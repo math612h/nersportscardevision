@@ -24,13 +24,14 @@ function AdminEntries() {
   const { data } = useQuery({
     queryKey: ["entries-admin", leagueId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("entries")
-        .select("*, divisions!inner(name, league_id)")
-        .eq("divisions.league_id", leagueId)
-        .order("created_at");
-      if (error) throw error;
-      return data;
+      const { data: divisions, error: divisionsError } = await supabase.from("divisions").select("id,name").eq("league_id", leagueId);
+      if (divisionsError) throw divisionsError;
+      const divisionIds = (divisions ?? []).map((d) => d.id);
+      if (divisionIds.length === 0) return [];
+      const { data: entries, error: entriesError } = await supabase.from("entries").select("*").in("division_id", divisionIds).order("created_at");
+      if (entriesError) throw entriesError;
+      const divisionNames = new Map((divisions ?? []).map((d) => [d.id, d.name]));
+      return (entries ?? []).map((entry) => ({ ...entry, divisionName: divisionNames.get(entry.division_id) ?? "Ukendt" }));
     },
   });
 
@@ -42,7 +43,7 @@ function AdminEntries() {
 
   // Group by division → class → category
   const grouped = (data ?? []).reduce<Record<string, Record<string, Record<string, any[]>>>>((acc, e: any) => {
-    const div = e.divisions?.name ?? "Ukendt";
+    const div = e.divisionName ?? "Ukendt";
     acc[div] ??= {};
     acc[div][e.car_class] ??= {};
     acc[div][e.car_class][e.driver_category] ??= [];
