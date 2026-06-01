@@ -1,10 +1,13 @@
-import { Link } from "@tanstack/react-router";
-import { Flag, LogOut, Shield, User as UserIcon } from "lucide-react";
+import { Link, useLocation } from "@tanstack/react-router";
+import { Flag, Gauge, LayoutGrid, LogOut, Shield, User as UserIcon } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 
 export function AppHeader() {
   const { user, isAdmin, signOut } = useAuth();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
@@ -13,15 +16,24 @@ export function AppHeader() {
           <span>LMU-Hub</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
-          <Link to="/" className="rounded px-2 py-1 hover:bg-accent" activeOptions={{ exact: true }}>
-            Ligaer
-          </Link>
-          <Link to="/mine-protests" className="rounded px-2 py-1 hover:bg-accent">
-            Protests
-          </Link>
-          {isAdmin && (
-            <Link to="/admin" className="flex items-center gap-1 rounded px-2 py-1 text-primary hover:bg-accent">
-              <Shield className="h-4 w-4" /> Admin
+          {!isAdminRoute && (
+            <Link to="/" className="rounded px-2 py-1 hover:bg-accent" activeOptions={{ exact: true }}>
+              <span className="flex items-center gap-1"><LayoutGrid className="h-4 w-4" /> Ligaer</span>
+            </Link>
+          )}
+          {!isAdminRoute && (
+            <Link to="/mine-protests" className="rounded px-2 py-1 hover:bg-accent">
+              Protests
+            </Link>
+          )}
+          {isAdmin && isAdminRoute && (
+            <Link to="/" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent">
+              <LayoutGrid className="h-4 w-4" /> Deltagerside
+            </Link>
+          )}
+          {isAdmin && !isAdminRoute && (
+            <Link to="/admin" className="flex items-center gap-1 rounded px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20">
+              <Gauge className="h-4 w-4" /> Kontrolpanel
             </Link>
           )}
           <div className="ml-2 hidden items-center gap-1 px-2 text-xs text-muted-foreground sm:flex">
