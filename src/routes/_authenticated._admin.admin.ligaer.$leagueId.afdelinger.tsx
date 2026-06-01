@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
@@ -108,12 +108,12 @@ function AdminDivisions() {
 function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: string; carClass: string | null; category: string | null; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
-  const [trackIdx, setTrackIdx] = useState("0");
-  const [layout, setLayout] = useState(LMU_TRACKS[0].layouts[0]);
+  const [trackLayout, setTrackLayout] = useState(`0::${LMU_TRACKS[0].layouts[0]}`);
   const [raceDate, setRaceDate] = useState("");
   const [weather, setWeather] = useState<WeatherKey[]>(Array(WEATHER_SLOT_COUNT).fill("sunny"));
 
-  const track = LMU_TRACKS[Number(trackIdx)];
+  const [trackIdxStr, layout] = trackLayout.split("::");
+  const track = LMU_TRACKS[Number(trackIdxStr)];
 
   const setSlot = (i: number, v: WeatherKey) => setWeather((prev) => prev.map((w, idx) => (idx === i ? v : w)));
 
@@ -137,16 +137,19 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
         <DialogHeader><DialogTitle>Opret afdeling</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="fx Round 1 – Spa" /></div>
-          <div><Label>Bane</Label>
-            <Select value={trackIdx} onValueChange={(v) => { setTrackIdx(v); setLayout(LMU_TRACKS[Number(v)].layouts[0]); }}>
+          <div><Label>Bane & layout</Label>
+            <Select value={trackLayout} onValueChange={setTrackLayout}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{LMU_TRACKS.map((t, i) => <SelectItem key={t.name} value={String(i)}>{t.name}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <div><Label>Layout</Label>
-            <Select value={layout} onValueChange={setLayout}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{track.layouts.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+              <SelectContent className="max-h-80">
+                {LMU_TRACKS.map((t, i) => (
+                  <SelectGroup key={t.name}>
+                    <SelectLabel>{t.name}</SelectLabel>
+                    {t.layouts.map((l) => (
+                      <SelectItem key={`${i}::${l}`} value={`${i}::${l}`}>{l}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           <div><Label>Dato & tid</Label><Input type="datetime-local" value={raceDate} onChange={(e) => setRaceDate(e.target.value)} /></div>
