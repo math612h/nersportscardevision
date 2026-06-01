@@ -194,6 +194,7 @@ export type Database = {
           created_at: string
           id: string
           league_id: string
+          section_number: string | null
           sort_order: number
           title: string
         }
@@ -202,6 +203,7 @@ export type Database = {
           created_at?: string
           id?: string
           league_id: string
+          section_number?: string | null
           sort_order?: number
           title: string
         }
@@ -210,6 +212,7 @@ export type Database = {
           created_at?: string
           id?: string
           league_id?: string
+          section_number?: string | null
           sort_order?: number
           title?: string
         }
