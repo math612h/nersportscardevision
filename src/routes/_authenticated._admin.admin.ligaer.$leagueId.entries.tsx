@@ -31,7 +31,7 @@ function AdminEntries() {
       const { data: entries, error: entriesError } = await supabase.from("entries").select("*").in("division_id", divisionIds).order("created_at");
       if (entriesError) throw entriesError;
       const divisionNames = new Map((divisions ?? []).map((d) => [d.id, d.name]));
-      return (entries ?? []).map((entry) => ({ ...entry, divisionName: divisionNames.get(entry.division_id) ?? "Ukendt" }));
+      return (entries ?? []).map((entry) => ({ ...entry, divisionName: entry.division_id ? (divisionNames.get(entry.division_id) ?? "Ukendt") : "Liga-tilmelding" }));
     },
   });
 

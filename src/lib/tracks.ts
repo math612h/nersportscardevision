@@ -18,8 +18,15 @@ export const LMU_TRACKS: TrackInfo[] = [
   { name: "Interlagos", layouts: ["Grand Prix"] },
 ];
 
-export const CAR_CLASSES = ["Hypercar", "LMP2", "LMGT3"] as const;
+export const CAR_CLASSES = ["Hypercar", "LMP2", "LMP3", "GT-E", "LMGT3"] as const;
 export const DRIVER_CATEGORIES = ["Pro", "Am"] as const;
+
+export type ClassConfig = {
+  car_class: string;
+  driver_category: string;
+  number_from: number;
+  number_to: number;
+};
 
 export type WeatherKey = "sunny" | "cloudy" | "light_rain" | "moderate_rain" | "storm";
 export const WEATHER_OPTIONS: { key: WeatherKey; label: string; icon: LucideIcon }[] = [

@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Trash2, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
+import { CAR_CLASSES, DRIVER_CATEGORIES, type ClassConfig } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,10 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
   component: AdminLeagues,
 });
 
+function emptyConfig(): ClassConfig {
+  return { car_class: CAR_CLASSES[0], driver_category: DRIVER_CATEGORIES[0], number_from: 1, number_to: 50 };
+}
+
 function AdminLeagues() {
   const { user } = useAuth();
   const location = useLocation();
@@ -27,8 +31,7 @@ function AdminLeagues() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
-  const [carClass, setCarClass] = useState<string>(CAR_CLASSES[0]);
-  const [category, setCategory] = useState<string>(DRIVER_CATEGORIES[0]);
+  const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
   const [createdLeague, setCreatedLeague] = useState(false);
 
   const { data: leagues } = useQuery({
@@ -40,17 +43,36 @@ function AdminLeagues() {
     },
   });
 
+  const updateConfig = (i: number, patch: Partial<ClassConfig>) =>
+    setConfigs((prev) => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+  const removeConfig = (i: number) => setConfigs((prev) => prev.filter((_, idx) => idx !== i));
+
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (configs.length === 0) return toast.error("Tilføj mindst én bilklasse.");
+    for (const c of configs) {
+      if (!c.car_class || !c.driver_category) return toast.error("Udfyld klasse og kategori.");
+      if (!Number.isInteger(c.number_from) || !Number.isInteger(c.number_to) || c.number_from < 1 || c.number_to < c.number_from)
+        return toast.error("Ugyldigt nummerinterval.");
+    }
+    const first = configs[0];
     const { error } = await supabase.from("leagues").insert({
       name: name.trim(),
       description: desc.trim() || null,
-      car_class: carClass,
-      driver_category: category,
+      car_class: first.car_class,
+      driver_category: first.driver_category,
+      class_configs: configs as any,
       created_by: user?.id,
     });
     if (error) return toast.error(error.message);
-    toast.success("Liga oprettet"); setCreatedLeague(true); setOpen(false); setName(""); setDesc(""); qc.invalidateQueries({ queryKey: ["leagues-admin"] }); qc.invalidateQueries({ queryKey: ["leagues"] });
+    toast.success("Liga oprettet");
+    setCreatedLeague(true);
+    setOpen(false);
+    setName("");
+    setDesc("");
+    setConfigs([emptyConfig()]);
+    qc.invalidateQueries({ queryKey: ["leagues-admin"] });
+    qc.invalidateQueries({ queryKey: ["leagues"] });
   };
 
   const del = useMutation({
@@ -72,24 +94,47 @@ function AdminLeagues() {
           <Button asChild variant="outline" className="gap-1"><Link to="/admin"><ArrowLeft className="h-4 w-4" /> Kontrolpanel</Link></Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button className="gap-1"><Plus className="h-4 w-4" /> Ny liga</Button></DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Opret liga</DialogTitle></DialogHeader>
               <form onSubmit={create} className="space-y-3">
                 <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
                 <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><Label>Bilklasse</Label>
-                    <Select value={carClass} onValueChange={setCarClass}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{CAR_CLASSES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                    </Select>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Bilklasser og kørenumre</Label>
+                    <Button type="button" variant="outline" size="sm" className="gap-1" onClick={() => setConfigs((p) => [...p, emptyConfig()])}>
+                      <Plus className="h-3 w-3" /> Tilføj klasse
+                    </Button>
                   </div>
-                  <div><Label>Kategori</Label>
-                    <Select value={category} onValueChange={setCategory}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>{DRIVER_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-                    </Select>
-                  </div>
+                  {configs.map((c, i) => (
+                    <div key={i} className="grid grid-cols-[1fr_1fr_70px_70px_auto] items-end gap-2 rounded-md border border-border p-2">
+                      <div>
+                        <Label className="text-xs">Klasse</Label>
+                        <Select value={c.car_class} onValueChange={(v) => updateConfig(i, { car_class: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{CAR_CLASSES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Kategori</Label>
+                        <Select value={c.driver_category} onValueChange={(v) => updateConfig(i, { driver_category: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>{DRIVER_CATEGORIES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">Fra</Label>
+                        <Input type="number" min={1} value={c.number_from} onChange={(e) => updateConfig(i, { number_from: Number(e.target.value) })} />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Til</Label>
+                        <Input type="number" min={1} value={c.number_to} onChange={(e) => updateConfig(i, { number_to: Number(e.target.value) })} />
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => removeConfig(i)} disabled={configs.length === 1}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
                 <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
               </form>
@@ -107,28 +152,37 @@ function AdminLeagues() {
 
       <div className="space-y-3">
         {leagues?.length === 0 && <p className="text-muted-foreground">Ingen ligaer endnu.</p>}
-        {leagues?.map((l: any) => (
-          <Card key={l.id}>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <CardTitle>{l.name}</CardTitle>
-                  {l.description && <p className="mt-1 text-sm text-muted-foreground">{l.description}</p>}
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {l.car_class && <Badge>{l.car_class}</Badge>}
-                    {l.driver_category && <Badge variant="secondary">{l.driver_category}</Badge>}
+        {leagues?.map((l: any) => {
+          const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
+          return (
+            <Card key={l.id}>
+              <CardHeader>
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <CardTitle>{l.name}</CardTitle>
+                    {l.description && <p className="mt-1 text-sm text-muted-foreground">{l.description}</p>}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {cfgs.length > 0
+                        ? cfgs.map((c, i) => (
+                            <Badge key={i} variant="outline">{c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}</Badge>
+                          ))
+                        : (<>
+                            {l.car_class && <Badge>{l.car_class}</Badge>}
+                            {l.driver_category && <Badge variant="secondary">{l.driver_category}</Badge>}
+                          </>)}
+                    </div>
                   </div>
+                  <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet liga?")) del.mutate(l.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet liga?")) del.mutate(l.id); }}><Trash2 className="h-4 w-4" /></Button>
-              </div>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              <Button asChild variant="outline" size="sm" className="gap-1"><Link to="/admin/ligaer/$leagueId/afdelinger" params={{ leagueId: l.id }}><Settings className="h-4 w-4" /> Afdelinger</Link></Button>
-              <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/regler" params={{ leagueId: l.id }}>Regler</Link></Button>
-              <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/entries" params={{ leagueId: l.id }}>Entries</Link></Button>
-            </CardContent>
-          </Card>
-        ))}
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                <Button asChild variant="outline" size="sm" className="gap-1"><Link to="/admin/ligaer/$leagueId/afdelinger" params={{ leagueId: l.id }}><Settings className="h-4 w-4" /> Afdelinger</Link></Button>
+                <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/regler" params={{ leagueId: l.id }}>Regler</Link></Button>
+                <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/entries" params={{ leagueId: l.id }}>Entries</Link></Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
