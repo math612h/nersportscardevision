@@ -64,29 +64,35 @@ export type Database = {
       entries: {
         Row: {
           car_class: string
+          car_number: number | null
           created_at: string
-          division_id: string
+          division_id: string | null
           driver_category: string
           driver_name: string
           id: string
+          league_id: string | null
           user_id: string
         }
         Insert: {
           car_class: string
+          car_number?: number | null
           created_at?: string
-          division_id: string
+          division_id?: string | null
           driver_category: string
           driver_name: string
           id?: string
+          league_id?: string | null
           user_id: string
         }
         Update: {
           car_class?: string
+          car_number?: number | null
           created_at?: string
-          division_id?: string
+          division_id?: string | null
           driver_category?: string
           driver_name?: string
           id?: string
+          league_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -103,6 +109,7 @@ export type Database = {
         Row: {
           banner_url: string | null
           car_class: string | null
+          class_configs: Json
           created_at: string
           created_by: string | null
           description: string | null
@@ -113,6 +120,7 @@ export type Database = {
         Insert: {
           banner_url?: string | null
           car_class?: string | null
+          class_configs?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -123,6 +131,7 @@ export type Database = {
         Update: {
           banner_url?: string | null
           car_class?: string | null
+          class_configs?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
