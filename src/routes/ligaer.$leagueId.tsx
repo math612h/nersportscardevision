@@ -12,7 +12,7 @@ export const Route = createFileRoute("/ligaer/$leagueId")({
 });
 
 function LeagueDetail() {
-  const { leagueId } = useParams({ from: "/_authenticated/ligaer/$leagueId" });
+  const { leagueId } = useParams({ from: "/ligaer/$leagueId" });
 
   const { data: league } = useQuery({
     queryKey: ["league", leagueId],

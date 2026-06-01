@@ -9,7 +9,7 @@ export const Route = createFileRoute("/ligaer/$leagueId/regler")({
 });
 
 function Rules() {
-  const { leagueId } = useParams({ from: "/_authenticated/ligaer/$leagueId/regler" });
+  const { leagueId } = useParams({ from: "/ligaer/$leagueId/regler" });
   const { data: rules } = useQuery({
     queryKey: ["rules", leagueId],
     queryFn: async () => {

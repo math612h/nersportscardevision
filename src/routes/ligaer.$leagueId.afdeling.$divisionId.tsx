@@ -21,7 +21,7 @@ export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
 });
 
 function DivisionDetail() {
-  const { leagueId, divisionId } = useParams({ from: "/_authenticated/ligaer/$leagueId/afdeling/$divisionId" });
+  const { leagueId, divisionId } = useParams({ from: "/ligaer/$leagueId/afdeling/$divisionId" });
   const { user } = useAuth();
   const qc = useQueryClient();
 
