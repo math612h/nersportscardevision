@@ -29,33 +29,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const qc = useQueryClient();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    let mounted = true;
+
+    const applySession = (s: Session | null) => {
+      if (!mounted) return;
       setSession(s);
       setUser(s?.user ?? null);
+      setLoading(false);
       if (s?.user) {
-        setTimeout(async () => {
-          const { data } = await supabase
-            .from("user_roles").select("role").eq("user_id", s.user.id);
-          setIsAdmin(!!data?.some((r) => r.role === "admin"));
-        }, 0);
+        void supabase.from("user_roles").select("role").eq("user_id", s.user.id).then(({ data }) => {
+          if (mounted) setIsAdmin(!!data?.some((r) => r.role === "admin"));
+        });
       } else {
         setIsAdmin(false);
       }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+      setTimeout(() => applySession(s), 0);
       router.invalidate();
       qc.invalidateQueries();
     });
 
-    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      setSession(s);
-      setUser(s?.user ?? null);
-      if (s?.user) {
-        const { data } = await supabase.from("user_roles").select("role").eq("user_id", s.user.id);
-        setIsAdmin(!!data?.some((r) => r.role === "admin"));
-      }
-      setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data: { session: s } }) => applySession(s))
+      .finally(() => mounted && setLoading(false));
 
-    return () => subscription.unsubscribe();
+    return () => { mounted = false; subscription.unsubscribe(); };
   }, [router, qc]);
 
   return (
