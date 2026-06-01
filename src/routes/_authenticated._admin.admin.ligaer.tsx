@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Plus, Trash2, Settings } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,10 +18,13 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
 
 function AdminLeagues() {
   const { user } = useAuth();
+  const location = useLocation();
+  const isLeagueList = location.pathname === "/admin/ligaer";
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
+  const [createdLeague, setCreatedLeague] = useState(false);
 
   const { data: leagues } = useQuery({
     queryKey: ["leagues-admin"],
@@ -36,7 +39,7 @@ function AdminLeagues() {
     e.preventDefault();
     const { error } = await supabase.from("leagues").insert({ name: name.trim(), description: desc.trim() || null, created_by: user?.id });
     if (error) return toast.error(error.message);
-    toast.success("Liga oprettet"); setOpen(false); setName(""); setDesc(""); qc.invalidateQueries({ queryKey: ["leagues-admin"] }); qc.invalidateQueries({ queryKey: ["leagues"] });
+    toast.success("Liga oprettet"); setCreatedLeague(true); setOpen(false); setName(""); setDesc(""); qc.invalidateQueries({ queryKey: ["leagues-admin"] }); qc.invalidateQueries({ queryKey: ["leagues"] });
   };
 
   const del = useMutation({
@@ -48,22 +51,34 @@ function AdminLeagues() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  if (!isLeagueList) return <Outlet />;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Ligaer</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="gap-1"><Plus className="h-4 w-4" /> Ny liga</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Opret liga</DialogTitle></DialogHeader>
-            <form onSubmit={create} className="space-y-3">
-              <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
-              <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
-              <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline" className="gap-1"><Link to="/admin"><ArrowLeft className="h-4 w-4" /> Kontrolpanel</Link></Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button className="gap-1"><Plus className="h-4 w-4" /> Ny liga</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Opret liga</DialogTitle></DialogHeader>
+              <form onSubmit={create} className="space-y-3">
+                <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
+                <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+                <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
+
+      {createdLeague && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3 text-sm">
+          <span>Ligaen er oprettet.</span>
+          <Button asChild size="sm" variant="outline"><Link to="/admin">Returner til Kontrolpanel</Link></Button>
+        </div>
+      )}
 
       <div className="space-y-3">
         {leagues?.length === 0 && <p className="text-muted-foreground">Ingen ligaer endnu.</p>}
@@ -79,9 +94,9 @@ function AdminLeagues() {
               </div>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-2">
-              <Link to="/admin/ligaer/$leagueId/afdelinger" params={{ leagueId: l.id }}><Button variant="outline" size="sm" className="gap-1"><Settings className="h-4 w-4" /> Afdelinger</Button></Link>
-              <Link to="/admin/ligaer/$leagueId/regler" params={{ leagueId: l.id }}><Button variant="outline" size="sm">Regler</Button></Link>
-              <Link to="/admin/ligaer/$leagueId/entries" params={{ leagueId: l.id }}><Button variant="outline" size="sm">Entries</Button></Link>
+              <Button asChild variant="outline" size="sm" className="gap-1"><Link to="/admin/ligaer/$leagueId/afdelinger" params={{ leagueId: l.id }}><Settings className="h-4 w-4" /> Afdelinger</Link></Button>
+              <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/regler" params={{ leagueId: l.id }}>Regler</Link></Button>
+              <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/entries" params={{ leagueId: l.id }}>Entries</Link></Button>
             </CardContent>
           </Card>
         ))}

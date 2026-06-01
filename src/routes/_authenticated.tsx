@@ -12,8 +12,9 @@ function Gate() {
   useEffect(() => {
     if (!loading && !user) navigate({ to: "/login" });
   }, [loading, user, navigate]);
-  if (loading || !user) {
+  if (loading) {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">Indlæser…</div>;
   }
+  if (!user) return null;
   return <Outlet />;
 }
