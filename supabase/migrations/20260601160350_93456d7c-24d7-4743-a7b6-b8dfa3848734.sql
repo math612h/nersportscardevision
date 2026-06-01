@@ -1,0 +1,1 @@
+ALTER TABLE public.rulesets ADD COLUMN IF NOT EXISTS section_number text;
