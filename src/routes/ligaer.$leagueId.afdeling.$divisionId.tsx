@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/_authenticated/ligaer/$leagueId/afdeling/$divisionId")({
+export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
   component: DivisionDetail,
 });
 

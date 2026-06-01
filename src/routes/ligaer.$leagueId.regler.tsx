@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-export const Route = createFileRoute("/_authenticated/ligaer/$leagueId/regler")({
+export const Route = createFileRoute("/ligaer/$leagueId/regler")({
   component: Rules,
 });
 
