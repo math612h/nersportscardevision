@@ -31,22 +31,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const applySession = (s: Session | null) => {
+    const applySession = async (s: Session | null) => {
       if (!mounted) return;
       setSession(s);
       setUser(s?.user ?? null);
-      setLoading(false);
       if (s?.user) {
-        void supabase.from("user_roles").select("role").eq("user_id", s.user.id).then(({ data }) => {
-          if (mounted) setIsAdmin(!!data?.some((r) => r.role === "admin"));
-        });
+        const { data } = await supabase.from("user_roles").select("role").eq("user_id", s.user.id);
+        if (mounted) setIsAdmin(!!data?.some((r) => r.role === "admin"));
       } else {
         setIsAdmin(false);
       }
+      if (mounted) setLoading(false);
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setTimeout(() => applySession(s), 0);
+      setLoading(true);
+      setTimeout(() => { void applySession(s).catch(() => mounted && setLoading(false)); }, 0);
       router.invalidate();
       qc.invalidateQueries();
     });
