@@ -1,3 +1,5 @@
+import { Sun, Cloud, CloudDrizzle, CloudRain, CloudLightning, type LucideIcon } from "lucide-react";
+
 export type TrackInfo = { name: string; layouts: string[] };
 
 export const LMU_TRACKS: TrackInfo[] = [
@@ -18,3 +20,16 @@ export const LMU_TRACKS: TrackInfo[] = [
 
 export const CAR_CLASSES = ["Hypercar", "LMP2", "LMGT3"] as const;
 export const DRIVER_CATEGORIES = ["Pro", "Am"] as const;
+
+export type WeatherKey = "sunny" | "cloudy" | "light_rain" | "moderate_rain" | "storm";
+export const WEATHER_OPTIONS: { key: WeatherKey; label: string; icon: LucideIcon }[] = [
+  { key: "sunny", label: "Sol", icon: Sun },
+  { key: "cloudy", label: "Overskyet", icon: Cloud },
+  { key: "light_rain", label: "Let regn", icon: CloudDrizzle },
+  { key: "moderate_rain", label: "Moderat regn", icon: CloudRain },
+  { key: "storm", label: "Storm", icon: CloudLightning },
+];
+export const WEATHER_BY_KEY: Record<WeatherKey, { label: string; icon: LucideIcon }> = Object.fromEntries(
+  WEATHER_OPTIONS.map((w) => [w.key, { label: w.label, icon: w.icon }]),
+) as Record<WeatherKey, { label: string; icon: LucideIcon }>;
+export const WEATHER_SLOT_COUNT = 5;
