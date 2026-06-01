@@ -7,12 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_authenticated/ligaer/$leagueId")({
+export const Route = createFileRoute("/ligaer/$leagueId")({
   component: LeagueDetail,
 });
 
 function LeagueDetail() {
-  const { leagueId } = useParams({ from: "/_authenticated/ligaer/$leagueId" });
+  const { leagueId } = useParams({ from: "/ligaer/$leagueId" });
 
   const { data: league } = useQuery({
     queryKey: ["league", leagueId],

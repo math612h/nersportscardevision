@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Calendar, MapPin, Trash2, MessageSquareWarning } from "lucide-react";
@@ -16,13 +16,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 
-export const Route = createFileRoute("/_authenticated/ligaer/$leagueId/afdeling/$divisionId")({
+export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
   component: DivisionDetail,
 });
 
 function DivisionDetail() {
-  const { leagueId, divisionId } = useParams({ from: "/_authenticated/ligaer/$leagueId/afdeling/$divisionId" });
+  const { leagueId, divisionId } = useParams({ from: "/ligaer/$leagueId/afdeling/$divisionId" });
   const { user } = useAuth();
+  const navigate = useNavigate();
   const qc = useQueryClient();
 
   const { data: div } = useQuery({
@@ -92,9 +93,12 @@ function DivisionDetail() {
       )}
 
       <div className="flex flex-wrap gap-2">
-        {!myEntry && <EntryDialog divisionId={divisionId} defaultClass={div?.car_class} defaultCategory={div?.driver_category} />}
-        <ProtestDialog divisionId={divisionId} />
-        {myEntry && (
+        {!user && (
+          <Button onClick={() => navigate({ to: "/login" })}>Log ind for at tilmelde</Button>
+        )}
+        {user && !myEntry && <EntryDialog divisionId={divisionId} defaultClass={div?.car_class} defaultCategory={div?.driver_category} />}
+        {user && <ProtestDialog divisionId={divisionId} />}
+        {user && myEntry && (
           <Button variant="outline" size="sm" onClick={() => deleteEntry.mutate(myEntry.id)} className="gap-1">
             <Trash2 className="h-4 w-4" /> Fjern min tilmelding
           </Button>

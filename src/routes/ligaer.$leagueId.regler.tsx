@@ -4,12 +4,12 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
-export const Route = createFileRoute("/_authenticated/ligaer/$leagueId/regler")({
+export const Route = createFileRoute("/ligaer/$leagueId/regler")({
   component: Rules,
 });
 
 function Rules() {
-  const { leagueId } = useParams({ from: "/_authenticated/ligaer/$leagueId/regler" });
+  const { leagueId } = useParams({ from: "/ligaer/$leagueId/regler" });
   const { data: rules } = useQuery({
     queryKey: ["rules", leagueId],
     queryFn: async () => {
