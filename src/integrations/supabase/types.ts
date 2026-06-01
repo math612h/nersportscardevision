@@ -102,25 +102,31 @@ export type Database = {
       leagues: {
         Row: {
           banner_url: string | null
+          car_class: string | null
           created_at: string
           created_by: string | null
           description: string | null
+          driver_category: string | null
           id: string
           name: string
         }
         Insert: {
           banner_url?: string | null
+          car_class?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          driver_category?: string | null
           id?: string
           name: string
         }
         Update: {
           banner_url?: string | null
+          car_class?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
+          driver_category?: string | null
           id?: string
           name?: string
         }
