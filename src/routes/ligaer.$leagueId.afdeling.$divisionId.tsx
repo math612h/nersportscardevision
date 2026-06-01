@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
+import { CAR_CLASSES, DRIVER_CATEGORIES, WEATHER_BY_KEY, type WeatherKey } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,15 +79,23 @@ function DivisionDetail() {
         </div>
       </div>
 
-      {div?.settings && Object.keys(div.settings as any).length > 0 && (
+      {Array.isArray((div?.settings as any)?.weather) && (div!.settings as any).weather.length > 0 && (
         <Card>
-          <CardHeader><CardTitle className="text-base">Settings</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-base">Vejr</CardTitle></CardHeader>
           <CardContent>
-            <dl className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-              {Object.entries(div.settings as Record<string, any>).map(([k, v]) => (
-                <div key={k}><dt className="text-xs text-muted-foreground">{k}</dt><dd>{String(v)}</dd></div>
-              ))}
-            </dl>
+            <div className="flex flex-wrap gap-2">
+              {((div!.settings as any).weather as WeatherKey[]).map((key, i) => {
+                const w = WEATHER_BY_KEY[key];
+                if (!w) return null;
+                const Icon = w.icon;
+                return (
+                  <span key={i} className="inline-flex items-center gap-1 rounded border border-border px-2 py-1 text-xs">
+                    <span className="text-muted-foreground">Slot {i + 1}</span>
+                    <Icon className="h-4 w-4" /> {w.label}
+                  </span>
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
       )}
