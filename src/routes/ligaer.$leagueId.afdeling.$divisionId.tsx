@@ -92,9 +92,12 @@ function DivisionDetail() {
       )}
 
       <div className="flex flex-wrap gap-2">
-        {!myEntry && <EntryDialog divisionId={divisionId} defaultClass={div?.car_class} defaultCategory={div?.driver_category} />}
-        <ProtestDialog divisionId={divisionId} />
-        {myEntry && (
+        {!user && (
+          <Button onClick={() => navigate({ to: "/login" })}>Log ind for at tilmelde</Button>
+        )}
+        {user && !myEntry && <EntryDialog divisionId={divisionId} defaultClass={div?.car_class} defaultCategory={div?.driver_category} />}
+        {user && <ProtestDialog divisionId={divisionId} />}
+        {user && myEntry && (
           <Button variant="outline" size="sm" onClick={() => deleteEntry.mutate(myEntry.id)} className="gap-1">
             <Trash2 className="h-4 w-4" /> Fjern min tilmelding
           </Button>
