@@ -45,7 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
-      setLoading(true);
       setTimeout(() => { void applySession(s).catch(() => mounted && setLoading(false)); }, 0);
       router.invalidate();
       qc.invalidateQueries();
