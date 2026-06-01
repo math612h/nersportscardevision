@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { WEATHER_BY_KEY, type WeatherKey } from "@/lib/tracks";
 
 export const Route = createFileRoute("/ligaer/$leagueId")({
   component: LeagueDetail,
@@ -45,6 +46,10 @@ function LeagueDetail() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{league?.name}</h1>
         {league?.description && <p className="mt-1 text-muted-foreground">{league.description}</p>}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
+          {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
+        </div>
         <div className="mt-3">
           <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
             <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
@@ -58,28 +63,41 @@ function LeagueDetail() {
           <p className="text-sm text-muted-foreground">Ingen afdelinger oprettet endnu.</p>
         )}
         <div className="grid gap-3 sm:grid-cols-2">
-          {divisions?.map((d: any) => (
-            <Link key={d.id} to="/ligaer/$leagueId/afdeling/$divisionId" params={{ leagueId, divisionId: d.id }}>
-              <Card className="cursor-pointer transition hover:border-primary">
-                <CardHeader>
-                  <CardTitle className="text-base">{d.name}</CardTitle>
-                  <CardDescription className="flex flex-wrap items-center gap-2">
-                    {d.track && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{d.track}{d.layout ? ` · ${d.layout}` : ""}</span>}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-wrap gap-2">
-                  {d.car_class && <Badge>{d.car_class}</Badge>}
-                  {d.driver_category && <Badge variant="secondary">{d.driver_category}</Badge>}
-                  {d.race_date && (
-                    <Badge variant="outline" className="gap-1">
-                      <Calendar className="h-3 w-3" /> {format(new Date(d.race_date), "dd MMM yyyy HH:mm")}
-                    </Badge>
-                  )}
-                  <Badge variant="outline">{d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+          {divisions?.map((d: any) => {
+            const slots: WeatherKey[] = Array.isArray(d.settings?.weather) ? d.settings.weather : [];
+            return (
+              <Link key={d.id} to="/ligaer/$leagueId/afdeling/$divisionId" params={{ leagueId, divisionId: d.id }}>
+                <Card className="cursor-pointer transition hover:border-primary">
+                  <CardHeader>
+                    <CardTitle className="text-base">{d.name}</CardTitle>
+                    <CardDescription className="flex flex-wrap items-center gap-2">
+                      {d.track && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{d.track}{d.layout ? ` · ${d.layout}` : ""}</span>}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {d.race_date && (
+                        <Badge variant="outline" className="gap-1">
+                          <Calendar className="h-3 w-3" /> {format(new Date(d.race_date), "dd MMM yyyy HH:mm")}
+                        </Badge>
+                      )}
+                      <Badge variant="outline">{d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
+                    </div>
+                    {slots.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {slots.map((key, i) => {
+                          const w = WEATHER_BY_KEY[key];
+                          if (!w) return null;
+                          const Icon = w.icon;
+                          return <Icon key={i} className="h-4 w-4 text-muted-foreground" aria-label={w.label} />;
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
