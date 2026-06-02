@@ -135,10 +135,10 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
       car_class: carClass, driver_category: category,
       track: track.name, layout,
       race_date: raceDate ? new Date(raceDate).toISOString() : null,
-      settings: { weather, fastest_lap_points: flPoints },
+      settings: { weather, fastest_lap_points: flPoints, temperature },
     });
     if (error) return toast.error(error.message);
-    toast.success("Afdeling oprettet"); setOpen(false); setName(""); setRaceDate(""); setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny")); setFlPoints(1); onDone();
+    toast.success("Afdeling oprettet"); setOpen(false); setName(""); setRaceDate(""); setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny")); setTemperature(22); setFlPoints(1); onDone();
   };
 
   return (
