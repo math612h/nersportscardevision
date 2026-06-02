@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           driver_category: string | null
           id: string
+          image_url: string | null
           layout: string | null
           league_id: string
           name: string
@@ -32,6 +33,7 @@ export type Database = {
           created_at?: string
           driver_category?: string | null
           id?: string
+          image_url?: string | null
           layout?: string | null
           league_id: string
           name: string
@@ -44,6 +46,7 @@ export type Database = {
           created_at?: string
           driver_category?: string | null
           id?: string
+          image_url?: string | null
           layout?: string | null
           league_id?: string
           name?: string
