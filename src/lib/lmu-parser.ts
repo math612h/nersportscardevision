@@ -109,3 +109,59 @@ export function msToLapStr(ms: number): string {
   const mss = rest - ss * 1000;
   return `${mm}:${String(ss).padStart(2, "0")}.${String(mss).padStart(3, "0")}`;
 }
+
+// --- Fuzzy driver name matching ---------------------------------------------
+// Levenshtein distance between two strings.
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (a.length === 0) return b.length;
+  if (b.length === 0) return a.length;
+  const prev = new Array(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let cur = i;
+    let prevDiag = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = prev[j];
+      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+      cur = Math.min(prev[j] + 1, prev[j - 1] + 1, prevDiag + cost);
+      prev[j - 1] = cur;
+      prevDiag = tmp;
+    }
+    prev[b.length] = cur;
+  }
+  return prev[b.length];
+}
+
+function normalizeName(s: string): string {
+  return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+// Returns similarity ratio 0..1 between two driver names.
+export function nameSimilarity(a: string, b: string): number {
+  const aa = normalizeName(a);
+  const bb = normalizeName(b);
+  if (!aa || !bb) return 0;
+  if (aa === bb) return 1;
+  const maxLen = Math.max(aa.length, bb.length);
+  return 1 - levenshtein(aa, bb) / maxLen;
+}
+
+// Finds the best matching candidate for `name` among `candidates`, if any
+// pair scores at or above `threshold` (default 0.85 — i.e. ≥85% similar).
+export function findBestNameMatch<T>(
+  name: string,
+  candidates: T[],
+  getName: (c: T) => string | null | undefined,
+  threshold = 0.85,
+): { match: T; score: number } | null {
+  let best: { match: T; score: number } | null = null;
+  for (const c of candidates) {
+    const cn = getName(c);
+    if (!cn) continue;
+    const score = nameSimilarity(name, cn);
+    if (score >= threshold && (!best || score > best.score)) best = { match: c, score };
+  }
+  return best;
+}
