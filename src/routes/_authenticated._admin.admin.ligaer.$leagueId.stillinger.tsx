@@ -370,14 +370,14 @@ function DivisionEditor({
                       <th className="px-2 py-1.5 w-10">Pos</th>
                       <th className="px-2 py-1.5 w-12">Nr.</th>
                       <th className="px-2 py-1.5">Kører</th>
-                      <th className="px-2 py-1.5 w-32">Tid (m:ss.xxx)</th>
-                      <th className="px-2 py-1.5 w-24">Straf (s)</th>
-                      <th className="px-2 py-1.5 w-24">Pointstraf</th>
+                      <th className="px-2 py-1.5 w-36">Tid (m:ss.xxx)</th>
+                      <th className="px-2 py-1.5 w-28">Straf (s)</th>
+                      <th className="px-2 py-1.5 w-28">Pointstraf</th>
                       <th className="px-2 py-1.5 w-28">Effektiv tid</th>
-                      <th className="px-2 py-1.5 w-12 text-center">FL</th>
-                      <th className="px-2 py-1.5 w-14 text-center">DNF</th>
-                      <th className="px-2 py-1.5 w-14 text-center">DNS</th>
-                      <th className="px-2 py-1.5 w-12 text-right">Pts</th>
+                      <th className="px-2 py-1.5 w-16 text-center">FL</th>
+                      <th className="px-2 py-1.5 w-16 text-center">DNF</th>
+                      <th className="px-2 py-1.5 w-16 text-center">DNS</th>
+                      <th className="px-2 py-1.5 w-14 text-right">Pts</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -392,7 +392,7 @@ function DivisionEditor({
                           <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
                           <td className="px-2 py-1.5">
                             <Input
-                              className="h-8"
+                              className="h-8 min-w-[100px]"
                               placeholder="1:32.456"
                               value={r.time_str}
                               onChange={(e) => setRow(i, { time_str: e.target.value })}
@@ -401,7 +401,7 @@ function DivisionEditor({
                           </td>
                           <td className="px-2 py-1.5">
                             <Input
-                              className="h-8"
+                              className="h-8 min-w-[70px]"
                               type="number"
                               min={0}
                               step={1}
@@ -412,7 +412,7 @@ function DivisionEditor({
                           </td>
                           <td className="px-2 py-1.5">
                             <Input
-                              className="h-8"
+                              className="h-8 min-w-[70px]"
                               type="number"
                               min={0}
                               step={1}

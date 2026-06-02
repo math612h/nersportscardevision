@@ -4,12 +4,12 @@ import { useState } from "react";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/regler")({
   component: AdminRules,
@@ -86,20 +86,27 @@ function AdminRules() {
         {Object.entries(grouped).map(([main, list]) => (
           <div key={main} className="space-y-2">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Sektion {main}</h2>
-            {list.map((r) => (
-              <Card key={r.id}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-base">
-                      {r.section_number && <span className="mr-2 text-muted-foreground">{r.section_number}</span>}
+            <Accordion type="multiple" className="w-full">
+              {list.map((r) => (
+                <AccordionItem key={r.id} value={r.id}>
+                  <AccordionTrigger className="text-left">
+                    <span className="flex items-center gap-2">
+                      {r.section_number && <span className="text-muted-foreground">{r.section_number}</span>}
                       {r.title}
-                    </CardTitle>
-                    <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet regel?")) del.mutate(r.id); }}><Trash2 className="h-4 w-4" /></Button>
-                  </div>
-                </CardHeader>
-                <CardContent><p className="whitespace-pre-wrap text-sm">{r.content}</p></CardContent>
-              </Card>
-            ))}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-auto shrink-0"
+                      onClick={(e) => { e.stopPropagation(); if (confirm("Slet regel?")) del.mutate(r.id); }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </AccordionTrigger>
+                  <AccordionContent className="whitespace-pre-wrap text-sm">{r.content}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         ))}
       </div>
