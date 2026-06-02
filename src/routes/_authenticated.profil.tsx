@@ -88,12 +88,14 @@ function ProfilePage() {
         age: ageNum,
         bio: bio.trim() || null,
         achievements: achievements.trim() || null,
+        discord_username: discord.trim() || null,
       })
       .eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Profil opdateret.");
     qc.invalidateQueries({ queryKey: ["my-profile", user.id] });
+    if (window.history.length > 1) router.history.back();
   };
 
   const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
