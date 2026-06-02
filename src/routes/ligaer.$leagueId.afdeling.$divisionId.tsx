@@ -86,6 +86,21 @@ function DivisionDetail() {
     },
   });
 
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-profile-approved", user?.id ?? "anon"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("approved")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { approved: boolean | null } | null;
+    },
+  });
+  const isApproved = !!myProfile?.approved;
+
   const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
   const reasonByUser = new Map((absenceReasons ?? []).map((a) => [a.user_id, a.reason]));
   const myAbsence = user ? absenceByUser.get(user.id) : undefined;
