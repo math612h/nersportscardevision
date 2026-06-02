@@ -146,13 +146,6 @@ function useLeagueSignups(leagueId: string) {
   });
 }
 
-function classOrder(configs: ClassConfig[]) {
-  return (a: { car_class: string; driver_category: string }, b: { car_class: string; driver_category: string }) => {
-    const ai = configs.findIndex((c) => c.car_class === a.car_class && c.driver_category === a.driver_category);
-    const bi = configs.findIndex((c) => c.car_class === b.car_class && c.driver_category === b.driver_category);
-    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-  };
-}
 
 function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { data } = useLeagueSignups(leagueId);
