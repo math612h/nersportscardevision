@@ -175,7 +175,11 @@ function AdminLeagues() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {cfgs.length > 0
                         ? cfgs.map((c, i) => (
-                            <Badge key={i} variant="outline">{c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}</Badge>
+                            <Badge key={i} variant="outline">
+                              {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
+                              {c.max_drivers ? ` · maks ${c.max_drivers}` : ""}
+                              {c.dns_limit ? ` · DNS ${c.dns_limit}` : ""}
+                            </Badge>
                           ))
                         : (<>
                             {l.car_class && <Badge>{l.car_class}</Badge>}
