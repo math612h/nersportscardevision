@@ -72,8 +72,16 @@ function AdminEntries() {
                     <ul className="space-y-1">
                       {list.map((e) => (
                         <li key={e.id} className="flex items-center justify-between rounded border border-border px-3 py-1.5 text-sm">
-                          <span>{e.driver_name}</span>
-                          <Button variant="ghost" size="sm" onClick={() => del.mutate(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          <span className="flex items-center gap-2">
+                            {e.car_number != null && (
+                              <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-muted px-1.5 font-mono text-xs">#{e.car_number}</span>
+                            )}
+                            {e.driver_name}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <MoveEntryDialog entry={e} leagueId={leagueId} allEntries={data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
+                            <Button variant="ghost" size="sm" onClick={() => del.mutate(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </div>
                         </li>
                       ))}
                     </ul>
