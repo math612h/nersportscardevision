@@ -108,7 +108,7 @@ function LeaderboardTeaser() {
 
   // Take best lap per (class + track + layout) and show the top 5 overall
   const best = (() => {
-    const map = new Map<string, typeof rows[number]>();
+    const map = new Map<string, TeaserRow>();
     for (const r of rows ?? []) {
       const key = `${r.car_class}|${r.track}|${r.layout ?? ""}|${r.driver_name.toLowerCase()}`;
       const cur = map.get(key);
