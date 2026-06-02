@@ -211,8 +211,11 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
   }
 
   return (
-    <div id="entryliste">
-      <h2 className="mb-2 text-lg font-semibold">Entryliste</h2>
+    <section id="entryliste" className="space-y-4">
+      <div className="flex items-center gap-2 text-primary">
+        <Users className="h-4 w-4" />
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Entryliste</h2>
+      </div>
       <div className="space-y-3">
         {Object.entries(grouped).map(([k, list]) => {
           if (!list || list.length === 0) return null;
