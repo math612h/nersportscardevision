@@ -90,7 +90,6 @@ export type Database = {
       }
       entries: {
         Row: {
-          approved: boolean
           car_class: string
           car_number: number | null
           created_at: string
@@ -103,7 +102,6 @@ export type Database = {
           waitlist: boolean
         }
         Insert: {
-          approved?: boolean
           car_class: string
           car_number?: number | null
           created_at?: string
@@ -116,7 +114,6 @@ export type Database = {
           waitlist?: boolean
         }
         Update: {
-          approved?: boolean
           car_class?: string
           car_number?: number | null
           created_at?: string
@@ -259,6 +256,7 @@ export type Database = {
         Row: {
           achievements: string | null
           age: number | null
+          approved: boolean
           avatar_url: string | null
           bio: string | null
           created_at: string
@@ -271,6 +269,7 @@ export type Database = {
         Insert: {
           achievements?: string | null
           age?: number | null
+          approved?: boolean
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
@@ -283,6 +282,7 @@ export type Database = {
         Update: {
           achievements?: string | null
           age?: number | null
+          approved?: boolean
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
