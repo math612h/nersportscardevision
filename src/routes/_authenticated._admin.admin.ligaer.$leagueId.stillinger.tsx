@@ -135,7 +135,7 @@ function AdminStandings() {
         <DivisionEditor
           key={division.id}
           division={division}
-          entries={entries}
+          entries={entries.filter((e) => e.car_number != null) as any}
           configs={configs}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] });
