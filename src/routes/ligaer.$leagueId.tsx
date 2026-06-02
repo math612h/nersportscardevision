@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, Users, Trophy, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,9 +73,11 @@ function LeagueDetail() {
         </div>
       </div>
 
+      <QuickNav />
+
       {league && <SignupsList leagueId={leagueId} />}
 
-      <div>
+      <div id="kalender">
         <h2 className="mb-2 text-lg font-semibold">Afdelinger</h2>
         {divisions?.length === 0 && (
           <p className="text-sm text-muted-foreground">Ingen afdelinger oprettet endnu.</p>
@@ -118,6 +120,8 @@ function LeagueDetail() {
           })}
         </div>
       </div>
+
+      <StandingsPlaceholder />
     </div>
   );
 }
@@ -147,7 +151,7 @@ function SignupsList({ leagueId }: { leagueId: string }) {
     return acc;
   }, {});
   return (
-    <div>
+    <div id="entryliste">
       <h2 className="mb-2 text-lg font-semibold">Tilmeldte kørere</h2>
       <div className="space-y-2">
         {Object.entries(grouped).map(([k, list]) => (
@@ -264,6 +268,48 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function QuickNav() {
+  const items = [
+    { id: "entryliste", label: "Entryliste", icon: Users },
+    { id: "kalender", label: "Kalender", icon: Calendar },
+    { id: "stillinger", label: "Stillinger", icon: Trophy },
+  ];
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => scrollTo(item.id)}
+          className="group flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card p-3 text-center transition hover:border-primary hover:bg-accent"
+        >
+          <item.icon className="h-5 w-5 text-primary" />
+          <span className="text-xs font-medium">{item.label}</span>
+          <ChevronRight className="h-3 w-3 text-muted-foreground transition group-hover:translate-y-0.5" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function StandingsPlaceholder() {
+  return (
+    <div id="stillinger" className="space-y-2">
+      <h2 className="text-lg font-semibold">Stillinger</h2>
+      <Card>
+        <CardContent className="py-6 text-center text-sm text-muted-foreground">
+          Stillinger vises når der er afholdt løb.
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
