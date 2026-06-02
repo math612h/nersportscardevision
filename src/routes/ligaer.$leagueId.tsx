@@ -339,6 +339,7 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                     ))}
                     <th className="py-1 px-1 w-10 text-center" title="Fastest lap points">FL</th>
                     <th className="py-1 px-1 w-12 text-center" title="Samlet tidsstraf">Straf</th>
+                    <th className="py-1 px-1 w-14 text-center" title="Samlet pointstraf">Pt-straf</th>
                     <th className="py-1 pl-2 w-12 text-right">Pts</th>
                   </tr>
                 </thead>
