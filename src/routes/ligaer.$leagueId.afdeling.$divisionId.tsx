@@ -246,7 +246,7 @@ function DivisionDetail() {
             </ul>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
