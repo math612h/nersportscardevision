@@ -397,6 +397,7 @@ export type Database = {
         | "time_penalty"
         | "position_penalty"
         | "disqualified"
+        | "point_penalty"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -532,6 +533,7 @@ export const Constants = {
         "time_penalty",
         "position_penalty",
         "disqualified",
+        "point_penalty",
       ],
     },
   },

@@ -1,0 +1,1 @@
+ALTER TYPE public.verdict_outcome ADD VALUE IF NOT EXISTS 'point_penalty';
