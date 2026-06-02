@@ -227,6 +227,8 @@ type ResultRow = {
   class_position: number;
   points: number;
   fastest_lap?: boolean;
+  penalty_seconds?: number;
+  dns?: boolean;
 };
 
 function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
@@ -258,7 +260,6 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     );
   }
 
-  // Aggregate per driver per class+cat
   type Agg = {
     car_number: number;
     driver_name: string;
@@ -267,7 +268,8 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     race: number;
     fl: number;
     total: number;
-    rounds: Record<string, { points: number; fl: boolean; flPts: number }>;
+    penalty: number;
+    rounds: Record<string, { points: number; fl: boolean; flPts: number; penalty: number; dns: boolean }>;
   };
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
@@ -282,13 +284,16 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
         race: 0,
         fl: 0,
         total: 0,
+        penalty: 0,
         rounds: {},
       };
       const earnedFl = r.fastest_lap ? flPts : 0;
+      const pen = Number(r.penalty_seconds ?? 0);
       cur.race += r.points;
       cur.fl += earnedFl;
       cur.total += r.points + earnedFl;
-      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl };
+      cur.penalty += pen;
+      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl, penalty: pen, dns: !!r.dns };
       map.set(key, cur);
     }
   }
@@ -323,11 +328,12 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                     <th className="py-1 pr-2">Kører</th>
                     <th className="py-1 pr-2 w-12 text-center">Nr.</th>
                     {completed.map((d: any) => (
-                      <th key={d.id} className="py-1 px-1 w-10 text-center" title={d.name}>
+                      <th key={d.id} className="py-1 px-1 w-12 text-center" title={d.name}>
                         {d.name.slice(0, 4)}
                       </th>
                     ))}
                     <th className="py-1 px-1 w-10 text-center" title="Fastest lap points">FL</th>
+                    <th className="py-1 px-1 w-12 text-center" title="Samlet tidsstraf">Straf</th>
                     <th className="py-1 pl-2 w-12 text-right">Pts</th>
                   </tr>
                 </thead>
@@ -340,16 +346,21 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
                         if (!cell) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                        if (cell.dns) return <td key={d.id} className="py-1.5 px-1 text-center text-[10px] font-semibold text-destructive">DNS</td>;
                         return (
                           <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
                             <span className="inline-flex items-center gap-0.5">
                               {cell.points}
                               {cell.fl && <Zap className="h-3 w-3 text-primary" aria-label="Fastest lap" />}
+                              {cell.penalty > 0 && (
+                                <span className="text-[10px] text-destructive" title={`+${cell.penalty}s tidsstraf`}>+{cell.penalty}s</span>
+                              )}
                             </span>
                           </td>
                         );
                       })}
                       <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">{r.fl || "–"}</td>
+                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
                     </tr>
                   ))}
@@ -362,6 +373,7 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     </div>
   );
 }
+
 
 function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { user } = useAuth();
