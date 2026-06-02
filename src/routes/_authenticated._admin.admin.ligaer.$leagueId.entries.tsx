@@ -97,13 +97,23 @@ function AdminEntries() {
                     <ul className="space-y-1">
                       {list.map((e) => (
                         <li key={e.id} className="flex items-center justify-between rounded border border-border px-3 py-1.5 text-sm">
-                          <span className="flex items-center gap-2">
+                          <span className="flex items-center gap-2 min-w-0">
                             {e.car_number != null && (
                               <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-muted px-1.5 font-mono text-xs">#{e.car_number}</span>
                             )}
-                            {e.driver_name}
+                            <span className="truncate">{e.driver_name}</span>
+                            {e.approved ? (
+                              <Badge variant="secondary" className="gap-1 text-[10px]"><CheckCircle2 className="h-3 w-3" />Godkendt</Badge>
+                            ) : (
+                              <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400"><Clock className="h-3 w-3" />Afventer</Badge>
+                            )}
                           </span>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 shrink-0">
+                            {!e.approved && (
+                              <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" disabled={approveMut.isPending} onClick={() => approveMut.mutate(e.id)}>
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Godkend
+                              </Button>
+                            )}
                             <MoveEntryDialog entry={e} leagueId={leagueId} allEntries={data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
                             <Button variant="ghost" size="sm" onClick={() => del.mutate(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                           </div>
