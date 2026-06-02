@@ -19,9 +19,10 @@ import { Route as LigaerLeagueIdIndexRouteImport } from './routes/ligaer.$league
 import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated._admin.admin.index'
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
-import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
 import { Route as AuthenticatedAdminAdminBrugereRouteImport } from './routes/_authenticated._admin.admin.brugere'
+import { Route as AuthenticatedAdminAdminProtestsIndexRouteImport } from './routes/_authenticated._admin.admin.protests.index'
+import { Route as AuthenticatedAdminAdminProtestsProtestIdRouteImport } from './routes/_authenticated._admin.admin.protests.$protestId'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdReglerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.regler'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.entries'
@@ -78,12 +79,6 @@ const LigaerLeagueIdAfdelingDivisionIdRoute =
     path: '/afdeling/$divisionId',
     getParentRoute: () => LigaerLeagueIdRoute,
   } as any)
-const AuthenticatedAdminAdminProtestsRoute =
-  AuthenticatedAdminAdminProtestsRouteImport.update({
-    id: '/admin/protests',
-    path: '/admin/protests',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedAdminAdminLigaerRoute =
   AuthenticatedAdminAdminLigaerRouteImport.update({
     id: '/admin/ligaer',
@@ -94,6 +89,18 @@ const AuthenticatedAdminAdminBrugereRoute =
   AuthenticatedAdminAdminBrugereRouteImport.update({
     id: '/admin/brugere',
     path: '/admin/brugere',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminProtestsIndexRoute =
+  AuthenticatedAdminAdminProtestsIndexRouteImport.update({
+    id: '/admin/protests/',
+    path: '/admin/protests/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminProtestsProtestIdRoute =
+  AuthenticatedAdminAdminProtestsProtestIdRouteImport.update({
+    id: '/admin/protests/$protestId',
+    path: '/admin/protests/$protestId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute =
@@ -130,9 +137,10 @@ export interface FileRoutesByFullPath {
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
-  '/admin/protests': typeof AuthenticatedAdminAdminProtestsRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
+  '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  '/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
   '/admin/ligaer/$leagueId/afdelinger': typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
   '/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
@@ -146,9 +154,10 @@ export interface FileRoutesByTo {
   '/ligaer/$leagueId': typeof LigaerLeagueIdIndexRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
-  '/admin/protests': typeof AuthenticatedAdminAdminProtestsRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
+  '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  '/admin/protests': typeof AuthenticatedAdminAdminProtestsIndexRoute
   '/admin/ligaer/$leagueId/afdelinger': typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
   '/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
@@ -166,9 +175,10 @@ export interface FileRoutesById {
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/_authenticated/_admin/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
-  '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
+  '/_authenticated/_admin/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  '/_authenticated/_admin/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger': typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
@@ -185,9 +195,10 @@ export interface FileRouteTypes {
     | '/ligaer/$leagueId/'
     | '/admin/brugere'
     | '/admin/ligaer'
-    | '/admin/protests'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/admin/'
+    | '/admin/protests/$protestId'
+    | '/admin/protests/'
     | '/admin/ligaer/$leagueId/afdelinger'
     | '/admin/ligaer/$leagueId/entries'
     | '/admin/ligaer/$leagueId/regler'
@@ -201,9 +212,10 @@ export interface FileRouteTypes {
     | '/ligaer/$leagueId'
     | '/admin/brugere'
     | '/admin/ligaer'
-    | '/admin/protests'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/admin'
+    | '/admin/protests/$protestId'
+    | '/admin/protests'
     | '/admin/ligaer/$leagueId/afdelinger'
     | '/admin/ligaer/$leagueId/entries'
     | '/admin/ligaer/$leagueId/regler'
@@ -220,9 +232,10 @@ export interface FileRouteTypes {
     | '/ligaer/$leagueId/'
     | '/_authenticated/_admin/admin/brugere'
     | '/_authenticated/_admin/admin/ligaer'
-    | '/_authenticated/_admin/admin/protests'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/_authenticated/_admin/admin/'
+    | '/_authenticated/_admin/admin/protests/$protestId'
+    | '/_authenticated/_admin/admin/protests/'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/entries'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/regler'
@@ -308,13 +321,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LigaerLeagueIdAfdelingDivisionIdRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
     }
-    '/_authenticated/_admin/admin/protests': {
-      id: '/_authenticated/_admin/admin/protests'
-      path: '/admin/protests'
-      fullPath: '/admin/protests'
-      preLoaderRoute: typeof AuthenticatedAdminAdminProtestsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/_admin/admin/ligaer': {
       id: '/_authenticated/_admin/admin/ligaer'
       path: '/admin/ligaer'
@@ -327,6 +333,20 @@ declare module '@tanstack/react-router' {
       path: '/admin/brugere'
       fullPath: '/admin/brugere'
       preLoaderRoute: typeof AuthenticatedAdminAdminBrugereRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/protests/': {
+      id: '/_authenticated/_admin/admin/protests/'
+      path: '/admin/protests'
+      fullPath: '/admin/protests/'
+      preLoaderRoute: typeof AuthenticatedAdminAdminProtestsIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/protests/$protestId': {
+      id: '/_authenticated/_admin/admin/protests/$protestId'
+      path: '/admin/protests/$protestId'
+      fullPath: '/admin/protests/$protestId'
+      preLoaderRoute: typeof AuthenticatedAdminAdminProtestsProtestIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger': {
@@ -387,16 +407,20 @@ const AuthenticatedAdminAdminLigaerRouteWithChildren =
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminBrugereRoute: typeof AuthenticatedAdminAdminBrugereRoute
   AuthenticatedAdminAdminLigaerRoute: typeof AuthenticatedAdminAdminLigaerRouteWithChildren
-  AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
+  AuthenticatedAdminAdminProtestsProtestIdRoute: typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  AuthenticatedAdminAdminProtestsIndexRoute: typeof AuthenticatedAdminAdminProtestsIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminBrugereRoute: AuthenticatedAdminAdminBrugereRoute,
   AuthenticatedAdminAdminLigaerRoute:
     AuthenticatedAdminAdminLigaerRouteWithChildren,
-  AuthenticatedAdminAdminProtestsRoute: AuthenticatedAdminAdminProtestsRoute,
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
+  AuthenticatedAdminAdminProtestsProtestIdRoute:
+    AuthenticatedAdminAdminProtestsProtestIdRoute,
+  AuthenticatedAdminAdminProtestsIndexRoute:
+    AuthenticatedAdminAdminProtestsIndexRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
@@ -441,3 +465,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

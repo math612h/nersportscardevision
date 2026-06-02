@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-export const Route = createFileRoute("/_authenticated/_admin/admin/protests")({
+export const Route = createFileRoute("/_authenticated/_admin/admin/protests/")({
   component: AdminProtests,
 });
 
