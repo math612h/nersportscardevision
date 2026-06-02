@@ -168,7 +168,7 @@ function DivisionDetail() {
             <UserCheck className="h-4 w-4" /> Jeg deltager alligevel
           </Button>
         )}
-        {user && <ProtestDialog divisionId={divisionId} />}
+        {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
       </div>
 
       <div>
