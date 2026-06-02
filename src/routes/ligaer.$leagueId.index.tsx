@@ -266,7 +266,7 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
