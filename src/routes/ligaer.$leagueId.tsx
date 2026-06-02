@@ -73,9 +73,11 @@ function LeagueDetail() {
         </div>
       </div>
 
+      <QuickNav />
+
       {league && <SignupsList leagueId={leagueId} />}
 
-      <div>
+      <div id="kalender">
         <h2 className="mb-2 text-lg font-semibold">Afdelinger</h2>
         {divisions?.length === 0 && (
           <p className="text-sm text-muted-foreground">Ingen afdelinger oprettet endnu.</p>
