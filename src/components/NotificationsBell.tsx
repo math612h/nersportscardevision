@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { Bell, Check } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
