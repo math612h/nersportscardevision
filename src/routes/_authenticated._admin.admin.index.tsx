@@ -10,7 +10,7 @@ function AdminHub() {
   const items = [
     { to: "/admin/ligaer", title: "Ligaer & afdelinger", desc: "Opret og rediger ligaer, afdelinger, regler og entries.", icon: Flag },
     { to: "/admin/protests", title: "Protests", desc: "Se alle indsendte protests.", icon: MessageSquareWarning },
-    { to: "/admin/brugere", title: "Brugere", desc: "Administrér alle brugere på platformen.", icon: Users },
+    { to: "/admin/brugere", title: "Brugere", desc: "Administrér alle brugere og godkend profiler.", icon: Users },
   ] as const;
   return (
     <div className="space-y-6">
