@@ -268,6 +268,7 @@ function DivisionEditor({
               fastest_lap: r.fastest_lap,
               finish_time_ms: baseMs,
               penalty_seconds: Math.max(0, r.penalty_seconds),
+              penalty_points: Math.max(0, r.penalty_points),
               effective_ms: baseMs + Math.max(0, r.penalty_seconds) * 1000,
               dnf: false,
               dns: false,
