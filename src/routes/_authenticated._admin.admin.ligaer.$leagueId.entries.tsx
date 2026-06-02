@@ -172,3 +172,132 @@ function EntryDialog({ leagueId, onDone }: { leagueId: string; onDone: () => voi
     </Dialog>
   );
 }
+
+type EntryRow = {
+  id: string;
+  driver_name: string;
+  car_class: string;
+  driver_category: string;
+  car_number: number | null;
+};
+
+function MoveEntryDialog({ entry, leagueId, allEntries, onDone }: { entry: EntryRow; leagueId: string; allEntries: EntryRow[]; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [carClass, setCarClass] = useState(entry.car_class);
+  const [category, setCategory] = useState(entry.driver_category);
+  const [carNumber, setCarNumber] = useState<number | null>(entry.car_number);
+
+  const { data: league } = useQuery({
+    queryKey: ["league-configs", leagueId],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("leagues").select("class_configs").eq("id", leagueId).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const configs: Array<{ car_class: string; driver_category: string; number_from: number; number_to: number }> =
+    Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
+
+  const selected = configs.find((c) => c.car_class === carClass && c.driver_category === category);
+
+  const { taken, available } = useMemo(() => {
+    if (!selected) return { taken: [] as number[], available: [] as number[] };
+    const t = allEntries
+      .filter((s) => s.id !== entry.id && s.car_class === selected.car_class && s.driver_category === selected.driver_category && s.car_number != null)
+      .map((s) => s.car_number as number);
+    const a: number[] = [];
+    for (let n = selected.number_from; n <= selected.number_to; n++) if (!t.includes(n)) a.push(n);
+    return { taken: t, available: a };
+  }, [allEntries, selected, entry.id]);
+
+  const pickConfig = (key: string) => {
+    const c = configs[Number(key)];
+    if (!c) return;
+    setCarClass(c.car_class);
+    setCategory(c.driver_category);
+    // reset number if outside new range or conflicting
+    if (carNumber == null || carNumber < c.number_from || carNumber > c.number_to) setCarNumber(null);
+  };
+
+  const cfgIdx = configs.findIndex((c) => c.car_class === carClass && c.driver_category === category);
+
+  const submit = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+    if (carNumber == null) return toast.error("Vælg et kørenummer.");
+    const { error } = await supabase
+      .from("entries")
+      .update({ car_class: carClass, driver_category: category, car_number: carNumber })
+      .eq("id", entry.id);
+    if (error) return toast.error(error.message);
+    toast.success("Flyttet");
+    setOpen(false);
+    onDone();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" title="Flyt"><ArrowLeftRight className="h-3.5 w-3.5" /></Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Flyt {entry.driver_name}</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          {configs.length > 0 ? (
+            <div>
+              <Label>Klasse · kategori</Label>
+              <Select value={cfgIdx >= 0 ? String(cfgIdx) : ""} onValueChange={pickConfig}>
+                <SelectTrigger><SelectValue placeholder="Vælg klasse" /></SelectTrigger>
+                <SelectContent>
+                  {configs.map((c, i) => (
+                    <SelectItem key={i} value={String(i)}>{c.car_class} · {c.driver_category} (#{c.number_from}-{c.number_to})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Bilklasse</Label>
+                <Select value={carClass} onValueChange={setCarClass}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{CAR_CLASSES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div><Label>Kategori</Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{DRIVER_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          {selected && (
+            <div className="space-y-2">
+              <Label>Kørenummer</Label>
+              <div className="grid grid-cols-8 gap-1 rounded-md border border-border p-2 max-h-48 overflow-y-auto">
+                {Array.from({ length: selected.number_to - selected.number_from + 1 }, (_, i) => selected.number_from + i).map((n) => {
+                  const isTaken = taken.includes(n);
+                  const isSel = carNumber === n;
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      disabled={isTaken}
+                      onClick={() => setCarNumber(n)}
+                      className={`rounded px-1 py-1 text-xs ${isTaken ? "bg-muted text-muted-foreground line-through cursor-not-allowed" : isSel ? "bg-primary text-primary-foreground" : "bg-card border border-border hover:bg-accent"}`}
+                    >
+                      {n}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">{available.length} ledige · {taken.length} optaget</p>
+            </div>
+          )}
+          <DialogFooter><Button type="submit" disabled={carNumber == null}>Gem</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
