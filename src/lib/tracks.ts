@@ -16,6 +16,7 @@ export const LMU_TRACKS: TrackInfo[] = [
   { name: "Autodromo Internazionale Enzo e Dino Ferrari (Imola)", layouts: ["Grand Prix", "ELMS"] },
   { name: "Lusail International Circuit (Qatar)", layouts: ["Grand Prix", "Short"] },
   { name: "Interlagos", layouts: ["Grand Prix"] },
+  { name: "Circuit de Barcelona-Catalunya", layouts: ["Grand Prix", "National"] },
 ];
 
 export const CAR_CLASSES = ["Hypercar", "LMP2", "LMP3", "GT-E", "LMGT3"] as const;
