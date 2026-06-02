@@ -33,6 +33,8 @@ function ParticipantDashboard() {
         <p className="text-sm text-muted-foreground">Vælg en liga for at se afdelinger, regler og tilmelde dig.</p>
       </header>
 
+      <LeaderboardTeaser />
+
       {isLoading && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 2 }).map((_, i) => (
