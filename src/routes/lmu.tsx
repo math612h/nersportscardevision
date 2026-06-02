@@ -26,11 +26,11 @@ function ParticipantDashboard() {
   const offseason = (leagues ?? []).filter((l: any) => l.is_offseason);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Le Mans Ultimate — Ligaer</h1>
+    <div className="space-y-10">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-bold tracking-tight">Le Mans Ultimate</h1>
         <p className="text-sm text-muted-foreground">Vælg en liga for at se afdelinger, regler og tilmelde dig.</p>
-      </div>
+      </header>
 
       {isLoading && <p className="text-muted-foreground">Indlæser ligaer…</p>}
       {!isLoading && leagues?.length === 0 && (
@@ -40,42 +40,64 @@ function ParticipantDashboard() {
       )}
 
       {regular.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {regular.map((l: any) => <LeagueCard key={l.id} l={l} />)}
-        </div>
+        <Section title="Ligaer" icon={<Flag className="h-5 w-5 text-primary" />}>
+          <CardGrid>
+            {regular.map((l: any) => <LeagueCard key={l.id} l={l} />)}
+          </CardGrid>
+        </Section>
       )}
 
       {offseason.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-bold tracking-tight">Off-Season events</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">Enkeltløb uden for de faste ligaer.</p>
-          <div className="grid gap-3 sm:grid-cols-2">
+        <Section
+          title="Off-Season events"
+          icon={<Sparkles className="h-5 w-5 text-primary" />}
+          description="Enkeltløb uden for de faste ligaer."
+        >
+          <CardGrid>
             {offseason.map((l: any) => <LeagueCard key={l.id} l={l} offseason />)}
-          </div>
-        </div>
+          </CardGrid>
+        </Section>
       )}
     </div>
   );
 }
 
+function Section({ title, icon, description, children }: { title: string; icon: React.ReactNode; description?: string; children: React.ReactNode }) {
+  return (
+    <section className="space-y-3">
+      <div className="space-y-1">
+        <div className="flex items-center gap-2">
+          {icon}
+          <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+        </div>
+        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function CardGrid({ children }: { children: React.ReactNode }) {
+  return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
+}
+
 function LeagueCard({ l, offseason }: { l: any; offseason?: boolean }) {
   return (
-    <Link to="/ligaer/$leagueId" params={{ leagueId: l.id }}>
-      <Card className="group cursor-pointer transition hover:border-primary">
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2">
-              {offseason ? <Sparkles className="h-5 w-5 text-primary" /> : <Flag className="h-5 w-5 text-primary" />}
-              <CardTitle className="text-lg">{l.name}</CardTitle>
+    <Link to="/ligaer/$leagueId" params={{ leagueId: l.id }} className="block h-full">
+      <Card className="group flex h-full flex-col cursor-pointer transition hover:border-primary hover:shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {offseason ? <Sparkles className="h-5 w-5 shrink-0 text-primary" /> : <Flag className="h-5 w-5 shrink-0 text-primary" />}
+              <CardTitle className="text-base truncate">{l.name}</CardTitle>
             </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-1" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-1" />
           </div>
-          {l.description && <CardDescription className="line-clamp-2">{l.description}</CardDescription>}
+          {l.description && (
+            <CardDescription className="line-clamp-2 min-h-[2.5rem]">{l.description}</CardDescription>
+          )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="mt-auto pt-0">
           <Badge variant="secondary" className="gap-1">
             <Calendar className="h-3 w-3" />
             {l.divisions?.[0]?.count ?? 0} {offseason ? "løb" : "afdelinger"}
