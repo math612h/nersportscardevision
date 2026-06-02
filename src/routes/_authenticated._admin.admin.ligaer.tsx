@@ -100,41 +100,44 @@ function AdminLeagues() {
                 <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
                 <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>Bilklasser og kørenumre</Label>
-                    <Button type="button" variant="outline" size="sm" className="gap-1" onClick={() => setConfigs((p) => [...p, emptyConfig()])}>
-                      <Plus className="h-3 w-3" /> Tilføj klasse
-                    </Button>
-                  </div>
+                  <Label>Bilklasser og kørenumre</Label>
                   {configs.map((c, i) => (
-                    <div key={i} className="grid grid-cols-[1fr_1fr_70px_70px_auto] items-end gap-2 rounded-md border border-border p-2">
-                      <div>
-                        <Label className="text-xs">Klasse</Label>
-                        <Select value={c.car_class} onValueChange={(v) => updateConfig(i, { car_class: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>{CAR_CLASSES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
-                        </Select>
+                    <div key={i} className="space-y-2 rounded-md border border-border p-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">Klasse {i + 1}</span>
+                        <Button type="button" variant="ghost" size="icon" onClick={() => removeConfig(i)} disabled={configs.length === 1}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <div>
-                        <Label className="text-xs">Kategori</Label>
-                        <Select value={c.driver_category} onValueChange={(v) => updateConfig(i, { driver_category: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>{DRIVER_CATEGORIES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
-                        </Select>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <Label className="text-xs">Klasse</Label>
+                          <Select value={c.car_class} onValueChange={(v) => updateConfig(i, { car_class: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{CAR_CLASSES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Kategori</Label>
+                          <Select value={c.driver_category} onValueChange={(v) => updateConfig(i, { driver_category: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>{DRIVER_CATEGORIES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Fra nr.</Label>
+                          <Input type="number" min={1} value={c.number_from} onChange={(e) => updateConfig(i, { number_from: Number(e.target.value) })} />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Til nr.</Label>
+                          <Input type="number" min={1} value={c.number_to} onChange={(e) => updateConfig(i, { number_to: Number(e.target.value) })} />
+                        </div>
                       </div>
-                      <div>
-                        <Label className="text-xs">Fra</Label>
-                        <Input type="number" min={1} value={c.number_from} onChange={(e) => updateConfig(i, { number_from: Number(e.target.value) })} />
-                      </div>
-                      <div>
-                        <Label className="text-xs">Til</Label>
-                        <Input type="number" min={1} value={c.number_to} onChange={(e) => updateConfig(i, { number_to: Number(e.target.value) })} />
-                      </div>
-                      <Button type="button" variant="ghost" size="icon" onClick={() => removeConfig(i)} disabled={configs.length === 1}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   ))}
+                  <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={() => setConfigs((p) => [...p, emptyConfig()])}>
+                    <Plus className="h-3 w-3" /> Tilføj klasse
+                  </Button>
                 </div>
                 <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
               </form>
