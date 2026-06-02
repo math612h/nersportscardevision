@@ -50,6 +50,19 @@ function AdminProtestDetail() {
     },
   });
 
+  const { data: submitter } = useQuery({
+    enabled: !!p?.submitted_by,
+    queryKey: ["protest-submitter", p?.submitted_by],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .eq("id", p!.submitted_by)
+        .maybeSingle();
+      return data;
+    },
+  });
+
   const [outcome, setOutcome] = useState<string>("");
   const [reason, setReason] = useState("");
   const [seconds, setSeconds] = useState("");
