@@ -176,6 +176,45 @@ function DivisionDetail() {
         </Card>
       )}
 
+      {(() => {
+        const settings = (div?.settings ?? {}) as { lobby_code?: string | null; lobby_password?: string | null };
+        const hasLobby = !!(settings.lobby_code || settings.lobby_password);
+        if (!hasLobby) return null;
+        if (!user || !mySignup) return null;
+        if (!isApproved) {
+          return (
+            <Card className="border-dashed">
+              <CardContent className="flex items-start gap-2 py-4 text-sm text-muted-foreground">
+                <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>Lobby code og password vises når din profil er godkendt af en admin.</span>
+              </CardContent>
+            </Card>
+          );
+        }
+        return (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2"><KeyRound className="h-4 w-4 text-primary" /> Lobby info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {settings.lobby_code && (
+                <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Lobby code</span>
+                  <span className="font-mono font-semibold">{settings.lobby_code}</span>
+                </div>
+              )}
+              {settings.lobby_password && (
+                <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Password</span>
+                  <span className="font-mono font-semibold">{settings.lobby_password}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+
       <div className="flex flex-wrap gap-2">
         {!user && (
           <Button onClick={() => navigate({ to: "/login" })}>Log ind</Button>
