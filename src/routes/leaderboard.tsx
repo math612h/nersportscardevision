@@ -52,7 +52,7 @@ function LeaderboardPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leaderboard_times")
-        .select("id,user_id,driver_name,track,layout,car_class,best_lap_ms,source,recorded_at,created_at")
+        .select("id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at")
         .order("best_lap_ms", { ascending: true })
         .limit(1000);
       if (error) throw error;
