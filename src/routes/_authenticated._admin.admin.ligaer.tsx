@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
 });
 
 function emptyConfig(): ClassConfig {
-  return { car_class: CAR_CLASSES[0], driver_category: DRIVER_CATEGORIES[0], number_from: 1, number_to: 50 };
+  return { car_class: CAR_CLASSES[0], driver_category: DRIVER_CATEGORIES[0], number_from: 1, number_to: 50, max_drivers: 20, dns_limit: 2 };
 }
 
 function AdminLeagues() {
