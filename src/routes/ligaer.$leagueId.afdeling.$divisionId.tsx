@@ -124,13 +124,16 @@ function DivisionDetail() {
         <ArrowLeft className="h-3 w-3" /> Tilbage
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold">{div?.name}</h1>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {div?.track && <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" />{div.track}{div.layout ? ` · ${div.layout}` : ""}</Badge>}
-          {div?.race_date && <Badge variant="outline" className="gap-1"><Calendar className="h-3 w-3" />{format(new Date(div.race_date), "dd MMM yyyy HH:mm")}</Badge>}
+        <div>
+          <h1 className="text-2xl font-bold">{div?.name}</h1>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {div?.track && <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" />{div.track}{div.layout ? ` · ${div.layout}` : ""}</Badge>}
+            {div?.race_date && <Badge variant="outline" className="gap-1"><Calendar className="h-3 w-3" />{format(new Date(div.race_date), "dd MMM yyyy HH:mm")}</Badge>}
+            {(div?.settings as any)?.temperature != null && (
+              <Badge variant="outline" className="gap-1">{(div!.settings as any).temperature}°C</Badge>
+            )}
+          </div>
         </div>
-      </div>
 
       {Array.isArray((div?.settings as any)?.weather) && (div!.settings as any).weather.length > 0 && (
         <Card>
