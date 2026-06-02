@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,21 +119,25 @@ function DivisionDetail() {
   const participantCount = totalSignups - absentCount;
 
   return (
-    <div className="space-y-6">
-      <Link to="/ligaer/$leagueId" params={{ leagueId }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+    <div className="space-y-8">
+      <Link to="/ligaer/$leagueId" params={{ leagueId }} className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Tilbage
       </Link>
 
-        <div>
-          <h1 className="text-2xl font-bold">{div?.name}</h1>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {div?.track && <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" />{div.track}{div.layout ? ` · ${div.layout}` : ""}</Badge>}
-            {div?.race_date && <Badge variant="outline" className="gap-1"><Calendar className="h-3 w-3" />{format(new Date(div.race_date), "dd MMM yyyy HH:mm")}</Badge>}
-            {(div?.settings as any)?.temperature != null && (
-              <Badge variant="outline" className="gap-1">{(div!.settings as any).temperature}°C</Badge>
-            )}
-          </div>
+      <header className="space-y-3">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Afdeling</p>
+          <h1 className="text-2xl font-bold tracking-tight">{div?.name}</h1>
+          {league?.name && <p className="text-sm text-muted-foreground">{league.name}</p>}
         </div>
+        <div className="flex flex-wrap gap-2">
+          {div?.track && <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" />{div.track}{div.layout ? ` · ${div.layout}` : ""}</Badge>}
+          {div?.race_date && <Badge variant="outline" className="gap-1"><Calendar className="h-3 w-3" />{format(new Date(div.race_date), "dd MMM yyyy HH:mm")}</Badge>}
+          {(div?.settings as any)?.temperature != null && (
+            <Badge variant="outline" className="gap-1">{(div!.settings as any).temperature}°C</Badge>
+          )}
+        </div>
+      </header>
 
       {Array.isArray((div?.settings as any)?.weather) && (div!.settings as any).weather.length > 0 && (
         <Card>
@@ -174,11 +178,18 @@ function DivisionDetail() {
         {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
       </div>
 
-      <div>
-        <h2 className="mb-2 text-lg font-semibold">
-          Deltagere ({participantCount}/{totalSignups})
-          {absentCount > 0 && <span className="ml-2 text-sm font-normal text-muted-foreground">· {absentCount} deltager ikke</span>}
-        </h2>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-primary">
+            <Users className="h-4 w-4" />
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">
+              Deltagere ({participantCount}/{totalSignups})
+            </h2>
+          </div>
+          {absentCount > 0 && (
+            <span className="text-xs text-muted-foreground">{absentCount} deltager ikke</span>
+          )}
+        </div>
         {totalSignups === 0 && <p className="text-sm text-muted-foreground">Ingen tilmeldte til ligaen endnu.</p>}
         <div className="space-y-3">
           {Object.entries(grouped).map(([k, list]) => {
@@ -235,7 +246,7 @@ function DivisionDetail() {
             </ul>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

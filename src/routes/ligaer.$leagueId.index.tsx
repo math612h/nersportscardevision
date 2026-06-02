@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, Users, Trophy, ChevronRight, Zap } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, Users, Trophy, ArrowUpRight, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,15 +65,21 @@ function LeagueDetail() {
   });
 
   return (
-    <div className="space-y-6">
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+    <div className="space-y-8">
+      <Link to="/lmu" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Alle ligaer
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{league?.name}</h1>
-        {league?.description && <p className="mt-1 text-muted-foreground">{league.description}</p>}
-        <div className="mt-2 flex flex-wrap gap-2">
+      <header className="space-y-3">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+            {(league as any)?.is_offseason ? "Off-Season event" : "Liga"}
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{league?.name}</h1>
+          {league?.description && <p className="text-sm text-muted-foreground">{league.description}</p>}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
           {configs.length > 0
             ? configs.map((c, i) => (
                 <Badge key={i} variant="outline">{c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}</Badge>
@@ -83,20 +89,24 @@ function LeagueDetail() {
                 {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
               </>)}
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+
+        <div className="flex flex-wrap gap-2 pt-1">
           <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
             <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
           </Link>
           {league && <SignupDialog leagueId={leagueId} configs={configs} />}
         </div>
-      </div>
+      </header>
 
       <QuickNav />
 
       {league && <SignupsList leagueId={leagueId} configs={configs} />}
 
-      <div id="kalender">
-        <h2 className="mb-2 text-lg font-semibold">Afdelinger</h2>
+      <section id="kalender" className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Calendar className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Afdelinger</h2>
+        </div>
         {divisions?.length === 0 && (
           <p className="text-sm text-muted-foreground">Ingen afdelinger oprettet endnu.</p>
         )}
@@ -107,23 +117,36 @@ function LeagueDetail() {
             const imgFile = getTrackImageFile(d.track);
             const imgUrl = imgFile ? imageMap?.[imgFile] : null;
             return (
-              <Link key={d.id} to="/ligaer/$leagueId/afdeling/$divisionId" params={{ leagueId, divisionId: d.id }}>
-                <Card className="cursor-pointer overflow-hidden transition hover:border-primary">
-                  {imgUrl && (
-                    <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-                      <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover" loading="lazy" />
+              <Link
+                key={d.id}
+                to="/ligaer/$leagueId/afdeling/$divisionId"
+                params={{ leagueId, divisionId: d.id }}
+                className="group block h-full"
+              >
+                <Card className="flex h-full flex-col overflow-hidden border-border transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]">
+                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                    ) : (
+                      <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
+                    <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
+                      <ArrowUpRight className="h-3.5 w-3.5" />
                     </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      {d.name}
-                      {completed && <Badge variant="secondary" className="text-[10px]">Afsluttet</Badge>}
-                    </CardTitle>
-                    <CardDescription className="flex flex-wrap items-center gap-2">
-                      {d.track && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{d.track}{d.layout ? ` · ${d.layout}` : ""}</span>}
-                    </CardDescription>
+                    {completed && (
+                      <Badge variant="secondary" className="absolute left-3 top-3 text-[10px]">Afsluttet</Badge>
+                    )}
+                  </div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{d.name}</CardTitle>
+                    {d.track && (
+                      <CardDescription className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />{d.track}{d.layout ? ` · ${d.layout}` : ""}
+                      </CardDescription>
+                    )}
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="mt-auto space-y-2 pt-0">
                     <div className="flex flex-wrap gap-2">
                       {d.race_date && (
                         <Badge variant="outline" className="gap-1">
@@ -148,7 +171,7 @@ function LeagueDetail() {
             );
           })}
         </div>
-      </div>
+      </section>
 
       <Standings leagueId={leagueId} configs={configs} />
     </div>
@@ -188,8 +211,11 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
   }
 
   return (
-    <div id="entryliste">
-      <h2 className="mb-2 text-lg font-semibold">Entryliste</h2>
+    <section id="entryliste" className="space-y-4">
+      <div className="flex items-center gap-2 text-primary">
+        <Users className="h-4 w-4" />
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Entryliste</h2>
+      </div>
       <div className="space-y-3">
         {Object.entries(grouped).map(([k, list]) => {
           if (!list || list.length === 0) return null;
@@ -240,7 +266,7 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -275,14 +301,17 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
 
   if (completed.length === 0) {
     return (
-      <div id="stillinger" className="space-y-2">
-        <h2 className="text-lg font-semibold">Stillinger</h2>
+      <section id="stillinger" className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Trophy className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger</h2>
+        </div>
         <Card>
           <CardContent className="py-6 text-center text-sm text-muted-foreground">
             Stillinger vises når der er afholdt løb.
           </CardContent>
         </Card>
-      </div>
+      </section>
     );
   }
 
@@ -334,8 +363,11 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     : Array.from(new Set(allRows.map((r) => `${r.car_class} · ${r.driver_category}`)));
 
   return (
-    <div id="stillinger" className="space-y-3">
-      <h2 className="text-lg font-semibold">Stillinger</h2>
+    <section id="stillinger" className="space-y-4">
+      <div className="flex items-center gap-2 text-primary">
+        <Trophy className="h-4 w-4" />
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger</h2>
+      </div>
       {groupKeys.map((k) => {
         const [cls, cat] = k.split(" · ");
         const rows = allRows
@@ -405,7 +437,7 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
           </Card>
         );
       })}
-    </div>
+    </section>
   );
 }
 
@@ -560,11 +592,12 @@ function QuickNav() {
         <button
           key={item.id}
           onClick={() => scrollTo(item.id)}
-          className="group flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card p-3 text-center transition hover:border-primary hover:bg-accent"
+          className="group flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-left transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
         >
-          <item.icon className="h-5 w-5 text-primary" />
-          <span className="text-xs font-medium">{item.label}</span>
-          <ChevronRight className="h-3 w-3 text-muted-foreground transition group-hover:translate-y-0.5" />
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+            <item.icon className="h-4 w-4" />
+          </span>
+          <span className="truncate text-xs font-medium">{item.label}</span>
         </button>
       ))}
     </div>
