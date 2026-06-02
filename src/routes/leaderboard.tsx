@@ -138,6 +138,7 @@ function LeaderboardPage() {
         track: parsed.track,
         layout: parsed.layout,
         car_class: normalizeCarClass(me.carClass),
+        car_model: me.carModel,
         best_lap_ms: me.bestLapMs,
         source: "user",
         uploaded_by: user.id,
