@@ -166,3 +166,168 @@ function EditRuleDialog({ rule, leagueId }: { rule: any; leagueId: string }) {
     </Dialog>
   );
 }
+
+function SaveTemplateDialog({ rules }: { rules: any[] }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [desc, setDesc] = useState("");
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (rules.length === 0) return toast.error("Der er ingen regler at gemme.");
+    const { data: tpl, error } = await supabase
+      .from("ruleset_templates")
+      .insert({ name: name.trim(), description: desc.trim() || null })
+      .select()
+      .single();
+    if (error || !tpl) return toast.error(error?.message ?? "Kunne ikke gemme");
+    const rows = rules.map((r, i) => ({
+      template_id: tpl.id,
+      section_number: r.section_number,
+      title: r.title,
+      content: r.content,
+      sort_order: r.sort_order ?? i,
+    }));
+    const { error: rErr } = await supabase.from("ruleset_template_rules").insert(rows);
+    if (rErr) return toast.error(rErr.message);
+    toast.success("Regelsæt arkiveret");
+    setOpen(false); setName(""); setDesc("");
+    qc.invalidateQueries({ queryKey: ["ruleset-templates"] });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-1"><Save className="h-4 w-4" /> Gem som skabelon</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Arkiver regelsæt</DialogTitle></DialogHeader>
+        <form onSubmit={save} className="space-y-3">
+          <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="fx GT3 Sprint 2026" /></div>
+          <div><Label>Beskrivelse</Label><Textarea maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+          <p className="text-xs text-muted-foreground">{rules.length} regler bliver gemt.</p>
+          <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function LoadTemplateDialog({ leagueId, existingCount }: { leagueId: string; existingCount: number }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [templateId, setTemplateId] = useState<string>("");
+
+  const { data: templates } = useQuery({
+    queryKey: ["ruleset-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ruleset_templates")
+        .select("id, name, description, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: open,
+  });
+
+  const load = async () => {
+    if (!templateId) return toast.error("Vælg et regelsæt");
+    const { data: tplRules, error } = await supabase
+      .from("ruleset_template_rules")
+      .select("*")
+      .eq("template_id", templateId)
+      .order("sort_order");
+    if (error) return toast.error(error.message);
+    if (!tplRules || tplRules.length === 0) return toast.error("Skabelonen er tom");
+    const rows = tplRules.map((r, i) => ({
+      league_id: leagueId,
+      section_number: r.section_number,
+      title: r.title,
+      content: r.content,
+      sort_order: existingCount + i,
+    }));
+    const { error: iErr } = await supabase.from("rulesets").insert(rows);
+    if (iErr) return toast.error(iErr.message);
+    toast.success(`${rows.length} regler indlæst`);
+    setOpen(false); setTemplateId("");
+    qc.invalidateQueries({ queryKey: ["rules-admin", leagueId] });
+    qc.invalidateQueries({ queryKey: ["rules", leagueId] });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-1"><FolderOpen className="h-4 w-4" /> Indlæs skabelon</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Indlæs arkiveret regelsæt</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <Select value={templateId} onValueChange={setTemplateId}>
+            <SelectTrigger><SelectValue placeholder="Vælg regelsæt…" /></SelectTrigger>
+            <SelectContent>
+              {(templates ?? []).map((t: any) => (
+                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {templates?.length === 0 && <p className="text-sm text-muted-foreground">Ingen arkiverede regelsæt endnu.</p>}
+          <p className="text-xs text-muted-foreground">Reglerne tilføjes til ligaens nuværende regelsæt.</p>
+        </div>
+        <DialogFooter><Button onClick={load} disabled={!templateId}>Indlæs</Button></DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ManageTemplatesDialog() {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+
+  const { data: templates } = useQuery({
+    queryKey: ["ruleset-templates"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ruleset_templates")
+        .select("id, name, description, created_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+    enabled: open,
+  });
+
+  const del = async (id: string) => {
+    if (!confirm("Slet arkiveret regelsæt?")) return;
+    const { error } = await supabase.from("ruleset_templates").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Slettet");
+    qc.invalidateQueries({ queryKey: ["ruleset-templates"] });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Administrer skabeloner"><Archive className="h-4 w-4" /></Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Arkiverede regelsæt</DialogTitle></DialogHeader>
+        <div className="space-y-2">
+          {(templates ?? []).map((t: any) => (
+            <Card key={t.id}>
+              <CardContent className="flex items-center justify-between gap-2 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium truncate">{t.name}</p>
+                  {t.description && <p className="text-xs text-muted-foreground truncate">{t.description}</p>}
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => del(t.id)}><Trash2 className="h-4 w-4" /></Button>
+              </CardContent>
+            </Card>
+          ))}
+          {templates?.length === 0 && <p className="text-sm text-muted-foreground">Ingen arkiverede regelsæt.</p>}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
