@@ -109,22 +109,23 @@ function LeaderboardPage() {
       const text = await file.text();
       const parsed = parseLmuRaceFile(text);
 
-      // Look up the uploader's LMU name
-      const { data: profile, error: pErr } = await supabase
-        .from("profiles")
-        .select("lmu_name")
-        .eq("id", user.id)
-        .maybeSingle();
+      // Look up the uploader's LMU name + all known LMU names for matching
+      const [{ data: profile, error: pErr }, { data: allProfiles, error: aErr }] = await Promise.all([
+        supabase.from("profiles").select("lmu_name").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("id,lmu_name").not("lmu_name", "is", null),
+      ]);
       if (pErr) throw pErr;
+      if (aErr) throw aErr;
+
       const lmu = (profile?.lmu_name ?? "").trim().toLowerCase();
       if (!lmu) {
         toast.error("Du mangler at sætte dit LMU-navn på profilen først.");
         return;
       }
 
+      // Confirm uploader is in the file (exact or fuzzy ≥85%)
       let me = parsed.drivers.find((d) => d.name.trim().toLowerCase() === lmu);
       if (!me) {
-        // Fuzzy match: ≥85% similarity
         let bestScore = 0;
         for (const d of parsed.drivers) {
           const s = nameSimilarity(d.name, lmu);
@@ -135,26 +136,44 @@ function LeaderboardPage() {
         toast.error(`Dit navn “${profile!.lmu_name}” findes ikke i filen. Tjek at det matcher (mindst 85%).`);
         return;
       }
-      if (me.bestLapMs == null) {
-        toast.error("Ingen gyldig hurtigste omgang fundet for dig i filen.");
-        return;
-      }
 
-      const { error } = await supabase.from("leaderboard_times").insert({
-        user_id: user.id,
-        driver_name: me.name,
-        track: parsed.track,
-        layout: parsed.layout,
-        car_class: normalizeCarClass(me.carClass),
-        car_model: me.carModel,
-        best_lap_ms: me.bestLapMs,
-        source: "user",
-        uploaded_by: user.id,
-        recorded_at: parsed.recordedAt,
-      });
+      // Match every driver in the file against known profiles
+      const profiles = (allProfiles ?? []) as Array<{ id: string; lmu_name: string | null }>;
+      const rows = parsed.drivers
+        .filter((d) => d.bestLapMs != null)
+        .map((d) => {
+          const dn = d.name.trim().toLowerCase();
+          let matchId: string | null = null;
+          const exact = profiles.find((p) => (p.lmu_name ?? "").trim().toLowerCase() === dn);
+          if (exact) matchId = exact.id;
+          else {
+            let bestScore = 0;
+            for (const p of profiles) {
+              const s = nameSimilarity(d.name, p.lmu_name ?? "");
+              if (s >= 0.85 && s > bestScore) { bestScore = s; matchId = p.id; }
+            }
+          }
+          return {
+            user_id: matchId,
+            driver_name: d.name,
+            track: parsed.track,
+            layout: parsed.layout,
+            car_class: normalizeCarClass(d.carClass),
+            car_model: d.carModel,
+            best_lap_ms: d.bestLapMs as number,
+            source: "user" as const,
+            uploaded_by: user.id,
+            recorded_at: parsed.recordedAt,
+          };
+        });
+
+      const { error } = await supabase.from("leaderboard_times").insert(rows);
       if (error) throw error;
 
-      toast.success(`Tid uploadet: ${msToLapStr(me.bestLapMs)} på ${parsed.track}${parsed.layout ? ` (${parsed.layout})` : ""}.`);
+      const matched = rows.filter((r) => r.user_id).length;
+      toast.success(
+        `${rows.length} tid${rows.length === 1 ? "" : "er"} uploadet fra ${parsed.track}${parsed.layout ? ` (${parsed.layout})` : ""} — ${matched} matchede kendte kørere.`,
+      );
       qc.invalidateQueries({ queryKey: ["leaderboard"] });
     } catch (e: any) {
       toast.error(e.message ?? "Kunne ikke læse filen");
