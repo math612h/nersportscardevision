@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig } from "@/lib/tracks";
+import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, getTrackImageFile } from "@/lib/tracks";
 
 export const Route = createFileRoute("/ligaer/$leagueId")({
   component: LeagueDetail,
