@@ -104,9 +104,16 @@ function LeagueDetail() {
           {divisions?.map((d: any) => {
             const slots: WeatherKey[] = Array.isArray(d.settings?.weather) ? d.settings.weather : [];
             const completed = !!d.settings?.completed;
+            const imgFile = getTrackImageFile(d.track);
+            const imgUrl = imgFile ? imageMap?.[imgFile] : null;
             return (
               <Link key={d.id} to="/ligaer/$leagueId/afdeling/$divisionId" params={{ leagueId, divisionId: d.id }}>
-                <Card className="cursor-pointer transition hover:border-primary">
+                <Card className="cursor-pointer overflow-hidden transition hover:border-primary">
+                  {imgUrl && (
+                    <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+                      <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover" loading="lazy" />
+                    </div>
+                  )}
                   <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                       {d.name}
