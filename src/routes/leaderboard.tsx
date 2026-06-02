@@ -263,6 +263,7 @@ function LeaderboardPage() {
                     <th className="px-3 py-2 w-10">#</th>
                     <th className="px-3 py-2">Kører</th>
                     <th className="px-3 py-2">Bilklasse</th>
+                    <th className="px-3 py-2 hidden md:table-cell">Bil</th>
                     <th className="px-3 py-2">Bane</th>
                     <th className="px-3 py-2 hidden sm:table-cell">Layout</th>
                     <th className="px-3 py-2 text-right">Bedste omgang</th>
