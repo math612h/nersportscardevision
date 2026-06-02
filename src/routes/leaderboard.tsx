@@ -195,32 +195,40 @@ function LeaderboardPage() {
       </header>
 
       <Card>
-        <CardContent className="flex flex-wrap items-center gap-3 py-4">
-          <div className="flex items-center gap-2 text-primary">
-            <Upload className="h-4 w-4" />
-            <span className="text-xs font-semibold uppercase tracking-[0.18em]">Upload din race-fil</span>
+        <CardContent className="space-y-3 py-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 text-primary">
+              <Upload className="h-4 w-4" />
+              <span className="text-xs font-semibold uppercase tracking-[0.18em]">Upload din race-fil</span>
+            </div>
+            <p className="flex-1 min-w-[12rem] text-xs text-muted-foreground">
+              Upload en LMU resultat-XML — alle genkendte kørere i filen får automatisk deres tider lagt på leaderboardet (matchet via LMU-navn).
+            </p>
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".xml,application/xml,text/xml"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleFile(f);
+                e.target.value = "";
+              }}
+            />
+            {user ? (
+              <Button onClick={() => fileRef.current?.click()} disabled={uploading} className="gap-2">
+                <Upload className="h-4 w-4" /> {uploading ? "Læser…" : "Vælg fil"}
+              </Button>
+            ) : (
+              <Button asChild><Link to="/login">Log ind for at uploade</Link></Button>
+            )}
           </div>
-          <p className="flex-1 min-w-[12rem] text-xs text-muted-foreground">
-            Upload en LMU resultat-XML — din tid bliver automatisk lagt på leaderboardet via dit LMU-navn.
+          <p className="text-[11px] text-muted-foreground">
+            Filerne ligger i:{" "}
+            <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">
+              Documents\My Games\LeMansUltimate\UserData\Log\Results
+            </code>
           </p>
-          <input
-            ref={fileRef}
-            type="file"
-            accept=".xml,application/xml,text/xml"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleFile(f);
-              e.target.value = "";
-            }}
-          />
-          {user ? (
-            <Button onClick={() => fileRef.current?.click()} disabled={uploading} className="gap-2">
-              <Upload className="h-4 w-4" /> {uploading ? "Læser…" : "Vælg fil"}
-            </Button>
-          ) : (
-            <Button asChild><Link to="/login">Log ind for at uploade</Link></Button>
-          )}
         </CardContent>
       </Card>
 
