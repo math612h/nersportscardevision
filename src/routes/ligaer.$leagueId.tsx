@@ -270,7 +270,8 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     fl: number;
     total: number;
     penalty: number;
-    rounds: Record<string, { points: number; fl: boolean; flPts: number; penalty: number; dns: boolean }>;
+    pointPenalty: number;
+    rounds: Record<string, { points: number; fl: boolean; flPts: number; penalty: number; pointPenalty: number; dns: boolean }>;
   };
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
@@ -286,15 +287,18 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
         fl: 0,
         total: 0,
         penalty: 0,
+        pointPenalty: 0,
         rounds: {},
       };
       const earnedFl = r.fastest_lap ? flPts : 0;
       const pen = Number(r.penalty_seconds ?? 0);
+      const ptsPen = Math.max(0, Number(r.penalty_points ?? 0));
       cur.race += r.points;
       cur.fl += earnedFl;
-      cur.total += r.points + earnedFl;
+      cur.total += Math.max(0, r.points + earnedFl - ptsPen);
       cur.penalty += pen;
-      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl, penalty: pen, dns: !!r.dns };
+      cur.pointPenalty += ptsPen;
+      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns };
       map.set(key, cur);
     }
   }
