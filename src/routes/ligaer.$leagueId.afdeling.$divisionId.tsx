@@ -1,19 +1,18 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Calendar, MapPin, Trash2, MessageSquareWarning } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { CAR_CLASSES, DRIVER_CATEGORIES, WEATHER_BY_KEY, type WeatherKey } from "@/lib/tracks";
+import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
@@ -35,33 +34,72 @@ function DivisionDetail() {
     },
   });
 
-  const { data: entries } = useQuery({
-    queryKey: ["entries", divisionId],
+  const { data: league } = useQuery({
+    queryKey: ["league", leagueId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("entries").select("*").eq("division_id", divisionId).order("created_at");
+      const { data, error } = await supabase.from("leagues").select("*").eq("id", leagueId).single();
       if (error) throw error;
       return data;
     },
   });
 
-  const myEntry = entries?.find((e) => e.user_id === user?.id);
+  const { data: signups } = useQuery({
+    queryKey: ["league-signups", leagueId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at")
+        .eq("league_id", leagueId)
+        .is("division_id", null)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  const grouped = (entries ?? []).reduce<Record<string, Record<string, typeof entries>>>((acc, e) => {
-    acc[e.car_class] ??= {};
-    acc[e.car_class][e.driver_category] ??= [];
-    acc[e.car_class][e.driver_category]!.push(e);
-    return acc;
-  }, {});
+  const { data: absences } = useQuery({
+    queryKey: ["division-absences", divisionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("division_absences")
+        .select("id,user_id,reason,created_at")
+        .eq("division_id", divisionId);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
 
-  const deleteEntry = useMutation({
+  const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
+  const myAbsence = user ? absenceByUser.get(user.id) : undefined;
+  const mySignup = (signups ?? []).find((e) => e.user_id === user?.id);
+
+  const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
+  const keys = configs.length
+    ? configs.map((c) => `${c.car_class} · ${c.driver_category}`)
+    : Array.from(new Set((signups ?? []).map((e) => `${e.car_class} · ${e.driver_category}`)));
+
+  const grouped: Record<string, typeof signups> = {};
+  for (const k of keys) grouped[k] = [];
+  for (const e of signups ?? []) {
+    const k = `${e.car_class} · ${e.driver_category}`;
+    (grouped[k] ??= [] as any).push(e);
+  }
+
+  const removeAbsence = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("entries").delete().eq("id", id);
+      const { error } = await supabase.from("division_absences").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["entries", divisionId] }); toast.success("Tilmelding fjernet"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
+      toast.success("Markeret som deltager igen");
+    },
     onError: (e: any) => toast.error(e.message),
   });
+
+  const totalSignups = signups?.length ?? 0;
+  const absentCount = absences?.length ?? 0;
+  const participantCount = totalSignups - absentCount;
 
   return (
     <div className="space-y-6">
@@ -72,8 +110,6 @@ function DivisionDetail() {
       <div>
         <h1 className="text-2xl font-bold">{div?.name}</h1>
         <div className="mt-2 flex flex-wrap gap-2">
-          {div?.car_class && <Badge>{div.car_class}</Badge>}
-          {div?.driver_category && <Badge variant="secondary">{div.driver_category}</Badge>}
           {div?.track && <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" />{div.track}{div.layout ? ` · ${div.layout}` : ""}</Badge>}
           {div?.race_date && <Badge variant="outline" className="gap-1"><Calendar className="h-3 w-3" />{format(new Date(div.race_date), "dd MMM yyyy HH:mm")}</Badge>}
         </div>
@@ -102,90 +138,130 @@ function DivisionDetail() {
 
       <div className="flex flex-wrap gap-2">
         {!user && (
-          <Button onClick={() => navigate({ to: "/login" })}>Log ind for at tilmelde</Button>
+          <Button onClick={() => navigate({ to: "/login" })}>Log ind</Button>
         )}
-        {user && !myEntry && <EntryDialog divisionId={divisionId} defaultClass={div?.car_class} defaultCategory={div?.driver_category} />}
-        {user && <ProtestDialog divisionId={divisionId} />}
-        {user && myEntry && (
-          <Button variant="outline" size="sm" onClick={() => deleteEntry.mutate(myEntry.id)} className="gap-1">
-            <Trash2 className="h-4 w-4" /> Fjern min tilmelding
+        {user && !mySignup && (
+          <p className="text-sm text-muted-foreground">Du er ikke tilmeldt ligaen. Tilmeld dig på ligasiden for at deltage.</p>
+        )}
+        {user && mySignup && !myAbsence && (
+          <AbsenceDialog divisionId={divisionId} userId={user.id} />
+        )}
+        {user && myAbsence && (
+          <Button variant="outline" className="gap-1" onClick={() => removeAbsence.mutate(myAbsence.id)}>
+            <UserCheck className="h-4 w-4" /> Jeg deltager alligevel
           </Button>
         )}
+        {user && <ProtestDialog divisionId={divisionId} />}
       </div>
 
       <div>
-        <h2 className="mb-2 text-lg font-semibold">Tilmeldte kørere ({entries?.length ?? 0})</h2>
-        {entries?.length === 0 && <p className="text-sm text-muted-foreground">Ingen tilmeldt endnu.</p>}
-        <div className="space-y-4">
-          {Object.entries(grouped).map(([cls, cats]) => (
-            <Card key={cls}>
-              <CardHeader><CardTitle className="text-base">{cls}</CardTitle></CardHeader>
-              <CardContent className="space-y-3">
-                {Object.entries(cats).map(([cat, list]) => (
-                  <div key={cat}>
-                    <p className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">{cat}</p>
-                    <ul className="space-y-1">
-                      {list!.map((e) => (
-                        <li key={e.id} className="flex items-center justify-between rounded border border-border px-3 py-1.5 text-sm">
-                          <span>{e.driver_name}</span>
-                          {e.user_id === user?.id && (
-                            <Button variant="ghost" size="sm" onClick={() => deleteEntry.mutate(e.id)}>
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+        <h2 className="mb-2 text-lg font-semibold">
+          Deltagere ({participantCount}/{totalSignups})
+          {absentCount > 0 && <span className="ml-2 text-sm font-normal text-muted-foreground">· {absentCount} deltager ikke</span>}
+        </h2>
+        {totalSignups === 0 && <p className="text-sm text-muted-foreground">Ingen tilmeldte til ligaen endnu.</p>}
+        <div className="space-y-3">
+          {Object.entries(grouped).map(([k, list]) => {
+            if (!list || list.length === 0) return null;
+            const [cls, cat] = k.split(" · ");
+            const sorted = [...list].sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0));
+            return (
+              <Card key={k}>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <span>{cls}</span>
+                    <Badge variant="outline" className="text-[10px]">{cat}</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <ul className="divide-y divide-border">
+                    {sorted.map((e) => {
+                      const ab = absenceByUser.get(e.user_id);
+                      return (
+                        <li key={e.id} className={`flex items-center gap-3 py-2 text-sm ${ab ? "opacity-60" : ""}`}>
+                          <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                            #{e.car_number}
+                          </span>
+                          <span className={`flex-1 truncate ${ab ? "line-through" : ""}`}>{e.driver_name}</span>
+                          {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
+                          {ab && (
+                            <Badge variant="secondary" className="gap-1 text-[10px]" title={ab.reason ?? undefined}>
+                              <UserX className="h-3 w-3" /> Deltager ikke
+                            </Badge>
                           )}
                         </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
+                      );
+                    })}
+                  </ul>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
+
+        {absentCount > 0 && (
+          <div className="mt-4">
+            <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Begrundelser</h3>
+            <ul className="space-y-1.5">
+              {(absences ?? []).filter((a) => a.reason).map((a) => {
+                const e = (signups ?? []).find((s) => s.user_id === a.user_id);
+                return (
+                  <li key={a.id} className="rounded border border-border px-3 py-2 text-sm">
+                    <span className="font-medium">{e?.driver_name ?? "Ukendt kører"}:</span>{" "}
+                    <span className="text-muted-foreground">{a.reason}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function EntryDialog({ divisionId, defaultClass, defaultCategory }: { divisionId: string; defaultClass?: string | null; defaultCategory?: string | null }) {
-  const { user } = useAuth();
+function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: string }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [carClass, setCarClass] = useState(defaultClass || CAR_CLASSES[0]);
-  const [category, setCategory] = useState(defaultCategory || DRIVER_CATEGORIES[0]);
+  const [reason, setReason] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-    const { error } = await supabase.from("entries").insert({
-      division_id: divisionId, user_id: user.id, driver_name: name.trim(),
-      car_class: carClass, driver_category: category,
+    const { error } = await supabase.from("division_absences").insert({
+      division_id: divisionId,
+      user_id: userId,
+      reason: reason.trim() || null,
     });
     if (error) toast.error(error.message);
-    else { toast.success("Tilmeldt!"); setOpen(false); setName(""); qc.invalidateQueries({ queryKey: ["entries", divisionId] }); }
+    else {
+      toast.success("Markeret som ikke-deltagende");
+      setOpen(false);
+      setReason("");
+      qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button>Tilmeld dig</Button></DialogTrigger>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-1"><UserX className="h-4 w-4" /> Deltager ikke</Button>
+      </DialogTrigger>
       <DialogContent>
-        <DialogHeader><DialogTitle>Tilmeld dig afdelingen</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>Marker som ikke-deltagende</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
-          <div><Label>Kørernavn</Label><Input required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div><Label>Bilklasse</Label>
-            <Select value={carClass} onValueChange={setCarClass}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{CAR_CLASSES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
+          <div>
+            <Label>Begrundelse (valgfri)</Label>
+            <Textarea
+              maxLength={500}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={3}
+              placeholder="Fx ferie, sygdom, andet løb…"
+            />
           </div>
-          <div><Label>Kategori</Label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>{DRIVER_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-          <DialogFooter><Button type="submit">Tilmeld</Button></DialogFooter>
+          <DialogFooter>
+            <Button type="submit">Bekræft</Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
