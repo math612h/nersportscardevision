@@ -383,7 +383,8 @@ function DivisionEditor({
                   <tbody>
                     {groupRows.map((r) => {
                       const i = rows.findIndex((x) => x.entry_id === r.entry_id);
-                      const totalPts = r.points + (r.fastest_lap && r.position > 0 ? flPoints : 0);
+                      const basePts = r.points + (r.fastest_lap && r.position > 0 ? flPoints : 0);
+                      const totalPts = Math.max(0, basePts - Math.max(0, r.penalty_points));
                       return (
                         <tr key={r.entry_id} className="border-t border-border">
                           <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
