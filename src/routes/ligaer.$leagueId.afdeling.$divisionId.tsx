@@ -201,7 +201,7 @@ function DivisionDetail() {
                           <span className={`flex-1 truncate ${ab ? "line-through" : ""}`}>{e.driver_name}</span>
                           {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
                           {ab && (
-                            <Badge variant="secondary" className="gap-1 text-[10px]" title={ab.reason ?? undefined}>
+                            <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
                               <UserX className="h-3 w-3" /> Deltager ikke
                             </Badge>
                           )}
