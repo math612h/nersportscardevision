@@ -289,25 +289,41 @@ function AdminProtestDetail() {
             </div>
           )}
 
-          {needsTargets && (
-            <div className="space-y-2">
-              <Label>Hvem modtager straffen?</Label>
-              {involved.length === 0 && (
-                <p className="text-xs text-muted-foreground">Ingen indklagede tilgængelige.</p>
-              )}
-              <div className="space-y-1.5 rounded-md border border-border p-3">
-                {involved.map((r: any) => (
-                  <label key={r.user_id} className="flex items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={penalized.includes(r.user_id)}
-                      onCheckedChange={() => togglePenalized(r.user_id)}
-                    />
-                    <span>{r.driver_name}</span>
-                  </label>
-                ))}
+          {needsTargets && (() => {
+            const targets: { user_id: string; driver_name: string; isSubmitter?: boolean }[] = [];
+            if (p.submitted_by) {
+              targets.push({
+                user_id: p.submitted_by,
+                driver_name: submitter?.display_name ?? "Klager",
+                isSubmitter: true,
+              });
+            }
+            for (const r of involved) {
+              if (!targets.some((t) => t.user_id === r.user_id)) {
+                targets.push({ user_id: r.user_id, driver_name: r.driver_name });
+              }
+            }
+            return (
+              <div className="space-y-2">
+                <Label>Hvem modtager straffen?</Label>
+                {targets.length === 0 && (
+                  <p className="text-xs text-muted-foreground">Ingen tilgængelige.</p>
+                )}
+                <div className="space-y-1.5 rounded-md border border-border p-3">
+                  {targets.map((t) => (
+                    <label key={t.user_id} className="flex items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={penalized.includes(t.user_id)}
+                        onCheckedChange={() => togglePenalized(t.user_id)}
+                      />
+                      <span>{t.driver_name}</span>
+                      {t.isSubmitter && <Badge variant="outline" className="text-[10px]">Klager</Badge>}
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           <div>
             <Label>Begrundelse</Label>
