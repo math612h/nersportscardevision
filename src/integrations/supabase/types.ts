@@ -135,6 +135,51 @@ export type Database = {
           },
         ]
       }
+      leaderboard_times: {
+        Row: {
+          best_lap_ms: number
+          car_class: string
+          created_at: string
+          division_id: string | null
+          driver_name: string
+          id: string
+          layout: string | null
+          recorded_at: string | null
+          source: string
+          track: string
+          uploaded_by: string
+          user_id: string | null
+        }
+        Insert: {
+          best_lap_ms: number
+          car_class: string
+          created_at?: string
+          division_id?: string | null
+          driver_name: string
+          id?: string
+          layout?: string | null
+          recorded_at?: string | null
+          source: string
+          track: string
+          uploaded_by: string
+          user_id?: string | null
+        }
+        Update: {
+          best_lap_ms?: number
+          car_class?: string
+          created_at?: string
+          division_id?: string | null
+          driver_name?: string
+          id?: string
+          layout?: string | null
+          recorded_at?: string | null
+          source?: string
+          track?: string
+          uploaded_by?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       leagues: {
         Row: {
           banner_url: string | null

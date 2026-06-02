@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ClassConfig } from "@/lib/tracks";
+import { parseLmuRaceFile, normalizeCarClass } from "@/lib/lmu-parser";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/stillinger")({
   component: AdminStandings,
@@ -228,27 +229,10 @@ function DivisionEditor({
   const importXml = async (file: File) => {
     try {
       const text = await file.text();
-      const doc = new DOMParser().parseFromString(text, "application/xml");
-      if (doc.querySelector("parsererror")) throw new Error("Filen kunne ikke læses som XML");
-      const driverEls = Array.from(doc.querySelectorAll("RaceResults > Race > Driver, RaceResults Race Driver, Driver"));
-      if (driverEls.length === 0) throw new Error("Ingen kørere fundet i filen");
+      const parsedRace = parseLmuRaceFile(text);
+      const parsed = parsedRace.drivers;
 
-      type ParsedDriver = { name: string; bestLapMs: number | null; finishMs: number | null; finished: boolean; carClass: string };
-      const parsed: ParsedDriver[] = driverEls.map((el) => {
-        const get = (t: string) => el.querySelector(`:scope > ${t}`)?.textContent?.trim() ?? "";
-        const finishStatus = get("FinishStatus");
-        const blt = parseFloat(get("BestLapTime"));
-        const fin = parseFloat(get("FinishTime"));
-        return {
-          name: get("Name"),
-          carClass: get("CarClass"),
-          bestLapMs: Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null,
-          finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
-          finished: finishStatus.toLowerCase().startsWith("finished"),
-        };
-      });
-
-      // Fastest-lap winner per car class
+      // Fastest-lap winner per car class (raw, for matching to draft rows below)
       const flByClass = new Map<string, string>(); // class -> lowercase driver name
       const classes = Array.from(new Set(parsed.map((p) => p.carClass).filter(Boolean)));
       for (const cls of classes) {
@@ -266,7 +250,7 @@ function DivisionEditor({
       }
 
       let matched = 0;
-      let missing: string[] = [];
+      const missing: string[] = [];
       const noLmu: string[] = [];
 
       const updates = new Map<string, Partial<DraftRow>>();
@@ -293,7 +277,32 @@ function DivisionEditor({
 
       setRows((prev) => prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r)));
 
-      toast.success(`Importerede ${matched} kørere fra resultatfilen.`);
+      // Also push every valid best-lap into the global leaderboard
+      const { data: { user } } = await supabase.auth.getUser();
+      let lbInserted = 0;
+      if (user) {
+        const lbRows = parsed
+          .filter((p) => p.bestLapMs != null && p.carClass)
+          .map((p) => ({
+            user_id: lmuToUser.get(p.name.trim().toLowerCase()) ?? null,
+            driver_name: p.name,
+            track: parsedRace.track,
+            layout: parsedRace.layout,
+            car_class: normalizeCarClass(p.carClass),
+            best_lap_ms: p.bestLapMs!,
+            source: "admin" as const,
+            uploaded_by: user.id,
+            division_id: division.id,
+            recorded_at: parsedRace.recordedAt,
+          }));
+        if (lbRows.length > 0) {
+          const { error: lbErr } = await supabase.from("leaderboard_times").insert(lbRows);
+          if (lbErr) toast.warning(`Leaderboard ikke opdateret: ${lbErr.message}`);
+          else lbInserted = lbRows.length;
+        }
+      }
+
+      toast.success(`Importerede ${matched} kørere fra resultatfilen.${lbInserted ? ` ${lbInserted} tider lagt på leaderboardet.` : ""}`);
       if (missing.length > 0) {
         toast.warning(`${missing.length} kørere i filen blev ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
       }

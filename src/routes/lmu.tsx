@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, Calendar, ArrowUpRight, Sparkles } from "lucide-react";
+import { Flag, Calendar, ArrowUpRight, Sparkles, Trophy, Timer, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { msToLapStr } from "@/lib/lmu-parser";
 
 export const Route = createFileRoute("/lmu")({
   component: ParticipantDashboard,
@@ -30,6 +32,8 @@ function ParticipantDashboard() {
         <h1 className="text-2xl font-bold tracking-tight">Ligaer & løb</h1>
         <p className="text-sm text-muted-foreground">Vælg en liga for at se afdelinger, regler og tilmelde dig.</p>
       </header>
+
+      <LeaderboardTeaser />
 
       {isLoading && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -85,6 +89,69 @@ function Section({ title, icon, description, children }: { title: string; icon: 
 
 function CardGrid({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
+}
+
+function LeaderboardTeaser() {
+  type TeaserRow = { id: string; driver_name: string; track: string; layout: string | null; car_class: string; best_lap_ms: number };
+  const { data: rows } = useQuery({
+    queryKey: ["leaderboard-teaser"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leaderboard_times")
+        .select("id,driver_name,track,layout,car_class,best_lap_ms")
+        .order("best_lap_ms", { ascending: true })
+        .limit(200);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Take best lap per (class + track + layout) and show the top 5 overall
+  const best = (() => {
+    const map = new Map<string, TeaserRow>();
+    for (const r of rows ?? []) {
+      const key = `${r.car_class}|${r.track}|${r.layout ?? ""}|${r.driver_name.toLowerCase()}`;
+      const cur = map.get(key);
+      if (!cur || r.best_lap_ms < cur.best_lap_ms) map.set(key, r);
+    }
+    return Array.from(map.values()).sort((a, b) => a.best_lap_ms - b.best_lap_ms).slice(0, 5);
+  })();
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-primary">
+          <Trophy className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Leaderboard</h2>
+        </div>
+        <Link to="/leaderboard" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+          Se alle tider <ArrowUpRight className="h-3 w-3" />
+        </Link>
+      </div>
+      <Link
+        to="/leaderboard"
+        className="block overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
+      >
+        {best.length === 0 ? (
+          <div className="px-4 py-5 text-center text-sm text-muted-foreground">
+            Ingen tider endnu — upload en race-fil for at komme på leaderboardet.
+          </div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {best.map((r, i) => (
+              <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-xs font-semibold tabular-nums">{i + 1}</span>
+                <span className="flex-1 truncate font-medium">{r.driver_name}</span>
+                <Badge variant="secondary" className="hidden sm:inline-flex text-[10px]">{r.car_class}</Badge>
+                <span className="hidden md:inline-flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{r.track}{r.layout ? ` · ${r.layout}` : ""}</span>
+                <span className="inline-flex items-center gap-1 font-mono tabular-nums text-sm"><Timer className="h-3 w-3 text-primary" />{msToLapStr(r.best_lap_ms)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Link>
+    </section>
+  );
 }
 
 function LeagueCard({ l, offseason }: { l: any; offseason?: boolean }) {
