@@ -115,3 +115,47 @@ function AdminRules() {
     </div>
   );
 }
+
+function EditRuleDialog({ rule, leagueId }: { rule: any; leagueId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [section, setSection] = useState(rule.section_number ?? "");
+  const [title, setTitle] = useState(rule.title ?? "");
+  const [content, setContent] = useState(rule.content ?? "");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase
+      .from("rulesets")
+      .update({
+        section_number: section.trim() || null,
+        title: title.trim(),
+        content: content.trim(),
+      })
+      .eq("id", rule.id);
+    if (error) return toast.error(error.message);
+    toast.success("Regel opdateret");
+    setOpen(false);
+    qc.invalidateQueries({ queryKey: ["rules-admin", leagueId] });
+    qc.invalidateQueries({ queryKey: ["rules", leagueId] });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent onClick={(e) => e.stopPropagation()}>
+        <DialogHeader><DialogTitle>Rediger regel</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div><Label>Sektionsnummer</Label><Input maxLength={20} value={section} onChange={(e) => setSection(e.target.value)} /></div>
+          <div><Label>Overskrift</Label><Input required maxLength={150} value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+          <div><Label>Indhold</Label><Textarea required maxLength={5000} rows={8} value={content} onChange={(e) => setContent(e.target.value)} /></div>
+          <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
