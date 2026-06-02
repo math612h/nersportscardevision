@@ -42,3 +42,32 @@ export const WEATHER_BY_KEY: Record<WeatherKey, { label: string; icon: LucideIco
   WEATHER_OPTIONS.map((w) => [w.key, { label: w.label, icon: w.icon }]),
 ) as Record<WeatherKey, { label: string; icon: LucideIcon }>;
 export const WEATHER_SLOT_COUNT = 5;
+
+// Map track-name (lowercase, contains-match) -> filename in the `track-images` storage bucket.
+const TRACK_IMAGE_RULES: { match: string; file: string }[] = [
+  { match: "le mans", file: "le-mans.png" },
+  { match: "sarthe", file: "le-mans.png" },
+  { match: "bahrain", file: "bahrain.png" },
+  { match: "spa", file: "spa.png" },
+  { match: "monza", file: "monza.png" },
+  { match: "sebring", file: "sebring.png" },
+  { match: "fuji", file: "fuji.png" },
+  { match: "portim", file: "portimao.png" },
+  { match: "algarve", file: "portimao.png" },
+  { match: "americas", file: "cota.png" },
+  { match: "cota", file: "cota.png" },
+  { match: "paul ricard", file: "paul-ricard.jpg" },
+  { match: "silverstone", file: "silverstone.png" },
+  { match: "imola", file: "imola.png" },
+  { match: "lusail", file: "lusail.jpg" },
+  { match: "qatar", file: "lusail.jpg" },
+  { match: "interlagos", file: "interlagos.png" },
+  { match: "barcelona", file: "barcelona.png" },
+];
+
+export function getTrackImageFile(trackName?: string | null): string | null {
+  if (!trackName) return null;
+  const n = trackName.toLowerCase();
+  for (const r of TRACK_IMAGE_RULES) if (n.includes(r.match)) return r.file;
+  return null;
+}
