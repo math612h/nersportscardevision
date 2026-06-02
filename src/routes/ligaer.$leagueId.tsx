@@ -453,6 +453,11 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
               </SelectContent>
             </Select>
           </div>
+          {selected && goesToWaitlist && (
+            <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
+              Klassen er fyldt ({gridCount}/{cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.
+            </p>
+          )}
           {selected && (
             <div className="space-y-2">
               <Label>Kørenummer</Label>
