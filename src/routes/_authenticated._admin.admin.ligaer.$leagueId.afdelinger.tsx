@@ -170,6 +170,11 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
             <Input type="number" min={0} max={50} value={flPoints} onChange={(e) => setFlPoints(Number(e.target.value))} />
             <p className="mt-1 text-xs text-muted-foreground">Tildeles til den hurtigste i hver klasse (Hypercar Pro/Am, LMGT3 Pro/Am osv.).</p>
           </div>
+          <div>
+            <Label>Temperatur (°C)</Label>
+            <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
+            <p className="mt-1 text-xs text-muted-foreground">Lufttemperatur for løbet.</p>
+          </div>
           <div className="space-y-2">
             <Label>Vejr (5 slots)</Label>
             <div className="space-y-2">
