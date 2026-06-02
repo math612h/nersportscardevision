@@ -44,13 +44,18 @@ function LoginPage() {
 
   const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    const lmu = lmuName.trim();
+    if (!lmu) { toast.error("Indtast dit LMU-navn præcis som det står i Le Mans Ultimate."); return; }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { display_name: displayName || email.split("@")[0] },
+        data: {
+          display_name: displayName || email.split("@")[0],
+          lmu_name: lmu,
+        },
       },
     });
     setLoading(false);
