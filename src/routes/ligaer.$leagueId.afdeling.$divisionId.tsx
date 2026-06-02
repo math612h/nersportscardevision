@@ -57,19 +57,35 @@ function DivisionDetail() {
     },
   });
 
+  // Public list (no reason) — visible to everyone
   const { data: absences } = useQuery({
     queryKey: ["division-absences", divisionId],
     queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("division_absences_public")
+        .select("id,user_id,created_at")
+        .eq("division_id", divisionId);
+      if (error) throw error;
+      return (data ?? []) as { id: string; user_id: string; created_at: string }[];
+    },
+  });
+
+  // Reasons — only owner/admin rows are returned by RLS
+  const { data: absenceReasons } = useQuery({
+    queryKey: ["division-absence-reasons", divisionId, user?.id ?? "anon"],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("division_absences")
-        .select("id,user_id,reason,created_at")
-        .eq("division_id", divisionId);
+        .select("id,user_id,reason")
+        .eq("division_id", divisionId)
+        .not("reason", "is", null);
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
+  const reasonByUser = new Map((absenceReasons ?? []).map((a) => [a.user_id, a.reason]));
   const myAbsence = user ? absenceByUser.get(user.id) : undefined;
   const mySignup = (signups ?? []).find((e) => e.user_id === user?.id);
 
