@@ -38,7 +38,7 @@ function AdminUsersPage() {
     queryKey: ["admin-users"],
     queryFn: async () => {
       const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
-        supabase.from("profiles").select("id, display_name, created_at").order("created_at", { ascending: false }),
+        supabase.from("profiles").select("id, display_name, created_at, approved").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role"),
       ]);
       if (pErr) throw pErr;
