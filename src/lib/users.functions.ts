@@ -5,8 +5,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const toggleUserRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { userId: string; role: string; assign: boolean }) =>
-    z.object({ userId: z.string().uuid(), role: z.string(), assign: z.boolean() }).parse(input),
+  .inputValidator((input: { userId: string; role: "admin" | "racer"; assign: boolean }) =>
+    z.object({ userId: z.string().uuid(), role: z.enum(["admin", "racer"]), assign: z.boolean() }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId: callerId } = context;
