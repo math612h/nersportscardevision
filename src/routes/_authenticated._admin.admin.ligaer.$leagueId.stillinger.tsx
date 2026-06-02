@@ -341,7 +341,16 @@ function DivisionEditor({
           <div className="flex items-end gap-3">
             <div>
               <Label className="text-xs">FL-point (pr. klasse)</Label>
-              <Input className="w-24" type="number" min={0} max={50} value={flPoints} onChange={(e) => setFlPoints(Number(e.target.value))} />
+              <Input
+                className="w-24"
+                type="text"
+                inputMode="numeric"
+                value={flPoints === 0 ? "" : String(flPoints)}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^0-9]/g, "");
+                  setFlPoints(v === "" ? 0 : Number(v));
+                }}
+              />
             </div>
             <label className="flex items-center gap-2 text-sm pb-2">
               <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
@@ -402,22 +411,26 @@ function DivisionEditor({
                           <td className="px-2 py-1.5">
                             <Input
                               className="h-8 min-w-[70px]"
-                              type="number"
-                              min={0}
-                              step={1}
-                              value={r.penalty_seconds}
-                              onChange={(e) => setRow(i, { penalty_seconds: Number(e.target.value) })}
+                              type="text"
+                              inputMode="numeric"
+                              value={r.penalty_seconds === 0 ? "" : String(r.penalty_seconds)}
+                              onChange={(e) => {
+                                const v = e.target.value.replace(/[^0-9]/g, "");
+                                setRow(i, { penalty_seconds: v === "" ? 0 : Number(v) });
+                              }}
                               disabled={r.dnf || r.dns}
                             />
                           </td>
                           <td className="px-2 py-1.5">
                             <Input
                               className="h-8 min-w-[70px]"
-                              type="number"
-                              min={0}
-                              step={1}
-                              value={r.penalty_points}
-                              onChange={(e) => setRow(i, { penalty_points: Number(e.target.value) })}
+                              type="text"
+                              inputMode="numeric"
+                              value={r.penalty_points === 0 ? "" : String(r.penalty_points)}
+                              onChange={(e) => {
+                                const v = e.target.value.replace(/[^0-9]/g, "");
+                                setRow(i, { penalty_points: v === "" ? 0 : Number(v) });
+                              }}
                               disabled={r.dnf || r.dns}
                             />
                           </td>
