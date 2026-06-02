@@ -65,15 +65,21 @@ function LeagueDetail() {
   });
 
   return (
-    <div className="space-y-6">
-      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+    <div className="space-y-8">
+      <Link to="/lmu" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Alle ligaer
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{league?.name}</h1>
-        {league?.description && <p className="mt-1 text-muted-foreground">{league.description}</p>}
-        <div className="mt-2 flex flex-wrap gap-2">
+      <header className="space-y-3">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+            {(league as any)?.is_offseason ? "Off-Season event" : "Liga"}
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight">{league?.name}</h1>
+          {league?.description && <p className="text-sm text-muted-foreground">{league.description}</p>}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
           {configs.length > 0
             ? configs.map((c, i) => (
                 <Badge key={i} variant="outline">{c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}</Badge>
@@ -83,13 +89,14 @@ function LeagueDetail() {
                 {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
               </>)}
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+
+        <div className="flex flex-wrap gap-2 pt-1">
           <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
             <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
           </Link>
           {league && <SignupDialog leagueId={leagueId} configs={configs} />}
         </div>
-      </div>
+      </header>
 
       <QuickNav />
 
