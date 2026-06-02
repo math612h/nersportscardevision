@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, Settings } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Settings, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -158,7 +158,7 @@ function AdminLeagues() {
         {leagues?.map((l: any) => {
           const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
           return (
-            <Card key={l.id}>
+          <Card key={l.id}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -175,7 +175,10 @@ function AdminLeagues() {
                           </>)}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet liga?")) del.mutate(l.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  <div className="flex gap-1">
+                    <EditLeagueDialog league={l} />
+                    <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet liga?")) del.mutate(l.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
