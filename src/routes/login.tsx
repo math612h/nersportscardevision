@@ -21,6 +21,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [lmuName, setLmuName] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
