@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Pencil, Shield, ShieldOff, ArrowLeft } from "lucide-react";
+import { Users, Pencil, Shield, ShieldOff, ArrowLeft, ThumbsUp, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,24 +18,27 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toggleUserRole } from "@/lib/users.functions";
+import { setProfileApproval } from "@/lib/leagues.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/brugere")({
   component: AdminUsersPage,
 });
 
-type Profile = { id: string; display_name: string | null; created_at: string };
+type Profile = { id: string; display_name: string | null; created_at: string; approved: boolean };
 type Role = { user_id: string; role: string };
 
 function AdminUsersPage() {
   const [search, setSearch] = useState("");
+  const [onlyPending, setOnlyPending] = useState(false);
   const qc = useQueryClient();
   const toggleRole = useServerFn(toggleUserRole);
+  const approveFn = useServerFn(setProfileApproval);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
     queryFn: async () => {
       const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
-        supabase.from("profiles").select("id, display_name, created_at").order("created_at", { ascending: false }),
+        supabase.from("profiles").select("id, display_name, created_at, approved").order("created_at", { ascending: false }),
         supabase.from("user_roles").select("user_id, role"),
       ]);
       if (pErr) throw pErr;
@@ -51,9 +54,12 @@ function AdminUsersPage() {
     rolesByUser.set(r.user_id, arr);
   });
 
-  const filtered = (data?.profiles ?? []).filter((p) =>
-    (p.display_name ?? "").toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = (data?.profiles ?? []).filter((p) => {
+    if (onlyPending && p.approved) return false;
+    return (p.display_name ?? "").toLowerCase().includes(search.toLowerCase());
+  });
+
+  const pendingCount = (data?.profiles ?? []).filter((p) => !p.approved).length;
 
   const roleMut = useMutation({
     mutationFn: async ({ userId, assign }: { userId: string; assign: boolean }) => {
@@ -61,6 +67,17 @@ function AdminUsersPage() {
     },
     onSuccess: (_, { assign }) => {
       toast.success(assign ? "Admin-rolle tildelt" : "Admin-rolle fjernet");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const approveMut = useMutation({
+    mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
+      await approveFn({ data: { userId, approved } });
+    },
+    onSuccess: (_, { approved }) => {
+      toast.success(approved ? "Profil godkendt" : "Godkendelse fjernet");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -78,12 +95,22 @@ function AdminUsersPage() {
         <h1 className="text-2xl font-bold">Brugere</h1>
       </div>
 
-      <Input
-        placeholder="Søg efter navn…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          placeholder="Søg efter navn…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
+        <Button
+          type="button"
+          variant={onlyPending ? "default" : "outline"}
+          size="sm"
+          onClick={() => setOnlyPending((v) => !v)}
+        >
+          Afventer godkendelse {pendingCount > 0 && <Badge variant="secondary" className="ml-2">{pendingCount}</Badge>}
+        </Button>
+      </div>
 
       {isLoading ? (
         <p className="text-muted-foreground">Indlæser…</p>
@@ -106,9 +133,23 @@ function AdminUsersPage() {
                           {r}
                         </Badge>
                       ))}
+                      {p.approved ? (
+                        <Badge className="bg-green-600 text-white text-xs"><Check className="mr-1 h-3 w-3" />Godkendt</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">Afventer</Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant={p.approved ? "ghost" : "default"}
+                      size="icon"
+                      aria-label={p.approved ? "Fjern godkendelse" : "Godkend profil"}
+                      onClick={() => approveMut.mutate({ userId: p.id, approved: !p.approved })}
+                      disabled={approveMut.isPending}
+                    >
+                      <ThumbsUp className={`h-4 w-4 ${p.approved ? "text-green-600" : ""}`} />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -94,14 +94,16 @@ function AdminRules() {
                       {r.section_number && <span className="text-muted-foreground">{r.section_number}</span>}
                       {r.title}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-auto shrink-0"
-                      onClick={(e) => { e.stopPropagation(); if (confirm("Slet regel?")) del.mutate(r.id); }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <span className="ml-auto flex shrink-0 items-center gap-1">
+                      <EditRuleDialog rule={r} leagueId={leagueId} />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); if (confirm("Slet regel?")) del.mutate(r.id); }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </span>
                   </AccordionTrigger>
                   <AccordionContent className="whitespace-pre-wrap text-sm">{r.content}</AccordionContent>
                 </AccordionItem>
@@ -111,5 +113,49 @@ function AdminRules() {
         ))}
       </div>
     </div>
+  );
+}
+
+function EditRuleDialog({ rule, leagueId }: { rule: any; leagueId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [section, setSection] = useState(rule.section_number ?? "");
+  const [title, setTitle] = useState(rule.title ?? "");
+  const [content, setContent] = useState(rule.content ?? "");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase
+      .from("rulesets")
+      .update({
+        section_number: section.trim() || null,
+        title: title.trim(),
+        content: content.trim(),
+      })
+      .eq("id", rule.id);
+    if (error) return toast.error(error.message);
+    toast.success("Regel opdateret");
+    setOpen(false);
+    qc.invalidateQueries({ queryKey: ["rules-admin", leagueId] });
+    qc.invalidateQueries({ queryKey: ["rules", leagueId] });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent onClick={(e) => e.stopPropagation()}>
+        <DialogHeader><DialogTitle>Rediger regel</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div><Label>Sektionsnummer</Label><Input maxLength={20} value={section} onChange={(e) => setSection(e.target.value)} /></div>
+          <div><Label>Overskrift</Label><Input required maxLength={150} value={title} onChange={(e) => setTitle(e.target.value)} /></div>
+          <div><Label>Indhold</Label><Textarea required maxLength={5000} rows={8} value={content} onChange={(e) => setContent(e.target.value)} /></div>
+          <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
