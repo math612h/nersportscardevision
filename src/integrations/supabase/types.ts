@@ -90,6 +90,7 @@ export type Database = {
       }
       entries: {
         Row: {
+          approved: boolean
           car_class: string
           car_number: number | null
           created_at: string
@@ -102,6 +103,7 @@ export type Database = {
           waitlist: boolean
         }
         Insert: {
+          approved?: boolean
           car_class: string
           car_number?: number | null
           created_at?: string
@@ -114,6 +116,7 @@ export type Database = {
           waitlist?: boolean
         }
         Update: {
+          approved?: boolean
           car_class?: string
           car_number?: number | null
           created_at?: string

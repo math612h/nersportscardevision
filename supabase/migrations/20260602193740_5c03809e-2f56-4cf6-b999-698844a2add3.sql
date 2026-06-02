@@ -1,0 +1,1 @@
+ALTER TABLE public.entries ADD COLUMN IF NOT EXISTS approved boolean NOT NULL DEFAULT false;
