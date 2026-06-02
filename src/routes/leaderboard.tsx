@@ -263,7 +263,7 @@ function LeaderboardPage() {
                     <th className="px-3 py-2 w-10">#</th>
                     <th className="px-3 py-2">Kører</th>
                     <th className="px-3 py-2">Bilklasse</th>
-                    <th className="px-3 py-2 hidden md:table-cell">Bil</th>
+                    <th className="px-3 py-2">Bil</th>
                     <th className="px-3 py-2">Bane</th>
                     <th className="px-3 py-2 hidden sm:table-cell">Layout</th>
                     <th className="px-3 py-2 text-right">Bedste omgang</th>
@@ -281,7 +281,7 @@ function LeaderboardPage() {
                         </div>
                       </td>
                       <td className="px-3 py-2"><Badge variant="secondary" className="text-[10px]">{r.car_class}</Badge></td>
-                      <td className="px-3 py-2 hidden md:table-cell text-muted-foreground">{r.car_model ?? "–"}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{r.car_model ?? "–"}</td>
                       <td className="px-3 py-2"><span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />{r.track}</span></td>
                       <td className="px-3 py-2 hidden sm:table-cell text-muted-foreground">{r.layout ?? "–"}</td>
                       <td className="px-3 py-2 text-right font-mono tabular-nums">
