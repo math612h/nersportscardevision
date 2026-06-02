@@ -72,6 +72,7 @@ export type Database = {
           id: string
           league_id: string | null
           user_id: string
+          waitlist: boolean
         }
         Insert: {
           car_class: string
@@ -83,6 +84,7 @@ export type Database = {
           id?: string
           league_id?: string | null
           user_id: string
+          waitlist?: boolean
         }
         Update: {
           car_class?: string
@@ -94,6 +96,7 @@ export type Database = {
           id?: string
           league_id?: string | null
           user_id?: string
+          waitlist?: boolean
         }
         Relationships: [
           {

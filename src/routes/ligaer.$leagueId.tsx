@@ -136,10 +136,10 @@ function useLeagueSignups(leagueId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at")
         .eq("league_id", leagueId)
         .is("division_id", null)
-        .order("car_number");
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
@@ -169,6 +169,9 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
         {Object.entries(grouped).map(([k, list]) => {
           if (!list || list.length === 0) return null;
           const [cls, cat] = k.split(" · ");
+          const cfg = configs.find((c) => c.car_class === cls && c.driver_category === cat);
+          const grid = list.filter((e) => !e.waitlist).sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0));
+          const wait = list.filter((e) => e.waitlist).sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
           return (
             <Card key={k}>
               <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
@@ -176,22 +179,37 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                   <span>{cls}</span>
                   <Badge variant="outline" className="text-[10px]">{cat}</Badge>
                 </CardTitle>
-                <span className="text-xs text-muted-foreground">{list.length} kører{list.length === 1 ? "" : "e"}</span>
+                <span className="text-xs text-muted-foreground">
+                  {grid.length}{cfg?.max_drivers ? `/${cfg.max_drivers}` : ""} på grid{wait.length > 0 ? ` · ${wait.length} på venteliste` : ""}
+                </span>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 space-y-3">
                 <ul className="divide-y divide-border">
-                  {list
-                    .slice()
-                    .sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0))
-                    .map((e) => (
-                      <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
-                        <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
-                          #{e.car_number}
-                        </span>
-                        <span className="flex-1 truncate">{e.driver_name}</span>
-                      </li>
-                    ))}
+                  {grid.map((e) => (
+                    <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                      <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                        #{e.car_number}
+                      </span>
+                      <span className="flex-1 truncate">{e.driver_name}</span>
+                    </li>
+                  ))}
                 </ul>
+                {wait.length > 0 && (
+                  <div className="rounded-md border border-dashed border-border p-2">
+                    <p className="mb-1 text-xs font-semibold text-muted-foreground">Venteliste</p>
+                    <ul className="divide-y divide-border">
+                      {wait.map((e, idx) => (
+                        <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                          <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-muted px-1.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                            {idx + 1}
+                          </span>
+                          <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
+                          <span className="flex-1 truncate">{e.driver_name}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );
@@ -209,6 +227,8 @@ type ResultRow = {
   class_position: number;
   points: number;
   fastest_lap?: boolean;
+  penalty_seconds?: number;
+  dns?: boolean;
 };
 
 function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
@@ -240,7 +260,6 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     );
   }
 
-  // Aggregate per driver per class+cat
   type Agg = {
     car_number: number;
     driver_name: string;
@@ -249,7 +268,8 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     race: number;
     fl: number;
     total: number;
-    rounds: Record<string, { points: number; fl: boolean; flPts: number }>;
+    penalty: number;
+    rounds: Record<string, { points: number; fl: boolean; flPts: number; penalty: number; dns: boolean }>;
   };
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
@@ -264,13 +284,16 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
         race: 0,
         fl: 0,
         total: 0,
+        penalty: 0,
         rounds: {},
       };
       const earnedFl = r.fastest_lap ? flPts : 0;
+      const pen = Number(r.penalty_seconds ?? 0);
       cur.race += r.points;
       cur.fl += earnedFl;
       cur.total += r.points + earnedFl;
-      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl };
+      cur.penalty += pen;
+      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl, penalty: pen, dns: !!r.dns };
       map.set(key, cur);
     }
   }
@@ -305,11 +328,12 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                     <th className="py-1 pr-2">Kører</th>
                     <th className="py-1 pr-2 w-12 text-center">Nr.</th>
                     {completed.map((d: any) => (
-                      <th key={d.id} className="py-1 px-1 w-10 text-center" title={d.name}>
+                      <th key={d.id} className="py-1 px-1 w-12 text-center" title={d.name}>
                         {d.name.slice(0, 4)}
                       </th>
                     ))}
                     <th className="py-1 px-1 w-10 text-center" title="Fastest lap points">FL</th>
+                    <th className="py-1 px-1 w-12 text-center" title="Samlet tidsstraf">Straf</th>
                     <th className="py-1 pl-2 w-12 text-right">Pts</th>
                   </tr>
                 </thead>
@@ -322,16 +346,21 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
                         if (!cell) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                        if (cell.dns) return <td key={d.id} className="py-1.5 px-1 text-center text-[10px] font-semibold text-destructive">DNS</td>;
                         return (
                           <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
                             <span className="inline-flex items-center gap-0.5">
                               {cell.points}
                               {cell.fl && <Zap className="h-3 w-3 text-primary" aria-label="Fastest lap" />}
+                              {cell.penalty > 0 && (
+                                <span className="text-[10px] text-destructive" title={`+${cell.penalty}s tidsstraf`}>+{cell.penalty}s</span>
+                              )}
                             </span>
                           </td>
                         );
                       })}
                       <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">{r.fl || "–"}</td>
+                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
                     </tr>
                   ))}
@@ -344,6 +373,7 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     </div>
   );
 }
+
 
 function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { user } = useAuth();
@@ -367,6 +397,12 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     return { taken: t, available: a };
   }, [signups, selected]);
 
+  const gridCount = (signups ?? []).filter(
+    (s) => selected && s.car_class === selected.car_class && s.driver_category === selected.driver_category && !s.waitlist,
+  ).length;
+  const cap = selected?.max_drivers ?? null;
+  const goesToWaitlist = cap != null && gridCount >= cap;
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return toast.error("Du skal være logget ind.");
@@ -379,14 +415,16 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
       car_class: selected.car_class,
       driver_category: selected.driver_category,
       car_number: carNumber,
+      waitlist: goesToWaitlist,
     });
     if (error) return toast.error(error.message);
-    toast.success("Du er tilmeldt!");
+    toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
     setOpen(false);
     setDriverName("");
     setCarNumber(null);
     qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
   };
+
 
   if (!user) {
     return <Button asChild size="sm" className="gap-2"><Link to="/login">Log ind for at tilmelde</Link></Button>;
@@ -415,6 +453,11 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
               </SelectContent>
             </Select>
           </div>
+          {selected && goesToWaitlist && (
+            <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
+              Klassen er fyldt ({gridCount}/{cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.
+            </p>
+          )}
           {selected && (
             <div className="space-y-2">
               <Label>Kørenummer</Label>
@@ -438,7 +481,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
               <p className="text-xs text-muted-foreground">{available.length} ledige · {taken.length} optaget</p>
             </div>
           )}
-          <DialogFooter><Button type="submit" disabled={carNumber == null}>Tilmeld</Button></DialogFooter>
+          <DialogFooter><Button type="submit" disabled={carNumber == null}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
