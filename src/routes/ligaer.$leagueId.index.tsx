@@ -437,7 +437,7 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
           </Card>
         );
       })}
-    </div>
+    </section>
   );
 }
 
