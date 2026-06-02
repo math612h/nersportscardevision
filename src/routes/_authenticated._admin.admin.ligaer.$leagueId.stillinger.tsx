@@ -21,15 +21,17 @@ const POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 const pointsFor = (pos: number) => (pos >= 1 && pos <= POINTS_TABLE.length ? POINTS_TABLE[pos - 1] : 0);
 
 type DraftRow = {
+  entry_id: string;
   user_id: string;
   car_number: number;
   driver_name: string;
   car_class: string;
   driver_category: string;
-  time_str: string;        // mm:ss.xxx or ss.xxx
-  penalty_seconds: number; // additional time penalty in seconds
+  time_str: string;
+  penalty_seconds: number;
   fastest_lap: boolean;
   dnf: boolean;
+  dns: boolean;
 };
 
 function parseTimeToMs(s: string): number | null {
