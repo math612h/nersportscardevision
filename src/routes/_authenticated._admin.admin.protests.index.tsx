@@ -25,6 +25,9 @@ function AdminProtests() {
 
   return (
     <div className="space-y-4">
+      <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-3 w-3" /> Tilbage til admin
+      </Link>
       <h1 className="text-2xl font-bold">Alle protests</h1>
       {data?.length === 0 && <p className="text-muted-foreground">Ingen protests.</p>}
       <div className="space-y-3">
