@@ -95,7 +95,7 @@ function LoginPage() {
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={onSignup} className="space-y-3">
-                <div><Label>Visningsnavn</Label><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Kørernavn" maxLength={80} /></div>
+                <div><Label>Visningsnavn</Label><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Kørernavn" required maxLength={80} /></div>
                 <div>
                   <Label>LMU-navn</Label>
                   <Input value={lmuName} onChange={(e) => setLmuName(e.target.value)} placeholder="Som det står i Le Mans Ultimate" required maxLength={80} />
