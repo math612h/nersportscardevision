@@ -238,6 +238,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
             <Label>Point for hurtigste omgang (pr. klasse)</Label>
             <Input type="number" min={0} max={50} value={flPoints} onChange={(e) => setFlPoints(Number(e.target.value))} />
           </div>
+          <div>
+            <Label>Temperatur (°C)</Label>
+            <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
+          </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
             Marker som afsluttet
