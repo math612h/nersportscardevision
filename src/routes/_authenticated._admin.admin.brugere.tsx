@@ -54,9 +54,12 @@ function AdminUsersPage() {
     rolesByUser.set(r.user_id, arr);
   });
 
-  const filtered = (data?.profiles ?? []).filter((p) =>
-    (p.display_name ?? "").toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = (data?.profiles ?? []).filter((p) => {
+    if (onlyPending && p.approved) return false;
+    return (p.display_name ?? "").toLowerCase().includes(search.toLowerCase());
+  });
+
+  const pendingCount = (data?.profiles ?? []).filter((p) => !p.approved).length;
 
   const roleMut = useMutation({
     mutationFn: async ({ userId, assign }: { userId: string; assign: boolean }) => {
@@ -64,6 +67,17 @@ function AdminUsersPage() {
     },
     onSuccess: (_, { assign }) => {
       toast.success(assign ? "Admin-rolle tildelt" : "Admin-rolle fjernet");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const approveMut = useMutation({
+    mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
+      await approveFn({ data: { userId, approved } });
+    },
+    onSuccess: (_, { approved }) => {
+      toast.success(approved ? "Profil godkendt" : "Godkendelse fjernet");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (e: Error) => toast.error(e.message),
