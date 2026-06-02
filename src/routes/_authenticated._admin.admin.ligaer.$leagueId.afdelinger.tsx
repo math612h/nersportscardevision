@@ -89,6 +89,7 @@ function AdminDivisions() {
                 <div className="flex flex-wrap gap-2">
                   {d.track && <Badge variant="outline">{d.track}{d.layout ? ` · ${d.layout}` : ""}</Badge>}
                   {d.race_date && <Badge variant="outline">{format(new Date(d.race_date), "dd MMM yyyy HH:mm")}</Badge>}
+                  {d.settings?.temperature != null && <Badge variant="outline">{d.settings.temperature}°C</Badge>}
                   <Badge variant="outline">FL: {flPts} p</Badge>
                 </div>
                 {slots.length > 0 && (
@@ -120,6 +121,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   const [trackLayout, setTrackLayout] = useState(`0::${LMU_TRACKS[0].layouts[0]}`);
   const [raceDate, setRaceDate] = useState("");
   const [weather, setWeather] = useState<WeatherKey[]>(Array(WEATHER_SLOT_COUNT).fill("sunny"));
+  const [temperature, setTemperature] = useState<number>(22);
   const [flPoints, setFlPoints] = useState<number>(1);
 
   const [trackIdxStr, layout] = trackLayout.split("::");
@@ -134,10 +136,10 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
       car_class: carClass, driver_category: category,
       track: track.name, layout,
       race_date: raceDate ? new Date(raceDate).toISOString() : null,
-      settings: { weather, fastest_lap_points: flPoints },
+      settings: { weather, fastest_lap_points: flPoints, temperature },
     });
     if (error) return toast.error(error.message);
-    toast.success("Afdeling oprettet"); setOpen(false); setName(""); setRaceDate(""); setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny")); setFlPoints(1); onDone();
+    toast.success("Afdeling oprettet"); setOpen(false); setName(""); setRaceDate(""); setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny")); setTemperature(22); setFlPoints(1); onDone();
   };
 
   return (
@@ -167,6 +169,11 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
             <Label>Point for hurtigste omgang (pr. klasse)</Label>
             <Input type="number" min={0} max={50} value={flPoints} onChange={(e) => setFlPoints(Number(e.target.value))} />
             <p className="mt-1 text-xs text-muted-foreground">Tildeles til den hurtigste i hver klasse (Hypercar Pro/Am, LMGT3 Pro/Am osv.).</p>
+          </div>
+          <div>
+            <Label>Temperatur (°C)</Label>
+            <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
+            <p className="mt-1 text-xs text-muted-foreground">Lufttemperatur for løbet.</p>
           </div>
           <div className="space-y-2">
             <Label>Vejr (5 slots)</Label>
@@ -206,11 +213,12 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
 function EditDivisionDialog({ division, onDone }: { division: any; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
+  const [temperature, setTemperature] = useState<number>(Number(division.settings?.temperature ?? 22));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newSettings = { ...(division.settings ?? {}), fastest_lap_points: flPoints, completed };
+    const newSettings = { ...(division.settings ?? {}), fastest_lap_points: flPoints, temperature, completed };
     const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
     if (error) return toast.error(error.message);
     toast.success("Opdateret");
@@ -229,6 +237,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
           <div>
             <Label>Point for hurtigste omgang (pr. klasse)</Label>
             <Input type="number" min={0} max={50} value={flPoints} onChange={(e) => setFlPoints(Number(e.target.value))} />
+          </div>
+          <div>
+            <Label>Temperatur (°C)</Label>
+            <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
