@@ -102,8 +102,11 @@ function LeagueDetail() {
 
       {league && <SignupsList leagueId={leagueId} configs={configs} />}
 
-      <div id="kalender">
-        <h2 className="mb-2 text-lg font-semibold">Afdelinger</h2>
+      <section id="kalender" className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Calendar className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Afdelinger</h2>
+        </div>
         {divisions?.length === 0 && (
           <p className="text-sm text-muted-foreground">Ingen afdelinger oprettet endnu.</p>
         )}
@@ -114,23 +117,36 @@ function LeagueDetail() {
             const imgFile = getTrackImageFile(d.track);
             const imgUrl = imgFile ? imageMap?.[imgFile] : null;
             return (
-              <Link key={d.id} to="/ligaer/$leagueId/afdeling/$divisionId" params={{ leagueId, divisionId: d.id }}>
-                <Card className="cursor-pointer overflow-hidden transition hover:border-primary">
-                  {imgUrl && (
-                    <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-                      <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover" loading="lazy" />
+              <Link
+                key={d.id}
+                to="/ligaer/$leagueId/afdeling/$divisionId"
+                params={{ leagueId, divisionId: d.id }}
+                className="group block h-full"
+              >
+                <Card className="flex h-full flex-col overflow-hidden border-border transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]">
+                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+                    {imgUrl ? (
+                      <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                    ) : (
+                      <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
+                    <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
+                      <ArrowUpRight className="h-3.5 w-3.5" />
                     </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle className="text-base flex items-center gap-2">
-                      {d.name}
-                      {completed && <Badge variant="secondary" className="text-[10px]">Afsluttet</Badge>}
-                    </CardTitle>
-                    <CardDescription className="flex flex-wrap items-center gap-2">
-                      {d.track && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{d.track}{d.layout ? ` · ${d.layout}` : ""}</span>}
-                    </CardDescription>
+                    {completed && (
+                      <Badge variant="secondary" className="absolute left-3 top-3 text-[10px]">Afsluttet</Badge>
+                    )}
+                  </div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{d.name}</CardTitle>
+                    {d.track && (
+                      <CardDescription className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />{d.track}{d.layout ? ` · ${d.layout}` : ""}
+                      </CardDescription>
+                    )}
                   </CardHeader>
-                  <CardContent className="space-y-2">
+                  <CardContent className="mt-auto space-y-2 pt-0">
                     <div className="flex flex-wrap gap-2">
                       {d.race_date && (
                         <Badge variant="outline" className="gap-1">
@@ -155,7 +171,7 @@ function LeagueDetail() {
             );
           })}
         </div>
-      </div>
+      </section>
 
       <Standings leagueId={leagueId} configs={configs} />
     </div>
