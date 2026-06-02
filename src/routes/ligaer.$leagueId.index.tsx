@@ -491,7 +491,11 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Tilmeld dig {league_name(leagueId)}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
-          <div><Label>Kørernavn</Label><Input required maxLength={80} value={driverName} onChange={(e) => setDriverName(e.target.value)} /></div>
+          <div>
+            <Label>Kørernavn</Label>
+            <Input value={driverName} disabled readOnly />
+            <p className="mt-1 text-xs text-muted-foreground">Hentet fra din profil.</p>
+          </div>
           <div>
             <Label>Bilklasse</Label>
             <Select value={cfgIdx} onValueChange={(v) => { setCfgIdx(v); setCarNumber(null); }}>
