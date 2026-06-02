@@ -215,11 +215,11 @@ function DivisionDetail() {
           })}
         </div>
 
-        {absentCount > 0 && (
+        {(absenceReasons?.length ?? 0) > 0 && (
           <div className="mt-4">
             <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Begrundelser</h3>
             <ul className="space-y-1.5">
-              {(absences ?? []).filter((a) => a.reason).map((a) => {
+              {(absenceReasons ?? []).map((a) => {
                 const e = (signups ?? []).find((s) => s.user_id === a.user_id);
                 return (
                   <li key={a.id} className="rounded border border-border px-3 py-2 text-sm">
