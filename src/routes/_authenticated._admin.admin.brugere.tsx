@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/brugere")({
   component: AdminUsersPage,
 });
 
-type Profile = { id: string; display_name: string | null; created_at: string };
+type Profile = { id: string; display_name: string | null; created_at: string; approved: boolean };
 type Role = { user_id: string; role: string };
 
 function AdminUsersPage() {
