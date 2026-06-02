@@ -97,13 +97,16 @@ export function NotificationsBell() {
               return (
                 <li key={n.id}>
                   {n.link ? (
-                    <Link
-                      to={n.link}
-                      onClick={() => { void markOneRead(n.id); setOpen(false); }}
-                      className="block hover:bg-accent"
+                    <button
+                      onClick={() => {
+                        void markOneRead(n.id);
+                        setOpen(false);
+                        navigate({ to: n.link! });
+                      }}
+                      className="block w-full text-left hover:bg-accent"
                     >
                       {body}
-                    </Link>
+                    </button>
                   ) : (
                     <button onClick={() => void markOneRead(n.id)} className="block w-full text-left hover:bg-accent">
                       {body}
