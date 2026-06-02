@@ -361,12 +361,16 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                               {cell.penalty > 0 && (
                                 <span className="text-[10px] text-destructive" title={`+${cell.penalty}s tidsstraf`}>+{cell.penalty}s</span>
                               )}
+                              {cell.pointPenalty > 0 && (
+                                <span className="text-[10px] text-destructive" title={`-${cell.pointPenalty} pointstraf`}>-{cell.pointPenalty}p</span>
+                              )}
                             </span>
                           </td>
                         );
                       })}
                       <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">{r.fl || "–"}</td>
                       <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
+                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : "–"}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
                     </tr>
                   ))}
