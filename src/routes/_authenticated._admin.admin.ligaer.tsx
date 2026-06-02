@@ -193,3 +193,42 @@ function AdminLeagues() {
     </div>
   );
 }
+
+function EditLeagueDialog({ league }: { league: any }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(league.name ?? "");
+  const [desc, setDesc] = useState(league.description ?? "");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const { error } = await supabase
+      .from("leagues")
+      .update({ name: name.trim(), description: desc.trim() || null })
+      .eq("id", league.id);
+    if (error) return toast.error(error.message);
+    toast.success("Liga opdateret");
+    setOpen(false);
+    qc.invalidateQueries({ queryKey: ["leagues-admin"] });
+    qc.invalidateQueries({ queryKey: ["leagues"] });
+    qc.invalidateQueries({ queryKey: ["league", league.id] });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" onClick={() => { setName(league.name ?? ""); setDesc(league.description ?? ""); }}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Rediger liga</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+          <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
