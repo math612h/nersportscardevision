@@ -239,10 +239,19 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
   const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
   const [temperature, setTemperature] = useState<number>(Number(division.settings?.temperature ?? 22));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
+  const [lobbyCode, setLobbyCode] = useState<string>(String(division.settings?.lobby_code ?? ""));
+  const [lobbyPassword, setLobbyPassword] = useState<string>(String(division.settings?.lobby_password ?? ""));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newSettings = { ...(division.settings ?? {}), fastest_lap_points: flPoints, temperature, completed };
+    const newSettings = {
+      ...(division.settings ?? {}),
+      fastest_lap_points: flPoints,
+      temperature,
+      completed,
+      lobby_code: lobbyCode.trim() || null,
+      lobby_password: lobbyPassword.trim() || null,
+    };
     const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
     if (error) return toast.error(error.message);
     toast.success("Opdateret");
@@ -255,7 +264,7 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm"><Pencil className="h-4 w-4" /></Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Rediger {division.name}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div>
@@ -266,6 +275,17 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
             <Label>Temperatur (°C)</Label>
             <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Lobby code</Label>
+              <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+            </div>
+          </div>
+          <p className="-mt-1 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
             Marker som afsluttet
