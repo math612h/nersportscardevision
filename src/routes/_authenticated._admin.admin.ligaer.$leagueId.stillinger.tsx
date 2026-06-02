@@ -410,6 +410,17 @@ function DivisionEditor({
                               disabled={r.dnf || r.dns}
                             />
                           </td>
+                          <td className="px-2 py-1.5">
+                            <Input
+                              className="h-8"
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={r.penalty_points}
+                              onChange={(e) => setRow(i, { penalty_points: Number(e.target.value) })}
+                              disabled={r.dnf || r.dns}
+                            />
+                          </td>
                           <td className="px-2 py-1.5 tabular-nums text-xs text-muted-foreground">
                             {r.effective_ms != null ? msToStr(r.effective_ms) : "–"}
                           </td>
