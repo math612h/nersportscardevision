@@ -95,12 +95,22 @@ function AdminUsersPage() {
         <h1 className="text-2xl font-bold">Brugere</h1>
       </div>
 
-      <Input
-        placeholder="Søg efter navn…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="max-w-sm"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          placeholder="Søg efter navn…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="max-w-sm"
+        />
+        <Button
+          type="button"
+          variant={onlyPending ? "default" : "outline"}
+          size="sm"
+          onClick={() => setOnlyPending((v) => !v)}
+        >
+          Afventer godkendelse {pendingCount > 0 && <Badge variant="secondary" className="ml-2">{pendingCount}</Badge>}
+        </Button>
+      </div>
 
       {isLoading ? (
         <p className="text-muted-foreground">Indlæser…</p>
