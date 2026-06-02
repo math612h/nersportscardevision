@@ -26,6 +26,7 @@ async function signedAvatarUrl(path: string | null) {
 function ProfilePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading } = useQuery({
