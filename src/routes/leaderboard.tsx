@@ -32,6 +32,7 @@ type Row = {
   track: string;
   layout: string | null;
   car_class: string;
+  car_model: string | null;
   best_lap_ms: number;
   source: "admin" | "user";
   recorded_at: string | null;
