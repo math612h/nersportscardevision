@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Shield, Flag, MessageSquareWarning } from "lucide-react";
+import { Shield, Flag, MessageSquareWarning, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/")({
@@ -10,6 +10,7 @@ function AdminHub() {
   const items = [
     { to: "/admin/ligaer", title: "Ligaer & afdelinger", desc: "Opret og rediger ligaer, afdelinger, regler og entries.", icon: Flag },
     { to: "/admin/protests", title: "Protests", desc: "Se alle indsendte protests.", icon: MessageSquareWarning },
+    { to: "/admin/brugere", title: "Brugere", desc: "Administrér alle brugere på platformen.", icon: Users },
   ];
   return (
     <div className="space-y-6">
