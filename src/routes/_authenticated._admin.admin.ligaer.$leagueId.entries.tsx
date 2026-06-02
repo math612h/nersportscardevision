@@ -52,8 +52,19 @@ function AdminEntries() {
   const del = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("entries").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { toast.success("Fjernet"); qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] }); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
+
+  const approve = useServerFn(approveEntry);
+  const approveMut = useMutation({
+    mutationFn: async (entryId: string) => approve({ data: { entryId } }),
+    onSuccess: (res) => {
+      toast.success(res.alreadyApproved ? "Allerede godkendt" : "Godkendt – kører har fået besked");
+      qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   // Group by division → class → category
   const grouped = (data ?? []).reduce<Record<string, Record<string, Record<string, any[]>>>>((acc, e: any) => {
