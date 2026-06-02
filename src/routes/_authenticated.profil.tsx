@@ -164,6 +164,10 @@ function ProfilePage() {
                 <Input type="number" min={0} max={120} value={age} onChange={(e) => setAge(e.target.value)} />
               </div>
               <div>
+                <Label>Discord-brugernavn</Label>
+                <Input value={discord} onChange={(e) => setDiscord(e.target.value)} maxLength={80} placeholder="dit_discord_navn" />
+              </div>
+              <div>
                 <Label>Email</Label>
                 <Input value={user?.email ?? ""} disabled />
               </div>
