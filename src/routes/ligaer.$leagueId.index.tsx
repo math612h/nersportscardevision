@@ -417,7 +417,22 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
   const [open, setOpen] = useState(false);
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
-  const [driverName, setDriverName] = useState("");
+
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const driverName = (profile?.display_name ?? user?.email?.split("@")[0] ?? "").trim();
 
   const alreadySignedUp = !!user && (signups ?? []).some((s) => s.user_id === user.id);
   const selected = configs[Number(cfgIdx)];
@@ -443,10 +458,11 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     if (!user) return toast.error("Du skal være logget ind.");
     if (!selected) return toast.error("Vælg en klasse.");
     if (carNumber == null) return toast.error("Vælg et kørenummer.");
+    if (!driverName) return toast.error("Dit kørernavn mangler på profilen.");
     const { error } = await supabase.from("entries").insert({
       league_id: leagueId,
       user_id: user.id,
-      driver_name: driverName.trim(),
+      driver_name: driverName,
       car_class: selected.car_class,
       driver_category: selected.driver_category,
       car_number: carNumber,
@@ -455,7 +471,6 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     if (error) return toast.error(error.message);
     toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
     setOpen(false);
-    setDriverName("");
     setCarNumber(null);
     qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
   };
