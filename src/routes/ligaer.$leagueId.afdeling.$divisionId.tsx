@@ -239,7 +239,7 @@ function DivisionDetail() {
                 const e = (signups ?? []).find((s) => s.user_id === a.user_id);
                 return (
                   <li key={a.id} className="rounded border border-border px-3 py-2 text-sm">
-                    <span className="font-medium">{e?.driver_name ?? "Ukendt kører"}:</span>{" "}
+                    <DriverLink userId={e?.user_id} name={e?.driver_name ?? "Ukendt kører"} className="font-medium" />:{" "}
                     <span className="text-muted-foreground">{a.reason}</span>
                   </li>
                 );
