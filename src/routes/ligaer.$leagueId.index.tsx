@@ -363,8 +363,11 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     : Array.from(new Set(allRows.map((r) => `${r.car_class} · ${r.driver_category}`)));
 
   return (
-    <div id="stillinger" className="space-y-3">
-      <h2 className="text-lg font-semibold">Stillinger</h2>
+    <section id="stillinger" className="space-y-4">
+      <div className="flex items-center gap-2 text-primary">
+        <Trophy className="h-4 w-4" />
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger</h2>
+      </div>
       {groupKeys.map((k) => {
         const [cls, cat] = k.split(" · ");
         const rows = allRows
