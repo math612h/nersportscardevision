@@ -28,6 +28,7 @@ type DraftRow = {
   driver_category: string;
   time_str: string;
   penalty_seconds: number;
+  penalty_points: number;
   fastest_lap: boolean;
   dnf: boolean;
   dns: boolean;
@@ -193,6 +194,7 @@ function DivisionEditor({
       driver_category: e.driver_category,
       time_str: ex && typeof ex.finish_time_ms === "number" && ex.finish_time_ms > 0 ? msToStr(ex.finish_time_ms) : "",
       penalty_seconds: Number(ex?.penalty_seconds ?? 0),
+      penalty_points: Number(ex?.penalty_points ?? 0),
       fastest_lap: !!ex?.fastest_lap,
       dnf: !!ex?.dnf,
       dns: !!ex?.dns,
@@ -266,6 +268,7 @@ function DivisionEditor({
               fastest_lap: r.fastest_lap,
               finish_time_ms: baseMs,
               penalty_seconds: Math.max(0, r.penalty_seconds),
+              penalty_points: Math.max(0, r.penalty_points),
               effective_ms: baseMs + Math.max(0, r.penalty_seconds) * 1000,
               dnf: false,
               dns: false,
@@ -286,6 +289,7 @@ function DivisionEditor({
               fastest_lap: false,
               finish_time_ms: 0,
               penalty_seconds: Math.max(0, r.penalty_seconds),
+              penalty_points: Math.max(0, r.penalty_points),
               effective_ms: 0,
               dnf: r.dnf && !r.dns,
               dns: r.dns,
@@ -368,6 +372,7 @@ function DivisionEditor({
                       <th className="px-2 py-1.5">Kører</th>
                       <th className="px-2 py-1.5 w-32">Tid (m:ss.xxx)</th>
                       <th className="px-2 py-1.5 w-24">Straf (s)</th>
+                      <th className="px-2 py-1.5 w-24">Pointstraf</th>
                       <th className="px-2 py-1.5 w-28">Effektiv tid</th>
                       <th className="px-2 py-1.5 w-12 text-center">FL</th>
                       <th className="px-2 py-1.5 w-14 text-center">DNF</th>
@@ -378,7 +383,8 @@ function DivisionEditor({
                   <tbody>
                     {groupRows.map((r) => {
                       const i = rows.findIndex((x) => x.entry_id === r.entry_id);
-                      const totalPts = r.points + (r.fastest_lap && r.position > 0 ? flPoints : 0);
+                      const basePts = r.points + (r.fastest_lap && r.position > 0 ? flPoints : 0);
+                      const totalPts = Math.max(0, basePts - Math.max(0, r.penalty_points));
                       return (
                         <tr key={r.entry_id} className="border-t border-border">
                           <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
@@ -401,6 +407,17 @@ function DivisionEditor({
                               step={1}
                               value={r.penalty_seconds}
                               onChange={(e) => setRow(i, { penalty_seconds: Number(e.target.value) })}
+                              disabled={r.dnf || r.dns}
+                            />
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <Input
+                              className="h-8"
+                              type="number"
+                              min={0}
+                              step={1}
+                              value={r.penalty_points}
+                              onChange={(e) => setRow(i, { penalty_points: Number(e.target.value) })}
                               disabled={r.dnf || r.dns}
                             />
                           </td>
@@ -435,6 +452,7 @@ function DivisionEditor({
                             <span className="inline-flex items-center gap-0.5">
                               {totalPts}
                               {r.fastest_lap && r.position > 0 && <Zap className="h-3 w-3 text-primary" />}
+                              {r.penalty_points > 0 && <span className="text-[10px] text-destructive">-{r.penalty_points}p</span>}
                             </span>
                           </td>
                         </tr>

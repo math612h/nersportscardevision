@@ -228,6 +228,7 @@ type ResultRow = {
   points: number;
   fastest_lap?: boolean;
   penalty_seconds?: number;
+  penalty_points?: number;
   dns?: boolean;
 };
 
@@ -269,7 +270,8 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     fl: number;
     total: number;
     penalty: number;
-    rounds: Record<string, { points: number; fl: boolean; flPts: number; penalty: number; dns: boolean }>;
+    pointPenalty: number;
+    rounds: Record<string, { points: number; fl: boolean; flPts: number; penalty: number; pointPenalty: number; dns: boolean }>;
   };
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
@@ -285,15 +287,18 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
         fl: 0,
         total: 0,
         penalty: 0,
+        pointPenalty: 0,
         rounds: {},
       };
       const earnedFl = r.fastest_lap ? flPts : 0;
       const pen = Number(r.penalty_seconds ?? 0);
+      const ptsPen = Math.max(0, Number(r.penalty_points ?? 0));
       cur.race += r.points;
       cur.fl += earnedFl;
-      cur.total += r.points + earnedFl;
+      cur.total += Math.max(0, r.points + earnedFl - ptsPen);
       cur.penalty += pen;
-      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl, penalty: pen, dns: !!r.dns };
+      cur.pointPenalty += ptsPen;
+      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns };
       map.set(key, cur);
     }
   }
@@ -334,6 +339,7 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                     ))}
                     <th className="py-1 px-1 w-10 text-center" title="Fastest lap points">FL</th>
                     <th className="py-1 px-1 w-12 text-center" title="Samlet tidsstraf">Straf</th>
+                    <th className="py-1 px-1 w-14 text-center" title="Samlet pointstraf">Pt-straf</th>
                     <th className="py-1 pl-2 w-12 text-right">Pts</th>
                   </tr>
                 </thead>
@@ -355,12 +361,16 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                               {cell.penalty > 0 && (
                                 <span className="text-[10px] text-destructive" title={`+${cell.penalty}s tidsstraf`}>+{cell.penalty}s</span>
                               )}
+                              {cell.pointPenalty > 0 && (
+                                <span className="text-[10px] text-destructive" title={`-${cell.pointPenalty} pointstraf`}>-{cell.pointPenalty}p</span>
+                              )}
                             </span>
                           </td>
                         );
                       })}
                       <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">{r.fl || "–"}</td>
                       <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
+                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : "–"}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
                     </tr>
                   ))}
