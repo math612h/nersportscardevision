@@ -1,95 +1,52 @@
-# LMU-Hub – Implementeringsplan
+## Mål
+Når en protest oprettes med indklagede kørere, får de besked i appen (og på email), kan afgive deres version, og admin/stewards afgør sagen med status + begrundelse + evt. straf-detaljer.
 
-Sim-racing platform med to sider: **admin** (arrangører styrer ligaer, afdelinger, regler, tilmeldinger og protests) og **deltager** (kørere ser ligaer, tilmelder sig, indsender protests, læser regler). Bygges på TanStack Start + Lovable Cloud med email/Google login og delt database.
+## Database (én migration)
 
-## Datamodel (Lovable Cloud)
+**Ny tabel `protest_involved`** — kobler indklagede brugere til en protest:
+- `protest_id`, `user_id` (unik kombination)
+- `response` (tekst, deres version), `responded_at`
+- RLS: indklaget bruger ser/opdaterer egen række; klager + admin læser alle på sine sager.
 
-```text
-profiles            (id=auth.uid, display_name, created_at)
-user_roles          (user_id, role: 'admin' | 'racer')
-leagues             (id, name, description, banner_url, created_by, created_at)
-divisions           (id, league_id, name, car_class, driver_category,
-                     track, layout, race_date, settings_json, created_at)
-                     -- settings_json: weather, tid, length, BoP, pit-window osv.
-entries             (id, division_id, user_id, driver_name, car_class,
-                     driver_category, status: 'pending'|'approved'|'rejected', created_at)
-rulesets            (id, league_id, title, content, sort_order, created_at)
-protests            (id, division_id, submitted_by, lap_number, corner,
-                     involved_drivers, description, video_url, created_at)
-```
+**Udvid `protests`**:
+- `status` (`open` | `awaiting_responses` | `ruled`)
+- `verdict_outcome` (enum: `no_penalty` | `warning` | `time_penalty` | `position_penalty` | `disqualified`)
+- `verdict_reason` (tekst)
+- `verdict_details` (jsonb — fx sekunder, antal positioner)
+- `ruled_by`, `ruled_at`
+- Skærp SELECT-policy: kun klager, indklagede, og admin må læse (involvering tjekkes via `protest_involved`).
 
-Én liga indeholder X afdelinger, hver afdeling har egne settings (bane, layout, dato, vejr, BoP osv.). Tilmeldinger og protests er pr. afdeling.
+## Protestformular (afdelingsside)
+- "Involverede kørere" bliver dropdown over tilmeldte i ligaen (entries), undtagen klager selv.
+- Plus-knap tilføjer endnu en dropdown-række. Gemmer som rækker i `protest_involved`. Beholder `involved_drivers` tekstfelt til visning/historik.
 
-## Roller & RLS
+## "Mine sager"-side (`/mine-protests`)
+Eksisterer allerede til klagerens sager — udvides til to tabs:
+- **Indsendt af mig** — som nu, plus visning af indklagedes svar + endelig afgørelse.
+- **Indklaget** — nye sager hvor jeg er indklaget; "Afgiv din version"-form pr. sag (én gang, kan opdateres indtil ruling).
+- Badge i top-menuen viser antal sager der venter på mit svar.
 
-Separat `user_roles` tabel + `has_role(uid, role)` security-definer funktion.
-- Første bruger der opretter konto bliver automatisk admin (eller manuelt seedet).
-- Admin: fuld CRUD på ligaer, afdelinger, regler. Kan godkende entries, læse alle protests.
-- Racer (alle authenticated): SELECT på leagues/divisions/rulesets, INSERT egne entries og protests, SELECT/UPDATE/DELETE kun egne entries/protests.
+## Admin-panel (`/admin/protests`)
+- Liste viser status-badge pr. sag.
+- Klik åbner detalje-side: original protest, alle indklagedes svar (eller "Ikke svaret endnu"), og formular til afgørelse:
+  - Udfald (radio/select)
+  - Begrundelse (textarea)
+  - Betingede felter: sekunder hvis tidsstraf, positioner hvis position penalty
+  - "Send afgørelse" — sætter status, gemmer rul-felter, trigger email.
 
-## Sidestruktur
+## Email-notifikationer
+Kræver ops\u00e6tning af Lovable email-domæne (DNS-trin). Tre tidspunkter:
+1. **Ny protest** → email til hver indklaget med link til "Mine sager".
+2. **Indklaget har svaret** → email til admins.
+3. **Afgørelse afsendt** → email til klager + alle indklagede med udfald + begrundelse.
 
-### Offentlige ruter
-- `/login` – Email/password + "Log ind med Google"
-- `/reset-password` – Sæt nyt password efter recovery-mail
+Server-fn `notify-protest` kaldes fra hver mutation. Selve email-infrastrukturen (domæne, queue, skabeloner) sættes op via Lovable email-værktøjerne efter du godkender planen — første skridt vil være at vælge afsender-domæne.
 
-### Deltager (`_authenticated/`)
-- `/` – Deltager-dashboard: liste over alle ligaer (kort med banner + beskrivelse)
-- `/ligaer/$leagueId` – Ligaens præsentation + liste af afdelinger
-- `/ligaer/$leagueId/afdeling/$divisionId` – Detaljer: bane/layout/dato/settings, "Tilmeld dig"-knap, deltagerliste, "Indsend protest"-knap
-- `/ligaer/$leagueId/regler` – Regelsæt for ligaen
-- `/mine-tilmeldinger` – Egne entries på tværs af ligaer
-- `/mine-protests` – Egne indsendte protests
+## Synlighed
+- Klager + indklagede + admin ser fuld sag og afgørelse.
+- Øvrige brugere ser intet om sagen; eventuelle straffe afspejles indirekte i stillinger (eksisterende side, ingen ny visning her).
 
-### Admin (`_authenticated/_admin/`)
-- `/admin` – Admin-hub med genveje (4 kort: Ligaer, Kalender, Entries, Regler)
-- `/admin/ligaer` – Liste + opret/rediger/slet liga
-- `/admin/ligaer/$leagueId/afdelinger` – CRUD afdelinger med settings-form
-- `/admin/ligaer/$leagueId/entries` – Alle tilmeldinger, auto-grupperet efter klasse→kategori, godkend/afvis/slet
-- `/admin/ligaer/$leagueId/regler` – CRUD regelsæt
-- `/admin/protests` – Alle indsendte protests
-
-## Moduler
-
-**Kalender (afdelinger):** Bane-dropdown (hardcoded LMU-baner med layouts: Spa, Le Mans, Monza, Bahrain, Imola, Fuji, Sebring, Portimão osv.), dato-picker, settings (vejr, sessionslængder osv.). Vises som sorteret liste pr. liga.
-
-**Entry-liste:** Form med kørernavn, bilklasse (Hypercar/LMP2/LMGT3), kategori (Pro/Silver/Bronze/Am). Visning auto-grupperet efter klasse→kategori. Admin kan slette; racer kan kun slette egne.
-
-**Regelsæt:** Titel + multi-linje tekst, sorterbar liste pr. liga. Vises som accordion for deltagere.
-
-**Protests:** Form med afdeling, omgang, sving, involverede kørere (text), beskrivelse, video-link (URL, valideret). Pr. liga/afdeling. Admin ser alle, racer kun egne.
-
-## Validering
-
-Alle forms bruger zod + react-hook-form med tegn/længde-grænser. Video-link valideres som URL. Tekstfelter har max-længder.
-
-## Design
-
-Mørkt motorsport-tema, rød accent. Semantiske tokens i `src/styles.css` (oklch). shadcn/ui komponenter. Mobile-first (testet 390px). Dansk UI gennemgående.
-
-## Filer der oprettes
-
-- `src/routes/login.tsx`, `reset-password.tsx`
-- `src/routes/_authenticated.tsx` (auth-gate)
-- `src/routes/_authenticated/index.tsx` (deltager-dashboard)
-- `src/routes/_authenticated/ligaer.$leagueId.tsx` osv.
-- `src/routes/_authenticated/_admin.tsx` (rolle-gate)
-- `src/routes/_authenticated/_admin/...` (admin-ruter)
-- `src/lib/*.functions.ts` – server functions for alle CRUD-operationer (med `requireSupabaseAuth`)
-- `src/lib/tracks.ts` – LMU banedata
-- `src/components/AppHeader.tsx`, `LeagueCard.tsx`, `DivisionCard.tsx`, `EntryForm.tsx`, `ProtestForm.tsx` osv.
-
-## Implementeringsrækkefølge
-
-1. Aktivér Lovable Cloud, opret tabeller + RLS + roller
-2. Auth: login, reset-password, root onAuthStateChange
-3. Admin-flow: ligaer → afdelinger → regler
-4. Deltager-flow: se ligaer/afdelinger/regler
-5. Tilmeldinger (begge sider)
-6. Protests (begge sider)
-7. Design-polish
-
-## Åbne spørgsmål (kan afklares senere)
-
-- Skal første registrerede bruger automatisk være admin, eller seedes du manuelt?
-- Skal admin godkende tilmeldinger (pending→approved), eller er de aktive med det samme?
+## Tekniske noter
+- Migration tilføjer enum-typer `protest_status` og `verdict_outcome`.
+- Email-skabeloner som React Email i `src/lib/email-templates/` (oprettes når infra er klar).
+- Realtime-opdatering er ikke en del af dette — siden re-fetcher ved navigation.

@@ -192,6 +192,44 @@ export type Database = {
         }
         Relationships: []
       }
+      protest_involved: {
+        Row: {
+          created_at: string
+          driver_name: string
+          id: string
+          protest_id: string
+          responded_at: string | null
+          response: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          driver_name: string
+          id?: string
+          protest_id: string
+          responded_at?: string | null
+          response?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          driver_name?: string
+          id?: string
+          protest_id?: string
+          responded_at?: string | null
+          response?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "protest_involved_protest_id_fkey"
+            columns: ["protest_id"]
+            isOneToOne: false
+            referencedRelation: "protests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       protests: {
         Row: {
           corner: string | null
@@ -201,7 +239,13 @@ export type Database = {
           id: string
           involved_drivers: string | null
           lap_number: number | null
+          ruled_at: string | null
+          ruled_by: string | null
+          status: Database["public"]["Enums"]["protest_status"]
           submitted_by: string
+          verdict_details: Json
+          verdict_outcome: Database["public"]["Enums"]["verdict_outcome"] | null
+          verdict_reason: string | null
           video_url: string | null
         }
         Insert: {
@@ -212,7 +256,15 @@ export type Database = {
           id?: string
           involved_drivers?: string | null
           lap_number?: number | null
+          ruled_at?: string | null
+          ruled_by?: string | null
+          status?: Database["public"]["Enums"]["protest_status"]
           submitted_by: string
+          verdict_details?: Json
+          verdict_outcome?:
+            | Database["public"]["Enums"]["verdict_outcome"]
+            | null
+          verdict_reason?: string | null
           video_url?: string | null
         }
         Update: {
@@ -223,7 +275,15 @@ export type Database = {
           id?: string
           involved_drivers?: string | null
           lap_number?: number | null
+          ruled_at?: string | null
+          ruled_by?: string | null
+          status?: Database["public"]["Enums"]["protest_status"]
           submitted_by?: string
+          verdict_details?: Json
+          verdict_outcome?:
+            | Database["public"]["Enums"]["verdict_outcome"]
+            | null
+          verdict_reason?: string | null
           video_url?: string | null
         }
         Relationships: [
@@ -327,9 +387,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      user_in_protest: {
+        Args: { _protest_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "racer"
+      protest_status: "open" | "ruled"
+      verdict_outcome:
+        | "no_penalty"
+        | "warning"
+        | "time_penalty"
+        | "position_penalty"
+        | "disqualified"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -458,6 +529,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "racer"],
+      protest_status: ["open", "ruled"],
+      verdict_outcome: [
+        "no_penalty",
+        "warning",
+        "time_penalty",
+        "position_penalty",
+        "disqualified",
+      ],
     },
   },
 } as const
