@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, Gauge, LayoutGrid, LogOut, User as UserIcon } from "lucide-react";
+import { Flag, Gauge, LayoutGrid, LogOut, User as UserIcon, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,7 +59,11 @@ export function AppHeader() {
           )}
           {user ? (
             <>
-              <div className="ml-2 hidden items-center gap-1 px-2 text-xs text-muted-foreground sm:flex">
+              <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil">
+                <UserCircle2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Profil</span>
+              </Link>
+              <div className="ml-1 hidden items-center gap-1 px-2 text-xs text-muted-foreground sm:flex">
                 <UserIcon className="h-3.5 w-3.5" />
                 <span className="max-w-[140px] truncate">{user.email}</span>
               </div>

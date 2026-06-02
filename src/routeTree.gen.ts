@@ -15,6 +15,7 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
+import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
 import { Route as LigaerLeagueIdIndexRouteImport } from './routes/ligaer.$leagueId.index'
@@ -59,6 +60,11 @@ const LigaerLeagueIdRoute = LigaerLeagueIdRouteImport.update({
   id: '/ligaer/$leagueId',
   path: '/ligaer/$leagueId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMineProtestsRoute =
   AuthenticatedMineProtestsRouteImport.update({
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
+  '/profil': typeof AuthenticatedProfilRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
+  '/profil': typeof AuthenticatedProfilRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdIndexRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
+  '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/lmu'
     | '/login'
     | '/mine-protests'
+    | '/profil'
     | '/ligaer/$leagueId'
     | '/ligaer/$leagueId/regler'
     | '/ligaer/$leagueId/'
@@ -240,6 +250,7 @@ export interface FileRouteTypes {
     | '/lmu'
     | '/login'
     | '/mine-protests'
+    | '/profil'
     | '/ligaer/$leagueId/regler'
     | '/ligaer/$leagueId'
     | '/admin/brugere'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authenticated/_admin'
     | '/_authenticated/mine-protests'
+    | '/_authenticated/profil'
     | '/ligaer/$leagueId'
     | '/ligaer/$leagueId/regler'
     | '/ligaer/$leagueId/'
@@ -329,6 +341,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ligaer/$leagueId'
       preLoaderRoute: typeof LigaerLeagueIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/profil': {
+      id: '/_authenticated/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof AuthenticatedProfilRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/mine-protests': {
       id: '/_authenticated/mine-protests'
@@ -502,11 +521,13 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedMineProtestsRoute: typeof AuthenticatedMineProtestsRoute
+  AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedMineProtestsRoute: AuthenticatedMineProtestsRoute,
+  AuthenticatedProfilRoute: AuthenticatedProfilRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
