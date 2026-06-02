@@ -214,7 +214,7 @@ function DivisionDetail() {
                           <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
                             #{e.car_number}
                           </span>
-                          <span className={`flex-1 truncate ${ab ? "line-through" : ""}`}>{e.driver_name}</span>
+                          <DriverLink userId={e.user_id} name={e.driver_name} className={`flex-1 truncate ${ab ? "line-through" : ""}`} />
                           {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
                           {ab && (
                             <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
