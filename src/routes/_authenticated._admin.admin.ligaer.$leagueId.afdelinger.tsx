@@ -123,6 +123,8 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   const [weather, setWeather] = useState<WeatherKey[]>(Array(WEATHER_SLOT_COUNT).fill("sunny"));
   const [temperature, setTemperature] = useState<number>(22);
   const [flPoints, setFlPoints] = useState<number>(1);
+  const [lobbyCode, setLobbyCode] = useState("");
+  const [lobbyPassword, setLobbyPassword] = useState("");
 
   const [trackIdxStr, layout] = trackLayout.split("::");
   const track = LMU_TRACKS[Number(trackIdxStr)];
@@ -136,10 +138,21 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
       car_class: carClass, driver_category: category,
       track: track.name, layout,
       race_date: raceDate ? new Date(raceDate).toISOString() : null,
-      settings: { weather, fastest_lap_points: flPoints, temperature },
+      settings: {
+        weather,
+        fastest_lap_points: flPoints,
+        temperature,
+        lobby_code: lobbyCode.trim() || null,
+        lobby_password: lobbyPassword.trim() || null,
+      },
     });
     if (error) return toast.error(error.message);
-    toast.success("Afdeling oprettet"); setOpen(false); setName(""); setRaceDate(""); setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny")); setTemperature(22); setFlPoints(1); onDone();
+    toast.success("Afdeling oprettet");
+    setOpen(false); setName(""); setRaceDate("");
+    setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny"));
+    setTemperature(22); setFlPoints(1);
+    setLobbyCode(""); setLobbyPassword("");
+    onDone();
   };
 
   return (
