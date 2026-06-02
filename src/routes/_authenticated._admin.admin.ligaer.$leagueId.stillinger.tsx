@@ -244,22 +244,33 @@ function DivisionEditor({
 
       // Build lmu_name -> userId lookup
       const lmuToUser = new Map<string, string>();
-      for (const p of profiles ?? []) {
+      const profilesWithLmu = (profiles ?? []).filter((p) => (p.lmu_name ?? "").trim().length > 0);
+      for (const p of profilesWithLmu) {
         const key = (p.lmu_name ?? "").trim().toLowerCase();
         if (key) lmuToUser.set(key, p.id);
       }
 
       let matched = 0;
+      let fuzzyMatched = 0;
       const missing: string[] = [];
       const noLmu: string[] = [];
 
       const updates = new Map<string, Partial<DraftRow>>();
+      // Resolve a parsed driver name to a userId — exact first, then fuzzy (≥85%).
+      const resolveUser = (parsedName: string): string | null => {
+        const key = parsedName.trim().toLowerCase();
+        const exact = lmuToUser.get(key);
+        if (exact) return exact;
+        const best = findBestNameMatch(parsedName, profilesWithLmu, (p) => p.lmu_name, 0.85);
+        if (best) { fuzzyMatched++; return best.match.id; }
+        return null;
+      };
       for (const p of parsed) {
-        const key = p.name.trim().toLowerCase();
-        const userId = lmuToUser.get(key);
+        const userId = resolveUser(p.name);
         if (!userId) { missing.push(p.name); continue; }
         const row = rows.find((r) => r.user_id === userId);
         if (!row) continue;
+        const key = p.name.trim().toLowerCase();
         const isFl = flByClass.get(p.carClass) === key;
         if (p.finished && p.finishMs != null) {
           updates.set(row.entry_id, { time_str: msToStr(p.finishMs), fastest_lap: isFl, dnf: false, dns: false });
