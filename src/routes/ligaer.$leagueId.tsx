@@ -481,7 +481,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
               <p className="text-xs text-muted-foreground">{available.length} ledige · {taken.length} optaget</p>
             </div>
           )}
-          <DialogFooter><Button type="submit" disabled={carNumber == null}>Tilmeld</Button></DialogFooter>
+          <DialogFooter><Button type="submit" disabled={carNumber == null}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
