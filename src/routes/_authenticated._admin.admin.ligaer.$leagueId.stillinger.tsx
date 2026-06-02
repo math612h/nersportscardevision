@@ -16,7 +16,6 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagu
   component: AdminStandings,
 });
 
-// Default championship points table by class position
 const POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 const pointsFor = (pos: number) => (pos >= 1 && pos <= POINTS_TABLE.length ? POINTS_TABLE[pos - 1] : 0);
 
@@ -32,6 +31,17 @@ type DraftRow = {
   fastest_lap: boolean;
   dnf: boolean;
   dns: boolean;
+};
+
+type EntryRec = {
+  id: string;
+  user_id: string;
+  driver_name: string;
+  car_class: string;
+  driver_category: string;
+  car_number: number;
+  waitlist: boolean;
+  created_at: string;
 };
 
 function parseTimeToMs(s: string): number | null {
@@ -86,12 +96,12 @@ function AdminStandings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("user_id,driver_name,car_class,driver_category,car_number")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at")
         .eq("league_id", leagueId)
         .is("division_id", null)
-        .order("car_number");
+        .order("created_at", { ascending: true });
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as EntryRec[];
     },
   });
 
@@ -133,15 +143,18 @@ function AdminStandings() {
         </div>
       )}
 
-      {division && entries && (
+      {division && entries && divisions && (
         <DivisionEditor
           key={division.id}
           division={division}
-          entries={entries.filter((e) => e.car_number != null) as any}
+          allDivisions={divisions}
+          entries={entries.filter((e) => e.car_number != null)}
           configs={configs}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] });
             qc.invalidateQueries({ queryKey: ["league-results", leagueId] });
+            qc.invalidateQueries({ queryKey: ["league-entries-for-standings", leagueId] });
+            qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
           }}
         />
       )}
@@ -151,31 +164,38 @@ function AdminStandings() {
 
 function DivisionEditor({
   division,
+  allDivisions,
   entries,
   configs,
   onSaved,
 }: {
   division: any;
-  entries: { user_id: string; driver_name: string; car_class: string; driver_category: string; car_number: number }[];
+  allDivisions: any[];
+  entries: EntryRec[];
   configs: ClassConfig[];
   onSaved: () => void;
 }) {
   const existing: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
   const existingByKey = new Map(existing.map((r) => [`${r.car_class}|${r.driver_category}|${r.car_number}`, r]));
 
-  const initialRows: DraftRow[] = entries.map((e) => {
+  // Only edit results for drivers currently on the grid (not waitlist) – waitlist drivers don't race
+  const gridEntries = entries.filter((e) => !e.waitlist);
+
+  const initialRows: DraftRow[] = gridEntries.map((e) => {
     const k = `${e.car_class}|${e.driver_category}|${e.car_number}`;
     const ex = existingByKey.get(k) as any;
     return {
+      entry_id: e.id,
       user_id: e.user_id,
       car_number: e.car_number,
       driver_name: e.driver_name,
       car_class: e.car_class,
       driver_category: e.driver_category,
-      time_str: ex && typeof ex.finish_time_ms === "number" ? msToStr(ex.finish_time_ms) : "",
+      time_str: ex && typeof ex.finish_time_ms === "number" && ex.finish_time_ms > 0 ? msToStr(ex.finish_time_ms) : "",
       penalty_seconds: Number(ex?.penalty_seconds ?? 0),
       fastest_lap: !!ex?.fastest_lap,
       dnf: !!ex?.dnf,
+      dns: !!ex?.dns,
     };
   });
 
@@ -187,14 +207,12 @@ function DivisionEditor({
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
 
-  // Group keys (use configs if present, else derived)
   const groupKeys = useMemo(() => {
     return configs.length
       ? configs.map((c) => `${c.car_class}|${c.driver_category}`)
       : Array.from(new Set(rows.map((r) => `${r.car_class}|${r.driver_category}`)));
   }, [configs, rows]);
 
-  // Compute live preview standings: per class, sort by (effective_ms), DNF/no-time at the bottom
   const preview = useMemo(() => {
     const out: Record<string, (DraftRow & { effective_ms: number | null; position: number; points: number })[]> = {};
     for (const k of groupKeys) out[k] = [];
@@ -202,7 +220,7 @@ function DivisionEditor({
       const k = `${r.car_class}|${r.driver_category}`;
       if (!out[k]) out[k] = [];
       const baseMs = parseTimeToMs(r.time_str);
-      const effective_ms = r.dnf || baseMs == null ? null : baseMs + Math.max(0, r.penalty_seconds) * 1000;
+      const effective_ms = r.dnf || r.dns || baseMs == null ? null : baseMs + Math.max(0, r.penalty_seconds) * 1000;
       out[k].push({ ...r, effective_ms, position: 0, points: 0 });
     }
     for (const k of Object.keys(out)) {
@@ -224,7 +242,6 @@ function DivisionEditor({
   const save = async () => {
     setSaving(true);
     try {
-      // Validate: at most one fastest lap per class
       for (const k of Object.keys(preview)) {
         const fls = preview[k].filter((r) => r.fastest_lap);
         if (fls.length > 1) {
@@ -233,10 +250,9 @@ function DivisionEditor({
           return;
         }
       }
-      // Flatten results
-      const results = Object.values(preview).flatMap((list) =>
+      const results: any[] = Object.values(preview).flatMap((list) =>
         list
-          .filter((r) => r.position > 0) // skip non-finishers
+          .filter((r) => r.position > 0)
           .map((r) => {
             const baseMs = parseTimeToMs(r.time_str)!;
             return {
@@ -252,10 +268,10 @@ function DivisionEditor({
               penalty_seconds: Math.max(0, r.penalty_seconds),
               effective_ms: baseMs + Math.max(0, r.penalty_seconds) * 1000,
               dnf: false,
+              dns: false,
             };
           }),
       );
-      // Include DNFs (no points)
       for (const k of Object.keys(preview)) {
         for (const r of preview[k]) {
           if (r.position === 0) {
@@ -271,7 +287,8 @@ function DivisionEditor({
               finish_time_ms: 0,
               penalty_seconds: Math.max(0, r.penalty_seconds),
               effective_ms: 0,
-              dnf: true,
+              dnf: r.dnf && !r.dns,
+              dns: r.dns,
             });
           }
         }
@@ -285,6 +302,16 @@ function DivisionEditor({
       };
       const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
       if (error) throw error;
+
+      // Recompute waitlist based on DNS counts across all divisions (including the one we just saved)
+      await reconcileWaitlist({
+        currentDivisionId: division.id,
+        currentResults: results,
+        allDivisions,
+        entries,
+        configs,
+      });
+
       toast.success("Stillinger gemt");
       onSaved();
     } catch (e: any) {
@@ -321,7 +348,7 @@ function DivisionEditor({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        {entries.length === 0 && <p className="text-sm text-muted-foreground">Ingen tilmeldinger på ligaen endnu.</p>}
+        {gridEntries.length === 0 && <p className="text-sm text-muted-foreground">Ingen kørere på grid.</p>}
         {groupKeys.map((k) => {
           const [cls, cat] = k.split("|");
           const groupRows = preview[k] ?? [];
@@ -344,16 +371,17 @@ function DivisionEditor({
                       <th className="px-2 py-1.5 w-28">Effektiv tid</th>
                       <th className="px-2 py-1.5 w-12 text-center">FL</th>
                       <th className="px-2 py-1.5 w-14 text-center">DNF</th>
+                      <th className="px-2 py-1.5 w-14 text-center">DNS</th>
                       <th className="px-2 py-1.5 w-12 text-right">Pts</th>
                     </tr>
                   </thead>
                   <tbody>
                     {groupRows.map((r) => {
-                      const i = rows.findIndex((x) => x.user_id === r.user_id && x.car_number === r.car_number);
+                      const i = rows.findIndex((x) => x.entry_id === r.entry_id);
                       const totalPts = r.points + (r.fastest_lap && r.position > 0 ? flPoints : 0);
                       return (
-                        <tr key={`${r.car_class}-${r.car_number}-${r.user_id}`} className="border-t border-border">
-                          <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : "–"}</td>
+                        <tr key={r.entry_id} className="border-t border-border">
+                          <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
                           <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
                           <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
                           <td className="px-2 py-1.5">
@@ -362,7 +390,7 @@ function DivisionEditor({
                               placeholder="1:32.456"
                               value={r.time_str}
                               onChange={(e) => setRow(i, { time_str: e.target.value })}
-                              disabled={r.dnf}
+                              disabled={r.dnf || r.dns}
                             />
                           </td>
                           <td className="px-2 py-1.5">
@@ -373,7 +401,7 @@ function DivisionEditor({
                               step={1}
                               value={r.penalty_seconds}
                               onChange={(e) => setRow(i, { penalty_seconds: Number(e.target.value) })}
-                              disabled={r.dnf}
+                              disabled={r.dnf || r.dns}
                             />
                           </td>
                           <td className="px-2 py-1.5 tabular-nums text-xs text-muted-foreground">
@@ -384,7 +412,7 @@ function DivisionEditor({
                               type="checkbox"
                               checked={r.fastest_lap}
                               onChange={(e) => setRow(i, { fastest_lap: e.target.checked })}
-                              disabled={r.dnf}
+                              disabled={r.dnf || r.dns}
                               aria-label="Fastest lap"
                             />
                           </td>
@@ -392,7 +420,15 @@ function DivisionEditor({
                             <input
                               type="checkbox"
                               checked={r.dnf}
-                              onChange={(e) => setRow(i, { dnf: e.target.checked })}
+                              onChange={(e) => setRow(i, { dnf: e.target.checked, dns: e.target.checked ? false : r.dns })}
+                            />
+                          </td>
+                          <td className="px-2 py-1.5 text-center">
+                            <input
+                              type="checkbox"
+                              checked={r.dns}
+                              onChange={(e) => setRow(i, { dns: e.target.checked, dnf: e.target.checked ? false : r.dnf, fastest_lap: false })}
+                              title="Did Not Show"
                             />
                           </td>
                           <td className="px-2 py-1.5 text-right font-semibold tabular-nums">
@@ -411,9 +447,81 @@ function DivisionEditor({
           );
         })}
         <p className="text-xs text-muted-foreground">
-          Pointskala (klasse-position): {POINTS_TABLE.join(", ")}. Tidsstraf lægges til kørerens tid og kan derved rykke vedkommende ned i klassen. FL-point tildeles til den med markeret hurtigste omgang i klassen.
+          Pointskala: {POINTS_TABLE.join(", ")}. Tidsstraf lægges til kørerens tid. DNS = Did Not Show: når en kører når DNS-grænsen pr. klasse, rykkes vedkommende bagerst på ventelisten, og første ventelistekører rykker op på griddet.
         </p>
       </CardContent>
     </Card>
   );
+}
+
+async function reconcileWaitlist({
+  currentDivisionId,
+  currentResults,
+  allDivisions,
+  entries,
+  configs,
+}: {
+  currentDivisionId: string;
+  currentResults: any[];
+  allDivisions: any[];
+  entries: EntryRec[];
+  configs: ClassConfig[];
+}) {
+  // Count DNS per entry across divisions (using current edits for the saved one)
+  const dnsByEntry = new Map<string, number>(); // entry_id -> count
+  const entryByKey = new Map<string, EntryRec>();
+  for (const e of entries) entryByKey.set(`${e.car_class}|${e.driver_category}|${e.car_number}`, e);
+
+  const countResults = (results: any[]) => {
+    for (const r of results) {
+      if (!r?.dns) continue;
+      const key = `${r.car_class}|${r.driver_category}|${r.car_number}`;
+      const ent = entryByKey.get(key);
+      if (!ent) continue;
+      dnsByEntry.set(ent.id, (dnsByEntry.get(ent.id) ?? 0) + 1);
+    }
+  };
+
+  for (const d of allDivisions) {
+    if (d.id === currentDivisionId) continue;
+    if (Array.isArray(d.settings?.results)) countResults(d.settings.results);
+  }
+  countResults(currentResults);
+
+  // For each class config that has a dns_limit, demote those past the limit and promote from waitlist
+  const updates: { id: string; waitlist: boolean }[] = [];
+  for (const cfg of configs) {
+    if (!cfg.dns_limit || cfg.dns_limit <= 0) continue;
+    const classEntries = entries.filter((e) => e.car_class === cfg.car_class && e.driver_category === cfg.driver_category);
+    const grid = classEntries.filter((e) => !e.waitlist);
+    const wait = classEntries.filter((e) => e.waitlist).sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+
+    let openSlots = 0;
+    const stillOnGrid: EntryRec[] = [];
+    for (const e of grid) {
+      if ((dnsByEntry.get(e.id) ?? 0) >= cfg.dns_limit) {
+        updates.push({ id: e.id, waitlist: true });
+        openSlots++;
+      } else {
+        stillOnGrid.push(e);
+      }
+    }
+    // If grid has a max_drivers and we freed slots, promote from waitlist
+    const cap = cfg.max_drivers ?? Infinity;
+    const room = Math.max(0, cap - stillOnGrid.length);
+    const promotions = Math.min(openSlots, room, wait.length);
+    for (let i = 0; i < promotions; i++) {
+      updates.push({ id: wait[i].id, waitlist: false });
+    }
+  }
+
+  for (const u of updates) {
+    const { error } = await supabase.from("entries").update({ waitlist: u.waitlist }).eq("id", u.id);
+    if (error) throw error;
+  }
+  if (updates.length > 0) {
+    const promoted = updates.filter((u) => !u.waitlist).length;
+    const demoted = updates.filter((u) => u.waitlist).length;
+    toast.message(`Venteliste opdateret: ${demoted} flyttet til venteliste, ${promoted} rykket op på grid.`);
+  }
 }
