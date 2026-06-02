@@ -301,14 +301,17 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
 
   if (completed.length === 0) {
     return (
-      <div id="stillinger" className="space-y-2">
-        <h2 className="text-lg font-semibold">Stillinger</h2>
+      <section id="stillinger" className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Trophy className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger</h2>
+        </div>
         <Card>
           <CardContent className="py-6 text-center text-sm text-muted-foreground">
             Stillinger vises når der er afholdt løb.
           </CardContent>
         </Card>
-      </div>
+      </section>
     );
   }
 
