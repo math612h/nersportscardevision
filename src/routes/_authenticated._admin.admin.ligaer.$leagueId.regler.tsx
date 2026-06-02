@@ -94,14 +94,16 @@ function AdminRules() {
                       {r.section_number && <span className="text-muted-foreground">{r.section_number}</span>}
                       {r.title}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="ml-auto shrink-0"
-                      onClick={(e) => { e.stopPropagation(); if (confirm("Slet regel?")) del.mutate(r.id); }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <span className="ml-auto flex shrink-0 items-center gap-1">
+                      <EditRuleDialog rule={r} leagueId={leagueId} />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => { e.stopPropagation(); if (confirm("Slet regel?")) del.mutate(r.id); }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </span>
                   </AccordionTrigger>
                   <AccordionContent className="whitespace-pre-wrap text-sm">{r.content}</AccordionContent>
                 </AccordionItem>
