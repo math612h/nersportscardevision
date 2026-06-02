@@ -269,6 +269,48 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
   );
 }
 
+function QuickNav() {
+  const items = [
+    { id: "entryliste", label: "Entryliste", icon: Users },
+    { id: "kalender", label: "Kalender", icon: Calendar },
+    { id: "stillinger", label: "Stillinger", icon: Trophy },
+  ];
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          onClick={() => scrollTo(item.id)}
+          className="group flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card p-3 text-center transition hover:border-primary hover:bg-accent"
+        >
+          <item.icon className="h-5 w-5 text-primary" />
+          <span className="text-xs font-medium">{item.label}</span>
+          <ChevronRight className="h-3 w-3 text-muted-foreground transition group-hover:translate-y-0.5" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function StandingsPlaceholder() {
+  return (
+    <div id="stillinger" className="space-y-2">
+      <h2 className="text-lg font-semibold">Stillinger</h2>
+      <Card>
+        <CardContent className="py-6 text-center text-sm text-muted-foreground">
+          Stillinger vises når der er afholdt løb.
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 function league_name(_id: string) {
   return "ligaen";
 }
