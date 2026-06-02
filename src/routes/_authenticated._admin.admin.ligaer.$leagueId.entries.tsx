@@ -27,11 +27,22 @@ function AdminEntries() {
       const { data: divisions, error: divisionsError } = await supabase.from("divisions").select("id,name").eq("league_id", leagueId);
       if (divisionsError) throw divisionsError;
       const divisionIds = (divisions ?? []).map((d) => d.id);
-      if (divisionIds.length === 0) return [];
-      const { data: entries, error: entriesError } = await supabase.from("entries").select("*").in("division_id", divisionIds).order("created_at");
-      if (entriesError) throw entriesError;
       const divisionNames = new Map((divisions ?? []).map((d) => [d.id, d.name]));
-      return (entries ?? []).map((entry) => ({ ...entry, divisionName: entry.division_id ? (divisionNames.get(entry.division_id) ?? "Ukendt") : "Liga-tilmelding" }));
+
+      // Fetch entries belonging to this league directly OR to any of its divisions
+      const orFilter = divisionIds.length > 0
+        ? `league_id.eq.${leagueId},division_id.in.(${divisionIds.join(",")})`
+        : `league_id.eq.${leagueId}`;
+      const { data: entries, error: entriesError } = await supabase
+        .from("entries")
+        .select("*")
+        .or(orFilter)
+        .order("created_at");
+      if (entriesError) throw entriesError;
+      return (entries ?? []).map((entry) => ({
+        ...entry,
+        divisionName: entry.division_id ? (divisionNames.get(entry.division_id) ?? "Ukendt") : "Liga-tilmelding",
+      }));
     },
   });
 
