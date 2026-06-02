@@ -178,7 +178,10 @@ function AdminLeagues() {
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <CardTitle>{l.name}</CardTitle>
+                    <CardTitle className="flex items-center gap-2">
+                      {l.name}
+                      {l.is_offseason && <Badge variant="secondary" className="text-[10px]">Off-season</Badge>}
+                    </CardTitle>
                     {l.description && <p className="mt-1 text-sm text-muted-foreground">{l.description}</p>}
                     <div className="mt-2 flex flex-wrap gap-2">
                       {cfgs.length > 0
@@ -220,12 +223,14 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(league.name ?? "");
   const [desc, setDesc] = useState(league.description ?? "");
+  const [isOffseason, setIsOffseason] = useState<boolean>(!!league.is_offseason);
   const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) ? league.class_configs : [];
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
 
   const reset = () => {
     setName(league.name ?? "");
     setDesc(league.description ?? "");
+    setIsOffseason(!!league.is_offseason);
     setCfgs(Array.isArray(league.class_configs) ? league.class_configs : []);
   };
 
@@ -236,7 +241,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     e.preventDefault();
     const { error } = await supabase
       .from("leagues")
-      .update({ name: name.trim(), description: desc.trim() || null, class_configs: cfgs as any })
+      .update({ name: name.trim(), description: desc.trim() || null, class_configs: cfgs as any, is_offseason: isOffseason })
       .eq("id", league.id);
     if (error) return toast.error(error.message);
     toast.success("Liga opdateret");
@@ -256,6 +261,10 @@ function EditLeagueDialog({ league }: { league: any }) {
         <form onSubmit={submit} className="space-y-3">
           <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+          <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+            <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
+            <span className="text-sm">Off-season event</span>
+          </label>
           {cfgs.length > 0 && (
             <div className="space-y-2">
               <Label>Klasser · maks deltagere og DNS-grænse</Label>
