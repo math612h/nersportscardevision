@@ -449,18 +449,6 @@ function QuickNav() {
   );
 }
 
-function StandingsPlaceholder() {
-  return (
-    <div id="stillinger" className="space-y-2">
-      <h2 className="text-lg font-semibold">Stillinger</h2>
-      <Card>
-        <CardContent className="py-6 text-center text-sm text-muted-foreground">
-          Stillinger vises når der er afholdt løb.
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 function league_name(_id: string) {
   return "ligaen";
