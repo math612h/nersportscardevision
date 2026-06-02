@@ -146,31 +146,183 @@ function useLeagueSignups(leagueId: string) {
   });
 }
 
-function SignupsList({ leagueId }: { leagueId: string }) {
+function classOrder(configs: ClassConfig[]) {
+  return (a: { car_class: string; driver_category: string }, b: { car_class: string; driver_category: string }) => {
+    const ai = configs.findIndex((c) => c.car_class === a.car_class && c.driver_category === a.driver_category);
+    const bi = configs.findIndex((c) => c.car_class === b.car_class && c.driver_category === b.driver_category);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  };
+}
+
+function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { data } = useLeagueSignups(leagueId);
   if (!data || data.length === 0) return null;
-  const grouped = data.reduce<Record<string, typeof data>>((acc, e) => {
+
+  const keys = configs.length
+    ? configs.map((c) => `${c.car_class} · ${c.driver_category}`)
+    : Array.from(new Set(data.map((e) => `${e.car_class} · ${e.driver_category}`)));
+
+  const grouped: Record<string, typeof data> = {};
+  for (const k of keys) grouped[k] = [];
+  for (const e of data) {
     const k = `${e.car_class} · ${e.driver_category}`;
-    (acc[k] ??= [] as any).push(e);
-    return acc;
-  }, {});
+    (grouped[k] ??= [] as any).push(e);
+  }
+
   return (
     <div id="entryliste">
-      <h2 className="mb-2 text-lg font-semibold">Tilmeldte kørere</h2>
-      <div className="space-y-2">
-        {Object.entries(grouped).map(([k, list]) => (
+      <h2 className="mb-2 text-lg font-semibold">Entryliste</h2>
+      <div className="space-y-3">
+        {Object.entries(grouped).map(([k, list]) => {
+          if (!list || list.length === 0) return null;
+          const [cls, cat] = k.split(" · ");
+          return (
+            <Card key={k}>
+              <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <span>{cls}</span>
+                  <Badge variant="outline" className="text-[10px]">{cat}</Badge>
+                </CardTitle>
+                <span className="text-xs text-muted-foreground">{list.length} kører{list.length === 1 ? "" : "e"}</span>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ul className="divide-y divide-border">
+                  {list
+                    .slice()
+                    .sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0))
+                    .map((e) => (
+                      <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                        <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                          #{e.car_number}
+                        </span>
+                        <span className="flex-1 truncate">{e.driver_name}</span>
+                      </li>
+                    ))}
+                </ul>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+type ResultRow = {
+  car_number: number;
+  driver_name: string;
+  car_class: string;
+  driver_category: string;
+  class_position: number;
+  points: number;
+};
+
+function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
+  const { data: divisions } = useQuery({
+    queryKey: ["league-results", leagueId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("divisions")
+        .select("id,name,settings,race_date")
+        .eq("league_id", leagueId)
+        .order("race_date", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const completed = (divisions ?? []).filter((d: any) => d.settings?.completed && Array.isArray(d.settings?.results));
+
+  if (completed.length === 0) {
+    return (
+      <div id="stillinger" className="space-y-2">
+        <h2 className="text-lg font-semibold">Stillinger</h2>
+        <Card>
+          <CardContent className="py-6 text-center text-sm text-muted-foreground">
+            Stillinger vises når der er afholdt løb.
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Aggregate per driver per class+cat
+  type Agg = { car_number: number; driver_name: string; car_class: string; driver_category: string; total: number; rounds: Record<string, number> };
+  const map = new Map<string, Agg>();
+  for (const d of completed as any[]) {
+    for (const r of d.settings.results as ResultRow[]) {
+      const key = `${r.car_class}|${r.driver_category}|${r.car_number}`;
+      const cur = map.get(key) ?? {
+        car_number: r.car_number,
+        driver_name: r.driver_name,
+        car_class: r.car_class,
+        driver_category: r.driver_category,
+        total: 0,
+        rounds: {},
+      };
+      cur.total += r.points;
+      cur.rounds[d.id] = r.points;
+      map.set(key, cur);
+    }
+  }
+
+  const allRows = Array.from(map.values());
+  const groupKeys = configs.length
+    ? configs.map((c) => `${c.car_class} · ${c.driver_category}`)
+    : Array.from(new Set(allRows.map((r) => `${r.car_class} · ${r.driver_category}`)));
+
+  return (
+    <div id="stillinger" className="space-y-3">
+      <h2 className="text-lg font-semibold">Stillinger</h2>
+      {groupKeys.map((k) => {
+        const [cls, cat] = k.split(" · ");
+        const rows = allRows
+          .filter((r) => r.car_class === cls && r.driver_category === cat)
+          .sort((a, b) => b.total - a.total);
+        if (rows.length === 0) return null;
+        return (
           <Card key={k}>
-            <CardHeader className="pb-2"><CardTitle className="text-sm">{k}</CardTitle></CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-1.5">
-                {list.map((e) => (
-                  <Badge key={e.id} variant="secondary">#{e.car_number} {e.driver_name}</Badge>
-                ))}
-              </div>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <span>{cls}</span>
+                <Badge variant="outline" className="text-[10px]">{cat}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-muted-foreground">
+                    <th className="py-1 pr-2 w-8">#</th>
+                    <th className="py-1 pr-2">Kører</th>
+                    <th className="py-1 pr-2 w-12 text-center">Nr.</th>
+                    {completed.map((d: any) => (
+                      <th key={d.id} className="py-1 px-1 w-10 text-center" title={d.name}>
+                        {d.name.slice(0, 4)}
+                      </th>
+                    ))}
+                    <th className="py-1 pl-2 w-12 text-right">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((r, i) => (
+                    <tr key={r.car_number} className="border-t border-border">
+                      <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
+                      <td className="py-1.5 pr-2 truncate">{r.driver_name}</td>
+                      <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
+                      {completed.map((d: any) => (
+                        <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
+                          {r.rounds[d.id] ?? "–"}
+                        </td>
+                      ))}
+                      <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </CardContent>
           </Card>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
