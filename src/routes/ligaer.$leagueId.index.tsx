@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, getTrackImageFile } from "@/lib/tracks";
 
-export const Route = createFileRoute("/ligaer/$leagueId")({
+export const Route = createFileRoute("/ligaer/$leagueId/")({
   component: LeagueDetail,
 });
 
