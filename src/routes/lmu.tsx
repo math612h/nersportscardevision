@@ -92,6 +92,7 @@ function CardGrid({ children }: { children: React.ReactNode }) {
 }
 
 function LeaderboardTeaser() {
+  type TeaserRow = { id: string; driver_name: string; track: string; layout: string | null; car_class: string; best_lap_ms: number };
   const { data: rows } = useQuery({
     queryKey: ["leaderboard-teaser"],
     queryFn: async () => {
