@@ -26,6 +26,8 @@ export type ClassConfig = {
   driver_category: string;
   number_from: number;
   number_to: number;
+  max_drivers?: number; // optional grid cap (waitlist activates when exceeded)
+  dns_limit?: number;   // optional max DNS before driver auto-moves to waitlist
 };
 
 export type WeatherKey = "sunny" | "cloudy" | "light_rain" | "moderate_rain" | "storm";
