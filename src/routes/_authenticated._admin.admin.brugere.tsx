@@ -142,6 +142,15 @@ function AdminUsersPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
+                      variant={p.approved ? "ghost" : "default"}
+                      size="icon"
+                      aria-label={p.approved ? "Fjern godkendelse" : "Godkend profil"}
+                      onClick={() => approveMut.mutate({ userId: p.id, approved: !p.approved })}
+                      disabled={approveMut.isPending}
+                    >
+                      <ThumbsUp className={`h-4 w-4 ${p.approved ? "text-green-600" : ""}`} />
+                    </Button>
+                    <Button
                       variant="ghost"
                       size="icon"
                       aria-label={isAdmin ? "Fjern admin-rolle" : "Tildel admin-rolle"}
