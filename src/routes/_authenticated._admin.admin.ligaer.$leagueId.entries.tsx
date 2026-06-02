@@ -1,13 +1,16 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, Trash2, ArrowLeftRight } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ArrowLeftRight, CheckCircle2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { approveEntry } from "@/lib/leagues.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,8 +52,19 @@ function AdminEntries() {
   const del = useMutation({
     mutationFn: async (id: string) => { const { error } = await supabase.from("entries").delete().eq("id", id); if (error) throw error; },
     onSuccess: () => { toast.success("Fjernet"); qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] }); },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: Error) => toast.error(e.message),
   });
+
+  const approve = useServerFn(approveEntry);
+  const approveMut = useMutation({
+    mutationFn: async (entryId: string) => approve({ data: { entryId } }),
+    onSuccess: (res) => {
+      toast.success(res.alreadyApproved ? "Allerede godkendt" : "Godkendt – kører har fået besked");
+      qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
 
   // Group by division → class → category
   const grouped = (data ?? []).reduce<Record<string, Record<string, Record<string, any[]>>>>((acc, e: any) => {
@@ -83,13 +97,23 @@ function AdminEntries() {
                     <ul className="space-y-1">
                       {list.map((e) => (
                         <li key={e.id} className="flex items-center justify-between rounded border border-border px-3 py-1.5 text-sm">
-                          <span className="flex items-center gap-2">
+                          <span className="flex items-center gap-2 min-w-0">
                             {e.car_number != null && (
                               <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-muted px-1.5 font-mono text-xs">#{e.car_number}</span>
                             )}
-                            {e.driver_name}
+                            <span className="truncate">{e.driver_name}</span>
+                            {e.approved ? (
+                              <Badge variant="secondary" className="gap-1 text-[10px]"><CheckCircle2 className="h-3 w-3" />Godkendt</Badge>
+                            ) : (
+                              <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400"><Clock className="h-3 w-3" />Afventer</Badge>
+                            )}
                           </span>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 shrink-0">
+                            {!e.approved && (
+                              <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" disabled={approveMut.isPending} onClick={() => approveMut.mutate(e.id)}>
+                                <CheckCircle2 className="h-3.5 w-3.5" /> Godkend
+                              </Button>
+                            )}
                             <MoveEntryDialog entry={e} leagueId={leagueId} allEntries={data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
                             <Button variant="ghost" size="sm" onClick={() => del.mutate(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                           </div>
