@@ -149,7 +149,7 @@ function SignupsList({ leagueId }: { leagueId: string }) {
     return acc;
   }, {});
   return (
-    <div>
+    <div id="entryliste">
       <h2 className="mb-2 text-lg font-semibold">Tilmeldte kørere</h2>
       <div className="space-y-2">
         {Object.entries(grouped).map(([k, list]) => (
