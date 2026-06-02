@@ -289,6 +289,7 @@ function DivisionEditor({
               fastest_lap: false,
               finish_time_ms: 0,
               penalty_seconds: Math.max(0, r.penalty_seconds),
+              penalty_points: Math.max(0, r.penalty_points),
               effective_ms: 0,
               dnf: r.dnf && !r.dns,
               dns: r.dns,
