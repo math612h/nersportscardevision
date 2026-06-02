@@ -456,15 +456,18 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name")
+        .select("display_name,lmu_name")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as { display_name: string | null; lmu_name: string | null } | null;
     },
   });
 
   const driverName = (profile?.display_name ?? user?.email?.split("@")[0] ?? "").trim();
+  const existingLmu = (profile?.lmu_name ?? "").trim();
+  const [lmuInput, setLmuInput] = useState("");
+  const effectiveLmu = (existingLmu || lmuInput).trim();
 
   const alreadySignedUp = !!user && (signups ?? []).some((s) => s.user_id === user.id);
   const selected = configs[Number(cfgIdx)];
@@ -491,6 +494,14 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     if (!selected) return toast.error("Vælg en klasse.");
     if (carNumber == null) return toast.error("Vælg et kørenummer.");
     if (!driverName) return toast.error("Dit kørernavn mangler på profilen.");
+    if (!effectiveLmu) return toast.error("Indtast dit LMU-navn præcis som det står i spillet.");
+
+    // Persist LMU name on profile if user just provided it
+    if (!existingLmu && lmuInput.trim()) {
+      const { error: pErr } = await supabase.from("profiles").update({ lmu_name: lmuInput.trim() }).eq("id", user.id);
+      if (pErr) return toast.error(`Kunne ikke gemme LMU-navn: ${pErr.message}`);
+    }
+
     const { error } = await supabase.from("entries").insert({
       league_id: leagueId,
       user_id: user.id,
@@ -505,6 +516,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     setOpen(false);
     setCarNumber(null);
     qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
+    qc.invalidateQueries({ queryKey: ["profile", user.id] });
   };
 
 
