@@ -398,6 +398,68 @@ export type Database = {
           },
         ]
       }
+      ruleset_template_rules: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          section_number: string | null
+          sort_order: number
+          template_id: string
+          title: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          section_number?: string | null
+          sort_order?: number
+          template_id: string
+          title: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          section_number?: string | null
+          sort_order?: number
+          template_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ruleset_template_rules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "ruleset_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ruleset_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       rulesets: {
         Row: {
           content: string
