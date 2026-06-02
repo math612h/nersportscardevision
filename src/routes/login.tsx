@@ -44,7 +44,9 @@ function LoginPage() {
 
   const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    const name = displayName.trim();
     const lmu = lmuName.trim();
+    if (!name) { toast.error("Indtast dit visningsnavn."); return; }
     if (!lmu) { toast.error("Indtast dit LMU-navn præcis som det står i Le Mans Ultimate."); return; }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
@@ -52,10 +54,7 @@ function LoginPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: {
-          display_name: displayName || email.split("@")[0],
-          lmu_name: lmu,
-        },
+        data: { display_name: name, lmu_name: lmu },
       },
     });
     setLoading(false);
