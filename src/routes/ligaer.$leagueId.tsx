@@ -136,10 +136,10 @@ function useLeagueSignups(leagueId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at")
         .eq("league_id", leagueId)
         .is("division_id", null)
-        .order("car_number");
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
     },
@@ -169,6 +169,9 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
         {Object.entries(grouped).map(([k, list]) => {
           if (!list || list.length === 0) return null;
           const [cls, cat] = k.split(" · ");
+          const cfg = configs.find((c) => c.car_class === cls && c.driver_category === cat);
+          const grid = list.filter((e) => !e.waitlist).sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0));
+          const wait = list.filter((e) => e.waitlist).sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
           return (
             <Card key={k}>
               <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
@@ -176,22 +179,37 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                   <span>{cls}</span>
                   <Badge variant="outline" className="text-[10px]">{cat}</Badge>
                 </CardTitle>
-                <span className="text-xs text-muted-foreground">{list.length} kører{list.length === 1 ? "" : "e"}</span>
+                <span className="text-xs text-muted-foreground">
+                  {grid.length}{cfg?.max_drivers ? `/${cfg.max_drivers}` : ""} på grid{wait.length > 0 ? ` · ${wait.length} på venteliste` : ""}
+                </span>
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="pt-0 space-y-3">
                 <ul className="divide-y divide-border">
-                  {list
-                    .slice()
-                    .sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0))
-                    .map((e) => (
-                      <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
-                        <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
-                          #{e.car_number}
-                        </span>
-                        <span className="flex-1 truncate">{e.driver_name}</span>
-                      </li>
-                    ))}
+                  {grid.map((e) => (
+                    <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                      <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                        #{e.car_number}
+                      </span>
+                      <span className="flex-1 truncate">{e.driver_name}</span>
+                    </li>
+                  ))}
                 </ul>
+                {wait.length > 0 && (
+                  <div className="rounded-md border border-dashed border-border p-2">
+                    <p className="mb-1 text-xs font-semibold text-muted-foreground">Venteliste</p>
+                    <ul className="divide-y divide-border">
+                      {wait.map((e, idx) => (
+                        <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                          <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-muted px-1.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                            {idx + 1}
+                          </span>
+                          <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
+                          <span className="flex-1 truncate">{e.driver_name}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );
