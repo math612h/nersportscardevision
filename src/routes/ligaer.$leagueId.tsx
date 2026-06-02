@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig } from "@/lib/tracks";
+import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, getTrackImageFile } from "@/lib/tracks";
 
 export const Route = createFileRoute("/ligaer/$leagueId")({
   component: LeagueDetail,
@@ -45,6 +45,24 @@ function LeagueDetail() {
   });
 
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
+
+  const trackFiles = useMemo(() => {
+    const set = new Set<string>();
+    (divisions ?? []).forEach((d: any) => { const f = getTrackImageFile(d.track); if (f) set.add(f); });
+    return Array.from(set);
+  }, [divisions]);
+
+  const { data: imageMap } = useQuery({
+    queryKey: ["track-image-urls", trackFiles.sort().join(",")],
+    enabled: trackFiles.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage.from("track-images").createSignedUrls(trackFiles, 60 * 60 * 24 * 7);
+      if (error) throw error;
+      const m: Record<string, string> = {};
+      data?.forEach((d) => { if (d.path && d.signedUrl) m[d.path] = d.signedUrl; });
+      return m;
+    },
+  });
 
   return (
     <div className="space-y-6">
@@ -86,9 +104,16 @@ function LeagueDetail() {
           {divisions?.map((d: any) => {
             const slots: WeatherKey[] = Array.isArray(d.settings?.weather) ? d.settings.weather : [];
             const completed = !!d.settings?.completed;
+            const imgFile = getTrackImageFile(d.track);
+            const imgUrl = imgFile ? imageMap?.[imgFile] : null;
             return (
               <Link key={d.id} to="/ligaer/$leagueId/afdeling/$divisionId" params={{ leagueId, divisionId: d.id }}>
-                <Card className="cursor-pointer transition hover:border-primary">
+                <Card className="cursor-pointer overflow-hidden transition hover:border-primary">
+                  {imgUrl && (
+                    <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+                      <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover" loading="lazy" />
+                    </div>
+                  )}
                   <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
                       {d.name}
