@@ -120,6 +120,8 @@ function LeagueDetail() {
           })}
         </div>
       </div>
+
+      <StandingsPlaceholder />
     </div>
   );
 }
