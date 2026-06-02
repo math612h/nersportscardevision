@@ -78,7 +78,13 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     const blt = parseFloat(get("BestLapTime"));
     const fin = parseFloat(get("FinishTime"));
     const carClass = get("CarClass");
-    const carModel = get("VehName") || get("CarType") || get("VehFile") || null;
+    const manufacturer = get("Manufacturer");
+    const carType = get("CarType");
+    const vehFile = get("VehFile").replace(/\.veh$/i, "");
+    let carModel: string | null = null;
+    if (carType) carModel = manufacturer && !carType.toLowerCase().includes(manufacturer.toLowerCase()) ? `${manufacturer} ${carType}` : carType;
+    else if (manufacturer) carModel = manufacturer;
+    else if (vehFile) carModel = vehFile;
     return {
       name: get("Name"),
       carClass,
