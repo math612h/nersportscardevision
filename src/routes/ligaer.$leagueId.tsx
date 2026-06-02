@@ -75,7 +75,7 @@ function LeagueDetail() {
 
       <QuickNav />
 
-      {league && <SignupsList leagueId={leagueId} />}
+      {league && <SignupsList leagueId={leagueId} configs={configs} />}
 
       <div id="kalender">
         <h2 className="mb-2 text-lg font-semibold">Afdelinger</h2>
@@ -85,11 +85,15 @@ function LeagueDetail() {
         <div className="grid gap-3 sm:grid-cols-2">
           {divisions?.map((d: any) => {
             const slots: WeatherKey[] = Array.isArray(d.settings?.weather) ? d.settings.weather : [];
+            const completed = !!d.settings?.completed;
             return (
               <Link key={d.id} to="/ligaer/$leagueId/afdeling/$divisionId" params={{ leagueId, divisionId: d.id }}>
                 <Card className="cursor-pointer transition hover:border-primary">
                   <CardHeader>
-                    <CardTitle className="text-base">{d.name}</CardTitle>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      {d.name}
+                      {completed && <Badge variant="secondary" className="text-[10px]">Afsluttet</Badge>}
+                    </CardTitle>
                     <CardDescription className="flex flex-wrap items-center gap-2">
                       {d.track && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{d.track}{d.layout ? ` · ${d.layout}` : ""}</span>}
                     </CardDescription>
@@ -121,7 +125,7 @@ function LeagueDetail() {
         </div>
       </div>
 
-      <StandingsPlaceholder />
+      <Standings leagueId={leagueId} configs={configs} />
     </div>
   );
 }
