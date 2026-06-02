@@ -2,9 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-export const approveEntry = createServerFn({ method: "POST" })
+export const setProfileApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ entryId: z.string().uuid() }).parse(input))
+  .inputValidator((input) =>
+    z.object({
+      targetUserId: z.string().uuid(),
+      approved: z.boolean(),
+    }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { userId } = context;
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -14,41 +19,35 @@ export const approveEntry = createServerFn({ method: "POST" })
       .select("role")
       .eq("user_id", userId);
     const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
-    if (!isAdmin) throw new Error("Kun admins kan godkende tilmeldinger.");
+    if (!isAdmin) throw new Error("Kun admins kan godkende profiler.");
 
-    const { data: entry, error: eErr } = await supabaseAdmin
-      .from("entries")
-      .select("id,user_id,league_id,approved")
-      .eq("id", data.entryId)
+    const { data: profile, error: pErr } = await supabaseAdmin
+      .from("profiles")
+      .select("id,approved,display_name")
+      .eq("id", data.targetUserId)
       .maybeSingle();
-    if (eErr) throw new Error(eErr.message);
-    if (!entry) throw new Error("Tilmelding findes ikke.");
-    if (entry.approved) return { ok: true, alreadyApproved: true };
-
-    const { error: upErr } = await supabaseAdmin
-      .from("entries")
-      .update({ approved: true })
-      .eq("id", entry.id);
-    if (upErr) throw new Error(upErr.message);
-
-    let leagueName = "ligaen";
-    if (entry.league_id) {
-      const { data: league } = await supabaseAdmin
-        .from("leagues")
-        .select("name")
-        .eq("id", entry.league_id)
-        .maybeSingle();
-      if (league?.name) leagueName = league.name;
+    if (pErr) throw new Error(pErr.message);
+    if (!profile) throw new Error("Profil findes ikke.");
+    if (profile.approved === data.approved) {
+      return { ok: true, changed: false, approved: data.approved };
     }
 
-    await supabaseAdmin.from("notifications").insert({
-      user_id: entry.user_id,
-      title: `Din tilmelding til ${leagueName} er godkendt`,
-      body: `Du er nu endelig godkendt som deltager og kan se lobby-information på afdelingerne.`,
-      link: entry.league_id ? `/ligaer/${entry.league_id}` : null,
-    });
+    const { error: upErr } = await supabaseAdmin
+      .from("profiles")
+      .update({ approved: data.approved })
+      .eq("id", data.targetUserId);
+    if (upErr) throw new Error(upErr.message);
 
-    return { ok: true, alreadyApproved: false };
+    if (data.approved) {
+      await supabaseAdmin.from("notifications").insert({
+        user_id: data.targetUserId,
+        title: `Din profil er blevet godkendt`,
+        body: `Du kan nu deltage i ligaer uden yderligere godkendelse, og du har adgang til lobby-information på dine afdelinger.`,
+        link: `/profil`,
+      });
+    }
+
+    return { ok: true, changed: true, approved: data.approved };
   });
 
 export const leaveLeague = createServerFn({ method: "POST" })

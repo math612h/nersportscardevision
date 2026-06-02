@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { approveEntry } from "@/lib/leagues.functions";
+import { setProfileApproval } from "@/lib/leagues.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,6 @@ function AdminEntries() {
       const divisionIds = (divisions ?? []).map((d) => d.id);
       const divisionNames = new Map((divisions ?? []).map((d) => [d.id, d.name]));
 
-      // Fetch entries belonging to this league directly OR to any of its divisions
       const orFilter = divisionIds.length > 0
         ? `league_id.eq.${leagueId},division_id.in.(${divisionIds.join(",")})`
         : `league_id.eq.${leagueId}`;
@@ -42,9 +41,22 @@ function AdminEntries() {
         .or(orFilter)
         .order("created_at");
       if (entriesError) throw entriesError;
+
+      const userIds = Array.from(new Set((entries ?? []).map((e) => e.user_id).filter(Boolean)));
+      let approvedMap = new Map<string, boolean>();
+      if (userIds.length > 0) {
+        const { data: profiles, error: pErr } = await supabase
+          .from("profiles")
+          .select("id,approved")
+          .in("id", userIds);
+        if (pErr) throw pErr;
+        approvedMap = new Map((profiles ?? []).map((p) => [p.id, !!p.approved]));
+      }
+
       return (entries ?? []).map((entry) => ({
         ...entry,
         divisionName: entry.division_id ? (divisionNames.get(entry.division_id) ?? "Ukendt") : "Liga-tilmelding",
+        profileApproved: approvedMap.get(entry.user_id) ?? false,
       }));
     },
   });
@@ -55,15 +67,21 @@ function AdminEntries() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const approve = useServerFn(approveEntry);
-  const approveMut = useMutation({
-    mutationFn: async (entryId: string) => approve({ data: { entryId } }),
+  const setApproval = useServerFn(setProfileApproval);
+  const approvalMut = useMutation({
+    mutationFn: async (vars: { targetUserId: string; approved: boolean }) =>
+      setApproval({ data: vars }),
     onSuccess: (res) => {
-      toast.success(res.alreadyApproved ? "Allerede godkendt" : "Godkendt – kører har fået besked");
+      if (!res.changed) {
+        toast.message(res.approved ? "Allerede godkendt" : "Allerede ikke-godkendt");
+      } else {
+        toast.success(res.approved ? "Profil godkendt – kører har fået besked" : "Godkendelse fjernet");
+      }
       qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
 
   // Group by division → class → category
@@ -96,24 +114,34 @@ function AdminEntries() {
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">{cat}</p>
                     <ul className="space-y-1">
                       {list.map((e) => (
-                        <li key={e.id} className="flex items-center justify-between rounded border border-border px-3 py-1.5 text-sm">
+                        <li key={e.id} className={`flex items-center justify-between rounded border px-3 py-1.5 text-sm ${e.profileApproved ? "border-emerald-500/40 bg-emerald-500/5" : "border-border"}`}>
                           <span className="flex items-center gap-2 min-w-0">
                             {e.car_number != null && (
                               <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-muted px-1.5 font-mono text-xs">#{e.car_number}</span>
                             )}
                             <span className="truncate">{e.driver_name}</span>
-                            {e.approved ? (
-                              <Badge variant="secondary" className="gap-1 text-[10px]"><CheckCircle2 className="h-3 w-3" />Godkendt</Badge>
+                            {e.profileApproved ? (
+                              <Badge variant="secondary" className="gap-1 text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+                                <CheckCircle2 className="h-3 w-3" />Godkendt profil
+                              </Badge>
                             ) : (
-                              <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400"><Clock className="h-3 w-3" />Afventer</Badge>
+                              <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">
+                                <Clock className="h-3 w-3" />Afventer
+                              </Badge>
                             )}
                           </span>
                           <div className="flex items-center gap-1 shrink-0">
-                            {!e.approved && (
-                              <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" disabled={approveMut.isPending} onClick={() => approveMut.mutate(e.id)}>
-                                <CheckCircle2 className="h-3.5 w-3.5" /> Godkend
-                              </Button>
-                            )}
+                            <Button
+                              variant={e.profileApproved ? "ghost" : "outline"}
+                              size="sm"
+                              className={`h-7 gap-1 text-xs ${e.profileApproved ? "text-emerald-600 dark:text-emerald-400" : ""}`}
+                              disabled={approvalMut.isPending}
+                              onClick={() => approvalMut.mutate({ targetUserId: e.user_id, approved: !e.profileApproved })}
+                              title={e.profileApproved ? "Fjern godkendelse" : "Godkend profil"}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              {e.profileApproved ? "Godkendt" : "Godkend"}
+                            </Button>
                             <MoveEntryDialog entry={e} leagueId={leagueId} allEntries={data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
                             <Button variant="ghost" size="sm" onClick={() => del.mutate(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                           </div>

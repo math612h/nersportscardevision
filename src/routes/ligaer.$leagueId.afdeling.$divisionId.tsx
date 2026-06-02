@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,6 +86,21 @@ function DivisionDetail() {
     },
   });
 
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-profile-approved", user?.id ?? "anon"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("approved")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { approved: boolean | null } | null;
+    },
+  });
+  const isApproved = !!myProfile?.approved;
+
   const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
   const reasonByUser = new Map((absenceReasons ?? []).map((a) => [a.user_id, a.reason]));
   const myAbsence = user ? absenceByUser.get(user.id) : undefined;
@@ -160,6 +175,45 @@ function DivisionDetail() {
           </CardContent>
         </Card>
       )}
+
+      {(() => {
+        const settings = (div?.settings ?? {}) as { lobby_code?: string | null; lobby_password?: string | null };
+        const hasLobby = !!(settings.lobby_code || settings.lobby_password);
+        if (!hasLobby) return null;
+        if (!user || !mySignup) return null;
+        if (!isApproved) {
+          return (
+            <Card className="border-dashed">
+              <CardContent className="flex items-start gap-2 py-4 text-sm text-muted-foreground">
+                <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>Lobby code og password vises når din profil er godkendt af en admin.</span>
+              </CardContent>
+            </Card>
+          );
+        }
+        return (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center gap-2"><KeyRound className="h-4 w-4 text-primary" /> Lobby info</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {settings.lobby_code && (
+                <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Lobby code</span>
+                  <span className="font-mono font-semibold">{settings.lobby_code}</span>
+                </div>
+              )}
+              {settings.lobby_password && (
+                <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Password</span>
+                  <span className="font-mono font-semibold">{settings.lobby_password}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
 
       <div className="flex flex-wrap gap-2">
         {!user && (

@@ -123,6 +123,8 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   const [weather, setWeather] = useState<WeatherKey[]>(Array(WEATHER_SLOT_COUNT).fill("sunny"));
   const [temperature, setTemperature] = useState<number>(22);
   const [flPoints, setFlPoints] = useState<number>(1);
+  const [lobbyCode, setLobbyCode] = useState("");
+  const [lobbyPassword, setLobbyPassword] = useState("");
 
   const [trackIdxStr, layout] = trackLayout.split("::");
   const track = LMU_TRACKS[Number(trackIdxStr)];
@@ -136,10 +138,21 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
       car_class: carClass, driver_category: category,
       track: track.name, layout,
       race_date: raceDate ? new Date(raceDate).toISOString() : null,
-      settings: { weather, fastest_lap_points: flPoints, temperature },
+      settings: {
+        weather,
+        fastest_lap_points: flPoints,
+        temperature,
+        lobby_code: lobbyCode.trim() || null,
+        lobby_password: lobbyPassword.trim() || null,
+      },
     });
     if (error) return toast.error(error.message);
-    toast.success("Afdeling oprettet"); setOpen(false); setName(""); setRaceDate(""); setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny")); setTemperature(22); setFlPoints(1); onDone();
+    toast.success("Afdeling oprettet");
+    setOpen(false); setName(""); setRaceDate("");
+    setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny"));
+    setTemperature(22); setFlPoints(1);
+    setLobbyCode(""); setLobbyPassword("");
+    onDone();
   };
 
   return (
@@ -175,6 +188,17 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
             <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
             <p className="mt-1 text-xs text-muted-foreground">Lufttemperatur for løbet.</p>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Lobby code</Label>
+              <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+            </div>
+          </div>
+          <p className="-mt-2 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
           <div className="space-y-2">
             <Label>Vejr (5 slots)</Label>
             <div className="space-y-2">
@@ -215,10 +239,19 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
   const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
   const [temperature, setTemperature] = useState<number>(Number(division.settings?.temperature ?? 22));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
+  const [lobbyCode, setLobbyCode] = useState<string>(String(division.settings?.lobby_code ?? ""));
+  const [lobbyPassword, setLobbyPassword] = useState<string>(String(division.settings?.lobby_password ?? ""));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newSettings = { ...(division.settings ?? {}), fastest_lap_points: flPoints, temperature, completed };
+    const newSettings = {
+      ...(division.settings ?? {}),
+      fastest_lap_points: flPoints,
+      temperature,
+      completed,
+      lobby_code: lobbyCode.trim() || null,
+      lobby_password: lobbyPassword.trim() || null,
+    };
     const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
     if (error) return toast.error(error.message);
     toast.success("Opdateret");
@@ -231,7 +264,7 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm"><Pencil className="h-4 w-4" /></Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Rediger {division.name}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div>
@@ -242,6 +275,17 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
             <Label>Temperatur (°C)</Label>
             <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Lobby code</Label>
+              <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+            </div>
+          </div>
+          <p className="-mt-1 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
             Marker som afsluttet
