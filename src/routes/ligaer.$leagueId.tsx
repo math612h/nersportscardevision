@@ -228,6 +228,7 @@ type ResultRow = {
   points: number;
   fastest_lap?: boolean;
   penalty_seconds?: number;
+  penalty_points?: number;
   dns?: boolean;
 };
 
