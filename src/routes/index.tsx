@@ -20,7 +20,6 @@ function SimPicker() {
         <SimCard
           to="/lmu"
           title="Le Mans Ultimate"
-          subtitle="Officielle FIA WEC ligaer"
           image={lmuCover.url}
         />
         <SimCard
@@ -43,7 +42,7 @@ function SimCard({
 }: {
   to?: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   image: string;
   disabled?: boolean;
 }) {
