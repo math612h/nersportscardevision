@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS } from "@/lib/lmu-parser";
+import { DriverLink } from "@/components/DriverLink";
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -272,7 +273,7 @@ function LeaderboardPage() {
                       <td className="px-3 py-2 font-semibold tabular-nums">{i + 1}</td>
                       <td className="px-3 py-2">
                         <div className="flex items-center gap-2">
-                          <span className="truncate">{r.driver_name}</span>
+                          <DriverLink userId={r.user_id} name={r.driver_name} className="truncate" />
                           {!r.user_id && <Badge variant="outline" className="text-[10px]">Gæst</Badge>}
                         </div>
                       </td>

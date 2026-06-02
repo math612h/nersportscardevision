@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DriverLink } from "@/components/DriverLink";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -213,7 +214,7 @@ function DivisionDetail() {
                           <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
                             #{e.car_number}
                           </span>
-                          <span className={`flex-1 truncate ${ab ? "line-through" : ""}`}>{e.driver_name}</span>
+                          <DriverLink userId={e.user_id} name={e.driver_name} className={`flex-1 truncate ${ab ? "line-through" : ""}`} />
                           {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
                           {ab && (
                             <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
@@ -238,7 +239,7 @@ function DivisionDetail() {
                 const e = (signups ?? []).find((s) => s.user_id === a.user_id);
                 return (
                   <li key={a.id} className="rounded border border-border px-3 py-2 text-sm">
-                    <span className="font-medium">{e?.driver_name ?? "Ukendt kører"}:</span>{" "}
+                    <DriverLink userId={e?.user_id} name={e?.driver_name ?? "Ukendt kører"} className="font-medium" />:{" "}
                     <span className="text-muted-foreground">{a.reason}</span>
                   </li>
                 );

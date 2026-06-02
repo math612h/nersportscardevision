@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ async function signedAvatarUrl(path: string | null) {
 function ProfilePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const { data: profile, isLoading } = useQuery({
@@ -34,7 +35,7 @@ function ProfilePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, lmu_name, age, bio, achievements, avatar_url")
+        .select("id, display_name, lmu_name, age, bio, achievements, avatar_url, discord_username")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
@@ -53,6 +54,7 @@ function ProfilePage() {
   const [age, setAge] = useState("");
   const [bio, setBio] = useState("");
   const [achievements, setAchievements] = useState("");
+  const [discord, setDiscord] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -63,6 +65,7 @@ function ProfilePage() {
     setAge(profile.age != null ? String(profile.age) : "");
     setBio(profile.bio ?? "");
     setAchievements(profile.achievements ?? "");
+    setDiscord(profile.discord_username ?? "");
   }, [profile]);
 
   const onSave = async (e: React.FormEvent) => {
@@ -85,12 +88,14 @@ function ProfilePage() {
         age: ageNum,
         bio: bio.trim() || null,
         achievements: achievements.trim() || null,
+        discord_username: discord.trim() || null,
       })
       .eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Profil opdateret.");
     qc.invalidateQueries({ queryKey: ["my-profile", user.id] });
+    if (window.history.length > 1) router.history.back();
   };
 
   const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,6 +162,10 @@ function ProfilePage() {
               <div>
                 <Label>Alder</Label>
                 <Input type="number" min={0} max={120} value={age} onChange={(e) => setAge(e.target.value)} />
+              </div>
+              <div>
+                <Label>Discord-brugernavn</Label>
+                <Input value={discord} onChange={(e) => setDiscord(e.target.value)} maxLength={80} placeholder="dit_discord_navn" />
               </div>
               <div>
                 <Label>Email</Label>
