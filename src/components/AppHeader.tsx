@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 export function AppHeader() {
   const { user, isAdmin, signOut, loading } = useAuth();
@@ -59,6 +60,7 @@ export function AppHeader() {
           )}
           {user ? (
             <>
+              <NotificationsBell />
               <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil">
                 <UserCircle2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Profil</span>

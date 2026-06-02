@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, Users, Trophy, ArrowUpRight, Zap } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { leaveLeague } from "@/lib/leagues.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, getTrackImageFile } from "@/lib/tracks";
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
@@ -95,6 +98,7 @@ function LeagueDetail() {
             <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
           </Link>
           {league && <SignupDialog leagueId={leagueId} configs={configs} />}
+          {league && <LeaveLeagueButton leagueId={leagueId} />}
         </div>
       </header>
 
@@ -639,4 +643,59 @@ function QuickNav() {
 
 function league_name(_id: string) {
   return "ligaen";
+}
+
+function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const { data: signups } = useLeagueSignups(leagueId);
+  const leave = useServerFn(leaveLeague);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  if (!user) return null;
+  const mine = (signups ?? []).find((s) => s.user_id === user.id);
+  if (!mine) return null;
+
+  const onConfirm = async () => {
+    setLoading(true);
+    try {
+      const res = await leave({ data: { leagueId } });
+      if (res.promotedDriver) {
+        toast.success(`Du er meldt ud. ${res.promotedDriver} er rykket op fra ventelisten.`);
+      } else {
+        toast.success("Du er meldt ud af ligaen.");
+      }
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke melde dig ud.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2">
+          <UserMinus className="h-4 w-4" /> Meld dig ud
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Meld dig ud af ligaen?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Din tilmelding bliver slettet. Hvis du stod på griddet, rykker den første på ventelisten automatisk op og får besked.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={loading}>Annullér</AlertDialogCancel>
+          <AlertDialogAction onClick={(e) => { e.preventDefault(); void onConfirm(); }} disabled={loading}>
+            {loading ? "Melder ud…" : "Ja, meld mig ud"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 }
