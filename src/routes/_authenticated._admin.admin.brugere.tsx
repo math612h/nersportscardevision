@@ -1,8 +1,9 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Pencil, Shield } from "lucide-react";
+import { Users, Pencil, Shield, ShieldOff, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { toggleUserRole } from "@/lib/users.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/brugere")({
   component: AdminUsersPage,
@@ -26,6 +28,8 @@ type Role = { user_id: string; role: string };
 
 function AdminUsersPage() {
   const [search, setSearch] = useState("");
+  const qc = useQueryClient();
+  const toggleRole = useServerFn(toggleUserRole);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -51,9 +55,25 @@ function AdminUsersPage() {
     (p.display_name ?? "").toLowerCase().includes(search.toLowerCase()),
   );
 
+  const roleMut = useMutation({
+    mutationFn: async ({ userId, assign }: { userId: string; assign: boolean }) => {
+      await toggleRole({ data: { userId, role: "admin", assign } });
+    },
+    onSuccess: (_, { assign }) => {
+      toast.success(assign ? "Admin-rolle tildelt" : "Admin-rolle fjernet");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        <Link to="/admin">
+          <Button variant="outline" size="icon" aria-label="Tilbage til admin">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
         <Users className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold">Brugere</h1>
       </div>
@@ -69,26 +89,45 @@ function AdminUsersPage() {
         <p className="text-muted-foreground">Indlæser…</p>
       ) : (
         <div className="space-y-2">
-          {filtered.map((p) => (
-            <Card key={p.id}>
-              <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 py-3">
-                <div className="min-w-0 flex-1">
-                  <CardTitle className="truncate text-base">
-                    {p.display_name || "(uden navn)"}
-                  </CardTitle>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {(rolesByUser.get(p.id) ?? ["racer"]).map((r) => (
-                      <Badge key={r} variant={r === "admin" ? "default" : "secondary"} className="text-xs">
-                        {r === "admin" && <Shield className="mr-1 h-3 w-3" />}
-                        {r}
-                      </Badge>
-                    ))}
+          {filtered.map((p) => {
+            const userRoles = rolesByUser.get(p.id) ?? ["racer"];
+            const isAdmin = userRoles.includes("admin");
+            return (
+              <Card key={p.id}>
+                <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 py-3">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="truncate text-base">
+                      {p.display_name || "(uden navn)"}
+                    </CardTitle>
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {userRoles.map((r) => (
+                        <Badge key={r} variant={r === "admin" ? "default" : "secondary"} className="text-xs">
+                          {r === "admin" && <Shield className="mr-1 h-3 w-3" />}
+                          {r}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
-                <EditNameDialog profile={p} />
-              </CardHeader>
-            </Card>
-          ))}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={isAdmin ? "Fjern admin-rolle" : "Tildel admin-rolle"}
+                      onClick={() => roleMut.mutate({ userId: p.id, assign: !isAdmin })}
+                      disabled={roleMut.isPending}
+                    >
+                      {isAdmin ? (
+                        <ShieldOff className="h-4 w-4 text-destructive" />
+                      ) : (
+                        <Shield className="h-4 w-4" />
+                      )}
+                    </Button>
+                    <EditNameDialog profile={p} />
+                  </div>
+                </CardHeader>
+              </Card>
+            );
+          })}
           {filtered.length === 0 && (
             <p className="text-muted-foreground">Ingen brugere fundet.</p>
           )}
