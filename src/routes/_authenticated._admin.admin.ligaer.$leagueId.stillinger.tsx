@@ -452,6 +452,20 @@ function DivisionEditor({
               <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
               Afsluttet
             </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xml,application/xml,text/xml"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importXml(f);
+                e.target.value = "";
+              }}
+            />
+            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
+              <Upload className="h-4 w-4" /> Importer LMU-fil
+            </Button>
             <Button onClick={save} disabled={saving} className="gap-2"><Save className="h-4 w-4" /> Gem</Button>
           </div>
         </div>
