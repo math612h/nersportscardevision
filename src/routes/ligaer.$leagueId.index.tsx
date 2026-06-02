@@ -583,11 +583,12 @@ function QuickNav() {
         <button
           key={item.id}
           onClick={() => scrollTo(item.id)}
-          className="group flex flex-col items-center gap-1.5 rounded-lg border border-border bg-card p-3 text-center transition hover:border-primary hover:bg-accent"
+          className="group flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-left transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
         >
-          <item.icon className="h-5 w-5 text-primary" />
-          <span className="text-xs font-medium">{item.label}</span>
-          <ChevronRight className="h-3 w-3 text-muted-foreground transition group-hover:translate-y-0.5" />
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+            <item.icon className="h-4 w-4" />
+          </span>
+          <span className="truncate text-xs font-medium">{item.label}</span>
         </button>
       ))}
     </div>
