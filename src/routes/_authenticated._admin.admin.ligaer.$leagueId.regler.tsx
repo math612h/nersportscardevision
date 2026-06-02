@@ -68,22 +68,27 @@ function AdminRules() {
   return (
     <div className="space-y-4">
       <Link to="/admin/ligaer" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ArrowLeft className="h-3 w-3" /> Ligaer</Link>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-bold">Regelsæt</h1>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild><Button className="gap-1"><Plus className="h-4 w-4" /> Ny regel</Button></DialogTrigger>
-          <DialogContent>
-            <DialogHeader><DialogTitle>Opret regel</DialogTitle></DialogHeader>
-            <form onSubmit={create} className="space-y-3">
-              <div><Label>Sektionsnummer</Label><Input maxLength={20} value={section} onChange={(e) => setSection(e.target.value)} placeholder="fx 1.0, 1.1, 2.0" /></div>
-              <div><Label>Overskrift</Label><Input required maxLength={150} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="fx Startprocedure" /></div>
-              <div><Label>Indhold</Label><Textarea required maxLength={5000} rows={8} value={content} onChange={(e) => setContent(e.target.value)} /></div>
-              <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <div className="flex flex-wrap gap-2">
+          <SaveTemplateDialog rules={rules ?? []} />
+          <LoadTemplateDialog leagueId={leagueId} existingCount={rules?.length ?? 0} />
+          <ManageTemplatesDialog />
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild><Button className="gap-1"><Plus className="h-4 w-4" /> Ny regel</Button></DialogTrigger>
+            <DialogContent>
+              <DialogHeader><DialogTitle>Opret regel</DialogTitle></DialogHeader>
+              <form onSubmit={create} className="space-y-3">
+                <div><Label>Sektionsnummer</Label><Input maxLength={20} value={section} onChange={(e) => setSection(e.target.value)} placeholder="fx 1.0, 1.1, 2.0" /></div>
+                <div><Label>Overskrift</Label><Input required maxLength={150} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="fx Startprocedure" /></div>
+                <div><Label>Indhold</Label><Textarea required maxLength={5000} rows={8} value={content} onChange={(e) => setContent(e.target.value)} /></div>
+                <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
-      {rules?.length === 0 && <p className="text-muted-foreground">Ingen regler endnu.</p>}
+      {rules?.length === 0 && <p className="text-muted-foreground">Ingen regler endnu. Du kan indlæse et arkiveret regelsæt eller oprette en ny regel.</p>}
       <div className="space-y-6">
         {Object.entries(grouped).map(([main, list]) => (
           <div key={main} className="space-y-2">
