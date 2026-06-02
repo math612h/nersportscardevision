@@ -89,6 +89,7 @@ function AdminDivisions() {
                 <div className="flex flex-wrap gap-2">
                   {d.track && <Badge variant="outline">{d.track}{d.layout ? ` · ${d.layout}` : ""}</Badge>}
                   {d.race_date && <Badge variant="outline">{format(new Date(d.race_date), "dd MMM yyyy HH:mm")}</Badge>}
+                  {d.settings?.temperature != null && <Badge variant="outline">{d.settings.temperature}°C</Badge>}
                   <Badge variant="outline">FL: {flPts} p</Badge>
                 </div>
                 {slots.length > 0 && (
