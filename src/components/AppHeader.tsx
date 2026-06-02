@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, Gauge, LayoutGrid, LogOut, User as UserIcon } from "lucide-react";
+import { Flag, Gauge, LayoutGrid, LogOut, User as UserIcon, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
