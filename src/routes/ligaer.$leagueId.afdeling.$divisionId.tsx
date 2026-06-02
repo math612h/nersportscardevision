@@ -178,11 +178,18 @@ function DivisionDetail() {
         {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
       </div>
 
-      <div>
-        <h2 className="mb-2 text-lg font-semibold">
-          Deltagere ({participantCount}/{totalSignups})
-          {absentCount > 0 && <span className="ml-2 text-sm font-normal text-muted-foreground">· {absentCount} deltager ikke</span>}
-        </h2>
+      <section className="space-y-4">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-primary">
+            <Users className="h-4 w-4" />
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">
+              Deltagere ({participantCount}/{totalSignups})
+            </h2>
+          </div>
+          {absentCount > 0 && (
+            <span className="text-xs text-muted-foreground">{absentCount} deltager ikke</span>
+          )}
+        </div>
         {totalSignups === 0 && <p className="text-sm text-muted-foreground">Ingen tilmeldte til ligaen endnu.</p>}
         <div className="space-y-3">
           {Object.entries(grouped).map(([k, list]) => {
