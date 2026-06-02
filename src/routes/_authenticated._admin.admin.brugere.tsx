@@ -133,6 +133,11 @@ function AdminUsersPage() {
                           {r}
                         </Badge>
                       ))}
+                      {p.approved ? (
+                        <Badge className="bg-green-600 text-white text-xs"><Check className="mr-1 h-3 w-3" />Godkendt</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">Afventer</Badge>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
