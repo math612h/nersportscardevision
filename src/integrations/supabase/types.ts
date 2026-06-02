@@ -297,7 +297,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      division_absences_public: {
+        Row: {
+          created_at: string | null
+          division_id: string | null
+          id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          division_id?: string | null
+          id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          division_id?: string | null
+          id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
