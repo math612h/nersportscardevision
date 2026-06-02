@@ -139,6 +139,7 @@ export type Database = {
         Row: {
           best_lap_ms: number
           car_class: string
+          car_model: string | null
           created_at: string
           division_id: string | null
           driver_name: string
@@ -153,6 +154,7 @@ export type Database = {
         Insert: {
           best_lap_ms: number
           car_class: string
+          car_model?: string | null
           created_at?: string
           division_id?: string | null
           driver_name: string
@@ -167,6 +169,7 @@ export type Database = {
         Update: {
           best_lap_ms?: number
           car_class?: string
+          car_model?: string | null
           created_at?: string
           division_id?: string | null
           driver_name?: string
