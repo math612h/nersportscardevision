@@ -28,6 +28,7 @@ type DraftRow = {
   driver_category: string;
   time_str: string;
   penalty_seconds: number;
+  penalty_points: number;
   fastest_lap: boolean;
   dnf: boolean;
   dns: boolean;
