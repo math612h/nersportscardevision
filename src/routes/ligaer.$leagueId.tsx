@@ -46,6 +46,24 @@ function LeagueDetail() {
 
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
 
+  const trackFiles = useMemo(() => {
+    const set = new Set<string>();
+    (divisions ?? []).forEach((d: any) => { const f = getTrackImageFile(d.track); if (f) set.add(f); });
+    return Array.from(set);
+  }, [divisions]);
+
+  const { data: imageMap } = useQuery({
+    queryKey: ["track-image-urls", trackFiles.sort().join(",")],
+    enabled: trackFiles.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage.from("track-images").createSignedUrls(trackFiles, 60 * 60 * 24 * 7);
+      if (error) throw error;
+      const m: Record<string, string> = {};
+      data?.forEach((d) => { if (d.path && d.signedUrl) m[d.path] = d.signedUrl; });
+      return m;
+    },
+  });
+
   return (
     <div className="space-y-6">
       <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
