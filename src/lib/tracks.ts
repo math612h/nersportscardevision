@@ -19,7 +19,7 @@ export const LMU_TRACKS: TrackInfo[] = [
 ];
 
 export const CAR_CLASSES = ["Hypercar", "LMP2", "LMP3", "GT-E", "LMGT3"] as const;
-export const DRIVER_CATEGORIES = ["Pro", "Am"] as const;
+export const DRIVER_CATEGORIES = ["Pro", "Am", "Open"] as const;
 
 export type ClassConfig = {
   car_class: string;
