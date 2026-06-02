@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LmuRouteImport } from './routes/lmu'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
@@ -32,6 +33,11 @@ import { Route as AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport } f
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LmuRoute = LmuRouteImport.update({
+  id: '/lmu',
+  path: '/lmu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -137,6 +143,7 @@ const AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
@@ -156,6 +163,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
@@ -197,6 +206,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/lmu'
     | '/login'
     | '/mine-protests'
     | '/ligaer/$leagueId'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/lmu'
     | '/login'
     | '/mine-protests'
     | '/ligaer/$leagueId/regler'
@@ -234,6 +245,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/lmu'
     | '/login'
     | '/_authenticated/_admin'
     | '/_authenticated/mine-protests'
@@ -256,6 +268,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LmuRoute: typeof LmuRoute
   LoginRoute: typeof LoginRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
 }
@@ -267,6 +280,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lmu': {
+      id: '/lmu'
+      path: '/lmu'
+      fullPath: '/lmu'
+      preLoaderRoute: typeof LmuRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -492,6 +512,7 @@ const LigaerLeagueIdRouteWithChildren = LigaerLeagueIdRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LmuRoute: LmuRoute,
   LoginRoute: LoginRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
 }
