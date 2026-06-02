@@ -372,6 +372,7 @@ function DivisionEditor({
                       <th className="px-2 py-1.5">Kører</th>
                       <th className="px-2 py-1.5 w-32">Tid (m:ss.xxx)</th>
                       <th className="px-2 py-1.5 w-24">Straf (s)</th>
+                      <th className="px-2 py-1.5 w-24">Pointstraf</th>
                       <th className="px-2 py-1.5 w-28">Effektiv tid</th>
                       <th className="px-2 py-1.5 w-12 text-center">FL</th>
                       <th className="px-2 py-1.5 w-14 text-center">DNF</th>
