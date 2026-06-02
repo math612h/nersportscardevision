@@ -295,7 +295,7 @@ function DivisionEditor({
         const lbRows = parsed
           .filter((p) => p.bestLapMs != null && p.carClass)
           .map((p) => ({
-            user_id: lmuToUser.get(p.name.trim().toLowerCase()) ?? null,
+            user_id: lmuToUser.get(p.name.trim().toLowerCase()) ?? (findBestNameMatch(p.name, profilesWithLmu, (x) => x.lmu_name, 0.85)?.match.id ?? null),
             driver_name: p.name,
             track: parsedRace.track,
             layout: parsedRace.layout,
