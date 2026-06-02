@@ -54,6 +54,7 @@ function ProfilePage() {
   const [age, setAge] = useState("");
   const [bio, setBio] = useState("");
   const [achievements, setAchievements] = useState("");
+  const [discord, setDiscord] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
@@ -64,6 +65,7 @@ function ProfilePage() {
     setAge(profile.age != null ? String(profile.age) : "");
     setBio(profile.bio ?? "");
     setAchievements(profile.achievements ?? "");
+    setDiscord(profile.discord_username ?? "");
   }, [profile]);
 
   const onSave = async (e: React.FormEvent) => {
