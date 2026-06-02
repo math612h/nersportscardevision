@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
@@ -31,6 +32,7 @@ function AdminLeagues() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
+  const [isOffseason, setIsOffseason] = useState(false);
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
   const [createdLeague, setCreatedLeague] = useState(false);
 
@@ -62,14 +64,16 @@ function AdminLeagues() {
       car_class: first.car_class,
       driver_category: first.driver_category,
       class_configs: configs as any,
+      is_offseason: isOffseason,
       created_by: user?.id,
     });
     if (error) return toast.error(error.message);
-    toast.success("Liga oprettet");
+    toast.success(isOffseason ? "Off-season event oprettet" : "Liga oprettet");
     setCreatedLeague(true);
     setOpen(false);
     setName("");
     setDesc("");
+    setIsOffseason(false);
     setConfigs([emptyConfig()]);
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
@@ -95,10 +99,14 @@ function AdminLeagues() {
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button className="gap-1"><Plus className="h-4 w-4" /> Ny liga</Button></DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Opret liga</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Opret liga eller off-season event</DialogTitle></DialogHeader>
               <form onSubmit={create} className="space-y-3">
                 <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
                 <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+                <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+                  <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
+                  <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
+                </label>
                 <div className="space-y-2">
                   <Label>Bilklasser og kørenumre</Label>
                   {configs.map((c, i) => (
