@@ -22,6 +22,7 @@ type Notification = {
 export function NotificationsBell() {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   const { data: items } = useQuery({
