@@ -132,6 +132,14 @@ function AdminLeagues() {
                           <Label className="text-xs">Til nr.</Label>
                           <Input type="number" min={1} value={c.number_to} onChange={(e) => updateConfig(i, { number_to: Number(e.target.value) })} />
                         </div>
+                        <div>
+                          <Label className="text-xs">Maks. deltagere</Label>
+                          <Input type="number" min={1} value={c.max_drivers ?? ""} placeholder="Ubegrænset" onChange={(e) => updateConfig(i, { max_drivers: e.target.value === "" ? undefined : Number(e.target.value) })} />
+                        </div>
+                        <div>
+                          <Label className="text-xs">DNS-grænse</Label>
+                          <Input type="number" min={1} value={c.dns_limit ?? ""} placeholder="Ingen" onChange={(e) => updateConfig(i, { dns_limit: e.target.value === "" ? undefined : Number(e.target.value) })} />
+                        </div>
                       </div>
                     </div>
                   ))}
