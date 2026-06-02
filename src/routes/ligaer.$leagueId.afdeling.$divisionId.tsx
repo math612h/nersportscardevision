@@ -57,19 +57,35 @@ function DivisionDetail() {
     },
   });
 
+  // Public list (no reason) — visible to everyone
   const { data: absences } = useQuery({
     queryKey: ["division-absences", divisionId],
     queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("division_absences_public")
+        .select("id,user_id,created_at")
+        .eq("division_id", divisionId);
+      if (error) throw error;
+      return (data ?? []) as { id: string; user_id: string; created_at: string }[];
+    },
+  });
+
+  // Reasons — only owner/admin rows are returned by RLS
+  const { data: absenceReasons } = useQuery({
+    queryKey: ["division-absence-reasons", divisionId, user?.id ?? "anon"],
+    queryFn: async () => {
       const { data, error } = await supabase
         .from("division_absences")
-        .select("id,user_id,reason,created_at")
-        .eq("division_id", divisionId);
+        .select("id,user_id,reason")
+        .eq("division_id", divisionId)
+        .not("reason", "is", null);
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
+  const reasonByUser = new Map((absenceReasons ?? []).map((a) => [a.user_id, a.reason]));
   const myAbsence = user ? absenceByUser.get(user.id) : undefined;
   const mySignup = (signups ?? []).find((e) => e.user_id === user?.id);
 
@@ -185,7 +201,7 @@ function DivisionDetail() {
                           <span className={`flex-1 truncate ${ab ? "line-through" : ""}`}>{e.driver_name}</span>
                           {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
                           {ab && (
-                            <Badge variant="secondary" className="gap-1 text-[10px]" title={ab.reason ?? undefined}>
+                            <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
                               <UserX className="h-3 w-3" /> Deltager ikke
                             </Badge>
                           )}
@@ -199,11 +215,11 @@ function DivisionDetail() {
           })}
         </div>
 
-        {absentCount > 0 && (
+        {(absenceReasons?.length ?? 0) > 0 && (
           <div className="mt-4">
             <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Begrundelser</h3>
             <ul className="space-y-1.5">
-              {(absences ?? []).filter((a) => a.reason).map((a) => {
+              {(absenceReasons ?? []).map((a) => {
                 const e = (signups ?? []).find((s) => s.user_id === a.user_id);
                 return (
                   <li key={a.id} className="rounded border border-border px-3 py-2 text-sm">
@@ -273,36 +289,65 @@ function ProtestDialog({ divisionId }: { divisionId: string }) {
   const [open, setOpen] = useState(false);
   const [lap, setLap] = useState("");
   const [corner, setCorner] = useState("");
-  const [involved, setInvolved] = useState("");
+  const [involved, setInvolved] = useState<string[]>([""]);
   const [desc, setDesc] = useState("");
   const [video, setVideo] = useState("");
+
+  const updateDriver = (idx: number, val: string) => {
+    setInvolved((arr) => arr.map((v, i) => (i === idx ? val : v)));
+  };
+  const addDriver = () => setInvolved((arr) => [...arr, ""]);
+  const removeDriver = (idx: number) => setInvolved((arr) => (arr.length === 1 ? [""] : arr.filter((_, i) => i !== idx)));
+
+  const reset = () => {
+    setLap(""); setCorner(""); setInvolved([""]); setDesc(""); setVideo("");
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
     if (video && !/^https?:\/\//i.test(video)) { toast.error("Video link skal være en gyldig URL"); return; }
+    const cleaned = involved.map((s) => s.trim()).filter(Boolean);
     const { error } = await supabase.from("protests").insert({
       division_id: divisionId, submitted_by: user.id,
       lap_number: lap ? Number(lap) : null,
       corner: corner.trim() || null,
-      involved_drivers: involved.trim() || null,
+      involved_drivers: cleaned.length ? cleaned.join(", ") : null,
       description: desc.trim(), video_url: video.trim() || null,
     });
     if (error) toast.error(error.message);
-    else { toast.success("Protest indsendt"); setOpen(false); setLap(""); setCorner(""); setInvolved(""); setDesc(""); setVideo(""); }
+    else { toast.success("Protest indsendt"); setOpen(false); reset(); }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild><Button variant="outline" className="gap-1"><MessageSquareWarning className="h-4 w-4" /> Indsend protest</Button></DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Indsend protest</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Omgang</Label><Input type="number" min={1} value={lap} onChange={(e) => setLap(e.target.value)} /></div>
             <div><Label>Sving</Label><Input maxLength={50} value={corner} onChange={(e) => setCorner(e.target.value)} placeholder="fx T7" /></div>
           </div>
-          <div><Label>Involverede kørere</Label><Input maxLength={200} value={involved} onChange={(e) => setInvolved(e.target.value)} placeholder="Navne, kommasepareret" /></div>
+          <div className="space-y-2">
+            <Label>Involverede kørere</Label>
+            {involved.map((v, i) => (
+              <div key={i} className="flex gap-2">
+                <Input
+                  maxLength={80}
+                  value={v}
+                  onChange={(e) => updateDriver(i, e.target.value)}
+                  placeholder={`Kører ${i + 1}`}
+                />
+                {(involved.length > 1 || v) && (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => removeDriver(i)} className="shrink-0">
+                    Fjern
+                  </Button>
+                )}
+              </div>
+            ))}
+            <Button type="button" variant="outline" size="sm" onClick={addDriver}>+ Tilføj kører</Button>
+          </div>
           <div><Label>Beskrivelse</Label><Textarea required maxLength={2000} value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} /></div>
           <div><Label>Video-link (valgfri)</Label><Input type="url" maxLength={500} value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://…" /></div>
           <DialogFooter><Button type="submit">Send</Button></DialogFooter>
