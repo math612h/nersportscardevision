@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, Users, Trophy, ChevronRight } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, Users, Trophy, ChevronRight, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -208,6 +208,7 @@ type ResultRow = {
   driver_category: string;
   class_position: number;
   points: number;
+  fastest_lap?: boolean;
 };
 
 function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
@@ -240,9 +241,19 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
   }
 
   // Aggregate per driver per class+cat
-  type Agg = { car_number: number; driver_name: string; car_class: string; driver_category: string; total: number; rounds: Record<string, number> };
+  type Agg = {
+    car_number: number;
+    driver_name: string;
+    car_class: string;
+    driver_category: string;
+    race: number;
+    fl: number;
+    total: number;
+    rounds: Record<string, { points: number; fl: boolean; flPts: number }>;
+  };
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
+    const flPts = Number(d.settings?.fastest_lap_points ?? 0);
     for (const r of d.settings.results as ResultRow[]) {
       const key = `${r.car_class}|${r.driver_category}|${r.car_number}`;
       const cur = map.get(key) ?? {
@@ -250,11 +261,16 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
         driver_name: r.driver_name,
         car_class: r.car_class,
         driver_category: r.driver_category,
+        race: 0,
+        fl: 0,
         total: 0,
         rounds: {},
       };
-      cur.total += r.points;
-      cur.rounds[d.id] = r.points;
+      const earnedFl = r.fastest_lap ? flPts : 0;
+      cur.race += r.points;
+      cur.fl += earnedFl;
+      cur.total += r.points + earnedFl;
+      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl };
       map.set(key, cur);
     }
   }
@@ -293,6 +309,7 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                         {d.name.slice(0, 4)}
                       </th>
                     ))}
+                    <th className="py-1 px-1 w-10 text-center" title="Fastest lap points">FL</th>
                     <th className="py-1 pl-2 w-12 text-right">Pts</th>
                   </tr>
                 </thead>
@@ -302,11 +319,19 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
                       <td className="py-1.5 pr-2 truncate">{r.driver_name}</td>
                       <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
-                      {completed.map((d: any) => (
-                        <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
-                          {r.rounds[d.id] ?? "–"}
-                        </td>
-                      ))}
+                      {completed.map((d: any) => {
+                        const cell = r.rounds[d.id];
+                        if (!cell) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                        return (
+                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
+                            <span className="inline-flex items-center gap-0.5">
+                              {cell.points}
+                              {cell.fl && <Zap className="h-3 w-3 text-primary" aria-label="Fastest lap" />}
+                            </span>
+                          </td>
+                        );
+                      })}
+                      <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">{r.fl || "–"}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
                     </tr>
                   ))}

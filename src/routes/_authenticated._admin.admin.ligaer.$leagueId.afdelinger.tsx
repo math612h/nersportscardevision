@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Check } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -69,18 +69,27 @@ function AdminDivisions() {
       <div className="space-y-3">
         {divisions?.map((d: any) => {
           const slots: WeatherKey[] = Array.isArray(d.settings?.weather) ? d.settings.weather : [];
+          const completed = !!d.settings?.completed;
+          const flPts = Number(d.settings?.fastest_lap_points ?? 0);
           return (
             <Card key={d.id}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">{d.name}</CardTitle>
-                  <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet afdeling?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    {d.name}
+                    {completed && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" />Afsluttet</Badge>}
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    <EditDivisionDialog division={d} onDone={() => qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] })} />
+                    <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet afdeling?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex flex-wrap gap-2">
                   {d.track && <Badge variant="outline">{d.track}{d.layout ? ` · ${d.layout}` : ""}</Badge>}
                   {d.race_date && <Badge variant="outline">{format(new Date(d.race_date), "dd MMM yyyy HH:mm")}</Badge>}
+                  <Badge variant="outline">FL: {flPts} p</Badge>
                 </div>
                 {slots.length > 0 && (
                   <div className="flex flex-wrap items-center gap-2">
@@ -111,6 +120,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   const [trackLayout, setTrackLayout] = useState(`0::${LMU_TRACKS[0].layouts[0]}`);
   const [raceDate, setRaceDate] = useState("");
   const [weather, setWeather] = useState<WeatherKey[]>(Array(WEATHER_SLOT_COUNT).fill("sunny"));
+  const [flPoints, setFlPoints] = useState<number>(1);
 
   const [trackIdxStr, layout] = trackLayout.split("::");
   const track = LMU_TRACKS[Number(trackIdxStr)];
@@ -124,10 +134,10 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
       car_class: carClass, driver_category: category,
       track: track.name, layout,
       race_date: raceDate ? new Date(raceDate).toISOString() : null,
-      settings: { weather },
+      settings: { weather, fastest_lap_points: flPoints },
     });
     if (error) return toast.error(error.message);
-    toast.success("Afdeling oprettet"); setOpen(false); setName(""); setRaceDate(""); setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny")); onDone();
+    toast.success("Afdeling oprettet"); setOpen(false); setName(""); setRaceDate(""); setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny")); setFlPoints(1); onDone();
   };
 
   return (
@@ -153,6 +163,11 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
             </Select>
           </div>
           <div><Label>Dato & tid</Label><Input type="datetime-local" value={raceDate} onChange={(e) => setRaceDate(e.target.value)} /></div>
+          <div>
+            <Label>Point for hurtigste omgang (pr. klasse)</Label>
+            <Input type="number" min={0} max={50} value={flPoints} onChange={(e) => setFlPoints(Number(e.target.value))} />
+            <p className="mt-1 text-xs text-muted-foreground">Tildeles til den hurtigste i hver klasse (Hypercar Pro/Am, LMGT3 Pro/Am osv.).</p>
+          </div>
           <div className="space-y-2">
             <Label>Vejr (5 slots)</Label>
             <div className="space-y-2">
@@ -182,6 +197,44 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
             </div>
           </div>
           <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditDivisionDialog({ division, onDone }: { division: any; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
+  const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const newSettings = { ...(division.settings ?? {}), fastest_lap_points: flPoints, completed };
+    const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
+    if (error) return toast.error(error.message);
+    toast.success("Opdateret");
+    setOpen(false);
+    onDone();
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm"><Pencil className="h-4 w-4" /></Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Rediger {division.name}</DialogTitle></DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div>
+            <Label>Point for hurtigste omgang (pr. klasse)</Label>
+            <Input type="number" min={0} max={50} value={flPoints} onChange={(e) => setFlPoints(Number(e.target.value))} />
+          </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
+            Marker som afsluttet
+          </label>
+          <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
