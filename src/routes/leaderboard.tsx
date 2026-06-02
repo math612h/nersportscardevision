@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS } from "@/lib/lmu-parser";
+import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 
 export const Route = createFileRoute("/leaderboard")({
@@ -122,9 +122,17 @@ function LeaderboardPage() {
         return;
       }
 
-      const me = parsed.drivers.find((d) => d.name.trim().toLowerCase() === lmu);
+      let me = parsed.drivers.find((d) => d.name.trim().toLowerCase() === lmu);
       if (!me) {
-        toast.error(`Dit navn “${profile!.lmu_name}” findes ikke i filen. Tjek at det matcher præcis.`);
+        // Fuzzy match: ≥85% similarity
+        let bestScore = 0;
+        for (const d of parsed.drivers) {
+          const s = nameSimilarity(d.name, lmu);
+          if (s > bestScore) { bestScore = s; me = s >= 0.85 ? d : me; }
+        }
+      }
+      if (!me) {
+        toast.error(`Dit navn “${profile!.lmu_name}” findes ikke i filen. Tjek at det matcher (mindst 85%).`);
         return;
       }
       if (me.bestLapMs == null) {
