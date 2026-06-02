@@ -212,12 +212,23 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(league.name ?? "");
   const [desc, setDesc] = useState(league.description ?? "");
+  const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) ? league.class_configs : [];
+  const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
+
+  const reset = () => {
+    setName(league.name ?? "");
+    setDesc(league.description ?? "");
+    setCfgs(Array.isArray(league.class_configs) ? league.class_configs : []);
+  };
+
+  const patchCfg = (i: number, patch: Partial<ClassConfig>) =>
+    setCfgs((prev) => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { error } = await supabase
       .from("leagues")
-      .update({ name: name.trim(), description: desc.trim() || null })
+      .update({ name: name.trim(), description: desc.trim() || null, class_configs: cfgs as any })
       .eq("id", league.id);
     if (error) return toast.error(error.message);
     toast.success("Liga opdateret");
@@ -228,17 +239,35 @@ function EditLeagueDialog({ league }: { league: any }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) reset(); }}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" onClick={() => { setName(league.name ?? ""); setDesc(league.description ?? ""); }}>
-          <Pencil className="h-4 w-4" />
-        </Button>
+        <Button variant="ghost" size="sm"><Pencil className="h-4 w-4" /></Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Rediger liga</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+          {cfgs.length > 0 && (
+            <div className="space-y-2">
+              <Label>Klasser · maks deltagere og DNS-grænse</Label>
+              {cfgs.map((c, i) => (
+                <div key={i} className="rounded-md border border-border p-2 space-y-2">
+                  <p className="text-xs font-medium">{c.car_class} · {c.driver_category} (#{c.number_from}-{c.number_to})</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label className="text-xs">Maks. deltagere</Label>
+                      <Input type="number" min={1} value={c.max_drivers ?? ""} placeholder="Ubegrænset" onChange={(e) => patchCfg(i, { max_drivers: e.target.value === "" ? undefined : Number(e.target.value) })} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">DNS-grænse</Label>
+                      <Input type="number" min={1} value={c.dns_limit ?? ""} placeholder="Ingen" onChange={(e) => patchCfg(i, { dns_limit: e.target.value === "" ? undefined : Number(e.target.value) })} />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
         </form>
       </DialogContent>
