@@ -21,6 +21,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [lmuName, setLmuName] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -43,13 +44,18 @@ function LoginPage() {
 
   const onSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    const lmu = lmuName.trim();
+    if (!lmu) { toast.error("Indtast dit LMU-navn præcis som det står i Le Mans Ultimate."); return; }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
-        data: { display_name: displayName || email.split("@")[0] },
+        data: {
+          display_name: displayName || email.split("@")[0],
+          lmu_name: lmu,
+        },
       },
     });
     setLoading(false);
@@ -90,7 +96,12 @@ function LoginPage() {
             </TabsContent>
             <TabsContent value="signup">
               <form onSubmit={onSignup} className="space-y-3">
-                <div><Label>Visningsnavn</Label><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Kørernavn" /></div>
+                <div><Label>Visningsnavn</Label><Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Kørernavn" maxLength={80} /></div>
+                <div>
+                  <Label>LMU-navn</Label>
+                  <Input value={lmuName} onChange={(e) => setLmuName(e.target.value)} placeholder="Som det står i Le Mans Ultimate" required maxLength={80} />
+                  <p className="mt-1 text-xs text-muted-foreground">Skal matche dit navn i spillet 100% – bruges til at koble løbsresultater til din konto.</p>
+                </div>
                 <div><Label>Email</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
                 <div><Label>Adgangskode</Label><Input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} /></div>
                 <Button type="submit" className="w-full" disabled={loading}>Opret konto</Button>
