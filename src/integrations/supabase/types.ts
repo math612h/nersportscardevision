@@ -221,22 +221,37 @@ export type Database = {
       }
       profiles: {
         Row: {
+          achievements: string | null
+          age: number | null
+          avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string | null
           id: string
           lmu_name: string | null
+          updated_at: string
         }
         Insert: {
+          achievements?: string | null
+          age?: number | null
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id: string
           lmu_name?: string | null
+          updated_at?: string
         }
         Update: {
+          achievements?: string | null
+          age?: number | null
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
           lmu_name?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
