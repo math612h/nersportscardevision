@@ -541,6 +541,23 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
             <p className="mt-1 text-xs text-muted-foreground">Hentet fra din profil.</p>
           </div>
           <div>
+            <Label>LMU-navn</Label>
+            <Input
+              value={existingLmu || lmuInput}
+              onChange={(e) => setLmuInput(e.target.value)}
+              disabled={!!existingLmu}
+              readOnly={!!existingLmu}
+              placeholder="Som det står i Le Mans Ultimate"
+              required
+              maxLength={80}
+            />
+            <p className="mt-1 text-xs text-muted-foreground">
+              {existingLmu
+                ? "Gemt på din profil – bruges til at koble løbsresultater til din konto."
+                : "Skriv dit navn præcis som det står i spillet. Bruges til at matche dig i resultatfiler."}
+            </p>
+          </div>
+          <div>
             <Label>Bilklasse</Label>
             <Select value={cfgIdx} onValueChange={(v) => { setCfgIdx(v); setCarNumber(null); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
