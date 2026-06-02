@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 export function AppHeader() {
   const { user, isAdmin, signOut, loading } = useAuth();
