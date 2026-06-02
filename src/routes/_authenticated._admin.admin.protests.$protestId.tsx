@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -22,9 +23,14 @@ const OUTCOMES = [
   { value: "no_penalty", label: "Ingen straf" },
   { value: "warning", label: "Advarsel" },
   { value: "time_penalty", label: "Tidsstraf" },
-  { value: "position_penalty", label: "Placeringsstraf" },
+  { value: "point_penalty", label: "Pointstraf" },
   { value: "disqualified", label: "Diskvalifikation" },
 ] as const;
+
+const POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+const pointsFor = (pos: number) => (pos >= 1 && pos <= POINTS_TABLE.length ? POINTS_TABLE[pos - 1] : 0);
+
+type AppliedMap = Record<string, { seconds?: number; points?: number }>;
 
 function AdminProtestDetail() {
   const { protestId } = useParams({ from: "/_authenticated/_admin/admin/protests/$protestId" });
@@ -36,7 +42,7 @@ function AdminProtestDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("protests")
-        .select("*, divisions(name, leagues(name)), protest_involved(*)")
+        .select("*, divisions(id, name, settings, leagues(name)), protest_involved(*)")
         .eq("id", protestId)
         .single();
       if (error) throw error;
@@ -47,7 +53,8 @@ function AdminProtestDetail() {
   const [outcome, setOutcome] = useState<string>("");
   const [reason, setReason] = useState("");
   const [seconds, setSeconds] = useState("");
-  const [positions, setPositions] = useState("");
+  const [points, setPoints] = useState("");
+  const [penalized, setPenalized] = useState<string[]>([]);
 
   useEffect(() => {
     if (!p) return;
@@ -55,24 +62,111 @@ function AdminProtestDetail() {
     setReason(p.verdict_reason ?? "");
     const d = (p.verdict_details ?? {}) as any;
     setSeconds(d.seconds != null ? String(d.seconds) : "");
-    setPositions(d.positions != null ? String(d.positions) : "");
+    setPoints(d.points != null ? String(d.points) : "");
+    setPenalized(Array.isArray(d.penalized_user_ids) ? d.penalized_user_ids : []);
   }, [p]);
+
+  const togglePenalized = (uid: string) =>
+    setPenalized((prev) => (prev.includes(uid) ? prev.filter((x) => x !== uid) : [...prev, uid]));
 
   const rule = useMutation({
     mutationFn: async () => {
       if (!outcome) throw new Error("Vælg et udfald");
       if (!reason.trim()) throw new Error("Begrundelse er påkrævet");
-      const details: Record<string, number> = {};
+
+      const needsTargets = ["warning", "time_penalty", "point_penalty", "disqualified"].includes(outcome);
+      if (needsTargets && penalized.length === 0) {
+        throw new Error("Vælg hvilken/hvilke kører(e) der modtager straffen");
+      }
+
+      let secondsNum = 0;
+      let pointsNum = 0;
       if (outcome === "time_penalty") {
-        const n = Number(seconds);
-        if (!n || n <= 0) throw new Error("Angiv antal sekunder");
-        details.seconds = n;
+        secondsNum = Number(seconds);
+        if (!secondsNum || secondsNum <= 0) throw new Error("Angiv antal sekunder");
       }
-      if (outcome === "position_penalty") {
-        const n = Number(positions);
-        if (!n || n <= 0) throw new Error("Angiv antal placeringer");
-        details.positions = n;
+      if (outcome === "point_penalty") {
+        pointsNum = Number(points);
+        if (!pointsNum || pointsNum <= 0) throw new Error("Angiv antal point");
       }
+
+      // Compute delta vs previously applied penalties to avoid double-counting on re-ruling
+      const prevDetails = (p?.verdict_details ?? {}) as any;
+      const prevApplied: AppliedMap = (prevDetails.applied_penalties ?? {}) as AppliedMap;
+
+      const newApplied: AppliedMap = {};
+      if (outcome === "time_penalty") {
+        for (const uid of penalized) newApplied[uid] = { seconds: secondsNum };
+      } else if (outcome === "point_penalty") {
+        for (const uid of penalized) newApplied[uid] = { points: pointsNum };
+      }
+
+      // Apply delta to division.settings.results
+      const division = (p as any)?.divisions;
+      if (division) {
+        const settings = (division.settings ?? {}) as any;
+        const results: any[] = Array.isArray(settings.results) ? [...settings.results] : [];
+        const flPts = Number(settings.fastest_lap_points ?? 1);
+
+        const userIds = new Set<string>([...Object.keys(prevApplied), ...Object.keys(newApplied)]);
+        let changed = false;
+        for (const uid of userIds) {
+          const oldP = prevApplied[uid] ?? {};
+          const newP = newApplied[uid] ?? {};
+          const dSec = (newP.seconds ?? 0) - (oldP.seconds ?? 0);
+          const dPts = (newP.points ?? 0) - (oldP.points ?? 0);
+          if (dSec === 0 && dPts === 0) continue;
+          for (const r of results) {
+            if (r.user_id !== uid) continue;
+            if (dSec !== 0) {
+              r.penalty_seconds = Math.max(0, Number(r.penalty_seconds ?? 0) + dSec);
+              if (typeof r.finish_time_ms === "number" && r.finish_time_ms > 0 && !r.dnf && !r.dns) {
+                r.effective_ms = r.finish_time_ms + Math.max(0, r.penalty_seconds) * 1000;
+              }
+            }
+            if (dPts !== 0) {
+              r.penalty_points = Math.max(0, Number(r.penalty_points ?? 0) + dPts);
+            }
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          // Recompute class_position + points per class group
+          const groups = new Map<string, any[]>();
+          for (const r of results) {
+            const k = `${r.car_class}|${r.driver_category}`;
+            if (!groups.has(k)) groups.set(k, []);
+            groups.get(k)!.push(r);
+          }
+          for (const list of groups.values()) {
+            const finished = list.filter((r) => !r.dnf && !r.dns && typeof r.effective_ms === "number" && r.effective_ms > 0);
+            const nonFinished = list.filter((r) => !finished.includes(r));
+            finished.sort((a, b) => a.effective_ms - b.effective_ms);
+            finished.forEach((r, idx) => {
+              r.class_position = idx + 1;
+              const base = pointsFor(r.class_position) + (r.fastest_lap ? flPts : 0);
+              r.points = Math.max(0, base - Math.max(0, Number(r.penalty_points ?? 0)));
+            });
+            for (const r of nonFinished) {
+              r.class_position = 0;
+              r.points = 0;
+            }
+          }
+
+          const newSettings = { ...settings, results };
+          const { error: upErr } = await supabase
+            .from("divisions")
+            .update({ settings: newSettings })
+            .eq("id", division.id);
+          if (upErr) throw upErr;
+        }
+      }
+
+      const details: any = { penalized_user_ids: penalized, applied_penalties: newApplied };
+      if (outcome === "time_penalty") details.seconds = secondsNum;
+      if (outcome === "point_penalty") details.points = pointsNum;
+
       const { error } = await supabase
         .from("protests")
         .update({
@@ -90,6 +184,8 @@ function AdminProtestDetail() {
       toast.success("Afgørelse sendt");
       qc.invalidateQueries({ queryKey: ["admin-protest", protestId] });
       qc.invalidateQueries({ queryKey: ["protests-admin"] });
+      qc.invalidateQueries({ queryKey: ["league-results"] });
+      qc.invalidateQueries({ queryKey: ["divisions-admin"] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -99,6 +195,7 @@ function AdminProtestDetail() {
   const involved = p.protest_involved ?? [];
   const answered = involved.filter((r: any) => r.response).length;
   const ruled = p.status === "ruled";
+  const needsTargets = ["warning", "time_penalty", "point_penalty", "disqualified"].includes(outcome);
 
   return (
     <div className="space-y-4">
@@ -153,7 +250,7 @@ function AdminProtestDetail() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{ruled ? "Opdater afgørelse" : "Afgør sagen"}</CardTitle>
-          <CardDescription>Sendes til klager og alle indklagede.</CardDescription>
+          <CardDescription>Sendes til klager og alle indklagede. Tids- og pointstraf trækkes automatisk fra i stillingen.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div>
@@ -172,10 +269,30 @@ function AdminProtestDetail() {
               <Input type="number" min={1} value={seconds} onChange={(e) => setSeconds(e.target.value)} />
             </div>
           )}
-          {outcome === "position_penalty" && (
+          {outcome === "point_penalty" && (
             <div>
-              <Label>Antal placeringer</Label>
-              <Input type="number" min={1} value={positions} onChange={(e) => setPositions(e.target.value)} />
+              <Label>Antal point</Label>
+              <Input type="number" min={1} value={points} onChange={(e) => setPoints(e.target.value)} />
+            </div>
+          )}
+
+          {needsTargets && (
+            <div className="space-y-2">
+              <Label>Hvem modtager straffen?</Label>
+              {involved.length === 0 && (
+                <p className="text-xs text-muted-foreground">Ingen indklagede tilgængelige.</p>
+              )}
+              <div className="space-y-1.5 rounded-md border border-border p-3">
+                {involved.map((r: any) => (
+                  <label key={r.user_id} className="flex items-center gap-2 text-sm">
+                    <Checkbox
+                      checked={penalized.includes(r.user_id)}
+                      onCheckedChange={() => togglePenalized(r.user_id)}
+                    />
+                    <span>{r.driver_name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
           )}
 
