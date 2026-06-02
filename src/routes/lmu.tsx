@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, Calendar, ArrowUpRight, Sparkles } from "lucide-react";
+import { Flag, Calendar, ArrowUpRight, Sparkles, Trophy, Timer, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { msToLapStr } from "@/lib/lmu-parser";
 
 export const Route = createFileRoute("/lmu")({
   component: ParticipantDashboard,
