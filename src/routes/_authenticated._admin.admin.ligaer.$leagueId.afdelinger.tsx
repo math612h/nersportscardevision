@@ -69,18 +69,27 @@ function AdminDivisions() {
       <div className="space-y-3">
         {divisions?.map((d: any) => {
           const slots: WeatherKey[] = Array.isArray(d.settings?.weather) ? d.settings.weather : [];
+          const completed = !!d.settings?.completed;
+          const flPts = Number(d.settings?.fastest_lap_points ?? 0);
           return (
             <Card key={d.id}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base">{d.name}</CardTitle>
-                  <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet afdeling?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    {d.name}
+                    {completed && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" />Afsluttet</Badge>}
+                  </CardTitle>
+                  <div className="flex gap-1">
+                    <EditDivisionDialog division={d} onDone={() => qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] })} />
+                    <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet afdeling?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <div className="flex flex-wrap gap-2">
                   {d.track && <Badge variant="outline">{d.track}{d.layout ? ` · ${d.layout}` : ""}</Badge>}
                   {d.race_date && <Badge variant="outline">{format(new Date(d.race_date), "dd MMM yyyy HH:mm")}</Badge>}
+                  <Badge variant="outline">FL: {flPts} p</Badge>
                 </div>
                 {slots.length > 0 && (
                   <div className="flex flex-wrap items-center gap-2">
