@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
   component: DivisionDetail,
@@ -167,7 +168,7 @@ function DivisionDetail() {
             <UserCheck className="h-4 w-4" /> Jeg deltager alligevel
           </Button>
         )}
-        {user && <ProtestDialog divisionId={divisionId} />}
+        {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
       </div>
 
       <div>
@@ -284,8 +285,9 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
   );
 }
 
-function ProtestDialog({ divisionId }: { divisionId: string }) {
-  const { user } = useAuth();
+type EntryLite = { id: string; user_id: string; driver_name: string };
+
+function ProtestDialog({ divisionId, entries, currentUserId }: { divisionId: string; entries: EntryLite[]; currentUserId: string }) {
   const [open, setOpen] = useState(false);
   const [lap, setLap] = useState("");
   const [corner, setCorner] = useState("");
@@ -293,11 +295,14 @@ function ProtestDialog({ divisionId }: { divisionId: string }) {
   const [desc, setDesc] = useState("");
   const [video, setVideo] = useState("");
 
+  const eligible = entries.filter((e) => e.user_id !== currentUserId);
+
   const updateDriver = (idx: number, val: string) => {
     setInvolved((arr) => arr.map((v, i) => (i === idx ? val : v)));
   };
   const addDriver = () => setInvolved((arr) => [...arr, ""]);
-  const removeDriver = (idx: number) => setInvolved((arr) => (arr.length === 1 ? [""] : arr.filter((_, i) => i !== idx)));
+  const removeDriver = (idx: number) =>
+    setInvolved((arr) => (arr.length === 1 ? [""] : arr.filter((_, i) => i !== idx)));
 
   const reset = () => {
     setLap(""); setCorner(""); setInvolved([""]); setDesc(""); setVideo("");
@@ -305,18 +310,39 @@ function ProtestDialog({ divisionId }: { divisionId: string }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
     if (video && !/^https?:\/\//i.test(video)) { toast.error("Video link skal være en gyldig URL"); return; }
-    const cleaned = involved.map((s) => s.trim()).filter(Boolean);
-    const { error } = await supabase.from("protests").insert({
-      division_id: divisionId, submitted_by: user.id,
-      lap_number: lap ? Number(lap) : null,
-      corner: corner.trim() || null,
-      involved_drivers: cleaned.length ? cleaned.join(", ") : null,
-      description: desc.trim(), video_url: video.trim() || null,
-    });
-    if (error) toast.error(error.message);
-    else { toast.success("Protest indsendt"); setOpen(false); reset(); }
+
+    // Dedupe selected user IDs
+    const userIds = Array.from(new Set(involved.filter(Boolean)));
+    if (userIds.length === 0) { toast.error("Vælg mindst én indklaget kører"); return; }
+
+    const selectedEntries = eligible.filter((e) => userIds.includes(e.user_id));
+    const names = selectedEntries.map((e) => e.driver_name);
+
+    const { data: created, error } = await supabase
+      .from("protests")
+      .insert({
+        division_id: divisionId,
+        submitted_by: currentUserId,
+        lap_number: lap ? Number(lap) : null,
+        corner: corner.trim() || null,
+        involved_drivers: names.join(", "),
+        description: desc.trim(),
+        video_url: video.trim() || null,
+      })
+      .select("id")
+      .single();
+
+    if (error || !created) { toast.error(error?.message ?? "Kunne ikke oprette protest"); return; }
+
+    const rows = selectedEntries.map((en) => ({
+      protest_id: created.id, user_id: en.user_id, driver_name: en.driver_name,
+    }));
+    const { error: invErr } = await supabase.from("protest_involved").insert(rows);
+    if (invErr) { toast.error(`Protest oprettet, men kørere kunne ikke kobles: ${invErr.message}`); return; }
+
+    toast.success("Protest indsendt – indklagede har fået besked");
+    setOpen(false); reset();
   };
 
   return (
@@ -331,22 +357,35 @@ function ProtestDialog({ divisionId }: { divisionId: string }) {
           </div>
           <div className="space-y-2">
             <Label>Involverede kørere</Label>
-            {involved.map((v, i) => (
-              <div key={i} className="flex gap-2">
-                <Input
-                  maxLength={80}
-                  value={v}
-                  onChange={(e) => updateDriver(i, e.target.value)}
-                  placeholder={`Kører ${i + 1}`}
-                />
-                {(involved.length > 1 || v) && (
-                  <Button type="button" variant="ghost" size="sm" onClick={() => removeDriver(i)} className="shrink-0">
-                    Fjern
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button type="button" variant="outline" size="sm" onClick={addDriver}>+ Tilføj kører</Button>
+            {eligible.length === 0 && (
+              <p className="text-xs text-muted-foreground">Ingen andre tilmeldte kørere i ligaen.</p>
+            )}
+            {involved.map((v, i) => {
+              const otherSelected = involved.filter((_, idx) => idx !== i);
+              const options = eligible.filter((e) => !otherSelected.includes(e.user_id));
+              return (
+                <div key={i} className="flex gap-2">
+                  <Select value={v} onValueChange={(val) => updateDriver(i, val)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue placeholder={`Vælg kører ${i + 1}`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {options.map((e) => (
+                        <SelectItem key={e.user_id} value={e.user_id}>{e.driver_name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {(involved.length > 1 || v) && (
+                    <Button type="button" variant="ghost" size="sm" onClick={() => removeDriver(i)} className="shrink-0">
+                      Fjern
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+            <Button type="button" variant="outline" size="sm" onClick={addDriver} disabled={involved.length >= eligible.length}>
+              + Tilføj kører
+            </Button>
           </div>
           <div><Label>Beskrivelse</Label><Textarea required maxLength={2000} value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} /></div>
           <div><Label>Video-link (valgfri)</Label><Input type="url" maxLength={500} value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://…" /></div>
