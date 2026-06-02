@@ -397,6 +397,12 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     return { taken: t, available: a };
   }, [signups, selected]);
 
+  const gridCount = (signups ?? []).filter(
+    (s) => selected && s.car_class === selected.car_class && s.driver_category === selected.driver_category && !s.waitlist,
+  ).length;
+  const cap = selected?.max_drivers ?? null;
+  const goesToWaitlist = cap != null && gridCount >= cap;
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return toast.error("Du skal være logget ind.");
@@ -409,14 +415,16 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
       car_class: selected.car_class,
       driver_category: selected.driver_category,
       car_number: carNumber,
+      waitlist: goesToWaitlist,
     });
     if (error) return toast.error(error.message);
-    toast.success("Du er tilmeldt!");
+    toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
     setOpen(false);
     setDriverName("");
     setCarNumber(null);
     qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
   };
+
 
   if (!user) {
     return <Button asChild size="sm" className="gap-2"><Link to="/login">Log ind for at tilmelde</Link></Button>;
