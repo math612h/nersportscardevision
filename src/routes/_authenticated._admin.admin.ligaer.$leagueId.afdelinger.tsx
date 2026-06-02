@@ -188,6 +188,17 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
             <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
             <p className="mt-1 text-xs text-muted-foreground">Lufttemperatur for løbet.</p>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Lobby code</Label>
+              <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+            </div>
+          </div>
+          <p className="-mt-2 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
           <div className="space-y-2">
             <Label>Vejr (5 slots)</Label>
             <div className="space-y-2">
