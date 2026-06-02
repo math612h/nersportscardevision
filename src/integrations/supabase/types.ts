@@ -387,10 +387,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      user_in_protest: {
-        Args: { _protest_id: string; _user_id: string }
-        Returns: boolean
-      }
     }
     Enums: {
       app_role: "admin" | "racer"
