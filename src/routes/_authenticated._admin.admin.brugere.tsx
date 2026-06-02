@@ -1,0 +1,141 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Users, Pencil, Shield } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+
+export const Route = createFileRoute("/_authenticated/_admin/admin/brugere")({
+  component: AdminUsersPage,
+});
+
+type Profile = { id: string; display_name: string | null; created_at: string };
+type Role = { user_id: string; role: string };
+
+function AdminUsersPage() {
+  const [search, setSearch] = useState("");
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: async () => {
+      const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
+        supabase.from("profiles").select("id, display_name, created_at").order("created_at", { ascending: false }),
+        supabase.from("user_roles").select("user_id, role"),
+      ]);
+      if (pErr) throw pErr;
+      if (rErr) throw rErr;
+      return { profiles: (profiles ?? []) as Profile[], roles: (roles ?? []) as Role[] };
+    },
+  });
+
+  const rolesByUser = new Map<string, string[]>();
+  data?.roles.forEach((r) => {
+    const arr = rolesByUser.get(r.user_id) ?? [];
+    arr.push(r.role);
+    rolesByUser.set(r.user_id, arr);
+  });
+
+  const filtered = (data?.profiles ?? []).filter((p) =>
+    (p.display_name ?? "").toLowerCase().includes(search.toLowerCase()),
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2">
+        <Users className="h-6 w-6 text-primary" />
+        <h1 className="text-2xl font-bold">Brugere</h1>
+      </div>
+
+      <Input
+        placeholder="Søg efter navn…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="max-w-sm"
+      />
+
+      {isLoading ? (
+        <p className="text-muted-foreground">Indlæser…</p>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((p) => (
+            <Card key={p.id}>
+              <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0 py-3">
+                <div className="min-w-0 flex-1">
+                  <CardTitle className="truncate text-base">
+                    {p.display_name || "(uden navn)"}
+                  </CardTitle>
+                  <div className="mt-1 flex flex-wrap gap-1">
+                    {(rolesByUser.get(p.id) ?? ["racer"]).map((r) => (
+                      <Badge key={r} variant={r === "admin" ? "default" : "secondary"} className="text-xs">
+                        {r === "admin" && <Shield className="mr-1 h-3 w-3" />}
+                        {r}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                <EditNameDialog profile={p} />
+              </CardHeader>
+            </Card>
+          ))}
+          {filtered.length === 0 && (
+            <p className="text-muted-foreground">Ingen brugere fundet.</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EditNameDialog({ profile }: { profile: Profile }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(profile.display_name ?? "");
+  const qc = useQueryClient();
+
+  const mut = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: name.trim() || null })
+        .eq("id", profile.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Navn opdateret");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+      setOpen(false);
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Rediger navn">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Rediger brugernavn</DialogTitle>
+        </DialogHeader>
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Navn" />
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>Gem</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
