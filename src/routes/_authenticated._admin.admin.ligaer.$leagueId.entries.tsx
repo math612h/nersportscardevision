@@ -32,7 +32,6 @@ function AdminEntries() {
       const divisionIds = (divisions ?? []).map((d) => d.id);
       const divisionNames = new Map((divisions ?? []).map((d) => [d.id, d.name]));
 
-      // Fetch entries belonging to this league directly OR to any of its divisions
       const orFilter = divisionIds.length > 0
         ? `league_id.eq.${leagueId},division_id.in.(${divisionIds.join(",")})`
         : `league_id.eq.${leagueId}`;
@@ -42,9 +41,22 @@ function AdminEntries() {
         .or(orFilter)
         .order("created_at");
       if (entriesError) throw entriesError;
+
+      const userIds = Array.from(new Set((entries ?? []).map((e) => e.user_id).filter(Boolean)));
+      let approvedMap = new Map<string, boolean>();
+      if (userIds.length > 0) {
+        const { data: profiles, error: pErr } = await supabase
+          .from("profiles")
+          .select("id,approved")
+          .in("id", userIds);
+        if (pErr) throw pErr;
+        approvedMap = new Map((profiles ?? []).map((p) => [p.id, !!p.approved]));
+      }
+
       return (entries ?? []).map((entry) => ({
         ...entry,
         divisionName: entry.division_id ? (divisionNames.get(entry.division_id) ?? "Ukendt") : "Liga-tilmelding",
+        profileApproved: approvedMap.get(entry.user_id) ?? false,
       }));
     },
   });
@@ -55,15 +67,21 @@ function AdminEntries() {
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const approve = useServerFn(approveEntry);
-  const approveMut = useMutation({
-    mutationFn: async (entryId: string) => approve({ data: { entryId } }),
+  const setApproval = useServerFn(setProfileApproval);
+  const approvalMut = useMutation({
+    mutationFn: async (vars: { targetUserId: string; approved: boolean }) =>
+      setApproval({ data: vars }),
     onSuccess: (res) => {
-      toast.success(res.alreadyApproved ? "Allerede godkendt" : "Godkendt – kører har fået besked");
+      if (!res.changed) {
+        toast.message(res.approved ? "Allerede godkendt" : "Allerede ikke-godkendt");
+      } else {
+        toast.success(res.approved ? "Profil godkendt – kører har fået besked" : "Godkendelse fjernet");
+      }
       qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
 
   // Group by division → class → category
