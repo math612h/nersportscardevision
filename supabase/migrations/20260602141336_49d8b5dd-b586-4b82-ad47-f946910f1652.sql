@@ -1,0 +1,1 @@
+ALTER TABLE public.leaderboard_times ADD COLUMN car_model text;

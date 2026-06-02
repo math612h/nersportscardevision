@@ -32,6 +32,7 @@ type Row = {
   track: string;
   layout: string | null;
   car_class: string;
+  car_model: string | null;
   best_lap_ms: number;
   source: "admin" | "user";
   recorded_at: string | null;
@@ -51,7 +52,7 @@ function LeaderboardPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leaderboard_times")
-        .select("id,user_id,driver_name,track,layout,car_class,best_lap_ms,source,recorded_at,created_at")
+        .select("id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at")
         .order("best_lap_ms", { ascending: true })
         .limit(1000);
       if (error) throw error;
@@ -137,6 +138,7 @@ function LeaderboardPage() {
         track: parsed.track,
         layout: parsed.layout,
         car_class: normalizeCarClass(me.carClass),
+        car_model: me.carModel,
         best_lap_ms: me.bestLapMs,
         source: "user",
         uploaded_by: user.id,
@@ -261,6 +263,7 @@ function LeaderboardPage() {
                     <th className="px-3 py-2 w-10">#</th>
                     <th className="px-3 py-2">Kører</th>
                     <th className="px-3 py-2">Bilklasse</th>
+                    <th className="px-3 py-2 hidden md:table-cell">Bil</th>
                     <th className="px-3 py-2">Bane</th>
                     <th className="px-3 py-2 hidden sm:table-cell">Layout</th>
                     <th className="px-3 py-2 text-right">Bedste omgang</th>
@@ -278,6 +281,7 @@ function LeaderboardPage() {
                         </div>
                       </td>
                       <td className="px-3 py-2"><Badge variant="secondary" className="text-[10px]">{r.car_class}</Badge></td>
+                      <td className="px-3 py-2 hidden md:table-cell text-muted-foreground">{r.car_model ?? "–"}</td>
                       <td className="px-3 py-2"><span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />{r.track}</span></td>
                       <td className="px-3 py-2 hidden sm:table-cell text-muted-foreground">{r.layout ?? "–"}</td>
                       <td className="px-3 py-2 text-right font-mono tabular-nums">

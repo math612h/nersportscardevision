@@ -289,6 +289,7 @@ function DivisionEditor({
             track: parsedRace.track,
             layout: parsedRace.layout,
             car_class: normalizeCarClass(p.carClass),
+            car_model: p.carModel,
             best_lap_ms: p.bestLapMs!,
             source: "admin" as const,
             uploaded_by: user.id,
