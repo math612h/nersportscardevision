@@ -60,6 +60,7 @@ export function AppHeader() {
           )}
           {user ? (
             <>
+              <NotificationsBell />
               <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil">
                 <UserCircle2 className="h-4 w-4" />
                 <span className="hidden sm:inline">Profil</span>
