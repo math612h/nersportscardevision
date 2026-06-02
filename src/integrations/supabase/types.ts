@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      division_absences: {
+        Row: {
+          created_at: string
+          division_id: string
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          division_id: string
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          division_id?: string
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       divisions: {
         Row: {
           car_class: string | null
@@ -121,6 +145,7 @@ export type Database = {
           description: string | null
           driver_category: string | null
           id: string
+          is_offseason: boolean
           name: string
         }
         Insert: {
@@ -132,6 +157,7 @@ export type Database = {
           description?: string | null
           driver_category?: string | null
           id?: string
+          is_offseason?: boolean
           name: string
         }
         Update: {
@@ -143,6 +169,7 @@ export type Database = {
           description?: string | null
           driver_category?: string | null
           id?: string
+          is_offseason?: boolean
           name?: string
         }
         Relationships: []
