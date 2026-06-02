@@ -412,18 +412,21 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                         if (cell.dns) return <td key={d.id} className="py-1.5 px-1 text-center text-[10px] font-semibold text-destructive">DNS</td>;
                         return (
                           <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
-                            <span className="inline-flex items-center gap-0.5">
-                              {cell.points}
-                              {cell.fl && <Zap className="h-3 w-3 text-primary" aria-label="Fastest lap" />}
-                              {cell.penalty > 0 && (
-                                <span className="text-[10px] text-destructive" title={`+${cell.penalty}s tidsstraf`}>+{cell.penalty}s</span>
-                              )}
-                              {cell.pointPenalty > 0 && (
-                                <span className="text-[10px] text-destructive" title={`-${cell.pointPenalty} pointstraf`}>-{cell.pointPenalty}p</span>
-                              )}
+                            <span className="relative inline-block">
+                              <span>{cell.points}</span>
+                              <span className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-0.5 flex items-center gap-0.5">
+                                {cell.fl && <Zap className="h-3 w-3 text-primary" aria-label="Fastest lap" />}
+                                {cell.penalty > 0 && (
+                                  <span className="text-[10px] text-destructive" title={`+${cell.penalty}s tidsstraf`}>+{cell.penalty}s</span>
+                                )}
+                                {cell.pointPenalty > 0 && (
+                                  <span className="text-[10px] text-destructive" title={`-${cell.pointPenalty} pointstraf`}>-{cell.pointPenalty}p</span>
+                                )}
+                              </span>
                             </span>
                           </td>
                         );
+
                       })}
                       <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">{r.fl || "–"}</td>
                       <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
