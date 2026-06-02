@@ -205,9 +205,105 @@ function DivisionEditor({
   const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [saving, setSaving] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Profiles for the entries on grid (for LMU name matching)
+  const userIds = useMemo(() => Array.from(new Set(entries.map((e) => e.user_id))), [entries]);
+  const { data: profiles } = useQuery({
+    queryKey: ["profiles-lmu", userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id,lmu_name,display_name")
+        .in("id", userIds);
+      if (error) throw error;
+      return (data ?? []) as { id: string; lmu_name: string | null; display_name: string | null }[];
+    },
+  });
 
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+
+  const importXml = async (file: File) => {
+    try {
+      const text = await file.text();
+      const doc = new DOMParser().parseFromString(text, "application/xml");
+      if (doc.querySelector("parsererror")) throw new Error("Filen kunne ikke læses som XML");
+      const driverEls = Array.from(doc.querySelectorAll("RaceResults > Race > Driver, RaceResults Race Driver, Driver"));
+      if (driverEls.length === 0) throw new Error("Ingen kørere fundet i filen");
+
+      type ParsedDriver = { name: string; bestLapMs: number | null; finishMs: number | null; finished: boolean; carClass: string };
+      const parsed: ParsedDriver[] = driverEls.map((el) => {
+        const get = (t: string) => el.querySelector(`:scope > ${t}`)?.textContent?.trim() ?? "";
+        const finishStatus = get("FinishStatus");
+        const blt = parseFloat(get("BestLapTime"));
+        const fin = parseFloat(get("FinishTime"));
+        return {
+          name: get("Name"),
+          carClass: get("CarClass"),
+          bestLapMs: Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null,
+          finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
+          finished: finishStatus.toLowerCase().startsWith("finished"),
+        };
+      });
+
+      // Fastest-lap winner per car class
+      const flByClass = new Map<string, string>(); // class -> lowercase driver name
+      const classes = Array.from(new Set(parsed.map((p) => p.carClass).filter(Boolean)));
+      for (const cls of classes) {
+        const inCls = parsed.filter((p) => p.carClass === cls && p.bestLapMs != null);
+        if (inCls.length === 0) continue;
+        inCls.sort((a, b) => (a.bestLapMs! - b.bestLapMs!));
+        flByClass.set(cls, inCls[0].name.trim().toLowerCase());
+      }
+
+      // Build lmu_name -> userId lookup
+      const lmuToUser = new Map<string, string>();
+      for (const p of profiles ?? []) {
+        const key = (p.lmu_name ?? "").trim().toLowerCase();
+        if (key) lmuToUser.set(key, p.id);
+      }
+
+      let matched = 0;
+      let missing: string[] = [];
+      const noLmu: string[] = [];
+
+      const updates = new Map<string, Partial<DraftRow>>();
+      for (const p of parsed) {
+        const key = p.name.trim().toLowerCase();
+        const userId = lmuToUser.get(key);
+        if (!userId) { missing.push(p.name); continue; }
+        const row = rows.find((r) => r.user_id === userId);
+        if (!row) continue;
+        const isFl = flByClass.get(p.carClass) === key;
+        if (p.finished && p.finishMs != null) {
+          updates.set(row.entry_id, { time_str: msToStr(p.finishMs), fastest_lap: isFl, dnf: false, dns: false });
+        } else {
+          updates.set(row.entry_id, { time_str: "", fastest_lap: false, dnf: true, dns: false });
+        }
+        matched++;
+      }
+
+      // Drivers on grid with no lmu_name set on their profile
+      for (const r of rows) {
+        const prof = (profiles ?? []).find((p) => p.id === r.user_id);
+        if (!prof?.lmu_name) noLmu.push(r.driver_name);
+      }
+
+      setRows((prev) => prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r)));
+
+      toast.success(`Importerede ${matched} kørere fra resultatfilen.`);
+      if (missing.length > 0) {
+        toast.warning(`${missing.length} kørere i filen blev ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
+      }
+      if (noLmu.length > 0) {
+        toast.message(`${noLmu.length} kørere på grid mangler LMU-navn på profilen: ${noLmu.slice(0, 5).join(", ")}${noLmu.length > 5 ? "…" : ""}`);
+      }
+    } catch (e: any) {
+      toast.error(e.message ?? "Kunne ikke importere fil");
+    }
+  };
 
   const groupKeys = useMemo(() => {
     return configs.length
