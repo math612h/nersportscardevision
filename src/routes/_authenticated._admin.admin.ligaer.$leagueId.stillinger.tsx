@@ -194,6 +194,7 @@ function DivisionEditor({
       driver_category: e.driver_category,
       time_str: ex && typeof ex.finish_time_ms === "number" && ex.finish_time_ms > 0 ? msToStr(ex.finish_time_ms) : "",
       penalty_seconds: Number(ex?.penalty_seconds ?? 0),
+      penalty_points: Number(ex?.penalty_points ?? 0),
       fastest_lap: !!ex?.fastest_lap,
       dnf: !!ex?.dnf,
       dns: !!ex?.dns,
