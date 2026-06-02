@@ -91,6 +91,68 @@ function CardGrid({ children }: { children: React.ReactNode }) {
   return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
 }
 
+function LeaderboardTeaser() {
+  const { data: rows } = useQuery({
+    queryKey: ["leaderboard-teaser"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leaderboard_times")
+        .select("id,driver_name,track,layout,car_class,best_lap_ms")
+        .order("best_lap_ms", { ascending: true })
+        .limit(200);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Take best lap per (class + track + layout) and show the top 5 overall
+  const best = (() => {
+    const map = new Map<string, typeof rows[number]>();
+    for (const r of rows ?? []) {
+      const key = `${r.car_class}|${r.track}|${r.layout ?? ""}|${r.driver_name.toLowerCase()}`;
+      const cur = map.get(key);
+      if (!cur || r.best_lap_ms < cur.best_lap_ms) map.set(key, r);
+    }
+    return Array.from(map.values()).sort((a, b) => a.best_lap_ms - b.best_lap_ms).slice(0, 5);
+  })();
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-primary">
+          <Trophy className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Leaderboard</h2>
+        </div>
+        <Link to="/leaderboard" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+          Se alle tider <ArrowUpRight className="h-3 w-3" />
+        </Link>
+      </div>
+      <Link
+        to="/leaderboard"
+        className="block overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
+      >
+        {best.length === 0 ? (
+          <div className="px-4 py-5 text-center text-sm text-muted-foreground">
+            Ingen tider endnu — upload en race-fil for at komme på leaderboardet.
+          </div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {best.map((r, i) => (
+              <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-xs font-semibold tabular-nums">{i + 1}</span>
+                <span className="flex-1 truncate font-medium">{r.driver_name}</span>
+                <Badge variant="secondary" className="hidden sm:inline-flex text-[10px]">{r.car_class}</Badge>
+                <span className="hidden md:inline-flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{r.track}{r.layout ? ` · ${r.layout}` : ""}</span>
+                <span className="inline-flex items-center gap-1 font-mono tabular-nums text-sm"><Timer className="h-3 w-3 text-primary" />{msToLapStr(r.best_lap_ms)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Link>
+    </section>
+  );
+}
+
 function LeagueCard({ l, offseason }: { l: any; offseason?: boolean }) {
   const count = l.divisions?.[0]?.count ?? 0;
   const countLabel = offseason ? (count === 1 ? "løb" : "løb") : (count === 1 ? "afdeling" : "afdelinger");
