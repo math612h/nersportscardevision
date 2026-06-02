@@ -78,10 +78,12 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     const blt = parseFloat(get("BestLapTime"));
     const fin = parseFloat(get("FinishTime"));
     const carClass = get("CarClass");
+    const carModel = get("VehName") || get("CarType") || get("VehFile") || null;
     return {
       name: get("Name"),
       carClass,
       carClassNorm: normalizeCarClass(carClass),
+      carModel: carModel ? carModel.replace(/\.veh$/i, "").trim() || null : null,
       bestLapMs: Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null,
       finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
       finished: finishStatus.toLowerCase().startsWith("finished"),
