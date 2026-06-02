@@ -452,6 +452,7 @@ function DivisionEditor({
                             <span className="inline-flex items-center gap-0.5">
                               {totalPts}
                               {r.fastest_lap && r.position > 0 && <Zap className="h-3 w-3 text-primary" />}
+                              {r.penalty_points > 0 && <span className="text-[10px] text-destructive">-{r.penalty_points}p</span>}
                             </span>
                           </td>
                         </tr>
