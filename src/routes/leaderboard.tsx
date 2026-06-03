@@ -158,10 +158,11 @@ function LeaderboardPage() {
         return;
       }
 
-      // Match every driver in the file against known profiles
+      // Match every driver in the file against known profiles — only registered users land on the leaderboard
       const profiles = (allProfiles ?? []) as Array<{ id: string; lmu_name: string | null }>;
-      const rows = parsed.drivers
-        .filter((d) => d.bestLapMs != null)
+      const allParsed = parsed.drivers.filter((d) => d.bestLapMs != null);
+      const skipped: string[] = [];
+      const rows = allParsed
         .map((d) => {
           const dn = d.name.trim().toLowerCase();
           let matchId: string | null = null;
@@ -174,6 +175,7 @@ function LeaderboardPage() {
               if (s >= 0.85 && s > bestScore) { bestScore = s; matchId = p.id; }
             }
           }
+          if (!matchId) { skipped.push(d.name); return null; }
           return {
             user_id: matchId,
             driver_name: d.name,
@@ -186,14 +188,19 @@ function LeaderboardPage() {
             uploaded_by: user.id,
             recorded_at: parsed.recordedAt,
           };
-        });
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+
+      if (rows.length === 0) {
+        toast.warning("Ingen af kørerne i filen er registreret i app'en — intet uploadet.");
+        return;
+      }
 
       const { error } = await supabase.from("leaderboard_times").insert(rows);
       if (error) throw error;
 
-      const matched = rows.filter((r) => r.user_id).length;
       toast.success(
-        `${rows.length} tid${rows.length === 1 ? "" : "er"} uploadet fra ${parsed.track}${parsed.layout ? ` (${parsed.layout})` : ""} — ${matched} matchede kendte kørere.`,
+        `${rows.length} tid${rows.length === 1 ? "" : "er"} uploadet fra ${parsed.track}${parsed.layout ? ` (${parsed.layout})` : ""}${skipped.length ? ` — ${skipped.length} ukendt${skipped.length === 1 ? "" : "e"} kører${skipped.length === 1 ? "" : "e"} sprunget over.` : "."}`,
       );
       qc.invalidateQueries({ queryKey: ["leaderboard"] });
     } catch (e: any) {
