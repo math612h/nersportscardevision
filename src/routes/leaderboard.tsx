@@ -339,6 +339,7 @@ function LeaderboardPage() {
                     <th className="px-3 py-2 hidden sm:table-cell">Layout</th>
                     <th className="px-3 py-2 text-right">Bedste omgang</th>
                     <th className="px-3 py-2 hidden md:table-cell text-center">Kilde</th>
+                    {isAdmin && <th className="px-3 py-2 w-10"></th>}
                   </tr>
                 </thead>
                 <tbody>
