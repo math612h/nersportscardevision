@@ -609,7 +609,9 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
           </div>
           {selected && goesToWaitlist && (
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-              Klassen er fyldt ({gridCount}/{cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.
+              {!isApproved
+                ? "Din profil er endnu ikke godkendt. Du tilmeldes ventelisten og rykker automatisk op på griddet, når en admin godkender dig."
+                : `Klassen er fyldt (${gridCount}/${cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.`}
             </p>
           )}
           {selected && (
