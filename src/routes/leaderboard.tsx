@@ -130,13 +130,18 @@ function LeaderboardPage() {
       const text = await file.text();
       const parsed = parseLmuRaceFile(text);
 
-      // Look up the uploader's LMU name + all known LMU names for matching
+      // Look up the uploader's profile (must be approved) + all known LMU names for matching
       const [{ data: profile, error: pErr }, { data: allProfiles, error: aErr }] = await Promise.all([
-        supabase.from("profiles").select("lmu_name").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("lmu_name, approved").eq("id", user.id).maybeSingle(),
         supabase.from("profiles").select("id,lmu_name").not("lmu_name", "is", null),
       ]);
       if (pErr) throw pErr;
       if (aErr) throw aErr;
+
+      if (!profile?.approved) {
+        toast.error("Kun godkendte brugere kan uploade tider. Bed en admin om at godkende din profil.");
+        return;
+      }
 
       const lmu = (profile?.lmu_name ?? "").trim().toLowerCase();
       if (!lmu) {
