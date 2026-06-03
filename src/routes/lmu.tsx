@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, Calendar, ArrowUpRight, Sparkles, Trophy, Timer, MapPin } from "lucide-react";
+import { useMemo } from "react";
+import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
+import type { ClassConfig } from "@/lib/tracks";
 
 const LMU_TITLE = "Le Mans Ultimate ligaer & løb — LMU-Hub";
 const LMU_DESC =
