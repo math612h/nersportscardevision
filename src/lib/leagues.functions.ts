@@ -38,7 +38,51 @@ export const setProfileApproval = createServerFn({ method: "POST" })
       .eq("id", data.targetUserId);
     if (upErr) throw new Error(upErr.message);
 
-    if (data.approved) {
+    // Fetch user's primary league signups (division_id null)
+    const { data: myEntries } = await supabaseAdmin
+      .from("entries")
+      .select("id,league_id,car_class,driver_category,waitlist,driver_name,created_at")
+      .is("division_id", null)
+      .eq("user_id", data.targetUserId);
+
+    const promoted: string[] = [];
+    const demoted: string[] = [];
+
+    if (data.approved && myEntries) {
+      // Try to promote this user's waitlist entries if capacity allows
+      for (const entry of myEntries.filter((e) => e.waitlist)) {
+        // Get league cap for this class/category
+        const { data: league } = await supabaseAdmin
+          .from("leagues")
+          .select("class_configs,name")
+          .eq("id", entry.league_id)
+          .maybeSingle();
+        const configs: Array<{ car_class: string; driver_category: string; max_drivers?: number | null }> =
+          Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
+        const cfg = configs.find((c) => c.car_class === entry.car_class && c.driver_category === entry.driver_category);
+        const cap = cfg?.max_drivers ?? null;
+
+        const { data: siblings } = await supabaseAdmin
+          .from("entries")
+          .select("id,waitlist")
+          .eq("league_id", entry.league_id)
+          .is("division_id", null)
+          .eq("car_class", entry.car_class)
+          .eq("driver_category", entry.driver_category);
+        const gridCount = (siblings ?? []).filter((s) => !s.waitlist).length;
+
+        if (cap == null || gridCount < cap) {
+          await supabaseAdmin.from("entries").update({ waitlist: false }).eq("id", entry.id);
+          promoted.push(league?.name ?? "ligaen");
+          await supabaseAdmin.from("notifications").insert({
+            user_id: data.targetUserId,
+            title: `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
+            body: `Du er nu godkendt og er rykket op på griddet i ${entry.car_class} · ${entry.driver_category}.`,
+            link: `/ligaer/${entry.league_id}`,
+          });
+        }
+      }
+
       await supabaseAdmin.from("notifications").insert({
         user_id: data.targetUserId,
         title: `Din profil er blevet godkendt`,
@@ -47,7 +91,55 @@ export const setProfileApproval = createServerFn({ method: "POST" })
       });
     }
 
-    return { ok: true, changed: true, approved: data.approved };
+    if (!data.approved && myEntries) {
+      // Demote any grid entries to waitlist; promote next approved waitlister
+      for (const entry of myEntries.filter((e) => !e.waitlist)) {
+        await supabaseAdmin.from("entries").update({ waitlist: true }).eq("id", entry.id);
+        demoted.push(entry.driver_name);
+
+        // Find next approved waitlist entry in same class/category
+        const { data: waitlisters } = await supabaseAdmin
+          .from("entries")
+          .select("id,user_id,driver_name,created_at")
+          .eq("league_id", entry.league_id)
+          .is("division_id", null)
+          .eq("waitlist", true)
+          .eq("car_class", entry.car_class)
+          .eq("driver_category", entry.driver_category)
+          .neq("user_id", data.targetUserId)
+          .order("created_at", { ascending: true });
+
+        if (waitlisters && waitlisters.length > 0) {
+          const userIds = waitlisters.map((w) => w.user_id);
+          const { data: profs } = await supabaseAdmin
+            .from("profiles")
+            .select("id,approved")
+            .in("id", userIds);
+          const approvedSet = new Set((profs ?? []).filter((p) => p.approved).map((p) => p.id));
+          const nextUp = waitlisters.find((w) => approvedSet.has(w.user_id));
+          if (nextUp) {
+            await supabaseAdmin.from("entries").update({ waitlist: false }).eq("id", nextUp.id);
+            const { data: league } = await supabaseAdmin
+              .from("leagues").select("name").eq("id", entry.league_id).maybeSingle();
+            await supabaseAdmin.from("notifications").insert({
+              user_id: nextUp.user_id,
+              title: `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
+              body: `En plads er blevet ledig i ${entry.car_class} · ${entry.driver_category}. Du er nu på griddet.`,
+              link: `/ligaer/${entry.league_id}`,
+            });
+          }
+        }
+      }
+
+      await supabaseAdmin.from("notifications").insert({
+        user_id: data.targetUserId,
+        title: `Din godkendelse er fjernet`,
+        body: `Dine tilmeldinger er flyttet til ventelisten. Kontakt en admin hvis du har spørgsmål.`,
+        link: `/profil`,
+      });
+    }
+
+    return { ok: true, changed: true, approved: data.approved, promoted, demoted };
   });
 
 export const leaveLeague = createServerFn({ method: "POST" })
