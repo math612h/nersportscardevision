@@ -18,7 +18,10 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: PAGE_DESC },
       { property: "og:url", content: PAGE_URL },
     ],
-    links: [{ rel: "canonical", href: PAGE_URL }],
+    links: [
+      { rel: "canonical", href: PAGE_URL },
+      { rel: "preload", as: "image", href: lmuCover.url, fetchpriority: "high" } as any,
+    ],
     scripts: [
       {
         type: "application/ld+json",
