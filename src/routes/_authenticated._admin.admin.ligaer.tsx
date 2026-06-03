@@ -229,6 +229,7 @@ function AdminLeagues() {
       is_offseason: isOffseason,
       banner_url: bannerPath,
       event_settings: eventSettings as any,
+      points_system: pointsSystem as any,
       created_by: user?.id,
     });
     setSubmitting(false);
@@ -242,6 +243,7 @@ function AdminLeagues() {
     setConfigs([emptyConfig()]);
     setBannerFile(null);
     setEventSettings({});
+    setPointsSystem({});
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
