@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DriversBriefing } from "@/components/DriversBriefing";
 
 export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
   component: DivisionDetail,
@@ -324,6 +325,15 @@ function DivisionDetail() {
           </Button>
         )}
         {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
+        {user && (
+          <DriversBriefing
+            divisionId={divisionId}
+            raceDate={(div?.race_date as string | null | undefined) ?? null}
+            briefingOpenMinutesBefore={
+              ((div?.settings as any)?.event_settings?.briefing_open_minutes_before as number | undefined) ?? 30
+            }
+          />
+        )}
       </div>
 
       <section className="space-y-4">

@@ -14,6 +14,32 @@ export type Database = {
   }
   public: {
     Tables: {
+      briefing_raised_hands: {
+        Row: {
+          division_id: string
+          raised_at: string
+          user_id: string
+        }
+        Insert: {
+          division_id: string
+          raised_at?: string
+          user_id: string
+        }
+        Update: {
+          division_id?: string
+          raised_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "briefing_raised_hands_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_tokens: {
         Row: {
           created_at: string
