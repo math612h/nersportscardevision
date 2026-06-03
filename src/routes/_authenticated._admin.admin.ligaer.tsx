@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, Settings, Pencil } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,65 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+async function uploadLeagueBanner(file: File): Promise<string> {
+  if (file.size > 8 * 1024 * 1024) throw new Error("Billedet må højst være 8 MB.");
+  if (!file.type.startsWith("image/")) throw new Error("Vælg en billedfil.");
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `banner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from("league-banners").upload(path, file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: file.type,
+  });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+function BannerPicker({ pathOrUrl, file, onFile, onClear }: { pathOrUrl: string | null; file: File | null; onFile: (f: File | null) => void; onClear: () => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  const { data: previewUrl } = useQuery({
+    queryKey: ["banner-preview", pathOrUrl],
+    enabled: !!pathOrUrl && !pathOrUrl.startsWith("http"),
+    queryFn: async () => {
+      const { data } = await supabase.storage.from("league-banners").createSignedUrl(pathOrUrl!, 60 * 60);
+      return data?.signedUrl ?? null;
+    },
+  });
+  const localUrl = file ? URL.createObjectURL(file) : null;
+  const src = localUrl || (pathOrUrl?.startsWith("http") ? pathOrUrl : previewUrl);
+  return (
+    <div className="space-y-2">
+      <Label>Billede til liga-knap</Label>
+      {src ? (
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border border-border bg-muted">
+          <img src={src} alt="Banner" className="h-full w-full object-cover" />
+        </div>
+      ) : (
+        <div className="flex aspect-[16/9] w-full items-center justify-center rounded-md border border-dashed border-border text-xs text-muted-foreground">
+          Intet billede
+        </div>
+      )}
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="sm" className="gap-1" onClick={() => ref.current?.click()}>
+          <ImagePlus className="h-3 w-3" /> Vælg billede
+        </Button>
+        {(file || pathOrUrl) && (
+          <Button type="button" variant="ghost" size="sm" onClick={() => { onFile(null); onClear(); if (ref.current) ref.current.value = ""; }}>
+            Fjern
+          </Button>
+        )}
+      </div>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0] ?? null; onFile(f); }}
+      />
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
   component: AdminLeagues,
@@ -34,7 +93,9 @@ function AdminLeagues() {
   const [desc, setDesc] = useState("");
   const [isOffseason, setIsOffseason] = useState(false);
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [createdLeague, setCreatedLeague] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const { data: leagues } = useQuery({
     queryKey: ["leagues-admin"],
@@ -57,6 +118,14 @@ function AdminLeagues() {
       if (!Number.isInteger(c.number_from) || !Number.isInteger(c.number_to) || c.number_from < 1 || c.number_to < c.number_from)
         return toast.error("Ugyldigt nummerinterval.");
     }
+    setSubmitting(true);
+    let bannerPath: string | null = null;
+    try {
+      if (bannerFile) bannerPath = await uploadLeagueBanner(bannerFile);
+    } catch (err: any) {
+      setSubmitting(false);
+      return toast.error(err.message);
+    }
     const first = configs[0];
     const { error } = await supabase.from("leagues").insert({
       name: name.trim(),
@@ -65,8 +134,10 @@ function AdminLeagues() {
       driver_category: first.driver_category,
       class_configs: configs as any,
       is_offseason: isOffseason,
+      banner_url: bannerPath,
       created_by: user?.id,
     });
+    setSubmitting(false);
     if (error) return toast.error(error.message);
     toast.success(isOffseason ? "Off-season event oprettet" : "Liga oprettet");
     setCreatedLeague(true);
@@ -75,6 +146,7 @@ function AdminLeagues() {
     setDesc("");
     setIsOffseason(false);
     setConfigs([emptyConfig()]);
+    setBannerFile(null);
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
@@ -103,6 +175,7 @@ function AdminLeagues() {
               <form onSubmit={create} className="space-y-3">
                 <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
                 <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+                <BannerPicker pathOrUrl={null} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerFile(null)} />
                 <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
                   <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
                   <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
@@ -155,7 +228,7 @@ function AdminLeagues() {
                     <Plus className="h-3 w-3" /> Tilføj klasse
                   </Button>
                 </div>
-                <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
+                <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
@@ -226,12 +299,17 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [isOffseason, setIsOffseason] = useState<boolean>(!!league.is_offseason);
   const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) ? league.class_configs : [];
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
+  const [bannerPath, setBannerPath] = useState<string | null>(league.banner_url ?? null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const reset = () => {
     setName(league.name ?? "");
     setDesc(league.description ?? "");
     setIsOffseason(!!league.is_offseason);
     setCfgs(Array.isArray(league.class_configs) ? league.class_configs : []);
+    setBannerPath(league.banner_url ?? null);
+    setBannerFile(null);
   };
 
   const patchCfg = (i: number, patch: Partial<ClassConfig>) =>
@@ -239,10 +317,19 @@ function EditLeagueDialog({ league }: { league: any }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
+    let newBanner = bannerPath;
+    try {
+      if (bannerFile) newBanner = await uploadLeagueBanner(bannerFile);
+    } catch (err: any) {
+      setSaving(false);
+      return toast.error(err.message);
+    }
     const { error } = await supabase
       .from("leagues")
-      .update({ name: name.trim(), description: desc.trim() || null, class_configs: cfgs as any, is_offseason: isOffseason })
+      .update({ name: name.trim(), description: desc.trim() || null, class_configs: cfgs as any, is_offseason: isOffseason, banner_url: newBanner })
       .eq("id", league.id);
+    setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Liga opdateret");
     setOpen(false);
@@ -261,6 +348,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         <form onSubmit={submit} className="space-y-3">
           <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+          <BannerPicker pathOrUrl={bannerPath} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerPath(null)} />
           <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
             <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
             <span className="text-sm">Off-season event</span>
@@ -285,7 +373,7 @@ function EditLeagueDialog({ league }: { league: any }) {
               ))}
             </div>
           )}
-          <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
+          <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
