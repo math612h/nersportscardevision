@@ -346,6 +346,11 @@ function DivisionDetail() {
                             #{e.car_number}
                           </span>
                           <DriverLink userId={e.user_id} name={e.driver_name} className={`flex-1 truncate ${ab ? "line-through" : ""}`} />
+                          {approvedSet?.has(e.user_id) && (
+                            <Badge variant="secondary" className="gap-1 text-[10px] text-green-700 dark:text-green-400" title="Godkendt kører">
+                              <CheckCircle2 className="h-3 w-3" /> Godkendt
+                            </Badge>
+                          )}
                           {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
                           {ab && (
                             <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
