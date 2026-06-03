@@ -396,6 +396,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         is_offseason: isOffseason,
         banner_url: newBanner,
         event_settings: eventSettings as any,
+        points_system: pointsSystem as any,
       })
       .eq("id", league.id);
     setSaving(false);
