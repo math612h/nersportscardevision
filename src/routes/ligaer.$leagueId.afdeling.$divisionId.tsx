@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,6 +119,20 @@ function DivisionDetail() {
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
+    },
+  });
+
+  const signupUserIds = (signups ?? []).map((s) => s.user_id);
+  const { data: approvedSet } = useQuery({
+    queryKey: ["approved-profiles", signupUserIds.sort().join(",")],
+    enabled: signupUserIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, approved")
+        .in("id", signupUserIds);
+      if (error) throw error;
+      return new Set((data ?? []).filter((p) => p.approved).map((p) => p.id));
     },
   });
 
@@ -332,6 +346,11 @@ function DivisionDetail() {
                             #{e.car_number}
                           </span>
                           <DriverLink userId={e.user_id} name={e.driver_name} className={`flex-1 truncate ${ab ? "line-through" : ""}`} />
+                          {approvedSet?.has(e.user_id) && (
+                            <Badge variant="secondary" className="gap-1 text-[10px] text-green-700 dark:text-green-400" title="Godkendt kører">
+                              <CheckCircle2 className="h-3 w-3" /> Godkendt
+                            </Badge>
+                          )}
                           {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
                           {ab && (
                             <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>

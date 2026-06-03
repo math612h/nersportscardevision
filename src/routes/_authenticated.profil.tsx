@@ -2,7 +2,8 @@ import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Camera, Loader2 } from "lucide-react";
+import { Camera, Loader2, CheckCircle2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -35,7 +36,7 @@ function ProfilePage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, lmu_name, age, bio, achievements, avatar_url, discord_username")
+        .select("id, display_name, lmu_name, age, bio, achievements, avatar_url, discord_username, approved")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
@@ -130,7 +131,16 @@ function ProfilePage() {
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>Min profil</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle>Min profil</CardTitle>
+            {profile?.approved ? (
+              <Badge variant="secondary" className="gap-1 text-green-700 dark:text-green-400">
+                <CheckCircle2 className="h-3 w-3" /> Godkendt kører
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-muted-foreground">Afventer godkendelse</Badge>
+            )}
+          </div>
           <CardDescription>Opdater dine oplysninger – LMU-navnet bruges til at koble løbsresultater til dig.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">

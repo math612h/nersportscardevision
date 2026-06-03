@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +27,7 @@ function PublicProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, lmu_name, age, bio, achievements, avatar_url, discord_username")
+        .select("id, display_name, lmu_name, age, bio, achievements, avatar_url, discord_username, approved")
         .eq("id", userId)
         .maybeSingle();
       if (error) throw error;
@@ -62,6 +62,11 @@ function PublicProfile() {
             <div className="space-y-1">
               <CardTitle>{name}</CardTitle>
               <div className="flex flex-wrap gap-1.5">
+                {profile.approved && (
+                  <Badge variant="secondary" className="gap-1 text-green-700 dark:text-green-400">
+                    <CheckCircle2 className="h-3 w-3" /> Godkendt kører
+                  </Badge>
+                )}
                 {profile.lmu_name && <Badge variant="secondary">LMU: {profile.lmu_name}</Badge>}
                 {profile.age != null && <Badge variant="outline">{profile.age} år</Badge>}
                 {profile.discord_username && <Badge variant="outline">Discord: {profile.discord_username}</Badge>}
