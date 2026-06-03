@@ -38,6 +38,27 @@ export type Database = {
         }
         Relationships: []
       }
+      division_lobbies: {
+        Row: {
+          division_id: string
+          lobby_code: string | null
+          lobby_password: string | null
+          updated_at: string
+        }
+        Insert: {
+          division_id: string
+          lobby_code?: string | null
+          lobby_password?: string | null
+          updated_at?: string
+        }
+        Update: {
+          division_id?: string
+          lobby_code?: string | null
+          lobby_password?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       divisions: {
         Row: {
           car_class: string | null
