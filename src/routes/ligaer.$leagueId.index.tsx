@@ -271,6 +271,8 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
   const { data } = useLeagueSignups(leagueId);
 
   const userIds = useMemo(() => Array.from(new Set((data ?? []).map((e) => e.user_id))), [data]);
+  const teamIds = useMemo(() => (data ?? []).map((e: any) => e.team_id).filter(Boolean) as string[], [data]);
+  const { data: teamMap } = useTeamLookup(teamIds);
   const { data: approvedMap } = useQuery({
     queryKey: ["signup-approvals", leagueId, userIds.sort().join(",")],
     enabled: userIds.length > 0,
@@ -329,6 +331,11 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                         #{e.car_number}
                       </span>
                       <span className="flex-1 truncate">{e.driver_name}</span>
+                      {(e as any).team_id && teamMap?.[(e as any).team_id] && (
+                        <Badge variant="outline" className="text-[10px] shrink-0" title="Team">
+                          {teamMap[(e as any).team_id]}
+                        </Badge>
+                      )}
                       {approvedMap?.has(e.user_id) && (
                         <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
                           <CheckCircle2 className="h-3 w-3" />Godkendt
