@@ -56,7 +56,7 @@ export const setProfileApproval = createServerFn({ method: "POST" })
         const { data: league } = await supabaseAdmin
           .from("leagues")
           .select("class_configs,name")
-          .eq("id", entry.league_id)
+          .eq("id", leagueId)
           .maybeSingle();
         const configs: Array<{ car_class: string; driver_category: string; max_drivers?: number | null }> =
           Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
