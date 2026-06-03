@@ -232,47 +232,73 @@ function LeaderboardTeaser() {
   );
 }
 
-function LeagueCard({ l, offseason }: { l: any; offseason?: boolean }) {
-  const count = l.divisions?.[0]?.count ?? 0;
-  const countLabel = offseason ? (count === 1 ? "løb" : "løb") : (count === 1 ? "afdeling" : "afdelinger");
+function LeagueCard({
+  l,
+  bannerUrl,
+  entries,
+  offseason,
+}: {
+  l: any;
+  bannerUrl: string | null;
+  entries: { car_class: string; driver_category: string; waitlist: boolean }[];
+  offseason?: boolean;
+}) {
   const Icon = offseason ? Sparkles : Flag;
+  const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
+
+  let totalSlots = 0;
+  let takenSlots = 0;
+  let hasCap = false;
+  for (const c of cfgs) {
+    if (typeof c.max_drivers === "number" && c.max_drivers > 0) {
+      hasCap = true;
+      totalSlots += c.max_drivers;
+      const taken = entries.filter((e) => !e.waitlist && e.car_class === c.car_class && e.driver_category === c.driver_category).length;
+      takenSlots += Math.min(taken, c.max_drivers);
+    }
+  }
+  const freeSlots = Math.max(0, totalSlots - takenSlots);
 
   return (
     <Link
       to="/ligaer/$leagueId"
       params={{ leagueId: l.id }}
-      className="group relative block h-full overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
+      aria-label={`Åbn ${l.name}`}
+      className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
     >
-      {/* Decorative gradient header */}
-      <div className="relative h-20 overflow-hidden">
-        {l.banner_url ? (
-          <img src={l.banner_url} alt={`Banner for ligaen ${l.name}`} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+      <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+        {bannerUrl ? (
+          <img
+            src={bannerUrl}
+            alt={`Banner for ${l.name}`}
+            loading="lazy"
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
         <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
           <ArrowUpRight className="h-3.5 w-3.5" />
         </div>
       </div>
 
-      <div className="space-y-3 px-4 pb-4 pt-2">
-        <div className="flex items-center gap-2">
-          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-            <Icon className="h-4 w-4" />
-          </span>
+      <div className="flex items-center gap-3 px-4 pb-4 pt-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary" aria-hidden="true">
+          <Icon className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
           <h3 className="truncate text-base font-semibold tracking-tight">{l.name}</h3>
-        </div>
-
-        {l.description ? (
-          <p className="line-clamp-2 text-sm text-muted-foreground">{l.description}</p>
-        ) : (
-          <p className="text-sm italic text-muted-foreground/60">Ingen beskrivelse.</p>
-        )}
-
-        <div className="flex items-center gap-1.5 pt-1 text-xs text-muted-foreground">
-          <Calendar className="h-3.5 w-3.5" />
-          <span><span className="font-semibold text-foreground">{count}</span> {countLabel}</span>
+          <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+            <Users className="h-3 w-3" />
+            {hasCap ? (
+              <span>
+                <span className="font-semibold text-foreground">{freeSlots}</span> ledige slots på gridden
+              </span>
+            ) : (
+              <span>Ingen pladsbegrænsning</span>
+            )}
+          </p>
         </div>
       </div>
     </Link>
