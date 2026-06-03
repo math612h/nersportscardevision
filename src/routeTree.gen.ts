@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as LmuRouteImport } from './routes/lmu'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as BrugereRouteImport } from './routes/brugere'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -48,11 +47,6 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LmuRoute = LmuRouteImport.update({
-  id: '/lmu',
-  path: '/lmu',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeaderboardRoute = LeaderboardRouteImport.update({
@@ -209,7 +203,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
@@ -239,7 +232,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
@@ -269,7 +261,6 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
-  '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
@@ -302,7 +293,6 @@ export interface FileRouteTypes {
     | '/'
     | '/brugere'
     | '/leaderboard'
-    | '/lmu'
     | '/login'
     | '/sitemap.xml'
     | '/mine-protests'
@@ -332,7 +322,6 @@ export interface FileRouteTypes {
     | '/'
     | '/brugere'
     | '/leaderboard'
-    | '/lmu'
     | '/login'
     | '/sitemap.xml'
     | '/mine-protests'
@@ -361,7 +350,6 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/brugere'
     | '/leaderboard'
-    | '/lmu'
     | '/login'
     | '/sitemap.xml'
     | '/_authenticated/_admin'
@@ -394,7 +382,6 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   BrugereRoute: typeof BrugereRoute
   LeaderboardRoute: typeof LeaderboardRoute
-  LmuRoute: typeof LmuRoute
   LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
@@ -418,13 +405,6 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lmu': {
-      id: '/lmu'
-      path: '/lmu'
-      fullPath: '/lmu'
-      preLoaderRoute: typeof LmuRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leaderboard': {
@@ -730,7 +710,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   BrugereRoute: BrugereRoute,
   LeaderboardRoute: LeaderboardRoute,
-  LmuRoute: LmuRoute,
   LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
