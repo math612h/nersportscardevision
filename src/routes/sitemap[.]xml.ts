@@ -24,11 +24,10 @@ export const Route = createFileRoute("/sitemap.xml")({
         try {
           const { data: leagues } = await supabaseAdmin
             .from("leagues")
-            .select("id, updated_at");
+            .select("id");
           for (const l of leagues ?? []) {
             entries.push({
               path: `/ligaer/${l.id}`,
-              lastmod: (l as any).updated_at ?? undefined,
               changefreq: "weekly",
               priority: "0.7",
             });
