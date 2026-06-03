@@ -65,21 +65,31 @@ export function DriversBriefing({ divisionId, raceDate, briefingOpenMinutesBefor
 
   return (
     <>
-      <Button
+      <button
         onClick={() => setOpen(true)}
         disabled={!canEnter}
-        variant={isOpen ? "default" : "outline"}
-        className="gap-2"
+        className={`group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-xl border-2 px-6 py-4 text-base font-bold shadow-lg transition disabled:cursor-not-allowed disabled:opacity-70 ${
+          isOpen
+            ? "border-primary bg-primary text-primary-foreground hover:brightness-110 animate-pulse"
+            : "border-primary/60 bg-primary/20 text-foreground hover:bg-primary/30"
+        }`}
       >
-        <Radio className="h-4 w-4" />
-        Drivers Briefing
-        {!isOpen && opensAt && (
-          <span className="text-xs font-normal opacity-80">
-            · åbner om {fmtCountdown(msUntilOpen)}
-          </span>
-        )}
-        {!opensAt && <span className="text-xs font-normal opacity-80">· dato mangler</span>}
-      </Button>
+        <Radio className="h-6 w-6" />
+        <span className="flex flex-col items-start leading-tight">
+          <span className="text-lg">Drivers Briefing</span>
+          {!isOpen && opensAt && (
+            <span className="text-xs font-medium opacity-80">
+              Åbner om {fmtCountdown(msUntilOpen)}
+            </span>
+          )}
+          {isOpen && (
+            <span className="text-xs font-medium opacity-90">Tryk for at deltage nu</span>
+          )}
+          {!opensAt && (
+            <span className="text-xs font-medium opacity-80">Race-dato mangler</span>
+          )}
+        </span>
+      </button>
 
       {open && (
         <BriefingRoomDialog
