@@ -671,6 +671,20 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
               </SelectContent>
             </Select>
           </div>
+          {(myTeams ?? []).length > 0 && (
+            <div>
+              <Label>Team (valgfri)</Label>
+              <Select value={teamId || "none"} onValueChange={(v) => setTeamId(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Intet team" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Intet team</SelectItem>
+                  {(myTeams ?? []).map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {selected && goesToWaitlist && (
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
               {!isApproved
