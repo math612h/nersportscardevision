@@ -252,6 +252,9 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [lobbyCode, setLobbyCode] = useState<string>("");
   const [lobbyPassword, setLobbyPassword] = useState<string>("");
+  const [eventSettings, setEventSettings] = useState<EventSettings>(
+    (division.settings?.event_settings && typeof division.settings.event_settings === "object" ? division.settings.event_settings : {}) as EventSettings,
+  );
 
   useQuery({
     queryKey: ["admin-division-lobby", division.id, open],
