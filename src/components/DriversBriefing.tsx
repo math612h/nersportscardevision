@@ -375,20 +375,49 @@ function BriefingRoomUI({ divisionId, isAdmin }: { divisionId: string; isAdmin: 
                 {m.isAdmin && <Badge variant="secondary" className="text-[10px]">Admin</Badge>}
                 {canSpeak && !m.isAdmin && <Badge variant="outline" className="text-[10px]">Taler</Badge>}
                 {isAdmin && p.identity !== localParticipant.identity && (
-                  <button
-                    onClick={async () => {
-                      try {
-                        await removeFn({ data: { divisionId, participantIdentity: p.identity } });
-                        toast.success("Fjernet fra kanal");
-                      } catch (e: any) {
-                        toast.error(e.message);
-                      }
-                    }}
-                    className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                    title="Fjern fra kanal"
-                  >
-                    <UserX className="h-3.5 w-3.5" />
-                  </button>
+                  <>
+                    {!m.isAdmin && (
+                      canSpeak ? (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await revokeFn({ data: { divisionId, participantIdentity: p.identity } });
+                              toast.success("Taleret fjernet");
+                            } catch (e: any) { toast.error(e.message); }
+                          }}
+                          className="rounded border border-border px-2 py-0.5 text-[11px] hover:bg-muted"
+                          title="Fjern taleret"
+                        >
+                          Fjern taleret
+                        </button>
+                      ) : (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await grantFn({ data: { divisionId, participantIdentity: p.identity } });
+                              toast.success("Taleret givet");
+                            } catch (e: any) { toast.error(e.message); }
+                          }}
+                          className="rounded bg-primary px-2 py-0.5 text-[11px] font-medium text-primary-foreground hover:brightness-110"
+                          title="Giv ordet"
+                        >
+                          Giv ordet
+                        </button>
+                      )
+                    )}
+                    <button
+                      onClick={async () => {
+                        try {
+                          await removeFn({ data: { divisionId, participantIdentity: p.identity } });
+                          toast.success("Fjernet fra kanal");
+                        } catch (e: any) { toast.error(e.message); }
+                      }}
+                      className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                      title="Fjern fra kanal"
+                    >
+                      <UserX className="h-3.5 w-3.5" />
+                    </button>
+                  </>
                 )}
               </li>
             );
