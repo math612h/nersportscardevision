@@ -194,6 +194,7 @@ function AdminLeagues() {
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
+  const [pointsSystem, setPointsSystem] = useState<PointsSystem>({});
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
