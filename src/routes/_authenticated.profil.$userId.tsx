@@ -62,6 +62,11 @@ function PublicProfile() {
             <div className="space-y-1">
               <CardTitle>{name}</CardTitle>
               <div className="flex flex-wrap gap-1.5">
+                {profile.approved && (
+                  <Badge variant="secondary" className="gap-1 text-green-700 dark:text-green-400">
+                    <CheckCircle2 className="h-3 w-3" /> Godkendt kører
+                  </Badge>
+                )}
                 {profile.lmu_name && <Badge variant="secondary">LMU: {profile.lmu_name}</Badge>}
                 {profile.age != null && <Badge variant="outline">{profile.age} år</Badge>}
                 {profile.discord_username && <Badge variant="outline">Discord: {profile.discord_username}</Badge>}
