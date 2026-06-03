@@ -373,7 +373,7 @@ function EditLeagueDialog({ league }: { league: any }) {
               ))}
             </div>
           )}
-          <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
+          <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
