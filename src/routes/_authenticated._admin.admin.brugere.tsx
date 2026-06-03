@@ -100,14 +100,9 @@ function AdminUsersPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
-        <Button
-          type="button"
-          variant={onlyPending ? "default" : "outline"}
-          size="sm"
-          onClick={() => setOnlyPending((v) => !v)}
-        >
-          Afventer godkendelse {pendingCount > 0 && <Badge variant="secondary" className="ml-2">{pendingCount}</Badge>}
-        </Button>
+        <Link to="/admin/afventer">
+          <Button type="button" variant="outline" size="sm">Afventer godkendelse</Button>
+        </Link>
       </div>
 
       {isLoading ? (
