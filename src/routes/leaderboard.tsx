@@ -284,6 +284,21 @@ function LeaderboardPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardContent className="space-y-2 py-4">
+          <div className="flex items-center gap-2 text-primary">
+            <Monitor className="h-4 w-4" />
+            <span className="text-xs font-semibold uppercase tracking-[0.18em]">Desktop Companion</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Download vores desktop app og få tiderne uploadet automatisk. Appen kører i baggrunden, overvåger din LMU resultat-mappe og sender nye tider direkte til leaderboardet — helt uden at du behøver gøre noget.
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Appen starter automatisk ved Windows-opstart, minimerer til systembakken og husker dit login.
+          </p>
+        </CardContent>
+      </Card>
+
       <section className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
           <Filter className="h-4 w-4" />
