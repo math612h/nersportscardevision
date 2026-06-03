@@ -364,6 +364,20 @@ function LeaderboardPage() {
                           {r.source === "admin" ? "Officielt løb" : "Bruger"}
                         </Badge>
                       </td>
+                      {isAdmin && (
+                        <td className="px-3 py-2 text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDelete(r.id)}
+                            title="Slet tid"
+                            aria-label="Slet tid"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
