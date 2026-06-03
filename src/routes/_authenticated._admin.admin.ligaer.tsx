@@ -299,12 +299,17 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [isOffseason, setIsOffseason] = useState<boolean>(!!league.is_offseason);
   const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) ? league.class_configs : [];
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
+  const [bannerPath, setBannerPath] = useState<string | null>(league.banner_url ?? null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const reset = () => {
     setName(league.name ?? "");
     setDesc(league.description ?? "");
     setIsOffseason(!!league.is_offseason);
     setCfgs(Array.isArray(league.class_configs) ? league.class_configs : []);
+    setBannerPath(league.banner_url ?? null);
+    setBannerFile(null);
   };
 
   const patchCfg = (i: number, patch: Partial<ClassConfig>) =>
@@ -312,10 +317,19 @@ function EditLeagueDialog({ league }: { league: any }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSaving(true);
+    let newBanner = bannerPath;
+    try {
+      if (bannerFile) newBanner = await uploadLeagueBanner(bannerFile);
+    } catch (err: any) {
+      setSaving(false);
+      return toast.error(err.message);
+    }
     const { error } = await supabase
       .from("leagues")
-      .update({ name: name.trim(), description: desc.trim() || null, class_configs: cfgs as any, is_offseason: isOffseason })
+      .update({ name: name.trim(), description: desc.trim() || null, class_configs: cfgs as any, is_offseason: isOffseason, banner_url: newBanner })
       .eq("id", league.id);
+    setSaving(false);
     if (error) return toast.error(error.message);
     toast.success("Liga opdateret");
     setOpen(false);
@@ -334,6 +348,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         <form onSubmit={submit} className="space-y-3">
           <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+          <BannerPicker pathOrUrl={bannerPath} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerPath(null)} />
           <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
             <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
             <span className="text-sm">Off-season event</span>
