@@ -55,11 +55,9 @@ function AdminUsersPage() {
   });
 
   const filtered = (data?.profiles ?? []).filter((p) => {
-    if (onlyPending && p.approved) return false;
+    if (!p.approved) return false;
     return (p.display_name ?? "").toLowerCase().includes(search.toLowerCase());
   });
-
-  const pendingCount = (data?.profiles ?? []).filter((p) => !p.approved).length;
 
   const roleMut = useMutation({
     mutationFn: async ({ userId, assign }: { userId: string; assign: boolean }) => {
