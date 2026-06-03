@@ -122,6 +122,20 @@ function DivisionDetail() {
     },
   });
 
+  const signupUserIds = (signups ?? []).map((s) => s.user_id);
+  const { data: approvedSet } = useQuery({
+    queryKey: ["approved-profiles", signupUserIds.sort().join(",")],
+    enabled: signupUserIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, approved")
+        .in("id", signupUserIds);
+      if (error) throw error;
+      return new Set((data ?? []).filter((p) => p.approved).map((p) => p.id));
+    },
+  });
+
   // Public list (no reason) — visible to everyone
   const { data: absences } = useQuery({
     queryKey: ["division-absences", divisionId],
