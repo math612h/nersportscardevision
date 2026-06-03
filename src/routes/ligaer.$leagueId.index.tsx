@@ -494,6 +494,12 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
         <Trophy className="h-4 w-4" />
         <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger</h2>
       </div>
+      <Tabs defaultValue="drivers" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="drivers">Kørere</TabsTrigger>
+          <TabsTrigger value="teams">Teams</TabsTrigger>
+        </TabsList>
+        <TabsContent value="drivers" className="space-y-4">
       {groupKeys.map((k) => {
         const [cls, cat] = k.split(" · ");
         const rows = allRows
@@ -564,7 +570,125 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
           </Card>
         );
       })}
+        </TabsContent>
+        <TabsContent value="teams" className="space-y-4">
+          <TeamStandings
+            completed={completed}
+            groupKeys={groupKeys}
+            allRows={allRows}
+            entryTeamMap={entryTeamMap}
+            teamMap={teamMap ?? {}}
+          />
+        </TabsContent>
+      </Tabs>
     </section>
+  );
+}
+
+function TeamStandings({
+  completed,
+  groupKeys,
+  allRows,
+  entryTeamMap,
+  teamMap,
+}: {
+  completed: any[];
+  groupKeys: string[];
+  allRows: Array<{ car_number: number; car_class: string; driver_category: string; rounds: Record<string, { points: number; flPts: number; pointPenalty: number; dns: boolean }> }>;
+  entryTeamMap: Record<string, string | null>;
+  teamMap: Record<string, string>;
+}) {
+  // For each (class·cat) group, compute per-round team points as the AVERAGE
+  // points earned by team members in that round. Total team score = sum of
+  // per-round averages. This keeps things fair when teams have different
+  // numbers of drivers.
+  return (
+    <>
+      <Card>
+        <CardContent className="py-3 text-xs text-muted-foreground">
+          Team-point pr. løb = gennemsnit af medlemmernes opnåede point i det løb. Samlet team-stilling = sum af runde-gennemsnit. På den måde får et mindre team ikke ulempe af at have færre kørere på banen.
+        </CardContent>
+      </Card>
+      {groupKeys.map((k) => {
+        const [cls, cat] = k.split(" · ");
+        const groupRows = allRows.filter((r) => r.car_class === cls && r.driver_category === cat);
+        if (groupRows.length === 0) return null;
+
+        type TeamAgg = { teamId: string; rounds: Record<string, { sum: number; count: number }>; total: number; drivers: number };
+        const teams = new Map<string, TeamAgg>();
+        for (const r of groupRows) {
+          const tId = entryTeamMap[`${r.car_class}|${r.driver_category}|${r.car_number}`];
+          if (!tId) continue;
+          let agg = teams.get(tId);
+          if (!agg) { agg = { teamId: tId, rounds: {}, total: 0, drivers: 0 }; teams.set(tId, agg); }
+          agg.drivers += 1;
+          for (const d of completed) {
+            const cell = r.rounds[d.id];
+            if (!cell || cell.dns) continue;
+            const pts = Math.max(0, cell.points + cell.flPts - cell.pointPenalty);
+            const slot = agg.rounds[d.id] ?? { sum: 0, count: 0 };
+            slot.sum += pts;
+            slot.count += 1;
+            agg.rounds[d.id] = slot;
+          }
+        }
+        for (const agg of teams.values()) {
+          agg.total = Object.values(agg.rounds).reduce((acc, s) => acc + (s.count > 0 ? s.sum / s.count : 0), 0);
+        }
+        const list = Array.from(teams.values()).sort((a, b) => b.total - a.total);
+        if (list.length === 0) {
+          return (
+            <Card key={k}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2"><span>{cls}</span><Badge variant="outline" className="text-[10px]">{cat}</Badge></CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 py-4 text-center text-xs text-muted-foreground">Ingen team-tilmeldinger i denne klasse endnu.</CardContent>
+            </Card>
+          );
+        }
+        return (
+          <Card key={k}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm flex items-center gap-2"><span>{cls}</span><Badge variant="outline" className="text-[10px]">{cat}</Badge></CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-muted-foreground">
+                    <th className="py-1 pr-2 w-8">#</th>
+                    <th className="py-1 pr-2">Team</th>
+                    <th className="py-1 pr-2 w-14 text-center">Kørere</th>
+                    {completed.map((d: any) => (
+                      <th key={d.id} className="py-1 px-1 w-14 text-center" title={d.name}>{d.name.slice(0, 4)}</th>
+                    ))}
+                    <th className="py-1 pl-2 w-14 text-right">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map((t, i) => (
+                    <tr key={t.teamId} className="border-t border-border">
+                      <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
+                      <td className="py-1.5 pr-2 truncate">{teamMap[t.teamId] ?? "Team"}</td>
+                      <td className="py-1.5 pr-2 text-center tabular-nums text-muted-foreground">{t.drivers}</td>
+                      {completed.map((d: any) => {
+                        const slot = t.rounds[d.id];
+                        if (!slot || slot.count === 0) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                        return (
+                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`${slot.sum} pt / ${slot.count} kørere`}>
+                            {(slot.sum / slot.count).toFixed(1)}
+                          </td>
+                        );
+                      })}
+                      <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{t.total.toFixed(1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </>
   );
 }
 
