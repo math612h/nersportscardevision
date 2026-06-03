@@ -34,7 +34,7 @@ function PendingApprovalsPage() {
 
   const approveMut = useMutation({
     mutationFn: async (userId: string) => {
-      await approveFn({ data: { userId, approved: true } });
+      await approveFn({ data: { targetUserId: userId, approved: true } });
     },
     onSuccess: () => {
       toast.success("Profil godkendt");
