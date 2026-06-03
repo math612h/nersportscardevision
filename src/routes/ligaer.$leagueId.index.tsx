@@ -137,7 +137,7 @@ function LeagueDetail() {
 
       {league && <SignupsList leagueId={leagueId} configs={configs} />}
 
-      <EventSettingsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
+      <DriverAidsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
 
 
 
