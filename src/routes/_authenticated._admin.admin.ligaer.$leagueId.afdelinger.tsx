@@ -245,8 +245,24 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
   const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
   const [temperature, setTemperature] = useState<number>(Number(division.settings?.temperature ?? 22));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
-  const [lobbyCode, setLobbyCode] = useState<string>(String(division.settings?.lobby_code ?? ""));
-  const [lobbyPassword, setLobbyPassword] = useState<string>(String(division.settings?.lobby_password ?? ""));
+  const [lobbyCode, setLobbyCode] = useState<string>("");
+  const [lobbyPassword, setLobbyPassword] = useState<string>("");
+
+  useQuery({
+    queryKey: ["admin-division-lobby", division.id, open],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("division_lobbies")
+        .select("lobby_code,lobby_password")
+        .eq("division_id", division.id)
+        .maybeSingle();
+      if (error) throw error;
+      setLobbyCode(String(data?.lobby_code ?? ""));
+      setLobbyPassword(String(data?.lobby_password ?? ""));
+      return data ?? null;
+    },
+  });
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,11 +271,20 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
       fastest_lap_points: flPoints,
       temperature,
       completed,
-      lobby_code: lobbyCode.trim() || null,
-      lobby_password: lobbyPassword.trim() || null,
     };
+    // Ensure stale lobby fields aren't kept in settings
+    delete (newSettings as any).lobby_code;
+    delete (newSettings as any).lobby_password;
     const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
     if (error) return toast.error(error.message);
+
+    const code = lobbyCode.trim() || null;
+    const pw = lobbyPassword.trim() || null;
+    const { error: lErr } = await supabase
+      .from("division_lobbies")
+      .upsert({ division_id: division.id, lobby_code: code, lobby_password: pw, updated_at: new Date().toISOString() }, { onConflict: "division_id" });
+    if (lErr) return toast.error(`Lobby kunne ikke gemmes: ${lErr.message}`);
+
     toast.success("Opdateret");
     setOpen(false);
     onDone();
