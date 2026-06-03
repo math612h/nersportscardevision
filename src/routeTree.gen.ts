@@ -16,7 +16,10 @@ import { Route as BrugereRouteImport } from './routes/brugere'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeamsIndexRouteImport } from './routes/teams.index'
+import { Route as LmuIndexRouteImport } from './routes/lmu.index'
 import { Route as TeamsTeamIdRouteImport } from './routes/teams.$teamId'
+import { Route as LmuTeamsRouteImport } from './routes/lmu.teams'
+import { Route as LmuLigaRouteImport } from './routes/lmu.liga'
 import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
@@ -73,9 +76,24 @@ const TeamsIndexRoute = TeamsIndexRouteImport.update({
   path: '/teams/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LmuIndexRoute = LmuIndexRouteImport.update({
+  id: '/lmu/',
+  path: '/lmu/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamsTeamIdRoute = TeamsTeamIdRouteImport.update({
   id: '/teams/$teamId',
   path: '/teams/$teamId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LmuTeamsRoute = LmuTeamsRouteImport.update({
+  id: '/lmu/teams',
+  path: '/lmu/teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LmuLigaRoute = LmuLigaRouteImport.update({
+  id: '/lmu/liga',
+  path: '/lmu/liga',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LigaerLeagueIdRoute = LigaerLeagueIdRouteImport.update({
@@ -208,7 +226,10 @@ export interface FileRoutesByFullPath {
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
+  '/lmu/liga': typeof LmuLigaRoute
+  '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/lmu/': typeof LmuIndexRoute
   '/teams/': typeof TeamsIndexRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
@@ -236,7 +257,10 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
+  '/lmu/liga': typeof LmuLigaRoute
+  '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/lmu': typeof LmuIndexRoute
   '/teams': typeof TeamsIndexRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
@@ -267,7 +291,10 @@ export interface FileRoutesById {
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRouteWithChildren
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
+  '/lmu/liga': typeof LmuLigaRoute
+  '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/lmu/': typeof LmuIndexRoute
   '/teams/': typeof TeamsIndexRoute
   '/_authenticated/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
@@ -298,7 +325,10 @@ export interface FileRouteTypes {
     | '/mine-protests'
     | '/profil'
     | '/ligaer/$leagueId'
+    | '/lmu/liga'
+    | '/lmu/teams'
     | '/teams/$teamId'
+    | '/lmu/'
     | '/teams/'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
@@ -326,7 +356,10 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/mine-protests'
     | '/profil'
+    | '/lmu/liga'
+    | '/lmu/teams'
     | '/teams/$teamId'
+    | '/lmu'
     | '/teams'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
@@ -356,7 +389,10 @@ export interface FileRouteTypes {
     | '/_authenticated/mine-protests'
     | '/_authenticated/profil'
     | '/ligaer/$leagueId'
+    | '/lmu/liga'
+    | '/lmu/teams'
     | '/teams/$teamId'
+    | '/lmu/'
     | '/teams/'
     | '/_authenticated/profil/$userId'
     | '/api/public/leaderboard-upload'
@@ -385,7 +421,10 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
+  LmuLigaRoute: typeof LmuLigaRoute
+  LmuTeamsRoute: typeof LmuTeamsRoute
   TeamsTeamIdRoute: typeof TeamsTeamIdRoute
+  LmuIndexRoute: typeof LmuIndexRoute
   TeamsIndexRoute: typeof TeamsIndexRoute
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
@@ -442,11 +481,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lmu/': {
+      id: '/lmu/'
+      path: '/lmu'
+      fullPath: '/lmu/'
+      preLoaderRoute: typeof LmuIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/teams/$teamId': {
       id: '/teams/$teamId'
       path: '/teams/$teamId'
       fullPath: '/teams/$teamId'
       preLoaderRoute: typeof TeamsTeamIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lmu/teams': {
+      id: '/lmu/teams'
+      path: '/lmu/teams'
+      fullPath: '/lmu/teams'
+      preLoaderRoute: typeof LmuTeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lmu/liga': {
+      id: '/lmu/liga'
+      path: '/lmu/liga'
+      fullPath: '/lmu/liga'
+      preLoaderRoute: typeof LmuLigaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ligaer/$leagueId': {
@@ -713,7 +773,10 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
+  LmuLigaRoute: LmuLigaRoute,
+  LmuTeamsRoute: LmuTeamsRoute,
   TeamsTeamIdRoute: TeamsTeamIdRoute,
+  LmuIndexRoute: LmuIndexRoute,
   TeamsIndexRoute: TeamsIndexRoute,
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
@@ -721,13 +784,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

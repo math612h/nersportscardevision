@@ -236,8 +236,19 @@ function TeamDetailPage() {
         </CardContent>
       </Card>
 
+      <RecentResultsCard members={members ?? []} profiles={profiles ?? {}} />
+
       {isOwner && <OwnerInbox teamId={teamId} />}
       {isOwner && <InviteCard teamId={teamId} userId={user!.id} existingMemberIds={memberIds} />}
+
+      {isMember && (
+        <ComposeMessageCard
+          teamId={teamId}
+          userId={user!.id}
+          members={members ?? []}
+          profiles={profiles ?? {}}
+        />
+      )}
 
       {isMember && <TeamChat teamId={teamId} userId={user!.id} profiles={profiles ?? {}} avatars={avatars ?? {}} />}
       {!isMember && (
@@ -249,6 +260,203 @@ function TeamDetailPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+// --- Recent results per member ---
+function RecentResultsCard({
+  members,
+  profiles,
+}: {
+  members: Member[];
+  profiles: Record<string, Profile>;
+}) {
+  const userIds = members.map((m) => m.user_id);
+  const { data: entries } = useQuery({
+    queryKey: ["team-recent-entries", userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("id, user_id, division_id, league_id, created_at, divisions(name, track, race_date), leagues(name)")
+        .in("user_id", userIds)
+        .not("division_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
+  const byUser = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    const now = Date.now();
+    for (const e of entries ?? []) {
+      const raceDate = e.divisions?.race_date ? new Date(e.divisions.race_date).getTime() : null;
+      // Only finished races
+      if (!raceDate || raceDate > now) continue;
+      (map[e.user_id] ??= []).push(e);
+    }
+    for (const uid of Object.keys(map)) {
+      map[uid] = map[uid].slice(0, 3);
+    }
+    return map;
+  }, [entries]);
+
+  if (userIds.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2"><Trophy className="h-4 w-4" /> Seneste løb pr. medlem</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {members.map((m) => {
+          const name = profiles[m.user_id]?.display_name ?? "Uden navn";
+          const list = byUser[m.user_id] ?? [];
+          return (
+            <div key={m.id} className="rounded border border-border p-3">
+              <p className="text-sm font-medium">{name}</p>
+              {list.length === 0 ? (
+                <p className="mt-1 text-xs text-muted-foreground">Ingen afsluttede løb endnu.</p>
+              ) : (
+                <ul className="mt-2 space-y-1 text-xs">
+                  {list.map((e) => (
+                    <li key={e.id} className="flex items-center justify-between gap-2 text-muted-foreground">
+                      <span className="truncate">
+                        <span className="text-foreground">{e.leagues?.name ?? "Liga"}</span>
+                        {" · "}{e.divisions?.name ?? "Afdeling"}
+                        {e.divisions?.track ? ` · ${e.divisions.track}` : ""}
+                      </span>
+                      {e.divisions?.race_date && (
+                        <span className="shrink-0 tabular-nums">
+                          {new Date(e.divisions.race_date).toLocaleDateString("da-DK")}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+// --- Compose targeted message ---
+function ComposeMessageCard({
+  teamId, userId, members, profiles,
+}: {
+  teamId: string;
+  userId: string;
+  members: Member[];
+  profiles: Record<string, Profile>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const others = members.filter((m) => m.user_id !== userId);
+  const allChosen = others.length > 0 && others.every((m) => selected[m.user_id]);
+  const chosenIds = others.filter((m) => selected[m.user_id]).map((m) => m.user_id);
+
+  const toggleAll = () => {
+    if (allChosen) setSelected({});
+    else {
+      const next: Record<string, boolean> = {};
+      for (const m of others) next[m.user_id] = true;
+      setSelected(next);
+    }
+  };
+
+  const send = async () => {
+    const body = text.trim();
+    if (!body || chosenIds.length === 0) return;
+    setSending(true);
+    const names = chosenIds.map((id) => `@${profiles[id]?.display_name ?? "medlem"}`).join(" ");
+    const prefix = allChosen ? "@alle" : names;
+    const content = `${prefix}: ${body}`.slice(0, 2000);
+    const { error } = await (supabase as any)
+      .from("team_messages")
+      .insert({ team_id: teamId, user_id: userId, content });
+    setSending(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Besked sendt i chatten");
+      setOpen(false);
+      setText("");
+      setSelected({});
+    }
+  };
+
+  if (others.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base flex items-center gap-2">
+          <Send className="h-4 w-4" /> Skriv målrettet besked
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Skriv til ét, flere eller alle medlemmer. Beskeden lægges i team-chatten med @nævn så hele teamet kan se den.
+        </p>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1"><Send className="h-4 w-4" /> Ny besked</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Ny besked</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <div className="mb-2 flex items-center justify-between">
+                  <Label>Modtagere</Label>
+                  <Button type="button" variant="ghost" size="sm" onClick={toggleAll}>
+                    {allChosen ? "Fravælg alle" : "Vælg alle"}
+                  </Button>
+                </div>
+                <div className="max-h-48 space-y-1 overflow-y-auto rounded border border-border p-2">
+                  {others.map((m) => {
+                    const name = profiles[m.user_id]?.display_name ?? "Uden navn";
+                    return (
+                      <label key={m.id} className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-muted">
+                        <input
+                          type="checkbox"
+                          checked={!!selected[m.user_id]}
+                          onChange={(e) => setSelected((s) => ({ ...s, [m.user_id]: e.target.checked }))}
+                        />
+                        <span className="flex-1 truncate">{name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+              <div>
+                <Label>Besked</Label>
+                <Textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  rows={4}
+                  maxLength={1800}
+                  placeholder="Skriv din besked…"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
+              <Button onClick={send} disabled={sending || !text.trim() || chosenIds.length === 0}>
+                {sending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Send
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
   );
 }
 
