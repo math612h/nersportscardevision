@@ -285,7 +285,7 @@ function LeaderboardPage() {
       </Card>
 
       <Card>
-        <CardContent className="space-y-2 py-4">
+        <CardContent className="space-y-3 py-4">
           <div className="flex items-center gap-2 text-primary">
             <Monitor className="h-4 w-4" />
             <span className="text-xs font-semibold uppercase tracking-[0.18em]">Desktop Companion</span>
@@ -296,6 +296,14 @@ function LeaderboardPage() {
           <p className="text-[11px] text-muted-foreground">
             Appen starter automatisk ved Windows-opstart, minimerer til systembakken og husker dit login.
           </p>
+          <div className="flex items-center gap-3 pt-1">
+            <Button asChild className="gap-2">
+              <a href="/api/public/download/companion" download>
+                <Upload className="h-4 w-4" /> Download til Windows
+              </a>
+            </Button>
+            <span className="text-[11px] text-muted-foreground">~138 MB · .zip</span>
+          </div>
         </CardContent>
       </Card>
 

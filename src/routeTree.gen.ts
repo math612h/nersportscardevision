@@ -25,6 +25,7 @@ import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/pub
 import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated._admin.admin.index'
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
+import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
 import { Route as AuthenticatedAdminAdminBrugereRouteImport } from './routes/_authenticated._admin.admin.brugere'
@@ -119,6 +120,12 @@ const LigaerLeagueIdAfdelingDivisionIdRoute =
     path: '/afdeling/$divisionId',
     getParentRoute: () => LigaerLeagueIdRoute,
   } as any)
+const ApiPublicDownloadCompanionRoute =
+  ApiPublicDownloadCompanionRouteImport.update({
+    id: '/api/public/download/companion',
+    path: '/api/public/download/companion',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminAdminProtestsRoute =
   AuthenticatedAdminAdminProtestsRouteImport.update({
     id: '/admin/protests',
@@ -197,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
@@ -221,6 +229,7 @@ export interface FileRoutesByTo {
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
+  '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
@@ -250,6 +259,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/_admin/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
@@ -278,6 +288,7 @@ export interface FileRouteTypes {
     | '/admin/brugere'
     | '/admin/ligaer'
     | '/admin/protests'
+    | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/admin/'
     | '/admin/protests/$protestId'
@@ -302,6 +313,7 @@ export interface FileRouteTypes {
     | '/admin/afventer'
     | '/admin/brugere'
     | '/admin/ligaer'
+    | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/admin'
     | '/admin/protests/$protestId'
@@ -330,6 +342,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/brugere'
     | '/_authenticated/_admin/admin/ligaer'
     | '/_authenticated/_admin/admin/protests'
+    | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/_admin/admin/protests/$protestId'
@@ -349,6 +362,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
+  ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -464,6 +478,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ligaer/$leagueId/afdeling/$divisionId'
       preLoaderRoute: typeof LigaerLeagueIdAfdelingDivisionIdRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/api/public/download/companion': {
+      id: '/api/public/download/companion'
+      path: '/api/public/download/companion'
+      fullPath: '/api/public/download/companion'
+      preLoaderRoute: typeof ApiPublicDownloadCompanionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_admin/admin/protests': {
       id: '/_authenticated/_admin/admin/protests'
@@ -653,6 +674,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
+  ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
