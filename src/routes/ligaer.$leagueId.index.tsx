@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -232,6 +232,21 @@ function useLeagueSignups(leagueId: string) {
 
 function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { data } = useLeagueSignups(leagueId);
+
+  const userIds = useMemo(() => Array.from(new Set((data ?? []).map((e) => e.user_id))), [data]);
+  const { data: approvedMap } = useQuery({
+    queryKey: ["signup-approvals", leagueId, userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const { data: profs, error } = await supabase
+        .from("profiles")
+        .select("id,approved")
+        .in("id", userIds);
+      if (error) throw error;
+      return new Set((profs ?? []).filter((p) => p.approved).map((p) => p.id));
+    },
+  });
+
   if (!data || data.length === 0) return null;
 
   const keys = configs.length
@@ -277,6 +292,11 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                         #{e.car_number}
                       </span>
                       <span className="flex-1 truncate">{e.driver_name}</span>
+                      {approvedMap?.has(e.user_id) && (
+                        <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
+                          <CheckCircle2 className="h-3 w-3" />Godkendt
+                        </Badge>
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -291,6 +311,11 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                           </span>
                           <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
                           <span className="flex-1 truncate">{e.driver_name}</span>
+                          {approvedMap?.has(e.user_id) && (
+                            <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
+                              <CheckCircle2 className="h-3 w-3" />Godkendt
+                            </Badge>
+                          )}
                         </li>
                       ))}
                     </ul>
@@ -494,11 +519,11 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name,lmu_name")
+        .select("display_name,lmu_name,approved")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
-      return data as { display_name: string | null; lmu_name: string | null } | null;
+      return data as { display_name: string | null; lmu_name: string | null; approved: boolean } | null;
     },
   });
 
@@ -524,7 +549,8 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     (s) => selected && s.car_class === selected.car_class && s.driver_category === selected.driver_category && !s.waitlist,
   ).length;
   const cap = selected?.max_drivers ?? null;
-  const goesToWaitlist = cap != null && gridCount >= cap;
+  const isApproved = !!profile?.approved;
+  const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -608,7 +634,9 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
           </div>
           {selected && goesToWaitlist && (
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-              Klassen er fyldt ({gridCount}/{cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.
+              {!isApproved
+                ? "Din profil er endnu ikke godkendt. Du tilmeldes ventelisten og rykker automatisk op på griddet, når en admin godkender dig."
+                : `Klassen er fyldt (${gridCount}/${cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.`}
             </p>
           )}
           {selected && (
