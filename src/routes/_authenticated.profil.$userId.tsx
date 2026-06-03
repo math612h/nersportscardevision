@@ -27,7 +27,7 @@ function PublicProfile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, lmu_name, age, bio, achievements, avatar_url, discord_username")
+        .select("id, display_name, lmu_name, age, bio, achievements, avatar_url, discord_username, approved")
         .eq("id", userId)
         .maybeSingle();
       if (error) throw error;
