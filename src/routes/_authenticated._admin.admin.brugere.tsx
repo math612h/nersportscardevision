@@ -29,7 +29,7 @@ type Role = { user_id: string; role: string };
 
 function AdminUsersPage() {
   const [search, setSearch] = useState("");
-  const [onlyPending, setOnlyPending] = useState(false);
+  
   const qc = useQueryClient();
   const toggleRole = useServerFn(toggleUserRole);
   const approveFn = useServerFn(setProfileApproval);
@@ -55,11 +55,9 @@ function AdminUsersPage() {
   });
 
   const filtered = (data?.profiles ?? []).filter((p) => {
-    if (onlyPending && p.approved) return false;
+    if (!p.approved) return false;
     return (p.display_name ?? "").toLowerCase().includes(search.toLowerCase());
   });
-
-  const pendingCount = (data?.profiles ?? []).filter((p) => !p.approved).length;
 
   const roleMut = useMutation({
     mutationFn: async ({ userId, assign }: { userId: string; assign: boolean }) => {
@@ -102,14 +100,9 @@ function AdminUsersPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="max-w-sm"
         />
-        <Button
-          type="button"
-          variant={onlyPending ? "default" : "outline"}
-          size="sm"
-          onClick={() => setOnlyPending((v) => !v)}
-        >
-          Afventer godkendelse {pendingCount > 0 && <Badge variant="secondary" className="ml-2">{pendingCount}</Badge>}
-        </Button>
+        <Link to="/admin/afventer">
+          <Button type="button" variant="outline" size="sm">Afventer godkendelse</Button>
+        </Link>
       </div>
 
       {isLoading ? (

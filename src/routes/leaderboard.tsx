@@ -130,13 +130,18 @@ function LeaderboardPage() {
       const text = await file.text();
       const parsed = parseLmuRaceFile(text);
 
-      // Look up the uploader's LMU name + all known LMU names for matching
+      // Look up the uploader's profile (must be approved) + all known LMU names for matching
       const [{ data: profile, error: pErr }, { data: allProfiles, error: aErr }] = await Promise.all([
-        supabase.from("profiles").select("lmu_name").eq("id", user.id).maybeSingle(),
+        supabase.from("profiles").select("lmu_name, approved").eq("id", user.id).maybeSingle(),
         supabase.from("profiles").select("id,lmu_name").not("lmu_name", "is", null),
       ]);
       if (pErr) throw pErr;
       if (aErr) throw aErr;
+
+      if (!profile?.approved) {
+        toast.error("Kun godkendte brugere kan uploade tider. Bed en admin om at godkende din profil.");
+        return;
+      }
 
       const lmu = (profile?.lmu_name ?? "").trim().toLowerCase();
       if (!lmu) {
@@ -264,6 +269,9 @@ function LeaderboardPage() {
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">
               Documents\My Games\LeMansUltimate\UserData\Log\Results
             </code>
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Bemærk: kun godkendte brugere kan uploade race-filer. Alle kan se leaderboardet.
           </p>
         </CardContent>
       </Card>
