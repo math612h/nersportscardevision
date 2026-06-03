@@ -56,6 +56,50 @@ function ParticipantDashboard() {
     },
   });
 
+  const leagueIds = useMemo(() => (leagues ?? []).map((l: any) => l.id), [leagues]);
+
+  const { data: entriesByLeague } = useQuery({
+    queryKey: ["leagues-entries-counts", leagueIds.sort().join(",")],
+    enabled: leagueIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("league_id,car_class,driver_category,waitlist,division_id")
+        .in("league_id", leagueIds)
+        .is("division_id", null);
+      if (error) throw error;
+      const m: Record<string, { car_class: string; driver_category: string; waitlist: boolean }[]> = {};
+      for (const e of data ?? []) {
+        if (!e.league_id) continue;
+        (m[e.league_id] ??= []).push({ car_class: e.car_class, driver_category: e.driver_category, waitlist: !!e.waitlist });
+      }
+      return m;
+    },
+  });
+
+  const bannerPaths = useMemo(
+    () => (leagues ?? []).map((l: any) => l.banner_url).filter((p: string | null): p is string => !!p && !p.startsWith("http")),
+    [leagues],
+  );
+
+  const { data: bannerMap } = useQuery({
+    queryKey: ["league-banner-urls", bannerPaths.sort().join(",")],
+    enabled: bannerPaths.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage.from("league-banners").createSignedUrls(bannerPaths, 60 * 60 * 24 * 7);
+      if (error) throw error;
+      const m: Record<string, string> = {};
+      data?.forEach((d) => { if (d.path && d.signedUrl) m[d.path] = d.signedUrl; });
+      return m;
+    },
+  });
+
+  const resolveBanner = (l: any): string | null => {
+    if (!l.banner_url) return null;
+    if (l.banner_url.startsWith("http")) return l.banner_url;
+    return bannerMap?.[l.banner_url] ?? null;
+  };
+
   const regular = (leagues ?? []).filter((l: any) => !l.is_offseason);
   const offseason = (leagues ?? []).filter((l: any) => l.is_offseason);
 
@@ -86,7 +130,7 @@ function ParticipantDashboard() {
       {regular.length > 0 && (
         <Section title="Ligaer" icon={<Flag className="h-4 w-4" />}>
           <CardGrid>
-            {regular.map((l: any) => <LeagueCard key={l.id} l={l} />)}
+            {regular.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} />)}
           </CardGrid>
         </Section>
       )}
@@ -98,7 +142,7 @@ function ParticipantDashboard() {
           description="Enkeltløb uden for de faste ligaer."
         >
           <CardGrid>
-            {offseason.map((l: any) => <LeagueCard key={l.id} l={l} offseason />)}
+            {offseason.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason />)}
           </CardGrid>
         </Section>
       )}
