@@ -133,7 +133,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { error } = await supabase.from("divisions").insert({
+    const { data: inserted, error } = await supabase.from("divisions").insert({
       league_id: leagueId, name: name.trim(),
       car_class: carClass, driver_category: category,
       track: track.name, layout,
@@ -142,11 +142,17 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
         weather,
         fastest_lap_points: flPoints,
         temperature,
+      },
+    }).select("id").single();
+    if (error) return toast.error(error.message);
+    if (inserted && (lobbyCode.trim() || lobbyPassword.trim())) {
+      const { error: lErr } = await supabase.from("division_lobbies").insert({
+        division_id: inserted.id,
         lobby_code: lobbyCode.trim() || null,
         lobby_password: lobbyPassword.trim() || null,
-      },
-    });
-    if (error) return toast.error(error.message);
+      });
+      if (lErr) return toast.error(`Afdeling oprettet, men lobby fejlede: ${lErr.message}`);
+    }
     toast.success("Afdeling oprettet");
     setOpen(false); setName(""); setRaceDate("");
     setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny"));
