@@ -270,6 +270,9 @@ function LeaderboardPage() {
               Documents\My Games\LeMansUltimate\UserData\Log\Results
             </code>
           </p>
+          <p className="text-[11px] text-muted-foreground">
+            Bemærk: kun godkendte brugere kan uploade race-filer. Alle kan se leaderboardet.
+          </p>
         </CardContent>
       </Card>
 
