@@ -306,7 +306,7 @@ function AdminLeagues() {
                   <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
                 </label>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
-                <EventSettingsEditor value={eventSettings} onChange={setEventSettings} />
+                <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
               </form>
             </DialogContent>
@@ -446,7 +446,7 @@ function EditLeagueDialog({ league }: { league: any }) {
             <span className="text-sm">Off-season event</span>
           </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
-          <EventSettingsEditor value={eventSettings} onChange={setEventSettings} />
+          <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
         </form>
       </DialogContent>
