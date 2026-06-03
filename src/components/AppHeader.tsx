@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Flag, Gauge, LayoutGrid, LogOut, User as UserIcon, UserCircle2 } from "lucide-react";
+import { Flag, Gauge, LayoutGrid, LogOut, Shield, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +38,16 @@ export function AppHeader() {
           {!isAdminRoute && (
             <Link to="/" className="rounded px-2 py-1 hover:bg-accent" activeOptions={{ exact: true }}>
               <span className="flex items-center gap-1"><LayoutGrid className="h-4 w-4" /> Ligaer</span>
+            </Link>
+          )}
+          {!isAdminRoute && (
+            <Link to="/teams" className="hidden sm:flex items-center gap-1 rounded px-2 py-1 hover:bg-accent">
+              <Shield className="h-4 w-4" /> Teams
+            </Link>
+          )}
+          {!isAdminRoute && (
+            <Link to="/brugere" className="hidden sm:flex items-center gap-1 rounded px-2 py-1 hover:bg-accent">
+              <Users className="h-4 w-4" /> Brugere
             </Link>
           )}
           {user && !isAdminRoute && (

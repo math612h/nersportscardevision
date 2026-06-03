@@ -223,7 +223,7 @@ function useLeagueSignups(leagueId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id")
         .eq("league_id", leagueId)
         .is("division_id", null)
         .order("created_at", { ascending: true });
@@ -233,11 +233,46 @@ function useLeagueSignups(leagueId: string) {
   });
 }
 
+function useTeamLookup(teamIds: string[]) {
+  const key = Array.from(new Set(teamIds)).sort().join(",");
+  return useQuery({
+    queryKey: ["teams-by-id", key],
+    enabled: teamIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("teams")
+        .select("id,name")
+        .in("id", Array.from(new Set(teamIds)));
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const t of (data ?? []) as { id: string; name: string }[]) map[t.id] = t.name;
+      return map;
+    },
+  });
+}
+
+function useMyTeams(userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["my-teams", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("team_members")
+        .select("team_id, teams(id,name)")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return ((data ?? []) as any[]).map((r) => r.teams).filter(Boolean) as { id: string; name: string }[];
+    },
+  });
+}
+
 
 function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { data } = useLeagueSignups(leagueId);
 
   const userIds = useMemo(() => Array.from(new Set((data ?? []).map((e) => e.user_id))), [data]);
+  const teamIds = useMemo(() => (data ?? []).map((e: any) => e.team_id).filter(Boolean) as string[], [data]);
+  const { data: teamMap } = useTeamLookup(teamIds);
   const { data: approvedMap } = useQuery({
     queryKey: ["signup-approvals", leagueId, userIds.sort().join(",")],
     enabled: userIds.length > 0,
@@ -296,6 +331,11 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                         #{e.car_number}
                       </span>
                       <span className="flex-1 truncate">{e.driver_name}</span>
+                      {(e as any).team_id && teamMap?.[(e as any).team_id] && (
+                        <Badge variant="outline" className="text-[10px] shrink-0" title="Team">
+                          {teamMap[(e as any).team_id]}
+                        </Badge>
+                      )}
                       {approvedMap?.has(e.user_id) && (
                         <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
                           <CheckCircle2 className="h-3 w-3" />Godkendt
@@ -360,6 +400,27 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
       return data ?? [];
     },
   });
+
+  const { data: leagueEntries } = useQuery({
+    queryKey: ["league-entries-with-teams", leagueId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("car_class,driver_category,car_number,team_id")
+        .eq("league_id", leagueId);
+      if (error) throw error;
+      return (data ?? []) as { car_class: string; driver_category: string; car_number: number | null; team_id: string | null }[];
+    },
+  });
+  const entryTeamMap = useMemo(() => {
+    const m: Record<string, string | null> = {};
+    for (const e of leagueEntries ?? []) {
+      if (e.car_number != null) m[`${e.car_class}|${e.driver_category}|${e.car_number}`] = e.team_id;
+    }
+    return m;
+  }, [leagueEntries]);
+  const teamIds = useMemo(() => Object.values(entryTeamMap).filter(Boolean) as string[], [entryTeamMap]);
+  const { data: teamMap } = useTeamLookup(teamIds);
 
   const completed = (divisions ?? []).filter((d: any) => d.settings?.completed && Array.isArray(d.settings?.results));
 
@@ -452,6 +513,7 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                   <tr className="text-left text-xs text-muted-foreground">
                     <th className="py-1 pr-2 w-8">#</th>
                     <th className="py-1 pr-2">Kører</th>
+                    <th className="py-1 pr-2">Team</th>
                     <th className="py-1 pr-2 w-12 text-center">Nr.</th>
                     {completed.map((d: any) => (
                       <th key={d.id} className="py-1 px-1 w-12 text-center" title={d.name}>
@@ -465,10 +527,14 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r, i) => (
+                  {rows.map((r, i) => {
+                    const tId = entryTeamMap[`${r.car_class}|${r.driver_category}|${r.car_number}`];
+                    const teamName = tId ? (teamMap?.[tId] ?? "") : "";
+                    return (
                     <tr key={r.car_number} className="border-t border-border">
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
                       <td className="py-1.5 pr-2 truncate">{r.driver_name}</td>
+                      <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{teamName || "–"}</td>
                       <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
@@ -489,7 +555,8 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                       <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : "–"}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </CardContent>
@@ -508,6 +575,8 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
   const [open, setOpen] = useState(false);
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
+  const [teamId, setTeamId] = useState<string>("");
+  const { data: myTeams } = useMyTeams(user?.id);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -570,7 +639,8 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
       driver_category: selected.driver_category,
       car_number: carNumber,
       waitlist: goesToWaitlist,
-    });
+      team_id: teamId || null,
+    } as any);
     if (error) return toast.error(error.message);
     toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
     setOpen(false);
@@ -628,6 +698,20 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
               </SelectContent>
             </Select>
           </div>
+          {(myTeams ?? []).length > 0 && (
+            <div>
+              <Label>Team (valgfri)</Label>
+              <Select value={teamId || "none"} onValueChange={(v) => setTeamId(v === "none" ? "" : v)}>
+                <SelectTrigger><SelectValue placeholder="Intet team" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Intet team</SelectItem>
+                  {(myTeams ?? []).map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {selected && goesToWaitlist && (
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
               {!isApproved

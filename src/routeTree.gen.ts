@@ -13,8 +13,11 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LmuRouteImport } from './routes/lmu'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as BrugereRouteImport } from './routes/brugere'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TeamsIndexRouteImport } from './routes/teams.index'
+import { Route as TeamsTeamIdRouteImport } from './routes/teams.$teamId'
 import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
@@ -57,6 +60,11 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
   path: '/leaderboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BrugereRoute = BrugereRouteImport.update({
+  id: '/brugere',
+  path: '/brugere',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
@@ -64,6 +72,16 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsIndexRoute = TeamsIndexRouteImport.update({
+  id: '/teams/',
+  path: '/teams/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsTeamIdRoute = TeamsTeamIdRouteImport.update({
+  id: '/teams/$teamId',
+  path: '/teams/$teamId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LigaerLeagueIdRoute = LigaerLeagueIdRouteImport.update({
@@ -189,6 +207,7 @@ const AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
@@ -196,6 +215,8 @@ export interface FileRoutesByFullPath {
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
+  '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/teams/': typeof TeamsIndexRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -216,12 +237,15 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
+  '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/teams': typeof TeamsIndexRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -243,6 +267,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
@@ -251,6 +276,8 @@ export interface FileRoutesById {
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRouteWithChildren
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
+  '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/teams/': typeof TeamsIndexRoute
   '/_authenticated/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -273,6 +300,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/brugere'
     | '/leaderboard'
     | '/lmu'
     | '/login'
@@ -280,6 +308,8 @@ export interface FileRouteTypes {
     | '/mine-protests'
     | '/profil'
     | '/ligaer/$leagueId'
+    | '/teams/$teamId'
+    | '/teams/'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
@@ -300,12 +330,15 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/brugere'
     | '/leaderboard'
     | '/lmu'
     | '/login'
     | '/sitemap.xml'
     | '/mine-protests'
     | '/profil'
+    | '/teams/$teamId'
+    | '/teams'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
@@ -326,6 +359,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/brugere'
     | '/leaderboard'
     | '/lmu'
     | '/login'
@@ -334,6 +368,8 @@ export interface FileRouteTypes {
     | '/_authenticated/mine-protests'
     | '/_authenticated/profil'
     | '/ligaer/$leagueId'
+    | '/teams/$teamId'
+    | '/teams/'
     | '/_authenticated/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
@@ -356,11 +392,14 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  BrugereRoute: typeof BrugereRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LmuRoute: typeof LmuRoute
   LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
+  TeamsTeamIdRoute: typeof TeamsTeamIdRoute
+  TeamsIndexRoute: typeof TeamsIndexRoute
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
 }
@@ -395,6 +434,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LeaderboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/brugere': {
+      id: '/brugere'
+      path: '/brugere'
+      fullPath: '/brugere'
+      preLoaderRoute: typeof BrugereRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
@@ -407,6 +453,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teams/': {
+      id: '/teams/'
+      path: '/teams'
+      fullPath: '/teams/'
+      preLoaderRoute: typeof TeamsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teams/$teamId': {
+      id: '/teams/$teamId'
+      path: '/teams/$teamId'
+      fullPath: '/teams/$teamId'
+      preLoaderRoute: typeof TeamsTeamIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ligaer/$leagueId': {
@@ -668,24 +728,17 @@ const LigaerLeagueIdRouteWithChildren = LigaerLeagueIdRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  BrugereRoute: BrugereRoute,
   LeaderboardRoute: LeaderboardRoute,
   LmuRoute: LmuRoute,
   LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
+  TeamsTeamIdRoute: TeamsTeamIdRoute,
+  TeamsIndexRoute: TeamsIndexRoute,
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
