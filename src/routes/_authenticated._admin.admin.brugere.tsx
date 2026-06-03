@@ -29,7 +29,7 @@ type Role = { user_id: string; role: string };
 
 function AdminUsersPage() {
   const [search, setSearch] = useState("");
-  const [onlyPending, setOnlyPending] = useState(false);
+  
   const qc = useQueryClient();
   const toggleRole = useServerFn(toggleUserRole);
   const approveFn = useServerFn(setProfileApproval);
