@@ -11,20 +11,6 @@ export function AppHeader() {
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
 
-  const { data: pendingInvolved } = useQuery({
-    queryKey: ["pending-protest-responses", user?.id],
-    enabled: !!user,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("protest_involved")
-        .select("id, response, protests!inner(status)")
-        .eq("user_id", user!.id)
-        .is("response", null);
-      if (error) return 0;
-      return (data ?? []).filter((r: any) => r.protests?.status !== "ruled").length;
-    },
-  });
-
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
