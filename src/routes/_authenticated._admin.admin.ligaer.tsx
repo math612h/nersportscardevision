@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, Settings, Pencil } from "lucide-react";
+import { useRef, useState } from "react";
+import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,65 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
+async function uploadLeagueBanner(file: File): Promise<string> {
+  if (file.size > 8 * 1024 * 1024) throw new Error("Billedet må højst være 8 MB.");
+  if (!file.type.startsWith("image/")) throw new Error("Vælg en billedfil.");
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `banner-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const { error } = await supabase.storage.from("league-banners").upload(path, file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: file.type,
+  });
+  if (error) throw new Error(error.message);
+  return path;
+}
+
+function BannerPicker({ pathOrUrl, file, onFile, onClear }: { pathOrUrl: string | null; file: File | null; onFile: (f: File | null) => void; onClear: () => void }) {
+  const ref = useRef<HTMLInputElement>(null);
+  const { data: previewUrl } = useQuery({
+    queryKey: ["banner-preview", pathOrUrl],
+    enabled: !!pathOrUrl && !pathOrUrl.startsWith("http"),
+    queryFn: async () => {
+      const { data } = await supabase.storage.from("league-banners").createSignedUrl(pathOrUrl!, 60 * 60);
+      return data?.signedUrl ?? null;
+    },
+  });
+  const localUrl = file ? URL.createObjectURL(file) : null;
+  const src = localUrl || (pathOrUrl?.startsWith("http") ? pathOrUrl : previewUrl);
+  return (
+    <div className="space-y-2">
+      <Label>Billede til liga-knap</Label>
+      {src ? (
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-md border border-border bg-muted">
+          <img src={src} alt="Banner" className="h-full w-full object-cover" />
+        </div>
+      ) : (
+        <div className="flex aspect-[16/9] w-full items-center justify-center rounded-md border border-dashed border-border text-xs text-muted-foreground">
+          Intet billede
+        </div>
+      )}
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="sm" className="gap-1" onClick={() => ref.current?.click()}>
+          <ImagePlus className="h-3 w-3" /> Vælg billede
+        </Button>
+        {(file || pathOrUrl) && (
+          <Button type="button" variant="ghost" size="sm" onClick={() => { onFile(null); onClear(); if (ref.current) ref.current.value = ""; }}>
+            Fjern
+          </Button>
+        )}
+      </div>
+      <input
+        ref={ref}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0] ?? null; onFile(f); }}
+      />
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
   component: AdminLeagues,
