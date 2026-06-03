@@ -179,35 +179,43 @@ export const leaveLeague = createServerFn({ method: "POST" })
     let promotedDriver: string | null = null;
 
     if (wasOnGrid) {
-      // Find oldest waitlist entry in same class/category
-      const { data: nextUp, error: nextErr } = await supabaseAdmin
+      // Find oldest approved waitlist entry in same class/category
+      const { data: waitlisters, error: nextErr } = await supabaseAdmin
         .from("entries")
-        .select("id,user_id,driver_name")
+        .select("id,user_id,driver_name,created_at")
         .eq("league_id", data.leagueId)
         .is("division_id", null)
         .eq("waitlist", true)
         .eq("car_class", myEntry.car_class)
         .eq("driver_category", myEntry.driver_category)
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .order("created_at", { ascending: true });
       if (nextErr) throw new Error(nextErr.message);
 
-      if (nextUp) {
-        const { error: upErr } = await supabaseAdmin
-          .from("entries")
-          .update({ waitlist: false })
-          .eq("id", nextUp.id);
-        if (upErr) throw new Error(upErr.message);
+      if (waitlisters && waitlisters.length > 0) {
+        const userIds = waitlisters.map((w) => w.user_id);
+        const { data: profs } = await supabaseAdmin
+          .from("profiles")
+          .select("id,approved")
+          .in("id", userIds);
+        const approvedSet = new Set((profs ?? []).filter((p) => p.approved).map((p) => p.id));
+        const nextUp = waitlisters.find((w) => approvedSet.has(w.user_id));
 
-        await supabaseAdmin.from("notifications").insert({
-          user_id: nextUp.user_id,
-          title: `Du er rykket op fra ventelisten i ${leagueName}`,
-          body: `En plads er blevet ledig i ${myEntry.car_class} · ${myEntry.driver_category}. Du er nu på griddet og kan deltage i løbet.`,
-          link: `/ligaer/${data.leagueId}`,
-        });
+        if (nextUp) {
+          const { error: upErr } = await supabaseAdmin
+            .from("entries")
+            .update({ waitlist: false })
+            .eq("id", nextUp.id);
+          if (upErr) throw new Error(upErr.message);
 
-        promotedDriver = nextUp.driver_name;
+          await supabaseAdmin.from("notifications").insert({
+            user_id: nextUp.user_id,
+            title: `Du er rykket op fra ventelisten i ${leagueName}`,
+            body: `En plads er blevet ledig i ${myEntry.car_class} · ${myEntry.driver_category}. Du er nu på griddet og kan deltage i løbet.`,
+            link: `/ligaer/${data.leagueId}`,
+          });
+
+          promotedDriver = nextUp.driver_name;
+        }
       }
     }
 
