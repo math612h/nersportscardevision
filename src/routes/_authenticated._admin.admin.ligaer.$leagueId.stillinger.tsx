@@ -625,7 +625,7 @@ function DivisionEditor({
           );
         })}
         <p className="text-xs text-muted-foreground">
-          Pointskala: {POINTS_TABLE.join(", ")}. Tidsstraf lægges til kørerens tid. DNS = Did Not Show: når en kører når DNS-grænsen pr. klasse, rykkes vedkommende bagerst på ventelisten, og første ventelistekører rykker op på griddet.
+          Pointskala: {pointsTable.join(", ")}. Tidsstraf lægges til kørerens tid. DNS = Did Not Show: når en kører når DNS-grænsen pr. klasse, rykkes vedkommende bagerst på ventelisten, og første ventelistekører rykker op på griddet.
         </p>
       </CardContent>
     </Card>
