@@ -163,6 +163,23 @@ function DriverAidsEditor({ value, onChange }: { value: EventSettings; onChange:
   );
 }
 
+function BriefingOpenEditor({ value, onChange }: { value: EventSettings; onChange: (next: EventSettings) => void }) {
+  const current = value.briefing_open_minutes_before ?? 30;
+  return (
+    <div className="space-y-1 rounded-md border border-border p-2">
+      <Label>Drivers Briefing åbner (min før løbsstart)</Label>
+      <Input
+        type="number"
+        min={0}
+        max={1440}
+        value={current}
+        onChange={(e) => onChange({ ...value, briefing_open_minutes_before: Number(e.target.value) })}
+      />
+      <p className="text-xs text-muted-foreground">Nedtælling vises på knappen indtil kanalen åbner. Admins har altid adgang.</p>
+    </div>
+  );
+}
+
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
   component: AdminLeagues,
