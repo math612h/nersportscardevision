@@ -213,10 +213,11 @@ function DivisionEditor({
   });
 
   const [rows, setRows] = useState<DraftRow[]>(initialRows);
-  const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
+  const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? leagueFlPoints));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
 
   // Profiles for the entries on grid (for LMU name matching)
   const userIds = useMemo(() => Array.from(new Set(entries.map((e) => e.user_id))), [entries]);
