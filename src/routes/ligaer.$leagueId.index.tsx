@@ -401,6 +401,27 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
     },
   });
 
+  const { data: leagueEntries } = useQuery({
+    queryKey: ["league-entries-with-teams", leagueId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("car_class,driver_category,car_number,team_id")
+        .eq("league_id", leagueId);
+      if (error) throw error;
+      return (data ?? []) as { car_class: string; driver_category: string; car_number: number | null; team_id: string | null }[];
+    },
+  });
+  const entryTeamMap = useMemo(() => {
+    const m: Record<string, string | null> = {};
+    for (const e of leagueEntries ?? []) {
+      if (e.car_number != null) m[`${e.car_class}|${e.driver_category}|${e.car_number}`] = e.team_id;
+    }
+    return m;
+  }, [leagueEntries]);
+  const teamIds = useMemo(() => Object.values(entryTeamMap).filter(Boolean) as string[], [entryTeamMap]);
+  const { data: teamMap } = useTeamLookup(teamIds);
+
   const completed = (divisions ?? []).filter((d: any) => d.settings?.completed && Array.isArray(d.settings?.results));
 
   if (completed.length === 0) {
@@ -492,6 +513,7 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                   <tr className="text-left text-xs text-muted-foreground">
                     <th className="py-1 pr-2 w-8">#</th>
                     <th className="py-1 pr-2">Kører</th>
+                    <th className="py-1 pr-2">Team</th>
                     <th className="py-1 pr-2 w-12 text-center">Nr.</th>
                     {completed.map((d: any) => (
                       <th key={d.id} className="py-1 px-1 w-12 text-center" title={d.name}>
