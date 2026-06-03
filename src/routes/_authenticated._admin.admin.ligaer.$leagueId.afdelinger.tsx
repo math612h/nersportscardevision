@@ -161,6 +161,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
     setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny"));
     setTemperature(22); setFlPoints(1);
     setLobbyCode(""); setLobbyPassword("");
+    setEventSettings({});
     onDone();
   };
 
