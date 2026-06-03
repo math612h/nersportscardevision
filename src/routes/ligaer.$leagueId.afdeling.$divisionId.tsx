@@ -16,7 +16,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DriversBriefing } from "@/components/DriversBriefing";
+import { lazy, Suspense } from "react";
+import { ClientOnly } from "@tanstack/react-router";
+const DriversBriefing = lazy(() => import("@/components/DriversBriefing").then(m => ({ default: m.DriversBriefing })));
 
 export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
   component: DivisionDetail,
