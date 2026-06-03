@@ -63,7 +63,7 @@ type Row = {
 const ALL = "__all__";
 
 function LeaderboardPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
