@@ -49,6 +49,7 @@ export type EventSettings = {
   stability_control?: OnOff;
   steering_help?: OnOff;
   auto_clutch?: OnOff;
+  briefing_open_minutes_before?: number; // Drivers Briefing åbner X min før race_date
 };
 
 export const EVENT_AID_FIELDS: { key: keyof EventSettings; label: string }[] = [
