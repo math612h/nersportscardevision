@@ -369,6 +369,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setBannerPath(league.banner_url ?? null);
     setBannerFile(null);
     setEventSettings((league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings);
+    setPointsSystem((league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem);
   };
 
   const submit = async (e: React.FormEvent) => {
