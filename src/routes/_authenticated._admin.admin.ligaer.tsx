@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { PointsSystemEditor, type PointsSystem } from "@/components/PointsSystemEditor";
 
 async function uploadLeagueBanner(file: File): Promise<string> {
   if (file.size > 8 * 1024 * 1024) throw new Error("Billedet må højst være 8 MB.");
