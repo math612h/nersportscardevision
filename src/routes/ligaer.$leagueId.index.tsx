@@ -20,6 +20,37 @@ import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, getTrackImageFile } 
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
   component: LeagueDetail,
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("leagues")
+      .select("name, description, is_offseason")
+      .eq("id", params.leagueId)
+      .maybeSingle();
+    return {
+      leagueName: (data?.name as string | undefined) ?? null,
+      leagueDesc: (data?.description as string | undefined) ?? null,
+      isOffseason: !!(data as any)?.is_offseason,
+    };
+  },
+  head: ({ params, loaderData }) => {
+    const name = loaderData?.leagueName ?? "Liga";
+    const kind = loaderData?.isOffseason ? "Off-season event" : "Liga";
+    const title = `${name} — ${kind} | LMU-Hub`;
+    const desc =
+      loaderData?.leagueDesc?.slice(0, 155) ??
+      `${name}: afdelinger, tilmeldte kørere, regelsæt og stillinger i NER Sportscar Division.`;
+    const url = `https://nersportscardevision.lovable.app/ligaer/${params.leagueId}`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
 });
 
 function LeagueDetail() {

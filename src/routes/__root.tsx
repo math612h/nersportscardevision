@@ -77,23 +77,43 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "LMU-Hub" },
-      { name: "description", content: "Sim-racing liga administration" },
-      { property: "og:title", content: "LMU-Hub" },
-      { name: "twitter:title", content: "LMU-Hub" },
-      { property: "og:description", content: "Sim-racing liga administration" },
-      { name: "twitter:description", content: "Sim-racing liga administration" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d87fccd1-59f4-47d9-a35d-21f44d2ae544/id-preview-492ebfc1--2054928e-8e3d-43f6-95a7-df5aedf97bab.lovable.app-1780398412613.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d87fccd1-59f4-47d9-a35d-21f44d2ae544/id-preview-492ebfc1--2054928e-8e3d-43f6-95a7-df5aedf97bab.lovable.app-1780398412613.png" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:type", content: "website" },
-    ],
-    links: [{ rel: "stylesheet", href: appCss }],
-  }),
+  head: () => {
+    const siteTitle = "LMU-Hub — Sim-racing liga til NER Sportscar Division";
+    const siteDesc =
+      "Sim-racing liga-hub til Le Mans Ultimate: tilmeld dig ligaer og off-season events, læs regelsæt, følg stillinger og se hurtigste omgangstider på leaderboardet.";
+    const ogImage =
+      "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d87fccd1-59f4-47d9-a35d-21f44d2ae544/id-preview-492ebfc1--2054928e-8e3d-43f6-95a7-df5aedf97bab.lovable.app-1780398412613.png";
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { title: siteTitle },
+        { name: "description", content: siteDesc },
+        { property: "og:site_name", content: "LMU-Hub" },
+        { property: "og:title", content: siteTitle },
+        { property: "og:description", content: siteDesc },
+        { property: "og:type", content: "website" },
+        { name: "twitter:title", content: siteTitle },
+        { name: "twitter:description", content: siteDesc },
+        { name: "twitter:image", content: ogImage },
+        { name: "twitter:card", content: "summary_large_image" },
+      ],
+      links: [{ rel: "stylesheet", href: appCss }],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "NER Sportscar Division",
+            url: "https://nersportscardevision.lovable.app",
+            description:
+              "Dansk sim-racing community med ligaer i Le Mans Ultimate.",
+          }),
+        },
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,

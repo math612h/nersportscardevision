@@ -3,8 +3,40 @@ import { ArrowUpRight, Lock, Flag } from "lucide-react";
 import lmuCover from "@/assets/lmu-cover.jpg.asset.json";
 import accCover from "@/assets/acc-cover.jpg.asset.json";
 
+const PAGE_TITLE = "Vælg simulator — LMU-Hub";
+const PAGE_DESC =
+  "Vælg simulator og hop ind i NER Sportscar Divisions sim-racing ligaer. Le Mans Ultimate er aktiv; Assetto Corsa Competizione kommer snart.";
+const PAGE_URL = "https://nersportscardevision.lovable.app/";
+
 export const Route = createFileRoute("/")({
   component: SimPicker,
+  head: () => ({
+    meta: [
+      { title: PAGE_TITLE },
+      { name: "description", content: PAGE_DESC },
+      { property: "og:title", content: PAGE_TITLE },
+      { property: "og:description", content: PAGE_DESC },
+      { property: "og:url", content: PAGE_URL },
+    ],
+    links: [{ rel: "canonical", href: PAGE_URL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "LMU-Hub",
+          url: "https://nersportscardevision.lovable.app",
+          description:
+            "Sim-racing liga-hub til NER Sportscar Division med ligaer i Le Mans Ultimate.",
+          publisher: {
+            "@type": "Organization",
+            name: "NER Sportscar Division",
+          },
+        }),
+      },
+    ],
+  }),
 });
 
 function SimPicker() {
@@ -57,7 +89,7 @@ function SimCard({
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
         <img
           src={image}
-          alt={title}
+          alt={`${title} cover art`}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
@@ -67,13 +99,14 @@ function SimCard({
               ? "bg-background/60 text-muted-foreground"
               : "bg-background/70 text-foreground group-hover:bg-primary group-hover:text-primary-foreground"
           }`}
+          aria-hidden="true"
         >
           {disabled ? <Lock className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
         </div>
       </div>
 
       <div className="flex items-center gap-3 px-4 pb-4 pt-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary" aria-hidden="true">
           <Flag className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
@@ -86,7 +119,7 @@ function SimCard({
 
   if (disabled || !to) return content;
   return (
-    <Link to={to} className="block h-full">
+    <Link to={to} className="block h-full" aria-label={`Åbn ${title}`}>
       {content}
     </Link>
   );

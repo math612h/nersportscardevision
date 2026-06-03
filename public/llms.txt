@@ -1,0 +1,15 @@
+# LMU-Hub — NER Sportscar Division
+
+> Sim-racing liga administration til Le Mans Ultimate. Ligaer, afdelinger, regelsæt, tilmeldinger, stillinger og et åbent leaderboard for hurtigste omgangstider.
+
+LMU-Hub er den officielle administrations-hub for NER Sportscar Division. Kørere kan tilmelde sig ligaer og enkeltløb (off-season events), se baner og vejrforhold, læse regelsæt, og uploade race-XML for at få deres tider på leaderboardet automatisk matchet via LMU-navn.
+
+## Pages
+
+- [Vælg simulator](/): Forsiden hvor kørere vælger simulator (Le Mans Ultimate aktiv, ACC kommer snart).
+- [Ligaer & løb](/lmu): Liste over alle Le Mans Ultimate-ligaer og off-season events med antal afdelinger.
+- [Leaderboard](/leaderboard): Hurtigste omgangstider pr. bane og bilklasse på tværs af alle løb.
+
+## Optional
+
+- [Log ind](/login): Login og kontooprettelse for kørere.

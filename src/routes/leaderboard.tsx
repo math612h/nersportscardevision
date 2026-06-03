@@ -13,13 +13,34 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 
+const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
+const LB_DESC =
+  "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle NER Sportscar Division-løb i Le Mans Ultimate. Upload din race-fil og kom på listen.";
+const LB_URL = "https://nersportscardevision.lovable.app/leaderboard";
+
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
     meta: [
-      { title: "Leaderboard – NER Sportscar Division" },
-      { name: "description", content: "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle løb i Le Mans Ultimate." },
-      { property: "og:title", content: "Leaderboard – NER Sportscar Division" },
-      { property: "og:description", content: "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle løb i Le Mans Ultimate." },
+      { title: LB_TITLE },
+      { name: "description", content: LB_DESC },
+      { property: "og:title", content: LB_TITLE },
+      { property: "og:description", content: LB_DESC },
+      { property: "og:url", content: LB_URL },
+    ],
+    links: [{ rel: "canonical", href: LB_URL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Dataset",
+          name: "NER Sportscar Division — Le Mans Ultimate leaderboard",
+          description: LB_DESC,
+          url: LB_URL,
+          creator: { "@type": "Organization", name: "NER Sportscar Division" },
+          variableMeasured: ["best lap time", "track", "car class"],
+        }),
+      },
     ],
   }),
   component: LeaderboardPage,
