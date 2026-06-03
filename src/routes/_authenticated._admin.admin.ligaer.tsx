@@ -228,7 +228,7 @@ function AdminLeagues() {
                     <Plus className="h-3 w-3" /> Tilføj klasse
                   </Button>
                 </div>
-                <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
+                <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
