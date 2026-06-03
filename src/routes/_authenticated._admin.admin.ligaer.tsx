@@ -175,6 +175,7 @@ function AdminLeagues() {
               <form onSubmit={create} className="space-y-3">
                 <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
                 <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+                <BannerPicker pathOrUrl={null} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerFile(null)} />
                 <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
                   <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
                   <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
