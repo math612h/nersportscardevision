@@ -240,6 +240,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           driver_category: string | null
+          event_settings: Json
           id: string
           is_offseason: boolean
           name: string
@@ -252,6 +253,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           driver_category?: string | null
+          event_settings?: Json
           id?: string
           is_offseason?: boolean
           name: string
@@ -264,6 +266,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           driver_category?: string | null
+          event_settings?: Json
           id?: string
           is_offseason?: boolean
           name?: string

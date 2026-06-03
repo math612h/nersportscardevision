@@ -5,7 +5,16 @@ import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus } from "lucide-rea
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { CAR_CLASSES, DRIVER_CATEGORIES, type ClassConfig } from "@/lib/tracks";
+import {
+  CAR_CLASSES,
+  DRIVER_CATEGORIES,
+  EVENT_AID_FIELDS,
+  EVENT_NUMERIC_FIELDS,
+  ON_OFF_OPTIONS,
+  type ClassConfig,
+  type EventSettings,
+  type OnOff,
+} from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,12 +84,124 @@ function BannerPicker({ pathOrUrl, file, onFile, onClear }: { pathOrUrl: string 
   );
 }
 
+function ClassConfigsEditor({ configs, setConfigs }: { configs: ClassConfig[]; setConfigs: (cb: (prev: ClassConfig[]) => ClassConfig[]) => void }) {
+  const update = (i: number, patch: Partial<ClassConfig>) =>
+    setConfigs((prev) => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
+  const remove = (i: number) => setConfigs((prev) => prev.filter((_, idx) => idx !== i));
+  return (
+    <div className="space-y-2">
+      <Label>Bilklasser og kørenumre</Label>
+      {configs.map((c, i) => (
+        <div key={i} className="space-y-2 rounded-md border border-border p-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground">Klasse {i + 1}</span>
+            <Button type="button" variant="ghost" size="icon" onClick={() => remove(i)} disabled={configs.length === 1}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Klasse</Label>
+              <Select value={c.car_class} onValueChange={(v) => update(i, { car_class: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{CAR_CLASSES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Kategori</Label>
+              <Select value={c.driver_category} onValueChange={(v) => update(i, { driver_category: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{DRIVER_CATEGORIES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-xs">Fra nr.</Label>
+              <Input type="number" min={1} value={c.number_from} onChange={(e) => update(i, { number_from: Number(e.target.value) })} />
+            </div>
+            <div>
+              <Label className="text-xs">Til nr.</Label>
+              <Input type="number" min={1} value={c.number_to} onChange={(e) => update(i, { number_to: Number(e.target.value) })} />
+            </div>
+            <div>
+              <Label className="text-xs">Maks. deltagere</Label>
+              <Input type="number" min={1} value={c.max_drivers ?? ""} placeholder="Ubegrænset" onChange={(e) => update(i, { max_drivers: e.target.value === "" ? undefined : Number(e.target.value) })} />
+            </div>
+            <div>
+              <Label className="text-xs">DNS-grænse</Label>
+              <Input type="number" min={1} value={c.dns_limit ?? ""} placeholder="Ingen" onChange={(e) => update(i, { dns_limit: e.target.value === "" ? undefined : Number(e.target.value) })} />
+            </div>
+          </div>
+        </div>
+      ))}
+      <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={() => setConfigs((p) => [...p, emptyConfig()])}>
+        <Plus className="h-3 w-3" /> Tilføj klasse
+      </Button>
+    </div>
+  );
+}
+
+function EventSettingsEditor({ value, onChange }: { value: EventSettings; onChange: (next: EventSettings) => void }) {
+  const patch = (p: Partial<EventSettings>) => onChange({ ...value, ...p });
+  return (
+    <div className="space-y-2 rounded-md border border-border p-2">
+      <Label>Event settings</Label>
+      <div className="grid grid-cols-2 gap-2">
+        {EVENT_NUMERIC_FIELDS.map((f) => (
+          <div key={f.key}>
+            <Label className="text-xs">{f.label}{f.suffix ? ` (${f.suffix})` : ""}</Label>
+            <Input
+              type="number"
+              min={f.min}
+              step={f.step ?? 1}
+              value={(value[f.key] as number | undefined) ?? ""}
+              placeholder="–"
+              onChange={(e) => patch({ [f.key]: e.target.value === "" ? undefined : Number(e.target.value) } as Partial<EventSettings>)}
+            />
+          </div>
+        ))}
+        <div className="col-span-2">
+          <Label className="text-xs">In-game tid (HH:MM)</Label>
+          <Input
+            type="time"
+            value={value.in_game_time ?? ""}
+            onChange={(e) => patch({ in_game_time: e.target.value || undefined })}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 pt-2">
+        {EVENT_AID_FIELDS.map((f) => (
+          <div key={f.key}>
+            <Label className="text-xs">{f.label}</Label>
+            <Select
+              value={(value[f.key] as OnOff | undefined) ?? ""}
+              onValueChange={(v) => patch({ [f.key]: (v || undefined) as OnOff | undefined } as Partial<EventSettings>)}
+            >
+              <SelectTrigger><SelectValue placeholder="–" /></SelectTrigger>
+              <SelectContent>{ON_OFF_OPTIONS.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
   component: AdminLeagues,
 });
 
 function emptyConfig(): ClassConfig {
   return { car_class: CAR_CLASSES[0], driver_category: DRIVER_CATEGORIES[0], number_from: 1, number_to: 50, max_drivers: 20, dns_limit: 2 };
+}
+
+function validateConfigs(configs: ClassConfig[]): string | null {
+  if (configs.length === 0) return "Tilføj mindst én bilklasse.";
+  for (const c of configs) {
+    if (!c.car_class || !c.driver_category) return "Udfyld klasse og kategori.";
+    if (!Number.isInteger(c.number_from) || !Number.isInteger(c.number_to) || c.number_from < 1 || c.number_to < c.number_from)
+      return "Ugyldigt nummerinterval.";
+  }
+  return null;
 }
 
 function AdminLeagues() {
@@ -94,6 +215,7 @@ function AdminLeagues() {
   const [isOffseason, setIsOffseason] = useState(false);
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [eventSettings, setEventSettings] = useState<EventSettings>({});
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -106,18 +228,10 @@ function AdminLeagues() {
     },
   });
 
-  const updateConfig = (i: number, patch: Partial<ClassConfig>) =>
-    setConfigs((prev) => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
-  const removeConfig = (i: number) => setConfigs((prev) => prev.filter((_, idx) => idx !== i));
-
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (configs.length === 0) return toast.error("Tilføj mindst én bilklasse.");
-    for (const c of configs) {
-      if (!c.car_class || !c.driver_category) return toast.error("Udfyld klasse og kategori.");
-      if (!Number.isInteger(c.number_from) || !Number.isInteger(c.number_to) || c.number_from < 1 || c.number_to < c.number_from)
-        return toast.error("Ugyldigt nummerinterval.");
-    }
+    const err = validateConfigs(configs);
+    if (err) return toast.error(err);
     setSubmitting(true);
     let bannerPath: string | null = null;
     try {
@@ -135,6 +249,7 @@ function AdminLeagues() {
       class_configs: configs as any,
       is_offseason: isOffseason,
       banner_url: bannerPath,
+      event_settings: eventSettings as any,
       created_by: user?.id,
     });
     setSubmitting(false);
@@ -147,6 +262,7 @@ function AdminLeagues() {
     setIsOffseason(false);
     setConfigs([emptyConfig()]);
     setBannerFile(null);
+    setEventSettings({});
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
@@ -180,54 +296,8 @@ function AdminLeagues() {
                   <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
                   <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
                 </label>
-                <div className="space-y-2">
-                  <Label>Bilklasser og kørenumre</Label>
-                  {configs.map((c, i) => (
-                    <div key={i} className="space-y-2 rounded-md border border-border p-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-muted-foreground">Klasse {i + 1}</span>
-                        <Button type="button" variant="ghost" size="icon" onClick={() => removeConfig(i)} disabled={configs.length === 1}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label className="text-xs">Klasse</Label>
-                          <Select value={c.car_class} onValueChange={(v) => updateConfig(i, { car_class: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>{CAR_CLASSES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Kategori</Label>
-                          <Select value={c.driver_category} onValueChange={(v) => updateConfig(i, { driver_category: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>{DRIVER_CATEGORIES.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label className="text-xs">Fra nr.</Label>
-                          <Input type="number" min={1} value={c.number_from} onChange={(e) => updateConfig(i, { number_from: Number(e.target.value) })} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Til nr.</Label>
-                          <Input type="number" min={1} value={c.number_to} onChange={(e) => updateConfig(i, { number_to: Number(e.target.value) })} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Maks. deltagere</Label>
-                          <Input type="number" min={1} value={c.max_drivers ?? ""} placeholder="Ubegrænset" onChange={(e) => updateConfig(i, { max_drivers: e.target.value === "" ? undefined : Number(e.target.value) })} />
-                        </div>
-                        <div>
-                          <Label className="text-xs">DNS-grænse</Label>
-                          <Input type="number" min={1} value={c.dns_limit ?? ""} placeholder="Ingen" onChange={(e) => updateConfig(i, { dns_limit: e.target.value === "" ? undefined : Number(e.target.value) })} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={() => setConfigs((p) => [...p, emptyConfig()])}>
-                    <Plus className="h-3 w-3" /> Tilføj klasse
-                  </Button>
-                </div>
+                <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
+                <EventSettingsEditor value={eventSettings} onChange={setEventSettings} />
                 <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
               </form>
             </DialogContent>
@@ -297,26 +367,29 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [name, setName] = useState(league.name ?? "");
   const [desc, setDesc] = useState(league.description ?? "");
   const [isOffseason, setIsOffseason] = useState<boolean>(!!league.is_offseason);
-  const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) ? league.class_configs : [];
+  const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()];
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
   const [bannerPath, setBannerPath] = useState<string | null>(league.banner_url ?? null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [eventSettings, setEventSettings] = useState<EventSettings>(
+    (league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings,
+  );
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
     setName(league.name ?? "");
     setDesc(league.description ?? "");
     setIsOffseason(!!league.is_offseason);
-    setCfgs(Array.isArray(league.class_configs) ? league.class_configs : []);
+    setCfgs(Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()]);
     setBannerPath(league.banner_url ?? null);
     setBannerFile(null);
+    setEventSettings((league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings);
   };
-
-  const patchCfg = (i: number, patch: Partial<ClassConfig>) =>
-    setCfgs((prev) => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const err = validateConfigs(cfgs);
+    if (err) return toast.error(err);
     setSaving(true);
     let newBanner = bannerPath;
     try {
@@ -325,9 +398,19 @@ function EditLeagueDialog({ league }: { league: any }) {
       setSaving(false);
       return toast.error(err.message);
     }
+    const first = cfgs[0];
     const { error } = await supabase
       .from("leagues")
-      .update({ name: name.trim(), description: desc.trim() || null, class_configs: cfgs as any, is_offseason: isOffseason, banner_url: newBanner })
+      .update({
+        name: name.trim(),
+        description: desc.trim() || null,
+        car_class: first.car_class,
+        driver_category: first.driver_category,
+        class_configs: cfgs as any,
+        is_offseason: isOffseason,
+        banner_url: newBanner,
+        event_settings: eventSettings as any,
+      })
       .eq("id", league.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -353,26 +436,8 @@ function EditLeagueDialog({ league }: { league: any }) {
             <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
             <span className="text-sm">Off-season event</span>
           </label>
-          {cfgs.length > 0 && (
-            <div className="space-y-2">
-              <Label>Klasser · maks deltagere og DNS-grænse</Label>
-              {cfgs.map((c, i) => (
-                <div key={i} className="rounded-md border border-border p-2 space-y-2">
-                  <p className="text-xs font-medium">{c.car_class} · {c.driver_category} (#{c.number_from}-{c.number_to})</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs">Maks. deltagere</Label>
-                      <Input type="number" min={1} value={c.max_drivers ?? ""} placeholder="Ubegrænset" onChange={(e) => patchCfg(i, { max_drivers: e.target.value === "" ? undefined : Number(e.target.value) })} />
-                    </div>
-                    <div>
-                      <Label className="text-xs">DNS-grænse</Label>
-                      <Input type="number" min={1} value={c.dns_limit ?? ""} placeholder="Ingen" onChange={(e) => patchCfg(i, { dns_limit: e.target.value === "" ? undefined : Number(e.target.value) })} />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
+          <EventSettingsEditor value={eventSettings} onChange={setEventSettings} />
           <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
         </form>
       </DialogContent>
