@@ -25,13 +25,17 @@ function PublicProfile() {
   const { data: profile, isLoading } = useQuery({
     queryKey: ["profile", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, display_name, lmu_name, age, bio, achievements, avatar_url, discord_username, approved")
-        .eq("id", userId)
-        .maybeSingle();
+      const [{ data, error }, { data: priv }] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, display_name, lmu_name, bio, achievements, avatar_url, approved")
+          .eq("id", userId)
+          .maybeSingle(),
+        supabase.rpc("get_profile_private", { _user_id: userId }).maybeSingle(),
+      ]);
       if (error) throw error;
-      return data;
+      if (!data) return null;
+      return { ...data, age: priv?.age ?? null, discord_username: priv?.discord_username ?? null };
     },
   });
 
