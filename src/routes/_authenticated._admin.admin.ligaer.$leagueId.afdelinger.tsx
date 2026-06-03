@@ -144,6 +144,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
         weather,
         fastest_lap_points: flPoints,
         temperature,
+        event_settings: eventSettings,
       },
     }).select("id").single();
     if (error) return toast.error(error.message);
