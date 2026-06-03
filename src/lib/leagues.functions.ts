@@ -103,7 +103,7 @@ export const setProfileApproval = createServerFn({ method: "POST" })
         const { data: waitlisters } = await supabaseAdmin
           .from("entries")
           .select("id,user_id,driver_name,created_at")
-          .eq("league_id", entry.league_id)
+          .eq("league_id", leagueId)
           .is("division_id", null)
           .eq("waitlist", true)
           .eq("car_class", entry.car_class)
