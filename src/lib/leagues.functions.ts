@@ -50,7 +50,8 @@ export const setProfileApproval = createServerFn({ method: "POST" })
 
     if (data.approved && myEntries) {
       // Try to promote this user's waitlist entries if capacity allows
-      for (const entry of myEntries.filter((e) => e.waitlist)) {
+      for (const entry of myEntries.filter((e) => e.waitlist && e.league_id)) {
+        const leagueId = entry.league_id as string;
         // Get league cap for this class/category
         const { data: league } = await supabaseAdmin
           .from("leagues")
