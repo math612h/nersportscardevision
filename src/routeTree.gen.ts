@@ -21,6 +21,7 @@ import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
 import { Route as LigaerLeagueIdIndexRouteImport } from './routes/ligaer.$leagueId.index'
 import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
+import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/public/leaderboard-upload'
 import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated._admin.admin.index'
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
@@ -94,6 +95,12 @@ const LigaerLeagueIdReglerRoute = LigaerLeagueIdReglerRouteImport.update({
   path: '/regler',
   getParentRoute: () => LigaerLeagueIdRoute,
 } as any)
+const ApiPublicLeaderboardUploadRoute =
+  ApiPublicLeaderboardUploadRouteImport.update({
+    id: '/api/public/leaderboard-upload',
+    path: '/api/public/leaderboard-upload',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedProfilUserIdRoute =
   AuthenticatedProfilUserIdRouteImport.update({
     id: '/$userId',
@@ -183,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
+  '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
@@ -207,6 +215,7 @@ export interface FileRoutesByTo {
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
+  '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdIndexRoute
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
@@ -234,6 +243,7 @@ export interface FileRoutesById {
   '/_authenticated/profil': typeof AuthenticatedProfilRouteWithChildren
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/_authenticated/profil/$userId': typeof AuthenticatedProfilUserIdRoute
+  '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/_authenticated/_admin/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/profil'
     | '/ligaer/$leagueId'
     | '/profil/$userId'
+    | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
     | '/ligaer/$leagueId/'
     | '/admin/afventer'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/mine-protests'
     | '/profil'
     | '/profil/$userId'
+    | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
     | '/ligaer/$leagueId'
     | '/admin/afventer'
@@ -311,6 +323,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profil'
     | '/ligaer/$leagueId'
     | '/_authenticated/profil/$userId'
+    | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
     | '/ligaer/$leagueId/'
     | '/_authenticated/_admin/admin/afventer'
@@ -335,6 +348,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
+  ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -422,6 +436,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ligaer/$leagueId/regler'
       preLoaderRoute: typeof LigaerLeagueIdReglerRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/api/public/leaderboard-upload': {
+      id: '/api/public/leaderboard-upload'
+      path: '/api/public/leaderboard-upload'
+      fullPath: '/api/public/leaderboard-upload'
+      preLoaderRoute: typeof ApiPublicLeaderboardUploadRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/profil/$userId': {
       id: '/_authenticated/profil/$userId'
@@ -631,6 +652,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
+  ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
