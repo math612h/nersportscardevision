@@ -178,6 +178,21 @@ function DivisionDetail() {
   });
   const isApproved = !!myProfile?.approved;
 
+  const { data: lobby } = useQuery({
+    queryKey: ["division-lobby", divisionId, user?.id ?? "anon"],
+    enabled: !!user && isApproved,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("division_lobbies")
+        .select("lobby_code,lobby_password")
+        .eq("division_id", divisionId)
+        .maybeSingle();
+      if (error) throw error;
+      return (data ?? null) as { lobby_code: string | null; lobby_password: string | null } | null;
+    },
+  });
+
+
   const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
   const reasonByUser = new Map((absenceReasons ?? []).map((a) => [a.user_id, a.reason]));
   const myAbsence = user ? absenceByUser.get(user.id) : undefined;
