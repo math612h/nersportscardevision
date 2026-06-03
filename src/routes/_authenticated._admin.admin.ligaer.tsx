@@ -9,7 +9,6 @@ import {
   CAR_CLASSES,
   DRIVER_CATEGORIES,
   EVENT_AID_FIELDS,
-  EVENT_NUMERIC_FIELDS,
   ON_OFF_OPTIONS,
   type ClassConfig,
   type EventSettings,
@@ -140,35 +139,12 @@ function ClassConfigsEditor({ configs, setConfigs }: { configs: ClassConfig[]; s
   );
 }
 
-function EventSettingsEditor({ value, onChange }: { value: EventSettings; onChange: (next: EventSettings) => void }) {
+function DriverAidsEditor({ value, onChange }: { value: EventSettings; onChange: (next: EventSettings) => void }) {
   const patch = (p: Partial<EventSettings>) => onChange({ ...value, ...p });
   return (
     <div className="space-y-2 rounded-md border border-border p-2">
-      <Label>Event settings</Label>
-      <div className="grid grid-cols-2 gap-2">
-        {EVENT_NUMERIC_FIELDS.map((f) => (
-          <div key={f.key}>
-            <Label className="text-xs">{f.label}{f.suffix ? ` (${f.suffix})` : ""}</Label>
-            <Input
-              type="number"
-              min={f.min}
-              step={f.step ?? 1}
-              value={(value[f.key] as number | undefined) ?? ""}
-              placeholder="–"
-              onChange={(e) => patch({ [f.key]: e.target.value === "" ? undefined : Number(e.target.value) } as Partial<EventSettings>)}
-            />
-          </div>
-        ))}
-        <div className="col-span-2">
-          <Label className="text-xs">In-game tid (HH:MM)</Label>
-          <Input
-            type="time"
-            value={value.in_game_time ?? ""}
-            onChange={(e) => patch({ in_game_time: e.target.value || undefined })}
-          />
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-2 pt-2">
+      <Label>Driver Aids</Label>
+      <div className="grid grid-cols-2 gap-2 pt-1">
         {EVENT_AID_FIELDS.map((f) => (
           <div key={f.key}>
             <Label className="text-xs">{f.label}</Label>
@@ -185,6 +161,7 @@ function EventSettingsEditor({ value, onChange }: { value: EventSettings; onChan
     </div>
   );
 }
+
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
   component: AdminLeagues,
@@ -297,7 +274,7 @@ function AdminLeagues() {
                   <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
                 </label>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
-                <EventSettingsEditor value={eventSettings} onChange={setEventSettings} />
+                <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
               </form>
             </DialogContent>
@@ -437,7 +414,7 @@ function EditLeagueDialog({ league }: { league: any }) {
             <span className="text-sm">Off-season event</span>
           </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
-          <EventSettingsEditor value={eventSettings} onChange={setEventSettings} />
+          <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
         </form>
       </DialogContent>

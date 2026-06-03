@@ -5,7 +5,8 @@ import { ArrowLeft, Plus, Trash2, Pencil, Check } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { LMU_TRACKS, WEATHER_OPTIONS, WEATHER_BY_KEY, WEATHER_SLOT_COUNT, type WeatherKey } from "@/lib/tracks";
+import { LMU_TRACKS, WEATHER_OPTIONS, WEATHER_BY_KEY, WEATHER_SLOT_COUNT, type WeatherKey, type EventSettings } from "@/lib/tracks";
+import { SessionSettingsEditor } from "@/components/SessionSettingsEditor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,6 +126,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   const [flPoints, setFlPoints] = useState<number>(1);
   const [lobbyCode, setLobbyCode] = useState("");
   const [lobbyPassword, setLobbyPassword] = useState("");
+  const [eventSettings, setEventSettings] = useState<EventSettings>({});
 
   const [trackIdxStr, layout] = trackLayout.split("::");
   const track = LMU_TRACKS[Number(trackIdxStr)];
@@ -142,6 +144,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
         weather,
         fastest_lap_points: flPoints,
         temperature,
+        event_settings: eventSettings,
       },
     }).select("id").single();
     if (error) return toast.error(error.message);
@@ -158,6 +161,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
     setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny"));
     setTemperature(22); setFlPoints(1);
     setLobbyCode(""); setLobbyPassword("");
+    setEventSettings({});
     onDone();
   };
 
@@ -233,6 +237,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
               })}
             </div>
           </div>
+          <SessionSettingsEditor value={eventSettings} onChange={setEventSettings} />
           <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
         </form>
       </DialogContent>
@@ -247,6 +252,9 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [lobbyCode, setLobbyCode] = useState<string>("");
   const [lobbyPassword, setLobbyPassword] = useState<string>("");
+  const [eventSettings, setEventSettings] = useState<EventSettings>(
+    (division.settings?.event_settings && typeof division.settings.event_settings === "object" ? division.settings.event_settings : {}) as EventSettings,
+  );
 
   useQuery({
     queryKey: ["admin-division-lobby", division.id, open],
@@ -271,6 +279,7 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
       fastest_lap_points: flPoints,
       temperature,
       completed,
+      event_settings: eventSettings,
     };
     // Ensure stale lobby fields aren't kept in settings
     delete (newSettings as any).lobby_code;
@@ -321,6 +330,7 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
             <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
             Marker som afsluttet
           </label>
+          <SessionSettingsEditor value={eventSettings} onChange={setEventSettings} />
           <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
         </form>
       </DialogContent>

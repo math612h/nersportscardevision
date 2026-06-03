@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig } from "@/lib/tracks";
+import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_NUMERIC_FIELDS } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DriverLink } from "@/components/DriverLink";
 import { Badge } from "@/components/ui/badge";
@@ -267,6 +267,8 @@ function DivisionDetail() {
           </CardContent>
         </Card>
       )}
+
+      <EventSettingsCard settings={((div?.settings as any)?.event_settings ?? {}) as EventSettings} />
 
       {(() => {
         const hasLobby = !!(lobby?.lobby_code || lobby?.lobby_password);
@@ -558,5 +560,35 @@ function ProtestDialog({ divisionId, entries, currentUserId }: { divisionId: str
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function EventSettingsCard({ settings }: { settings: EventSettings }) {
+  const rows = EVENT_NUMERIC_FIELDS
+    .map((f) => {
+      const v = settings[f.key] as number | undefined;
+      return v == null || Number.isNaN(v) ? null : { label: f.label, value: `${v}${f.suffix ? ` ${f.suffix}` : ""}` };
+    })
+    .filter(Boolean) as { label: string; value: string }[];
+  if (settings.in_game_time) rows.push({ label: "In-game tid", value: settings.in_game_time });
+
+  if (rows.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2"><CardTitle className="text-base">Event settings</CardTitle></CardHeader>
+      <CardContent>
+        <table className="w-full text-sm">
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.label} className="border-t border-border first:border-t-0">
+                <td className="py-1.5 pr-2 text-muted-foreground">{r.label}</td>
+                <td className="py-1.5 text-right font-medium tabular-nums">{r.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
   );
 }
