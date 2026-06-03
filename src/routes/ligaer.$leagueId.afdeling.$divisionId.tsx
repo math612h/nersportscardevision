@@ -328,13 +328,17 @@ function DivisionDetail() {
         )}
         {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
         {user && (
-          <DriversBriefing
-            divisionId={divisionId}
-            raceDate={(div?.race_date as string | null | undefined) ?? null}
-            briefingOpenMinutesBefore={
-              ((div?.settings as any)?.event_settings?.briefing_open_minutes_before as number | undefined) ?? 30
-            }
-          />
+          <ClientOnly fallback={null}>
+            <Suspense fallback={null}>
+              <DriversBriefing
+                divisionId={divisionId}
+                raceDate={(div?.race_date as string | null | undefined) ?? null}
+                briefingOpenMinutesBefore={
+                  ((div?.settings as any)?.event_settings?.briefing_open_minutes_before as number | undefined) ?? 30
+                }
+              />
+            </Suspense>
+          </ClientOnly>
         )}
       </div>
 
