@@ -112,6 +112,11 @@ function AdminStandings() {
 
   const division = divisions?.find((d: any) => d.id === divisionId);
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
+  const leaguePoints: number[] = (() => {
+    const arr = (league as any)?.points_system?.points_per_position;
+    return Array.isArray(arr) && arr.length > 0 ? arr.map((n: any) => Number(n) || 0) : DEFAULT_POINTS_TABLE;
+  })();
+  const leagueFlPoints: number = Number((league as any)?.points_system?.fastest_lap_points ?? 1);
 
   return (
     <div className="space-y-4">
