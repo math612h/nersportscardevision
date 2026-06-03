@@ -56,6 +56,7 @@ function SimPicker() {
           to="/lmu"
           title="Le Mans Ultimate"
           image={lmuCover.url}
+          priority
         />
         <SimCard
           title="Assetto Corsa Competizione"
