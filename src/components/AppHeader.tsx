@@ -16,7 +16,6 @@ export function AppHeader() {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
           <Flag className="h-5 w-5 text-primary" />
-          <span>LMU-Hub</span>
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           {!isAdminRoute && (
@@ -32,14 +31,6 @@ export function AppHeader() {
           {!isAdminRoute && (
             <Link to="/brugere" className="hidden sm:flex items-center gap-1 rounded px-2 py-1 hover:bg-accent">
               <Users className="h-4 w-4" /> Brugere
-            </Link>
-          )}
-          {user && !isAdminRoute && (
-            <Link to="/mine-protests" className="relative flex items-center gap-1 rounded px-2 py-1 hover:bg-accent">
-              Sager
-              {!!pendingInvolved && pendingInvolved > 0 && (
-                <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">{pendingInvolved}</Badge>
-              )}
             </Link>
           )}
           {isAdmin && isAdminRoute && (
