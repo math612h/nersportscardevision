@@ -36,7 +36,7 @@ function AdminHub() {
           <Link key={i.to} to={i.to} className="block">
             <Card className="cursor-pointer transition hover:border-primary">
               <CardHeader>
-                <div className="flex items-center gap-2"><i.icon className="h-5 w-5 text-primary" /><CardTitle>{i.title}</CardTitle></div>
+                <div className="flex items-center gap-2"><i.icon className="h-5 w-5 text-primary" /><CardTitle>{i.title}</CardTitle>{i.badge != null && i.badge > 0 && <Badge variant="destructive" className="ml-auto">{i.badge}</Badge>}</div>
                 <CardDescription>{i.desc}</CardDescription>
               </CardHeader>
             </Card>
