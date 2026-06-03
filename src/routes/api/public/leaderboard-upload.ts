@@ -135,7 +135,7 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
           );
         } catch (e: any) {
           console.error("[leaderboard-upload]", e);
-          return Response.json({ error: e?.message ?? "Server error" }, { status: 500, headers: CORS });
+          return Response.json({ error: "Der opstod en serverfejl. Prøv igen senere." }, { status: 500, headers: CORS });
         }
       },
     },
