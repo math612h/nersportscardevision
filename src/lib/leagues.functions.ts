@@ -66,7 +66,7 @@ export const setProfileApproval = createServerFn({ method: "POST" })
         const { data: siblings } = await supabaseAdmin
           .from("entries")
           .select("id,waitlist")
-          .eq("league_id", entry.league_id)
+          .eq("league_id", leagueId)
           .is("division_id", null)
           .eq("car_class", entry.car_class)
           .eq("driver_category", entry.driver_category);
