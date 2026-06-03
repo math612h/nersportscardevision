@@ -278,6 +278,7 @@ function AdminLeagues() {
                   <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
                 </label>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
+                <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
                 <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
