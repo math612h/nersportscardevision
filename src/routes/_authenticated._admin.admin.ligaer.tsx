@@ -140,7 +140,30 @@ function ClassConfigsEditor({ configs, setConfigs }: { configs: ClassConfig[]; s
   );
 }
 
-function EventSettingsEditor({ value, onChange }: { value: EventSettings; onChange: (next: EventSettings) => void }) {
+function DriverAidsEditor({ value, onChange }: { value: EventSettings; onChange: (next: EventSettings) => void }) {
+  const patch = (p: Partial<EventSettings>) => onChange({ ...value, ...p });
+  return (
+    <div className="space-y-2 rounded-md border border-border p-2">
+      <Label>Driver Aids</Label>
+      <div className="grid grid-cols-2 gap-2 pt-1">
+        {EVENT_AID_FIELDS.map((f) => (
+          <div key={f.key}>
+            <Label className="text-xs">{f.label}</Label>
+            <Select
+              value={(value[f.key] as OnOff | undefined) ?? ""}
+              onValueChange={(v) => patch({ [f.key]: (v || undefined) as OnOff | undefined } as Partial<EventSettings>)}
+            >
+              <SelectTrigger><SelectValue placeholder="–" /></SelectTrigger>
+              <SelectContent>{ON_OFF_OPTIONS.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function SessionSettingsEditor({ value, onChange }: { value: EventSettings; onChange: (next: EventSettings) => void }) {
   const patch = (p: Partial<EventSettings>) => onChange({ ...value, ...p });
   return (
     <div className="space-y-2 rounded-md border border-border p-2">
@@ -167,20 +190,6 @@ function EventSettingsEditor({ value, onChange }: { value: EventSettings; onChan
             onChange={(e) => patch({ in_game_time: e.target.value || undefined })}
           />
         </div>
-      </div>
-      <div className="grid grid-cols-2 gap-2 pt-2">
-        {EVENT_AID_FIELDS.map((f) => (
-          <div key={f.key}>
-            <Label className="text-xs">{f.label}</Label>
-            <Select
-              value={(value[f.key] as OnOff | undefined) ?? ""}
-              onValueChange={(v) => patch({ [f.key]: (v || undefined) as OnOff | undefined } as Partial<EventSettings>)}
-            >
-              <SelectTrigger><SelectValue placeholder="–" /></SelectTrigger>
-              <SelectContent>{ON_OFF_OPTIONS.map((x) => <SelectItem key={x} value={x}>{x}</SelectItem>)}</SelectContent>
-            </Select>
-          </div>
-        ))}
       </div>
     </div>
   );
