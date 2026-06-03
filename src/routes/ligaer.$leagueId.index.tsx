@@ -677,7 +677,7 @@ function QuickNav() {
   const items = [
     { id: "entryliste", label: "Entryliste", icon: Users },
     { id: "kalender", label: "Kalender", icon: Calendar },
-    { id: "eventsettings", label: "Event settings", icon: SettingsIcon },
+    { id: "driveraids", label: "Driver Aids", icon: SettingsIcon },
     { id: "stillinger", label: "Stillinger", icon: Trophy },
   ];
 
@@ -704,15 +704,7 @@ function QuickNav() {
   );
 }
 
-function EventSettingsView({ settings }: { settings: EventSettings }) {
-  const numericRows = EVENT_NUMERIC_FIELDS
-    .map((f) => {
-      const v = settings[f.key] as number | undefined;
-      return v == null || Number.isNaN(v) ? null : { label: f.label, value: `${v}${f.suffix ? ` ${f.suffix}` : ""}` };
-    })
-    .filter(Boolean) as { label: string; value: string }[];
-  if (settings.in_game_time) numericRows.push({ label: "In-game tid", value: settings.in_game_time });
-
+function DriverAidsView({ settings }: { settings: EventSettings }) {
   const aidRows = EVENT_AID_FIELDS
     .map((f) => {
       const v = settings[f.key] as string | undefined;
@@ -720,55 +712,33 @@ function EventSettingsView({ settings }: { settings: EventSettings }) {
     })
     .filter(Boolean) as { label: string; value: string }[];
 
-  const hasAny = numericRows.length > 0 || aidRows.length > 0;
-
   return (
-    <section id="eventsettings" className="space-y-4">
+    <section id="driveraids" className="space-y-4">
       <div className="flex items-center gap-2 text-primary">
         <SettingsIcon className="h-4 w-4" />
-        <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Event settings</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Driver Aids</h2>
       </div>
-      {!hasAny ? (
+      {aidRows.length === 0 ? (
         <Card>
           <CardContent className="py-6 text-center text-sm text-muted-foreground">
-            Ingen event settings angivet endnu.
+            Ingen driver aids angivet endnu.
           </CardContent>
         </Card>
       ) : (
         <Card>
-          <CardContent className="space-y-4 py-4">
-            {numericRows.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Session & verden</p>
-                <table className="w-full text-sm">
-                  <tbody>
-                    {numericRows.map((r) => (
-                      <tr key={r.label} className="border-t border-border first:border-t-0">
-                        <td className="py-1.5 pr-2 text-muted-foreground">{r.label}</td>
-                        <td className="py-1.5 text-right font-medium tabular-nums">{r.value}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {aidRows.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Driver aids</p>
-                <table className="w-full text-sm">
-                  <tbody>
-                    {aidRows.map((r) => (
-                      <tr key={r.label} className="border-t border-border first:border-t-0">
-                        <td className="py-1.5 pr-2 text-muted-foreground">{r.label}</td>
-                        <td className="py-1.5 text-right">
-                          <Badge variant={r.value === "On" ? "default" : "secondary"} className="text-[10px]">{r.value}</Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+          <CardContent className="py-4">
+            <table className="w-full text-sm">
+              <tbody>
+                {aidRows.map((r) => (
+                  <tr key={r.label} className="border-t border-border first:border-t-0">
+                    <td className="py-1.5 pr-2 text-muted-foreground">{r.label}</td>
+                    <td className="py-1.5 text-right">
+                      <Badge variant={r.value === "On" ? "default" : "secondary"} className="text-[10px]">{r.value}</Badge>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </CardContent>
         </Card>
       )}
