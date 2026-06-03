@@ -562,3 +562,33 @@ function ProtestDialog({ divisionId, entries, currentUserId }: { divisionId: str
     </Dialog>
   );
 }
+
+function EventSettingsCard({ settings }: { settings: EventSettings }) {
+  const rows = EVENT_NUMERIC_FIELDS
+    .map((f) => {
+      const v = settings[f.key] as number | undefined;
+      return v == null || Number.isNaN(v) ? null : { label: f.label, value: `${v}${f.suffix ? ` ${f.suffix}` : ""}` };
+    })
+    .filter(Boolean) as { label: string; value: string }[];
+  if (settings.in_game_time) rows.push({ label: "In-game tid", value: settings.in_game_time });
+
+  if (rows.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-2"><CardTitle className="text-base">Event settings</CardTitle></CardHeader>
+      <CardContent>
+        <table className="w-full text-sm">
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.label} className="border-t border-border first:border-t-0">
+                <td className="py-1.5 pr-2 text-muted-foreground">{r.label}</td>
+                <td className="py-1.5 text-right font-medium tabular-nums">{r.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
