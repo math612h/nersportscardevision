@@ -356,6 +356,9 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [eventSettings, setEventSettings] = useState<EventSettings>(
     (league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings,
   );
+  const [pointsSystem, setPointsSystem] = useState<PointsSystem>(
+    (league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem,
+  );
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
