@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   ArrowLeft, Camera, Loader2, MessageSquare, Send, Shield, Trash2, UserPlus,
-  Users, Check, X, LogOut, Crown, Pencil,
+  Users, Check, X, LogOut, Crown, Pencil, Trophy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
