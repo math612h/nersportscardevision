@@ -72,7 +72,7 @@ function AdminUsersPage() {
 
   const approveMut = useMutation({
     mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
-      await approveFn({ data: { userId, approved } });
+      await approveFn({ data: { targetUserId: userId, approved } });
     },
     onSuccess: (_, { approved }) => {
       toast.success(approved ? "Profil godkendt" : "Godkendelse fjernet");
