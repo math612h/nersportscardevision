@@ -31,6 +31,45 @@ export type ClassConfig = {
   dns_limit?: number;   // optional max DNS before driver auto-moves to waitlist
 };
 
+export type OnOff = "On" | "Off";
+export const ON_OFF_OPTIONS: OnOff[] = ["On", "Off"];
+
+export type EventSettings = {
+  practice_minutes?: number;
+  quali_minutes?: number;
+  race_minutes?: number;
+  in_game_time?: string; // HH:MM (24h)
+  time_scale?: number; // e.g. 1, 2, 5, 10, 30
+  fuel_consumption?: number; // multiplier
+  tyre_wear?: number; // multiplier
+  anti_lock_brakes?: OnOff;
+  auto_shift?: OnOff;
+  brake_help?: OnOff;
+  driving_line?: OnOff;
+  stability_control?: OnOff;
+  steering_help?: OnOff;
+  auto_clutch?: OnOff;
+};
+
+export const EVENT_AID_FIELDS: { key: keyof EventSettings; label: string }[] = [
+  { key: "anti_lock_brakes", label: "Anti Lock Brakes" },
+  { key: "auto_shift", label: "Auto Shift" },
+  { key: "brake_help", label: "Brake Help" },
+  { key: "driving_line", label: "Driving Line" },
+  { key: "stability_control", label: "Stability Control" },
+  { key: "steering_help", label: "Steering Help" },
+  { key: "auto_clutch", label: "Auto Clutch" },
+];
+
+export const EVENT_NUMERIC_FIELDS: { key: keyof EventSettings; label: string; suffix?: string; step?: number; min?: number }[] = [
+  { key: "practice_minutes", label: "Practice", suffix: "min", min: 0 },
+  { key: "quali_minutes", label: "Qualifying", suffix: "min", min: 0 },
+  { key: "race_minutes", label: "Race", suffix: "min", min: 0 },
+  { key: "time_scale", label: "Time scale", suffix: "x", step: 1, min: 1 },
+  { key: "fuel_consumption", label: "Fuel consumption", suffix: "x", step: 0.1, min: 0 },
+  { key: "tyre_wear", label: "Tyre wear", suffix: "x", step: 0.1, min: 0 },
+];
+
 export type WeatherKey = "sunny" | "cloudy" | "light_rain" | "moderate_rain" | "storm";
 export const WEATHER_OPTIONS: { key: WeatherKey; label: string; icon: LucideIcon }[] = [
   { key: "sunny", label: "Sol", icon: Sun },
