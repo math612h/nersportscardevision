@@ -75,12 +75,14 @@ function SimCard({
   subtitle,
   image,
   disabled,
+  priority,
 }: {
   to?: string;
   title: string;
   subtitle?: string;
   image: string;
   disabled?: boolean;
+  priority?: boolean;
 }) {
   const content = (
     <div
@@ -94,6 +96,11 @@ function SimCard({
         <img
           src={image}
           alt={`${title} cover art`}
+          width={1280}
+          height={720}
+          loading={priority ? "eager" : "lazy"}
+          decoding={priority ? "sync" : "async"}
+          {...(priority ? { fetchpriority: "high" as any } : {})}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
