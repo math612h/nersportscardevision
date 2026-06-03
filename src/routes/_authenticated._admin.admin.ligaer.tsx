@@ -425,6 +425,7 @@ function EditLeagueDialog({ league }: { league: any }) {
             <span className="text-sm">Off-season event</span>
           </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
+          <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
           <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
