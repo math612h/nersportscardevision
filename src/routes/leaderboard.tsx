@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
-import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2 } from "lucide-react";
+import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -280,6 +280,21 @@ function LeaderboardPage() {
           </p>
           <p className="text-[11px] text-muted-foreground">
             Bemærk: kun godkendte brugere kan uploade race-filer. Alle kan se leaderboardet.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="space-y-2 py-4">
+          <div className="flex items-center gap-2 text-primary">
+            <Monitor className="h-4 w-4" />
+            <span className="text-xs font-semibold uppercase tracking-[0.18em]">Desktop Companion</span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Download vores desktop app og få tiderne uploadet automatisk. Appen kører i baggrunden, overvåger din LMU resultat-mappe og sender nye tider direkte til leaderboardet — helt uden at du behøver gøre noget.
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Appen starter automatisk ved Windows-opstart, minimerer til systembakken og husker dit login.
           </p>
         </CardContent>
       </Card>
