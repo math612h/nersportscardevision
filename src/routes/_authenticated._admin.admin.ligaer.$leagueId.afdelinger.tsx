@@ -330,6 +330,7 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
             <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
             Marker som afsluttet
           </label>
+          <SessionSettingsEditor value={eventSettings} onChange={setEventSettings} />
           <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
         </form>
       </DialogContent>
