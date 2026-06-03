@@ -93,7 +93,9 @@ function AdminLeagues() {
   const [desc, setDesc] = useState("");
   const [isOffseason, setIsOffseason] = useState(false);
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [createdLeague, setCreatedLeague] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const { data: leagues } = useQuery({
     queryKey: ["leagues-admin"],
@@ -116,6 +118,14 @@ function AdminLeagues() {
       if (!Number.isInteger(c.number_from) || !Number.isInteger(c.number_to) || c.number_from < 1 || c.number_to < c.number_from)
         return toast.error("Ugyldigt nummerinterval.");
     }
+    setSubmitting(true);
+    let bannerPath: string | null = null;
+    try {
+      if (bannerFile) bannerPath = await uploadLeagueBanner(bannerFile);
+    } catch (err: any) {
+      setSubmitting(false);
+      return toast.error(err.message);
+    }
     const first = configs[0];
     const { error } = await supabase.from("leagues").insert({
       name: name.trim(),
@@ -124,8 +134,10 @@ function AdminLeagues() {
       driver_category: first.driver_category,
       class_configs: configs as any,
       is_offseason: isOffseason,
+      banner_url: bannerPath,
       created_by: user?.id,
     });
+    setSubmitting(false);
     if (error) return toast.error(error.message);
     toast.success(isOffseason ? "Off-season event oprettet" : "Liga oprettet");
     setCreatedLeague(true);
@@ -134,6 +146,7 @@ function AdminLeagues() {
     setDesc("");
     setIsOffseason(false);
     setConfigs([emptyConfig()]);
+    setBannerFile(null);
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
