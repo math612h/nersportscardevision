@@ -425,6 +425,7 @@ function EditLeagueDialog({ league }: { league: any }) {
           </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
+          <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
           <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
         </form>
       </DialogContent>
