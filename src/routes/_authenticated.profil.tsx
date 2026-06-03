@@ -202,8 +202,84 @@ function ProfilePage() {
         </CardContent>
       </Card>
 
+      <MyTeamsCard userId={user?.id ?? null} />
       <DeviceTokensCard />
     </div>
+  );
+}
+
+// ---------- Mine teams ----------
+function MyTeamsCard({ userId }: { userId: string | null }) {
+  const { data: rows } = useQuery({
+    queryKey: ["my-teams", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("team_members")
+        .select("role, teams(id, name)")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return ((data ?? []) as any[]).map((r) => ({ ...r.teams, role: r.role })).filter(Boolean) as { id: string; name: string; role: string }[];
+    },
+  });
+  const { data: invites } = useQuery({
+    queryKey: ["my-team-invitations", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("team_invitations")
+        .select("id, team_id, teams(name)")
+        .eq("user_id", userId)
+        .eq("status", "pending");
+      if (error) throw error;
+      return (data ?? []) as { id: string; team_id: string; teams: { name: string } | null }[];
+    },
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Mine teams</CardTitle>
+            <CardDescription>Du kan maks være med i 3 teams.</CardDescription>
+          </div>
+          <CreateTeamDialog />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {(rows ?? []).length === 0 ? (
+          <p className="text-sm text-muted-foreground">Du er ikke med på noget team endnu.</p>
+        ) : (
+          <ul className="space-y-1.5">
+            {(rows ?? []).map((t) => (
+              <li key={t.id}>
+                <Link to="/teams/$teamId" params={{ teamId: t.id }} className="flex items-center gap-2 rounded border border-border px-3 py-2 text-sm hover:bg-accent">
+                  <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="flex-1 truncate font-medium">{t.name}</span>
+                  {t.role === "owner" && <Badge variant="secondary" className="text-[10px]">Ejer</Badge>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+        {(invites ?? []).length > 0 && (
+          <div className="rounded border border-dashed border-border p-2">
+            <p className="mb-1 text-xs font-semibold text-muted-foreground">Invitationer</p>
+            <ul className="space-y-1.5">
+              {(invites ?? []).map((inv) => (
+                <li key={inv.id}>
+                  <Link to="/teams/$teamId" params={{ teamId: inv.team_id }} className="flex items-center gap-2 text-sm hover:underline">
+                    <span className="flex-1 truncate">{inv.teams?.name ?? "Team"}</span>
+                    <Badge variant="outline" className="text-[10px]">Åbn for at acceptere</Badge>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
