@@ -210,6 +210,14 @@ function LeaderboardPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm("Slet denne tid fra leaderboardet?")) return;
+    const { error } = await supabase.from("leaderboard_times").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Tid slettet.");
+    qc.invalidateQueries({ queryKey: ["leaderboard"] });
+  };
+
   return (
     <div className="space-y-8">
       <Link to="/lmu" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
