@@ -494,11 +494,11 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("display_name,lmu_name")
+        .select("display_name,lmu_name,approved")
         .eq("id", user!.id)
         .maybeSingle();
       if (error) throw error;
-      return data as { display_name: string | null; lmu_name: string | null } | null;
+      return data as { display_name: string | null; lmu_name: string | null; approved: boolean } | null;
     },
   });
 
