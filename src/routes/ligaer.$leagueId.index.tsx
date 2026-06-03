@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, Settings as SettingsIcon, Gavel } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, Settings as SettingsIcon, Gavel, Timer } from "lucide-react";
+import { useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,6 +54,39 @@ export const Route = createFileRoute("/ligaer/$leagueId/")({
     };
   },
 });
+
+function RaceCountdown({ raceDate }: { raceDate: string }) {
+  const target = new Date(raceDate).getTime();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  if (Number.isNaN(target)) return null;
+  const diff = target - now;
+  if (diff <= 0) {
+    return (
+      <Badge className="gap-1 bg-primary text-primary-foreground animate-pulse">
+        <Timer className="h-3 w-3" /> LIVE
+      </Badge>
+    );
+  }
+  const s = Math.floor(diff / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const label =
+    d > 0 ? `${d}d ${h}t ${m}m`
+    : h > 0 ? `${h}t ${m}m ${String(sec).padStart(2, "0")}s`
+    : `${m}m ${String(sec).padStart(2, "0")}s`;
+  const soon = diff < 60 * 60 * 1000;
+  return (
+    <Badge variant={soon ? "default" : "outline"} className={`gap-1 ${soon ? "bg-primary text-primary-foreground" : ""}`}>
+      <Timer className="h-3 w-3" /> {label}
+    </Badge>
+  );
+}
 
 function LeagueDetail() {
   const { leagueId } = useParams({ from: "/ligaer/$leagueId/" });
@@ -193,6 +227,7 @@ function LeagueDetail() {
                           <Calendar className="h-3 w-3" /> {format(new Date(d.race_date), "dd MMM yyyy HH:mm")}
                         </Badge>
                       )}
+                      {d.race_date && !completed && <RaceCountdown raceDate={d.race_date} />}
                       <Badge variant="outline">{d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
                     </div>
                     {slots.length > 0 && (

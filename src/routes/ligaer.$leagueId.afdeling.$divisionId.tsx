@@ -250,6 +250,20 @@ function DivisionDetail() {
         </div>
       </header>
 
+      {user && (
+        <ClientOnly fallback={null}>
+          <Suspense fallback={null}>
+            <DriversBriefing
+              divisionId={divisionId}
+              raceDate={(div?.race_date as string | null | undefined) ?? null}
+              briefingOpenMinutesBefore={
+                ((div?.settings as any)?.event_settings?.briefing_open_minutes_before as number | undefined) ?? 30
+              }
+            />
+          </Suspense>
+        </ClientOnly>
+      )}
+
       {Array.isArray((div?.settings as any)?.weather) && (div!.settings as any).weather.length > 0 && (
         <Card>
           <CardHeader><CardTitle className="text-base">Vejr</CardTitle></CardHeader>
@@ -327,19 +341,6 @@ function DivisionDetail() {
           </Button>
         )}
         {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
-        {user && (
-          <ClientOnly fallback={null}>
-            <Suspense fallback={null}>
-              <DriversBriefing
-                divisionId={divisionId}
-                raceDate={(div?.race_date as string | null | undefined) ?? null}
-                briefingOpenMinutesBefore={
-                  ((div?.settings as any)?.event_settings?.briefing_open_minutes_before as number | undefined) ?? 30
-                }
-              />
-            </Suspense>
-          </ClientOnly>
-        )}
       </div>
 
       <section className="space-y-4">
