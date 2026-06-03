@@ -548,6 +548,8 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
   const [open, setOpen] = useState(false);
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
+  const [teamId, setTeamId] = useState<string>("");
+  const { data: myTeams } = useMyTeams(user?.id);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -610,7 +612,8 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
       driver_category: selected.driver_category,
       car_number: carNumber,
       waitlist: goesToWaitlist,
-    });
+      team_id: teamId || null,
+    } as any);
     if (error) return toast.error(error.message);
     toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
     setOpen(false);
