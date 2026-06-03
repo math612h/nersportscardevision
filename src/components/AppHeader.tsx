@@ -61,16 +61,16 @@ export function AppHeader() {
           {user ? (
             <>
               <NotificationsBell />
-              <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil">
-                <UserCircle2 className="h-4 w-4" />
+              <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil" aria-label="Min profil">
+                <UserCircle2 className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">Profil</span>
               </Link>
               <div className="ml-1 hidden items-center gap-1 px-2 text-xs text-muted-foreground sm:flex">
-                <UserIcon className="h-3.5 w-3.5" />
+                <UserIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 <span className="max-w-[140px] truncate">{user.email}</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={signOut} title="Log ud">
-                <LogOut className="h-4 w-4" />
+              <Button variant="ghost" size="sm" onClick={signOut} title="Log ud" aria-label="Log ud">
+                <LogOut className="h-4 w-4" aria-hidden="true" />
               </Button>
             </>
           ) : (

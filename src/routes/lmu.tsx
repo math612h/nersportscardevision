@@ -5,8 +5,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
 
+const LMU_TITLE = "Le Mans Ultimate ligaer & løb — LMU-Hub";
+const LMU_DESC =
+  "Oversigt over alle Le Mans Ultimate-ligaer og off-season events i NER Sportscar Division. Tilmeld dig, se afdelinger, regler og stillinger.";
+const LMU_URL = "https://nersportscardevision.lovable.app/lmu";
+
 export const Route = createFileRoute("/lmu")({
   component: ParticipantDashboard,
+  head: () => ({
+    meta: [
+      { title: LMU_TITLE },
+      { name: "description", content: LMU_DESC },
+      { property: "og:title", content: LMU_TITLE },
+      { property: "og:description", content: LMU_DESC },
+      { property: "og:url", content: LMU_URL },
+    ],
+    links: [{ rel: "canonical", href: LMU_URL }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          name: "Le Mans Ultimate ligaer",
+          url: LMU_URL,
+          description: LMU_DESC,
+          isPartOf: {
+            "@type": "WebSite",
+            name: "LMU-Hub",
+            url: "https://nersportscardevision.lovable.app",
+          },
+        }),
+      },
+    ],
+  }),
 });
 
 function ParticipantDashboard() {
@@ -168,7 +200,7 @@ function LeagueCard({ l, offseason }: { l: any; offseason?: boolean }) {
       {/* Decorative gradient header */}
       <div className="relative h-20 overflow-hidden">
         {l.banner_url ? (
-          <img src={l.banner_url} alt="" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+          <img src={l.banner_url} alt={`Banner for ligaen ${l.name}`} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
         ) : (
           <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
         )}

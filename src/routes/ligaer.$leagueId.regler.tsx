@@ -6,10 +6,37 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 export const Route = createFileRoute("/ligaer/$leagueId/regler")({
   component: Rules,
+  loader: async ({ params }) => {
+    const { data } = await supabase
+      .from("leagues")
+      .select("name")
+      .eq("id", params.leagueId)
+      .maybeSingle();
+    return { leagueName: (data?.name as string | undefined) ?? null };
+  },
+  head: ({ params, loaderData }) => {
+    const name = loaderData?.leagueName ?? "ligaen";
+    const title = `Regelsæt for ${name} — LMU-Hub`;
+    const desc = `Det fulde regelsæt for ${name} i NER Sportscar Division: sportslige, tekniske og adfærdsmæssige regler.`;
+    const url = `https://nersportscardevision.lovable.app/ligaer/${params.leagueId}/regler`;
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "article" },
+      ],
+      links: [{ rel: "canonical", href: url }],
+    };
+  },
 });
 
 function Rules() {
   const { leagueId } = useParams({ from: "/ligaer/$leagueId/regler" });
+  const { leagueName } = Route.useLoaderData();
+
   const { data: rules } = useQuery({
     queryKey: ["rules", leagueId],
     queryFn: async () => {
@@ -33,9 +60,11 @@ function Rules() {
   return (
     <div className="space-y-4">
       <Link to="/ligaer/$leagueId" params={{ leagueId }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-3 w-3" /> Tilbage til liga
+        <ArrowLeft className="h-3 w-3" aria-hidden="true" /> Tilbage til liga
       </Link>
-      <h1 className="text-2xl font-bold">Regelsæt</h1>
+      <h1 className="text-2xl font-bold">
+        Regelsæt {leagueName ? `– ${leagueName}` : ""}
+      </h1>
       {rules?.length === 0 && <p className="text-muted-foreground">Ingen regler oprettet endnu.</p>}
       <div className="space-y-6">
         {Object.entries(grouped).map(([main, list]) => (

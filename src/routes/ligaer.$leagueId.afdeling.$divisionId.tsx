@@ -19,6 +19,69 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
   component: DivisionDetail,
+  loader: async ({ params }) => {
+    const [{ data: divData }, { data: leagueData }] = await Promise.all([
+      supabase.from("divisions").select("name, track, layout, race_date").eq("id", params.divisionId).maybeSingle(),
+      supabase.from("leagues").select("name").eq("id", params.leagueId).maybeSingle(),
+    ]);
+    return {
+      divName: (divData?.name as string | undefined) ?? null,
+      track: (divData?.track as string | undefined) ?? null,
+      layout: (divData?.layout as string | undefined) ?? null,
+      raceDate: (divData?.race_date as string | undefined) ?? null,
+      leagueName: (leagueData?.name as string | undefined) ?? null,
+    };
+  },
+  head: ({ params, loaderData }) => {
+    const div = loaderData?.divName ?? "Afdeling";
+    const league = loaderData?.leagueName ?? "";
+    const trackStr = loaderData?.track
+      ? `${loaderData.track}${loaderData.layout ? ` (${loaderData.layout})` : ""}`
+      : "";
+    const title = `${div}${league ? ` – ${league}` : ""} | LMU-Hub`;
+    const desc =
+      `Detaljer for afdelingen ${div}${league ? ` i ${league}` : ""}: ` +
+      `${trackStr ? `${trackStr}, ` : ""}deltagere, lobby info og protest-formular.`;
+    const url = `https://nersportscardevision.lovable.app/ligaer/${params.leagueId}/afdeling/${params.divisionId}`;
+    const scripts: Array<{ type: string; children: string }> = [];
+    if (loaderData?.divName) {
+      scripts.push({
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SportsEvent",
+          name: `${div}${league ? ` – ${league}` : ""}`,
+          ...(loaderData.raceDate ? { startDate: loaderData.raceDate } : {}),
+          ...(loaderData.track
+            ? {
+                location: {
+                  "@type": "Place",
+                  name: trackStr,
+                },
+              }
+            : {}),
+          url,
+          eventStatus: "https://schema.org/EventScheduled",
+          organizer: {
+            "@type": "Organization",
+            name: "NER Sportscar Division",
+          },
+        }),
+      });
+    }
+    return {
+      meta: [
+        { title },
+        { name: "description", content: desc.slice(0, 160) },
+        { property: "og:title", content: title },
+        { property: "og:description", content: desc.slice(0, 160) },
+        { property: "og:url", content: url },
+        { property: "og:type", content: "article" },
+      ],
+      links: [{ rel: "canonical", href: url }],
+      scripts,
+    };
+  },
 });
 
 function DivisionDetail() {

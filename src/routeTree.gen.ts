@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LmuRouteImport } from './routes/lmu'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
@@ -33,6 +34,11 @@ import { Route as AuthenticatedAdminAdminLigaerLeagueIdReglerRouteImport } from 
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.entries'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.afdelinger'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
@@ -188,6 +195,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/lmu': typeof LmuRoute
   '/login': typeof LoginRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRouteWithChildren
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/lmu'
     | '/login'
+    | '/sitemap.xml'
     | '/mine-protests'
     | '/profil'
     | '/ligaer/$leagueId'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/lmu'
     | '/login'
+    | '/sitemap.xml'
     | '/mine-protests'
     | '/profil'
     | '/profil/$userId'
@@ -282,6 +293,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/lmu'
     | '/login'
+    | '/sitemap.xml'
     | '/_authenticated/_admin'
     | '/_authenticated/mine-protests'
     | '/_authenticated/profil'
@@ -308,11 +320,19 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   LmuRoute: typeof LmuRoute
   LoginRoute: typeof LoginRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -587,18 +607,9 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   LmuRoute: LmuRoute,
   LoginRoute: LoginRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
