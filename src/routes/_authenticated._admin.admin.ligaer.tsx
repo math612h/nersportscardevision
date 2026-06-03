@@ -9,7 +9,6 @@ import {
   CAR_CLASSES,
   DRIVER_CATEGORIES,
   EVENT_AID_FIELDS,
-  EVENT_NUMERIC_FIELDS,
   ON_OFF_OPTIONS,
   type ClassConfig,
   type EventSettings,
