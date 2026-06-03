@@ -55,6 +55,39 @@ export const Route = createFileRoute("/ligaer/$leagueId/")({
   },
 });
 
+function RaceCountdown({ raceDate }: { raceDate: string }) {
+  const target = new Date(raceDate).getTime();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  if (Number.isNaN(target)) return null;
+  const diff = target - now;
+  if (diff <= 0) {
+    return (
+      <Badge className="gap-1 bg-primary text-primary-foreground animate-pulse">
+        <Timer className="h-3 w-3" /> LIVE
+      </Badge>
+    );
+  }
+  const s = Math.floor(diff / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const label =
+    d > 0 ? `${d}d ${h}t ${m}m`
+    : h > 0 ? `${h}t ${m}m ${String(sec).padStart(2, "0")}s`
+    : `${m}m ${String(sec).padStart(2, "0")}s`;
+  const soon = diff < 60 * 60 * 1000;
+  return (
+    <Badge variant={soon ? "default" : "outline"} className={`gap-1 ${soon ? "bg-primary text-primary-foreground" : ""}`}>
+      <Timer className="h-3 w-3" /> {label}
+    </Badge>
+  );
+}
+
 function LeagueDetail() {
   const { leagueId } = useParams({ from: "/ligaer/$leagueId/" });
 
