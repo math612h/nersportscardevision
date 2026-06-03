@@ -149,7 +149,7 @@ export type Database = {
           source: string
           track: string
           uploaded_by: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           best_lap_ms: number
@@ -164,7 +164,7 @@ export type Database = {
           source: string
           track: string
           uploaded_by: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           best_lap_ms?: number
@@ -179,7 +179,7 @@ export type Database = {
           source?: string
           track?: string
           uploaded_by?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }

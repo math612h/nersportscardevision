@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
-import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter } from "lucide-react";
+import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -63,7 +63,7 @@ type Row = {
 const ALL = "__all__";
 
 function LeaderboardPage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -158,10 +158,11 @@ function LeaderboardPage() {
         return;
       }
 
-      // Match every driver in the file against known profiles
+      // Match every driver in the file against known profiles — only registered users land on the leaderboard
       const profiles = (allProfiles ?? []) as Array<{ id: string; lmu_name: string | null }>;
-      const rows = parsed.drivers
-        .filter((d) => d.bestLapMs != null)
+      const allParsed = parsed.drivers.filter((d) => d.bestLapMs != null);
+      const skipped: string[] = [];
+      const rows = allParsed
         .map((d) => {
           const dn = d.name.trim().toLowerCase();
           let matchId: string | null = null;
@@ -174,6 +175,7 @@ function LeaderboardPage() {
               if (s >= 0.85 && s > bestScore) { bestScore = s; matchId = p.id; }
             }
           }
+          if (!matchId) { skipped.push(d.name); return null; }
           return {
             user_id: matchId,
             driver_name: d.name,
@@ -186,14 +188,19 @@ function LeaderboardPage() {
             uploaded_by: user.id,
             recorded_at: parsed.recordedAt,
           };
-        });
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null);
+
+      if (rows.length === 0) {
+        toast.warning("Ingen af kørerne i filen er registreret i app'en — intet uploadet.");
+        return;
+      }
 
       const { error } = await supabase.from("leaderboard_times").insert(rows);
       if (error) throw error;
 
-      const matched = rows.filter((r) => r.user_id).length;
       toast.success(
-        `${rows.length} tid${rows.length === 1 ? "" : "er"} uploadet fra ${parsed.track}${parsed.layout ? ` (${parsed.layout})` : ""} — ${matched} matchede kendte kørere.`,
+        `${rows.length} tid${rows.length === 1 ? "" : "er"} uploadet fra ${parsed.track}${parsed.layout ? ` (${parsed.layout})` : ""}${skipped.length ? ` — ${skipped.length} ukendt${skipped.length === 1 ? "" : "e"} kører${skipped.length === 1 ? "" : "e"} sprunget over.` : "."}`,
       );
       qc.invalidateQueries({ queryKey: ["leaderboard"] });
     } catch (e: any) {
@@ -201,6 +208,14 @@ function LeaderboardPage() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Slet denne tid fra leaderboardet?")) return;
+    const { error } = await supabase.from("leaderboard_times").delete().eq("id", id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Tid slettet.");
+    qc.invalidateQueries({ queryKey: ["leaderboard"] });
   };
 
   return (
@@ -324,6 +339,7 @@ function LeaderboardPage() {
                     <th className="px-3 py-2 hidden sm:table-cell">Layout</th>
                     <th className="px-3 py-2 text-right">Bedste omgang</th>
                     <th className="px-3 py-2 hidden md:table-cell text-center">Kilde</th>
+                    {isAdmin && <th className="px-3 py-2 w-10"></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -348,6 +364,20 @@ function LeaderboardPage() {
                           {r.source === "admin" ? "Officielt løb" : "Bruger"}
                         </Badge>
                       </td>
+                      {isAdmin && (
+                        <td className="px-3 py-2 text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleDelete(r.id)}
+                            title="Slet tid"
+                            aria-label="Slet tid"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

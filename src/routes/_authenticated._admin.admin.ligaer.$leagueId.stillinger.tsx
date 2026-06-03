@@ -294,19 +294,24 @@ function DivisionEditor({
       if (user) {
         const lbRows = parsed
           .filter((p) => p.bestLapMs != null && p.carClass)
-          .map((p) => ({
-            user_id: lmuToUser.get(p.name.trim().toLowerCase()) ?? (findBestNameMatch(p.name, profilesWithLmu, (x) => x.lmu_name, 0.85)?.match.id ?? null),
-            driver_name: p.name,
-            track: parsedRace.track,
-            layout: parsedRace.layout,
-            car_class: normalizeCarClass(p.carClass),
-            car_model: p.carModel,
-            best_lap_ms: p.bestLapMs!,
-            source: "admin" as const,
-            uploaded_by: user.id,
-            division_id: division.id,
-            recorded_at: parsedRace.recordedAt,
-          }));
+          .map((p) => {
+            const matchId = lmuToUser.get(p.name.trim().toLowerCase()) ?? (findBestNameMatch(p.name, profilesWithLmu, (x) => x.lmu_name, 0.85)?.match.id ?? null);
+            if (!matchId) return null;
+            return {
+              user_id: matchId,
+              driver_name: p.name,
+              track: parsedRace.track,
+              layout: parsedRace.layout,
+              car_class: normalizeCarClass(p.carClass),
+              car_model: p.carModel,
+              best_lap_ms: p.bestLapMs!,
+              source: "admin" as const,
+              uploaded_by: user.id,
+              division_id: division.id,
+              recorded_at: parsedRace.recordedAt,
+            };
+          })
+          .filter((r): r is NonNullable<typeof r> => r !== null);
         if (lbRows.length > 0) {
           const { error: lbErr } = await supabase.from("leaderboard_times").insert(lbRows);
           if (lbErr) toast.warning(`Leaderboard ikke opdateret: ${lbErr.message}`);
