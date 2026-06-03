@@ -23,6 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { PointsSystemEditor, type PointsSystem } from "@/components/PointsSystemEditor";
 
 async function uploadLeagueBanner(file: File): Promise<string> {
   if (file.size > 8 * 1024 * 1024) throw new Error("Billedet må højst være 8 MB.");
@@ -193,6 +194,7 @@ function AdminLeagues() {
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
+  const [pointsSystem, setPointsSystem] = useState<PointsSystem>({});
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -227,6 +229,7 @@ function AdminLeagues() {
       is_offseason: isOffseason,
       banner_url: bannerPath,
       event_settings: eventSettings as any,
+      points_system: pointsSystem as any,
       created_by: user?.id,
     });
     setSubmitting(false);
@@ -240,6 +243,7 @@ function AdminLeagues() {
     setConfigs([emptyConfig()]);
     setBannerFile(null);
     setEventSettings({});
+    setPointsSystem({});
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
@@ -275,6 +279,7 @@ function AdminLeagues() {
                 </label>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
+                <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
                 <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
               </form>
             </DialogContent>
@@ -351,6 +356,9 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [eventSettings, setEventSettings] = useState<EventSettings>(
     (league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings,
   );
+  const [pointsSystem, setPointsSystem] = useState<PointsSystem>(
+    (league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem,
+  );
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
@@ -361,6 +369,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setBannerPath(league.banner_url ?? null);
     setBannerFile(null);
     setEventSettings((league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings);
+    setPointsSystem((league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -387,6 +396,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         is_offseason: isOffseason,
         banner_url: newBanner,
         event_settings: eventSettings as any,
+        points_system: pointsSystem as any,
       })
       .eq("id", league.id);
     setSaving(false);
@@ -415,6 +425,7 @@ function EditLeagueDialog({ league }: { league: any }) {
           </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
+          <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
           <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
         </form>
       </DialogContent>

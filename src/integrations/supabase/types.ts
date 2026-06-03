@@ -244,6 +244,7 @@ export type Database = {
           id: string
           is_offseason: boolean
           name: string
+          points_system: Json
         }
         Insert: {
           banner_url?: string | null
@@ -257,6 +258,7 @@ export type Database = {
           id?: string
           is_offseason?: boolean
           name: string
+          points_system?: Json
         }
         Update: {
           banner_url?: string | null
@@ -270,6 +272,7 @@ export type Database = {
           id?: string
           is_offseason?: boolean
           name?: string
+          points_system?: Json
         }
         Relationships: []
       }
@@ -300,6 +303,36 @@ export type Database = {
           read_at?: string | null
           title?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      points_system_templates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          fastest_lap_points: number
+          id: string
+          name: string
+          points_per_position: number[]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fastest_lap_points?: number
+          id?: string
+          name: string
+          points_per_position?: number[]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fastest_lap_points?: number
+          id?: string
+          name?: string
+          points_per_position?: number[]
         }
         Relationships: []
       }

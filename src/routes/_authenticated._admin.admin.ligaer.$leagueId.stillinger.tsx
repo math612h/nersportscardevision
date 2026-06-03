@@ -17,8 +17,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagu
   component: AdminStandings,
 });
 
-const POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
-const pointsFor = (pos: number) => (pos >= 1 && pos <= POINTS_TABLE.length ? POINTS_TABLE[pos - 1] : 0);
+const DEFAULT_POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
 type DraftRow = {
   entry_id: string;
@@ -113,6 +112,11 @@ function AdminStandings() {
 
   const division = divisions?.find((d: any) => d.id === divisionId);
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
+  const leaguePoints: number[] = (() => {
+    const arr = (league as any)?.points_system?.points_per_position;
+    return Array.isArray(arr) && arr.length > 0 ? arr.map((n: any) => Number(n) || 0) : DEFAULT_POINTS_TABLE;
+  })();
+  const leagueFlPoints: number = Number((league as any)?.points_system?.fastest_lap_points ?? 1);
 
   return (
     <div className="space-y-4">
@@ -152,6 +156,8 @@ function AdminStandings() {
           allDivisions={divisions}
           entries={entries.filter((e) => e.car_number != null)}
           configs={configs}
+          pointsTable={leaguePoints}
+          leagueFlPoints={leagueFlPoints}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] });
             qc.invalidateQueries({ queryKey: ["league-results", leagueId] });
@@ -169,12 +175,16 @@ function DivisionEditor({
   allDivisions,
   entries,
   configs,
+  pointsTable,
+  leagueFlPoints,
   onSaved,
 }: {
   division: any;
   allDivisions: any[];
   entries: EntryRec[];
   configs: ClassConfig[];
+  pointsTable: number[];
+  leagueFlPoints: number;
   onSaved: () => void;
 }) {
   const existing: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
@@ -203,10 +213,11 @@ function DivisionEditor({
   });
 
   const [rows, setRows] = useState<DraftRow[]>(initialRows);
-  const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
+  const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? leagueFlPoints));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
 
   // Profiles for the entries on grid (for LMU name matching)
   const userIds = useMemo(() => Array.from(new Set(entries.map((e) => e.user_id))), [entries]);
@@ -614,7 +625,7 @@ function DivisionEditor({
           );
         })}
         <p className="text-xs text-muted-foreground">
-          Pointskala: {POINTS_TABLE.join(", ")}. Tidsstraf lægges til kørerens tid. DNS = Did Not Show: når en kører når DNS-grænsen pr. klasse, rykkes vedkommende bagerst på ventelisten, og første ventelistekører rykker op på griddet.
+          Pointskala: {pointsTable.join(", ")}. Tidsstraf lægges til kørerens tid. DNS = Did Not Show: når en kører når DNS-grænsen pr. klasse, rykkes vedkommende bagerst på ventelisten, og første ventelistekører rykker op på griddet.
         </p>
       </CardContent>
     </Card>
