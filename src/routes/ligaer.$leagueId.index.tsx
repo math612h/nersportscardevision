@@ -232,6 +232,21 @@ function useLeagueSignups(leagueId: string) {
 
 function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { data } = useLeagueSignups(leagueId);
+
+  const userIds = useMemo(() => Array.from(new Set((data ?? []).map((e) => e.user_id))), [data]);
+  const { data: approvedMap } = useQuery({
+    queryKey: ["signup-approvals", leagueId, userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const { data: profs, error } = await supabase
+        .from("profiles")
+        .select("id,approved")
+        .in("id", userIds);
+      if (error) throw error;
+      return new Set((profs ?? []).filter((p) => p.approved).map((p) => p.id));
+    },
+  });
+
   if (!data || data.length === 0) return null;
 
   const keys = configs.length
