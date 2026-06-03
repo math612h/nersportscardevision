@@ -279,6 +279,7 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
       fastest_lap_points: flPoints,
       temperature,
       completed,
+      event_settings: eventSettings,
     };
     // Ensure stale lobby fields aren't kept in settings
     delete (newSettings as any).lobby_code;
