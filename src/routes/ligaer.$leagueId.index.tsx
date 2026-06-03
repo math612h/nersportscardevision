@@ -524,7 +524,8 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     (s) => selected && s.car_class === selected.car_class && s.driver_category === selected.driver_category && !s.waitlist,
   ).length;
   const cap = selected?.max_drivers ?? null;
-  const goesToWaitlist = cap != null && gridCount >= cap;
+  const isApproved = !!profile?.approved;
+  const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
