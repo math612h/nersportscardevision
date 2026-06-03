@@ -223,12 +223,45 @@ function useLeagueSignups(leagueId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id")
         .eq("league_id", leagueId)
         .is("division_id", null)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data ?? [];
+    },
+  });
+}
+
+function useTeamLookup(teamIds: string[]) {
+  const key = Array.from(new Set(teamIds)).sort().join(",");
+  return useQuery({
+    queryKey: ["teams-by-id", key],
+    enabled: teamIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("teams")
+        .select("id,name")
+        .in("id", Array.from(new Set(teamIds)));
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const t of (data ?? []) as { id: string; name: string }[]) map[t.id] = t.name;
+      return map;
+    },
+  });
+}
+
+function useMyTeams(userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["my-teams", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("team_members")
+        .select("team_id, teams(id,name)")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return ((data ?? []) as any[]).map((r) => r.teams).filter(Boolean) as { id: string; name: string }[];
     },
   });
 }
