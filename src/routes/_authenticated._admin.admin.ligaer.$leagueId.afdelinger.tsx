@@ -237,6 +237,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
               })}
             </div>
           </div>
+          <SessionSettingsEditor value={eventSettings} onChange={setEventSettings} />
           <DialogFooter><Button type="submit">Opret</Button></DialogFooter>
         </form>
       </DialogContent>
