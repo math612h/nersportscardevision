@@ -1,8 +1,9 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Camera, Loader2, CheckCircle2 } from "lucide-react";
+import { Camera, Loader2, CheckCircle2, Shield } from "lucide-react";
+import { CreateTeamDialog } from "@/components/CreateTeamDialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
