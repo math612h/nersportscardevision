@@ -197,6 +197,172 @@ function ProfilePage() {
           </form>
         </CardContent>
       </Card>
+
+      <DeviceTokensCard />
     </div>
   );
 }
+
+// ---------- Device tokens for the desktop companion app ----------
+import { useMutation } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { Copy, KeyRound, Plus, Trash2, Monitor } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { createDeviceToken, deleteDeviceToken } from "@/lib/device-tokens.functions";
+
+type DeviceTokenRow = {
+  id: string;
+  name: string | null;
+  created_at: string;
+  last_used_at: string | null;
+};
+
+function DeviceTokensCard() {
+  const qc = useQueryClient();
+  const createFn = useServerFn(createDeviceToken);
+  const deleteFn = useServerFn(deleteDeviceToken);
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [generated, setGenerated] = useState<string | null>(null);
+
+  const { data: tokens = [], isLoading } = useQuery({
+    queryKey: ["device-tokens"],
+    queryFn: async (): Promise<DeviceTokenRow[]> => {
+      const { data, error } = await supabase
+        .from("device_tokens")
+        .select("id, name, created_at, last_used_at")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as DeviceTokenRow[];
+    },
+  });
+
+  const createMut = useMutation({
+    mutationFn: async () => createFn({ data: { name: name.trim() || "Desktop" } }),
+    onSuccess: (res) => {
+      setGenerated(res.token);
+      setName("");
+      qc.invalidateQueries({ queryKey: ["device-tokens"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: async (id: string) => deleteFn({ data: { id } }),
+    onSuccess: () => {
+      toast.success("Token slettet");
+      qc.invalidateQueries({ queryKey: ["device-tokens"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const copy = async (value: string) => {
+    try { await navigator.clipboard.writeText(value); toast.success("Kopieret"); }
+    catch { toast.error("Kunne ikke kopiere"); }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="flex items-center gap-2"><Monitor className="h-5 w-5" />Desktop companion</CardTitle>
+            <CardDescription>
+              Generér en adgangsnøgle som du paster ind i NER Companion-appen på din PC. Den overvåger din LMU
+              Results-mappe og uploader automatisk nye race-filer til leaderboardet.
+            </CardDescription>
+          </div>
+          <Button size="sm" onClick={() => { setGenerated(null); setOpen(true); }} className="gap-1">
+            <Plus className="h-4 w-4" /> Ny nøgle
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <p className="text-sm text-muted-foreground">Indlæser…</p>
+        ) : tokens.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Du har ingen adgangsnøgler endnu.</p>
+        ) : (
+          <ul className="space-y-2">
+            {tokens.map((t) => (
+              <li key={t.id} className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium flex items-center gap-2">
+                    <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />{t.name || "Uden navn"}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Oprettet {new Date(t.created_at).toLocaleDateString("da-DK")} ·{" "}
+                    {t.last_used_at ? `senest brugt ${new Date(t.last_used_at).toLocaleString("da-DK")}` : "aldrig brugt"}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => { if (confirm("Slet denne adgangsnøgle? Companion-appen skal pares igen.")) deleteMut.mutate(t.id); }}
+                  aria-label="Slet nøgle"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setGenerated(null); }}>
+        <DialogContent>
+          {!generated ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Ny adgangsnøgle</DialogTitle>
+                <DialogDescription>
+                  Giv nøglen et navn så du kan kende den igen (f.eks. navnet på din PC).
+                </DialogDescription>
+              </DialogHeader>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Min gaming-PC"
+                maxLength={80}
+              />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
+                <Button onClick={() => createMut.mutate()} disabled={createMut.isPending}>
+                  {createMut.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Generér
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Din nye adgangsnøgle</DialogTitle>
+                <DialogDescription>
+                  Kopiér nøglen nu — den vises kun denne ene gang. Paste den ind i companion-appen.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
+                <code className="flex-1 truncate text-xs font-mono">{generated}</code>
+                <Button size="icon" variant="ghost" onClick={() => copy(generated)} aria-label="Kopiér">
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+              <DialogFooter>
+                <Button onClick={() => setOpen(false)}>Færdig</Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
+
