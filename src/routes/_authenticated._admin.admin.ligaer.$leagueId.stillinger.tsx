@@ -156,6 +156,8 @@ function AdminStandings() {
           allDivisions={divisions}
           entries={entries.filter((e) => e.car_number != null)}
           configs={configs}
+          pointsTable={leaguePoints}
+          leagueFlPoints={leagueFlPoints}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] });
             qc.invalidateQueries({ queryKey: ["league-results", leagueId] });
