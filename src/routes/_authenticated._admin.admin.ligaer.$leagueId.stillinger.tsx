@@ -17,8 +17,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagu
   component: AdminStandings,
 });
 
-const POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
-const pointsFor = (pos: number) => (pos >= 1 && pos <= POINTS_TABLE.length ? POINTS_TABLE[pos - 1] : 0);
+const DEFAULT_POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
 type DraftRow = {
   entry_id: string;
