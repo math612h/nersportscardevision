@@ -476,17 +476,9 @@ function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConf
                         if (cell.dns) return <td key={d.id} className="py-1.5 px-1 text-center text-[10px] font-semibold text-destructive">DNS</td>;
                         return (
                           <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
-                            <div className="flex flex-col items-center leading-tight">
-                              <div className="inline-flex items-center gap-0.5">
-                                <span>{cell.points}</span>
-                                {cell.fl && <Zap className="h-3 w-3 text-primary" aria-label="Fastest lap" />}
-                              </div>
-                              {cell.penalty > 0 && (
-                                <span className="text-[10px] text-destructive" title={`+${cell.penalty}s tidsstraf`}>+{cell.penalty}s</span>
-                              )}
-                              {cell.pointPenalty > 0 && (
-                                <span className="text-[10px] text-destructive" title={`-${cell.pointPenalty} pointstraf`}>-{cell.pointPenalty}p</span>
-                              )}
+                            <div className="inline-flex items-center gap-0.5">
+                              <span>{cell.points}</span>
+                              {cell.fl && <Zap className="h-3 w-3 text-primary" aria-label="Fastest lap" />}
                             </div>
                           </td>
                         );
