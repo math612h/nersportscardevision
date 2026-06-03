@@ -175,12 +175,16 @@ function DivisionEditor({
   allDivisions,
   entries,
   configs,
+  pointsTable,
+  leagueFlPoints,
   onSaved,
 }: {
   division: any;
   allDivisions: any[];
   entries: EntryRec[];
   configs: ClassConfig[];
+  pointsTable: number[];
+  leagueFlPoints: number;
   onSaved: () => void;
 }) {
   const existing: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
