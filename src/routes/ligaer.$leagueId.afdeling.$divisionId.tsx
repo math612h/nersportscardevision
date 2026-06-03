@@ -268,6 +268,8 @@ function DivisionDetail() {
         </Card>
       )}
 
+      <EventSettingsCard settings={((div?.settings as any)?.event_settings ?? {}) as EventSettings} />
+
       {(() => {
         const hasLobby = !!(lobby?.lobby_code || lobby?.lobby_password);
         if (!user || !mySignup) return null;
