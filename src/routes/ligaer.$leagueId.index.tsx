@@ -137,6 +137,10 @@ function LeagueDetail() {
 
       {league && <SignupsList leagueId={leagueId} configs={configs} />}
 
+      <EventSettingsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
+
+
+
       <section id="kalender" className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
           <Calendar className="h-4 w-4" />
