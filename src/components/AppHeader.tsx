@@ -1,11 +1,9 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
 import { Flag, Gauge, LayoutGrid, LogOut, Shield, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { NotificationsBell } from "@/components/NotificationsBell";
+
 
 export function AppHeader() {
   const { user, isAdmin, signOut, loading } = useAuth();
