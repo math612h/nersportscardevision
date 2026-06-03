@@ -94,7 +94,8 @@ export const setProfileApproval = createServerFn({ method: "POST" })
 
     if (!data.approved && myEntries) {
       // Demote any grid entries to waitlist; promote next approved waitlister
-      for (const entry of myEntries.filter((e) => !e.waitlist)) {
+      for (const entry of myEntries.filter((e) => !e.waitlist && e.league_id)) {
+        const leagueId = entry.league_id as string;
         await supabaseAdmin.from("entries").update({ waitlist: true }).eq("id", entry.id);
         demoted.push(entry.driver_name);
 
