@@ -595,7 +595,13 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_profile_private: {
+        Args: { _user_id: string }
+        Returns: {
+          age: number
+          discord_username: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "racer"
