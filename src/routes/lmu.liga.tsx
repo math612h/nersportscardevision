@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users } from "lucide-react";
+import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
@@ -10,9 +10,9 @@ import type { ClassConfig } from "@/lib/tracks";
 const LMU_TITLE = "Le Mans Ultimate ligaer & løb — LMU-Hub";
 const LMU_DESC =
   "Oversigt over alle Le Mans Ultimate-ligaer og off-season events i NER Sportscar Division. Tilmeld dig, se afdelinger, regler og stillinger.";
-const LMU_URL = "https://nersportscardevision.lovable.app/lmu";
+const LMU_URL = "https://nersportscardevision.lovable.app/lmu/liga";
 
-export const Route = createFileRoute("/lmu")({
+export const Route = createFileRoute("/lmu/liga")({
   component: ParticipantDashboard,
   head: () => ({
     meta: [
@@ -23,23 +23,6 @@ export const Route = createFileRoute("/lmu")({
       { property: "og:url", content: LMU_URL },
     ],
     links: [{ rel: "canonical", href: LMU_URL }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "CollectionPage",
-          name: "Le Mans Ultimate ligaer",
-          url: LMU_URL,
-          description: LMU_DESC,
-          isPartOf: {
-            "@type": "WebSite",
-            name: "LMU-Hub",
-            url: "https://nersportscardevision.lovable.app",
-          },
-        }),
-      },
-    ],
   }),
 });
 
@@ -105,8 +88,12 @@ function ParticipantDashboard() {
 
   return (
     <div className="space-y-10">
+      <Link to="/lmu" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
+        <ArrowLeft className="h-3 w-3" /> LMU hub
+      </Link>
+
       <header className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Le Mans Ultimate</p>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Liga Hub</p>
         <h1 className="text-2xl font-bold tracking-tight">Ligaer & løb</h1>
         <p className="text-sm text-muted-foreground">Vælg en liga for at se afdelinger, regler og tilmelde dig.</p>
       </header>
@@ -184,7 +171,6 @@ function LeaderboardTeaser() {
     },
   });
 
-  // Take best lap per (class + track + layout) and show the top 5 overall
   const best = (() => {
     const map = new Map<string, TeaserRow>();
     for (const r of rows ?? []) {
