@@ -325,6 +325,15 @@ function DivisionDetail() {
           </Button>
         )}
         {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
+        {user && (
+          <DriversBriefing
+            divisionId={divisionId}
+            raceDate={(div?.race_date as string | null | undefined) ?? null}
+            briefingOpenMinutesBefore={
+              ((div?.settings as any)?.event_settings?.briefing_open_minutes_before as number | undefined) ?? 30
+            }
+          />
+        )}
       </div>
 
       <section className="space-y-4">
