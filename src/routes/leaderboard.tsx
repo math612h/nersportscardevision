@@ -120,7 +120,15 @@ function LeaderboardPage() {
       const cur = bestByDriver.get(key);
       if (!cur || r.best_lap_ms < cur.best_lap_ms) bestByDriver.set(key, r);
     }
-    return Array.from(bestByDriver.values()).sort((a, b) => a.best_lap_ms - b.best_lap_ms);
+    // Cap at top 15 per (car_class + track + layout) — slowest tider falder af listen
+    const sorted = Array.from(bestByDriver.values()).sort((a, b) => a.best_lap_ms - b.best_lap_ms);
+    const countByGroup = new Map<string, number>();
+    return sorted.filter((r) => {
+      const g = `${r.car_class}|${r.track}|${r.layout ?? ""}`;
+      const n = (countByGroup.get(g) ?? 0) + 1;
+      countByGroup.set(g, n);
+      return n <= 15;
+    });
   }, [rows, carClass, track, layout]);
 
   const handleFile = async (file: File) => {
