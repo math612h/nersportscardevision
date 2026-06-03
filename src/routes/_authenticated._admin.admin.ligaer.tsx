@@ -279,6 +279,7 @@ function AdminLeagues() {
                 </label>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
+                <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
                 <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
               </form>
             </DialogContent>
