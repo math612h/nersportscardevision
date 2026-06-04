@@ -111,7 +111,6 @@ class LmuWatcher {
         if (res && !res.error) this.seen.add(key);
       } catch (err) {
         console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
-        this.seen.add(key);
       }
     }
   }
@@ -133,7 +132,6 @@ class LmuWatcher {
           if (res && !res.error) this.seen.add(f.name);
         } catch (err) {
           console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
-          this.seen.add(f.name);
         }
       }
       return { uploaded, total: files.length };
