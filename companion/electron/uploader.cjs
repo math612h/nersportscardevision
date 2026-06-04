@@ -1,7 +1,8 @@
 // Uploads parsed LMU race results to the Supabase leaderboard.
 // Mirrors the logic in src/routes/leaderboard.tsx so the same rules apply.
+const fs = require("fs");
 const { createClient } = require("@supabase/supabase-js");
-const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } = require("./config.cjs");
+const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, APP_URL } = require("./config.cjs");
 const { normalizeCarClass, nameSimilarity } = require("./lmu-parser.cjs");
 
 function makeClient(session) {
