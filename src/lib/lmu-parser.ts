@@ -75,7 +75,8 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
   }
 
-  const driverEls = Array.from(raceResults.querySelectorAll("Race Driver"));
+  const sessionNode = raceResults.querySelector(":scope > Race, :scope > Qualify, :scope > Practice, :scope > TestDay, :scope > WarmUp");
+  const driverEls = sessionNode ? Array.from(sessionNode.querySelectorAll(":scope > Driver")) : [];
   const drivers: ParsedDriver[] = driverEls.map((el) => {
     const get = (t: string) => el.querySelector(`:scope > ${t}`)?.textContent?.trim() ?? "";
     const finishStatus = get("FinishStatus");
