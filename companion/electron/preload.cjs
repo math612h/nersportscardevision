@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld("companion", {
   signIn: (email, password) => ipcRenderer.invoke("auth:signIn", { email, password }),
   sendOtp: (email) => ipcRenderer.invoke("auth:sendOtp", { email }),
   verifyOtp: (email, token) => ipcRenderer.invoke("auth:verifyOtp", { email, token }),
+  signInWithToken: (token) => ipcRenderer.invoke("auth:signInWithToken", { token }),
   signOut: () => ipcRenderer.invoke("auth:signOut"),
 
   // LMU

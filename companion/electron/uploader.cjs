@@ -138,4 +138,31 @@ async function uploadParsedResults({ session, parsed }) {
   return { uploaded: rows.length, skipped: parsed.drivers.length - rows.length };
 }
 
+// ---------- Device-token (engangsnøgle) flow ----------
+async function verifyDeviceToken(token) {
+  const res = await fetch(`${APP_URL}/api/public/companion/verify-token`, {
+    method: "POST",
+    headers: { "x-device-token": token, "Content-Type": "application/json" },
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `Login fejlede (HTTP ${res.status})`);
+  return body; // { user, token_name }
+}
+
+async function uploadParsedResultsViaToken({ token, filePath }) {
+  const xml = fs.readFileSync(filePath, "utf8");
+  const res = await fetch(`${APP_URL}/api/public/leaderboard-upload`, {
+    method: "POST",
+    headers: { "x-device-token": token, "Content-Type": "application/xml" },
+    body: xml,
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.error || `Upload fejlede (HTTP ${res.status})`);
+  return { uploaded: body.inserted ?? 0, skipped: body.skipped ?? 0, note: body.note };
+}
+
+module.exports.verifyDeviceToken = verifyDeviceToken;
+module.exports.uploadParsedResultsViaToken = uploadParsedResultsViaToken;
+
+
 module.exports = { makeClient, signInWithPassword, sendEmailOtp, verifyEmailOtp, restoreSession, getUserProfile, uploadParsedResults };
