@@ -10,6 +10,8 @@ declare global {
       signInWithToken: (token: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
       signOut: () => Promise<{ ok: boolean }>;
       scanNow: () => Promise<{ uploaded: number; error?: string }>;
+      pickFolder: () => Promise<{ ok: boolean; folder?: string }>;
+      clearFolder: () => Promise<{ ok: boolean }>;
       onStatusUpdate: (cb: (s: Status) => void) => () => void;
     };
   }
