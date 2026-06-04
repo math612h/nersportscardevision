@@ -316,8 +316,27 @@ ipcMain.handle("auth:signOut", async () => {
   return { ok: true };
 });
 
-ipcMain.handle("lmu:status", () => ({ ...lmuStatus, uploadCount }));
+ipcMain.handle("lmu:status", () => ({ ...lmuStatus, uploadCount, customFolder: authStore.loadCustomFolder() }));
 ipcMain.handle("lmu:scanNow", () => triggerScan());
+ipcMain.handle("lmu:pickFolder", async () => {
+  const res = await dialog.showOpenDialog(win, {
+    title: "Vælg LMU Results-mappe",
+    properties: ["openDirectory"],
+  });
+  if (res.canceled || !res.filePaths[0]) return { ok: false };
+  const folder = res.filePaths[0];
+  authStore.saveCustomFolder(folder);
+  if (watcher) { watcher.setCustomFolder(folder); await watcher.tick(); }
+  else if (session || deviceToken) startWatcher();
+  updateStatus();
+  return { ok: true, folder };
+});
+ipcMain.handle("lmu:clearFolder", async () => {
+  authStore.saveCustomFolder(null);
+  if (watcher) { watcher.setCustomFolder(null); await watcher.tick(); }
+  updateStatus();
+  return { ok: true };
+});
 
 // ---- App lifecycle ---------------------------------------------------------
 app.on("second-instance", () => showWindow());
