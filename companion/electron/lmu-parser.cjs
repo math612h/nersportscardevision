@@ -29,6 +29,27 @@ function parseLayoutFromTrackData(trackData) {
   return layout || null;
 }
 
+function cleanTrackName(raw) {
+  return String(raw || "")
+    .replace(/\.mas$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b(v|version)?\d+(\.\d+)+\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseTrackFromTrackData(trackData) {
+  if (!trackData) return "";
+  const parts = String(trackData).replace(/\\/g, "/").split("/").filter(Boolean);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    if (/^layout/i.test(part) || /^\d+(\.\d+)*$/.test(part)) continue;
+    const cleaned = cleanTrackName(part);
+    if (cleaned) return cleaned;
+  }
+  return "";
+}
+
 const parser = new XMLParser({
   ignoreAttributes: true,
   trimValues: true,
@@ -54,10 +75,7 @@ function parseLmuRaceFile(xml) {
   const rr = findRaceResultsNode(doc);
   if (!rr) throw new Error("Not an LMU race result file (missing RaceResults)");
 
-  const track =
-    (rr.TrackVenue && String(rr.TrackVenue).trim()) ||
-    (rr.TrackCourse && String(rr.TrackCourse).trim()) ||
-    "";
+  const track = cleanTrackName(rr.TrackVenue || rr.TrackCourse || rr.TrackEvent || rr.TrackName || rr.CircuitName) || parseTrackFromTrackData(rr.TrackData);
   if (!track) throw new Error("Missing TrackVenue");
 
   const layout = parseLayoutFromTrackData(rr.TrackData);
@@ -81,6 +99,12 @@ function parseLmuRaceFile(xml) {
   const drivers = driverEls.map((el) => {
     const finishStatus = String(el.FinishStatus || "");
     const blt = parseFloat(el.BestLapTime);
+    let bestLapMs = Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null;
+    if (bestLapMs == null && el.Lap) {
+      const laps = Array.isArray(el.Lap) ? el.Lap : [el.Lap];
+      const lapSeconds = laps.map((lap) => parseFloat(typeof lap === "object" ? lap["#text"] : lap)).filter((n) => Number.isFinite(n) && n > 0);
+      if (lapSeconds.length) bestLapMs = Math.round(Math.min(...lapSeconds) * 1000);
+    }
     const fin = parseFloat(el.FinishTime);
     const carClass = String(el.CarClass || "");
     const manufacturer = String(el.Manufacturer || "");
@@ -98,7 +122,7 @@ function parseLmuRaceFile(xml) {
       carClass,
       carClassNorm: normalizeCarClass(carClass),
       carModel: carModel ? carModel.trim() || null : null,
-      bestLapMs: Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null,
+      bestLapMs,
       finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
       finished: finishStatus.toLowerCase().startsWith("finished"),
     };
