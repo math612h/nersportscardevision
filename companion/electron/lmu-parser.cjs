@@ -80,10 +80,10 @@ function parseLmuRaceFile(xml) {
 
   const layout = parseLayoutFromTrackData(rr.TrackData);
 
-  // Find Race node — may be a direct child or nested
-  let race = rr.Race;
+  // Find session node — Race, Qualify, or Practice (in order of preference)
+  let race = rr.Race || rr.Qualify || rr.Practice || rr.TestDay || rr.WarmUp;
   if (Array.isArray(race)) race = race[race.length - 1];
-  if (!race) throw new Error("Missing Race node");
+  if (!race) throw new Error("Missing session node (Race/Qualify/Practice)");
 
   let recordedAt = null;
   const ts = race.DateTime || rr.DateTime;
