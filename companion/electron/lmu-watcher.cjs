@@ -6,13 +6,30 @@ const { parseLmuRaceFile } = require("./lmu-parser.cjs");
 
 function candidateResultsFolders() {
   const home = os.homedir();
-  return [
+  const list = [
     path.join(home, "Documents", "My Games", "LeMansUltimate", "UserData", "Log", "Results"),
     path.join(home, "Documents", "Le Mans Ultimate", "UserData", "Log", "Results"),
   ];
+  // Common Steam install locations
+  const steamRoots = [
+    "C:/Program Files (x86)/Steam",
+    "C:/Program Files/Steam",
+    "D:/Steam",
+    "D:/SteamLibrary",
+    "E:/Steam",
+    "E:/SteamLibrary",
+    "C:/SteamLibrary",
+  ];
+  for (const r of steamRoots) {
+    list.push(path.join(r, "steamapps", "common", "Le Mans Ultimate", "UserData", "Log", "Results"));
+  }
+  return list;
 }
 
-function findResultsFolder() {
+function findResultsFolder(customFolder) {
+  if (customFolder) {
+    try { if (fs.statSync(customFolder).isDirectory()) return customFolder; } catch {}
+  }
   for (const p of candidateResultsFolders()) {
     try {
       if (fs.statSync(p).isDirectory()) return p;
