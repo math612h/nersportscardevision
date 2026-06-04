@@ -4,6 +4,10 @@
   "description": "NER Sportscar Companion — uploader automatisk dine LMU omgangstider til leaderboardet",
   "main": "electron/main.cjs",
   "author": "NER Sportscar Division",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/math612h/nersportscardevision.git"
+  },
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
