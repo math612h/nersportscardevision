@@ -17,6 +17,7 @@ let win = null;
 let tray = null;
 let watcher = null;
 let session = null;
+let deviceToken = null; // Set when user logs in with engangsnøgle (mutually exclusive med session)
 let userInfo = null; // { display_name, lmu_name, approved }
 let lmuStatus = { lmuFound: false, folder: null };
 let uploadCount = 0;
@@ -86,11 +87,14 @@ function buildTrayMenu() {
     { type: "separator" },
     {
       label: "Log ud",
-      enabled: !!session,
+      enabled: !!session || !!deviceToken,
       click: async () => {
         authStore.clearSession();
+        authStore.clearDeviceToken();
         session = null;
+        deviceToken = null;
         userInfo = null;
+        if (watcher) { watcher.stop(); watcher = null; }
         updateStatus();
         showWindow();
       },
