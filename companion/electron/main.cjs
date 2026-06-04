@@ -219,6 +219,35 @@ ipcMain.handle("auth:signIn", async (_e, { email, password }) => {
   }
 });
 
+ipcMain.handle("auth:sendOtp", async (_e, { email }) => {
+  try {
+    await uploader.sendEmailOtp(email);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
+ipcMain.handle("auth:verifyOtp", async (_e, { email, token }) => {
+  try {
+    session = await uploader.verifyEmailOtp(email, token);
+    authStore.saveSession(session);
+    const { user, profile } = await uploader.getUserProfile(session);
+    userInfo = {
+      id: user.id,
+      email: user.email,
+      display_name: profile?.display_name || user.email,
+      lmu_name: profile?.lmu_name || null,
+      approved: !!profile?.approved,
+    };
+    startWatcher();
+    updateStatus();
+    return { ok: true, user: userInfo };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
 ipcMain.handle("auth:signOut", async () => {
   authStore.clearSession();
   session = null;
