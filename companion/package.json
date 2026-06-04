@@ -44,14 +44,6 @@
       "electron/**/*",
       "package.json"
     ],
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "math612h",
-        "repo": "nersportscardevision",
-        "channel": "latest"
-      }
-    ],
     "win": {
       "target": [
         {
