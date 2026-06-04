@@ -118,7 +118,7 @@ function broadcast(channel, payload) {
 function updateStatus() {
   refreshTray();
   broadcast("status:update", {
-    signedIn: !!session,
+    signedIn: !!session || !!deviceToken,
     user: userInfo,
     lmu: lmuStatus,
     uploadCount,
@@ -127,7 +127,7 @@ function updateStatus() {
 }
 
 async function triggerScan() {
-  if (!session || !watcher) return { uploaded: 0 };
+  if ((!session && !deviceToken) || !watcher) return { uploaded: 0 };
   try {
     const res = await watcher.scanAll();
     return res;
@@ -150,9 +150,11 @@ function startWatcher() {
       lmuStatus = s;
       if (changed) updateStatus();
     },
-    onNewResults: async ({ fileName, parsed }) => {
+    onNewResults: async ({ filePath, fileName, parsed }) => {
       try {
-        const res = await uploader.uploadParsedResults({ session, parsed });
+        const res = deviceToken
+          ? await uploader.uploadParsedResultsViaToken({ token: deviceToken, filePath })
+          : await uploader.uploadParsedResults({ session, parsed });
         if (res.uploaded > 0) {
           uploadCount += res.uploaded;
           updateStatus();
@@ -171,8 +173,31 @@ function startWatcher() {
 }
 
 async function restoreOnStartup() {
+  // 1) Prøv device-token først (foretrukket flow)
+  const savedToken = authStore.loadDeviceToken();
+  if (savedToken) {
+    try {
+      const { user } = await uploader.verifyDeviceToken(savedToken);
+      deviceToken = savedToken;
+      userInfo = {
+        id: user.id,
+        email: null,
+        display_name: user.display_name || "Bruger",
+        lmu_name: user.lmu_name || null,
+        approved: !!user.approved,
+      };
+      startWatcher();
+      updateStatus();
+      return;
+    } catch (err) {
+      console.error("[restore-token] failed:", err);
+      authStore.clearDeviceToken();
+    }
+  }
+
+  // 2) Fallback: gammel Supabase-session
   const saved = authStore.loadSession();
-  if (!saved) return;
+  if (!saved) { updateStatus(); return; }
   try {
     session = await uploader.restoreSession(saved);
     authStore.saveSession(session);
