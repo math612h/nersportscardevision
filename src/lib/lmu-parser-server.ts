@@ -76,7 +76,9 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
     let bestLapMs = Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null;
     if (bestLapMs == null && d.Lap) {
       const laps = Array.isArray(d.Lap) ? d.Lap : [d.Lap];
-      const lapSeconds = laps.map((lap) => parseFloat(String(typeof lap === "object" ? lap["#text"] : lap))).filter((n) => Number.isFinite(n) && n > 0);
+      const lapSeconds = laps
+        .map((lap: unknown) => parseFloat(String(typeof lap === "object" && lap !== null ? (lap as Record<string, unknown>)["#text"] : lap)))
+        .filter((n: number) => Number.isFinite(n) && n > 0);
       if (lapSeconds.length) bestLapMs = Math.round(Math.min(...lapSeconds) * 1000);
     }
     const fin = parseFloat(String(d.FinishTime ?? ""));
