@@ -221,7 +221,7 @@ async function restoreOnStartup() {
 
 // ---- IPC handlers ----------------------------------------------------------
 ipcMain.handle("auth:status", () => ({
-  signedIn: !!session,
+  signedIn: !!session || !!deviceToken,
   user: userInfo,
   lmu: lmuStatus,
   uploadCount,
@@ -277,9 +277,37 @@ ipcMain.handle("auth:verifyOtp", async (_e, { email, token }) => {
   }
 });
 
+ipcMain.handle("auth:signInWithToken", async (_e, { token }) => {
+  try {
+    const cleaned = String(token || "").trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(cleaned)) {
+      return { ok: false, error: "Ugyldigt nøgleformat. Generér en ny på din profil." };
+    }
+    const { user } = await uploader.verifyDeviceToken(cleaned);
+    deviceToken = cleaned;
+    session = null;
+    authStore.clearSession();
+    authStore.saveDeviceToken(cleaned);
+    userInfo = {
+      id: user.id,
+      email: null,
+      display_name: user.display_name || "Bruger",
+      lmu_name: user.lmu_name || null,
+      approved: !!user.approved,
+    };
+    startWatcher();
+    updateStatus();
+    return { ok: true, user: userInfo };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
 ipcMain.handle("auth:signOut", async () => {
   authStore.clearSession();
+  authStore.clearDeviceToken();
   session = null;
+  deviceToken = null;
   userInfo = null;
   if (watcher) { watcher.stop(); watcher = null; }
   updateStatus();
