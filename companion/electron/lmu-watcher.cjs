@@ -60,11 +60,12 @@ function parseFile(filePath) {
 }
 
 class LmuWatcher {
-  constructor({ seenFiles, onNewResults, onStatus, onScanComplete, pollMs, customFolder }) {
+  constructor({ seenFiles, onNewResults, onStatus, onScanComplete, onSeenChanged, pollMs, customFolder }) {
     this.seen = seenFiles;
     this.onNewResults = onNewResults;
     this.onStatus = onStatus;
     this.onScanComplete = onScanComplete;
+    this.onSeenChanged = onSeenChanged;
     this.pollMs = pollMs || 10_000;
     this.timer = null;
     this.folder = null;
@@ -109,7 +110,7 @@ class LmuWatcher {
       try {
         const parsed = parseFile(f.path);
         const res = await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
-        if (res && !res.error) this.seen.add(key);
+        if (res && !res.error) { this.seen.add(key); if (this.onSeenChanged) this.onSeenChanged(this.seen); }
       } catch (err) {
         console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
       }
@@ -137,7 +138,7 @@ class LmuWatcher {
           if (res && res.uploaded) uploaded += res.uploaded;
           if (res && res.skipped) skipped += res.skipped;
           if (res && (res.note || res.reason)) lastNote = res.note || res.reason;
-          if (res && !res.error) this.seen.add(f.name);
+          if (res && !res.error) { this.seen.add(f.name); if (this.onSeenChanged) this.onSeenChanged(this.seen); }
         } catch (err) {
           console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
           errors += 1;
