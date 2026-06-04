@@ -161,15 +161,17 @@ function startWatcher() {
     seenFiles: seen,
     pollMs: POLL_INTERVAL_MS,
     customFolder,
+    initialFullScanDone: authStore.loadFullScanDone(),
     onStatus: (s) => {
       const changed = s.lmuFound !== lmuStatus.lmuFound || s.folder !== lmuStatus.folder;
       lmuStatus = s;
       if (changed) updateStatus();
     },
     onSeenChanged: (set) => authStore.saveSeenFiles(set),
-    onScanComplete: (res) => {
+    onScanComplete: (res, opts = {}) => {
       lastScan = res;
       if (res.errors === 0) lastError = null;
+      if (opts.markFullScan && res.errors === 0) authStore.saveFullScanDone(true);
       updateStatus();
     },
     onNewResults: async ({ filePath, fileName, parsed }) => {
@@ -350,6 +352,7 @@ ipcMain.handle("lmu:pickFolder", async () => {
   if (res.canceled || !res.filePaths[0]) return { ok: false };
   const folder = res.filePaths[0];
   authStore.saveCustomFolder(folder);
+  authStore.saveFullScanDone(false);
   if (watcher) { watcher.setCustomFolder(folder); await watcher.tick(); }
   else if (session || deviceToken) startWatcher();
   updateStatus();
@@ -357,6 +360,7 @@ ipcMain.handle("lmu:pickFolder", async () => {
 });
 ipcMain.handle("lmu:clearFolder", async () => {
   authStore.saveCustomFolder(null);
+  authStore.saveFullScanDone(false);
   if (watcher) { watcher.setCustomFolder(null); await watcher.tick(); }
   updateStatus();
   return { ok: true };
