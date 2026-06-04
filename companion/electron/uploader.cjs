@@ -161,8 +161,14 @@ async function uploadParsedResultsViaToken({ token, filePath }) {
   return { uploaded: body.inserted ?? 0, skipped: body.skipped ?? 0, note: body.note };
 }
 
-module.exports.verifyDeviceToken = verifyDeviceToken;
-module.exports.uploadParsedResultsViaToken = uploadParsedResultsViaToken;
-
-
-module.exports = { makeClient, signInWithPassword, sendEmailOtp, verifyEmailOtp, restoreSession, getUserProfile, uploadParsedResults };
+module.exports = {
+  makeClient,
+  signInWithPassword,
+  sendEmailOtp,
+  verifyEmailOtp,
+  restoreSession,
+  getUserProfile,
+  uploadParsedResults,
+  verifyDeviceToken,
+  uploadParsedResultsViaToken,
+};
