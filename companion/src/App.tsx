@@ -5,6 +5,8 @@ declare global {
     companion: {
       getStatus: () => Promise<Status>;
       signIn: (email: string, password: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
+      sendOtp: (email: string) => Promise<{ ok: boolean; error?: string }>;
+      verifyOtp: (email: string, token: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
       signOut: () => Promise<{ ok: boolean }>;
       scanNow: () => Promise<{ uploaded: number; error?: string }>;
       onStatusUpdate: (cb: (s: Status) => void) => () => void;
