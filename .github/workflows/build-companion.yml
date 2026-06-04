@@ -32,8 +32,6 @@ jobs:
 
       - name: Build Windows installer (NSIS)
         run: npx electron-builder --win nsis --publish never
-        env:
-          GH_TOKEN: ""
 
       - name: Upload installer as workflow artifact
         uses: actions/upload-artifact@v4
