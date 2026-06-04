@@ -123,6 +123,7 @@ function updateStatus() {
     lmu: lmuStatus,
     uploadCount,
     lastError,
+    customFolder: authStore.loadCustomFolder(),
   });
 }
 
