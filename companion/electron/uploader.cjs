@@ -32,6 +32,23 @@ async function signInWithPassword(email, password) {
   return data.session;
 }
 
+async function sendEmailOtp(email) {
+  const client = makeClient(null);
+  const { error } = await client.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false },
+  });
+  if (error) throw error;
+  return true;
+}
+
+async function verifyEmailOtp(email, token) {
+  const client = makeClient(null);
+  const { data, error } = await client.auth.verifyOtp({ email, token, type: "email" });
+  if (error) throw error;
+  return data.session;
+}
+
 async function restoreSession(session) {
   const client = makeClient(null);
   const { data, error } = await client.auth.setSession({
@@ -120,4 +137,4 @@ async function uploadParsedResults({ session, parsed }) {
   return { uploaded: rows.length, skipped: parsed.drivers.length - rows.length };
 }
 
-module.exports = { makeClient, signInWithPassword, restoreSession, getUserProfile, uploadParsedResults };
+module.exports = { makeClient, signInWithPassword, sendEmailOtp, verifyEmailOtp, restoreSession, getUserProfile, uploadParsedResults };
