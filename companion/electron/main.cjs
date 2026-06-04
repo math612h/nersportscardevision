@@ -22,6 +22,8 @@ let userInfo = null; // { display_name, lmu_name, approved }
 let lmuStatus = { lmuFound: false, folder: null };
 let uploadCount = 0;
 let lastError = null;
+let lastScan = null;
+let scanning = false;
 
 // ---- Auto-start at Windows login (silent, in background) -------------------
 app.setLoginItemSettings({
@@ -123,6 +125,8 @@ function updateStatus() {
     lmu: lmuStatus,
     uploadCount,
     lastError,
+    lastScan,
+    scanning,
     customFolder: authStore.loadCustomFolder(),
   });
 }
@@ -130,10 +134,17 @@ function updateStatus() {
 async function triggerScan() {
   if ((!session && !deviceToken) || !watcher) return { uploaded: 0 };
   try {
+    scanning = true;
+    updateStatus();
     const res = await watcher.scanAll();
+    lastScan = res;
+    if (!res.error) lastError = null;
+    scanning = false;
+    updateStatus();
     return res;
   } catch (err) {
     lastError = err.message;
+    scanning = false;
     updateStatus();
     return { uploaded: 0, error: err.message };
   }
@@ -153,6 +164,12 @@ function startWatcher() {
       lmuStatus = s;
       if (changed) updateStatus();
     },
+    onSeenChanged: (set) => authStore.saveSeenFiles(set),
+    onScanComplete: (res) => {
+      lastScan = res;
+      if (res.errors === 0) lastError = null;
+      updateStatus();
+    },
     onNewResults: async ({ filePath, fileName, parsed }) => {
       try {
         const res = deviceToken
@@ -162,7 +179,6 @@ function startWatcher() {
           uploadCount += res.uploaded;
           updateStatus();
         }
-        authStore.saveSeenFiles(seen);
         return res;
       } catch (err) {
         console.error(`[upload] ${fileName} failed:`, err);
