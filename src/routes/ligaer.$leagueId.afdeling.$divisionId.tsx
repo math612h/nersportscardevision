@@ -41,11 +41,11 @@ export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
     const trackStr = loaderData?.track
       ? `${loaderData.track}${loaderData.layout ? ` (${loaderData.layout})` : ""}`
       : "";
-    const title = `${div}${league ? ` – ${league}` : ""} | LMU-Hub`;
+    const title = `${div}${league ? ` – ${league}` : ""} | DanishEnduranceSeries.dk`;
     const desc =
       `Detaljer for afdelingen ${div}${league ? ` i ${league}` : ""}: ` +
       `${trackStr ? `${trackStr}, ` : ""}deltagere, lobby info og protest-formular.`;
-    const url = `https://nersportscardevision.lovable.app/ligaer/${params.leagueId}/afdeling/${params.divisionId}`;
+    const url = `https://danishenduranceseries.dk/ligaer/${params.leagueId}/afdeling/${params.divisionId}`;
     const scripts: Array<{ type: string; children: string }> = [];
     if (loaderData?.divName) {
       scripts.push({
@@ -67,7 +67,7 @@ export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
           eventStatus: "https://schema.org/EventScheduled",
           organizer: {
             "@type": "Organization",
-            name: "NER Sportscar Division",
+            name: "DanishEnduranceSeries.dk",
           },
         }),
       });
