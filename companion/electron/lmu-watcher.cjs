@@ -60,12 +60,18 @@ function parseFile(filePath) {
 }
 
 class LmuWatcher {
-  constructor({ seenFiles, onNewResults, onStatus, pollMs }) {
-    this.seen = seenFiles; // Set of file basenames already processed
+  constructor({ seenFiles, onNewResults, onStatus, pollMs, customFolder }) {
+    this.seen = seenFiles;
     this.onNewResults = onNewResults;
     this.onStatus = onStatus;
     this.pollMs = pollMs || 10_000;
     this.timer = null;
+    this.folder = null;
+    this.customFolder = customFolder || null;
+  }
+
+  setCustomFolder(folder) {
+    this.customFolder = folder || null;
     this.folder = null;
   }
 
@@ -80,7 +86,7 @@ class LmuWatcher {
   }
 
   async tick() {
-    if (!this.folder) this.folder = findResultsFolder();
+    if (!this.folder) this.folder = findResultsFolder(this.customFolder);
     if (!this.folder) {
       this.onStatus({ lmuFound: false, folder: null });
       return;
@@ -96,16 +102,14 @@ class LmuWatcher {
         this.seen.add(key);
         await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
       } catch (err) {
-        // Mark as seen so we don't retry forever — but log
         console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
         this.seen.add(key);
       }
     }
   }
 
-  // Re-process all existing files (used right after login to catch up on history)
   async scanAll() {
-    if (!this.folder) this.folder = findResultsFolder();
+    if (!this.folder) this.folder = findResultsFolder(this.customFolder);
     if (!this.folder) return { uploaded: 0, total: 0 };
     const files = listXmlFiles(this.folder);
     let uploaded = 0;
