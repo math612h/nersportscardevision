@@ -5,11 +5,15 @@ const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } = require("./config.cjs");
 const { normalizeCarClass, nameSimilarity } = require("./lmu-parser.cjs");
 
 function makeClient(session) {
+  const ws = require("ws");
   const client = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: {
       autoRefreshToken: true,
       persistSession: false, // we persist via auth-store ourselves
       detectSessionInUrl: false,
+    },
+    realtime: {
+      transport: ws,
     },
   });
   if (session) {
