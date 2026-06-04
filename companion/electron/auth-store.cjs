@@ -8,6 +8,7 @@ const path = require("path");
 const FILE = path.join(app.getPath("userData"), "session.bin");
 const TOKEN_FILE = path.join(app.getPath("userData"), "device-token.bin");
 const SEEN_FILES = path.join(app.getPath("userData"), "seen-files.json");
+const FULL_SCAN_FILE = path.join(app.getPath("userData"), "full-scan-v2.done");
 
 function saveDeviceToken(token) {
   try {
@@ -107,6 +108,17 @@ function saveSeenFiles(set) {
   }
 }
 
+function loadFullScanDone() {
+  try { return fs.existsSync(FULL_SCAN_FILE); } catch { return false; }
+}
+
+function saveFullScanDone(done) {
+  try {
+    if (done) fs.writeFileSync(FULL_SCAN_FILE, new Date().toISOString(), "utf8");
+    else if (fs.existsSync(FULL_SCAN_FILE)) fs.unlinkSync(FULL_SCAN_FILE);
+  } catch (err) { console.error("[auth-store] saveFullScanDone failed:", err); }
+}
+
 const FOLDER_FILE = path.join(app.getPath("userData"), "custom-folder.txt");
 function saveCustomFolder(folder) {
   try {
@@ -119,4 +131,4 @@ function loadCustomFolder() {
   return null;
 }
 
-module.exports = { saveSession, loadSession, clearSession, saveDeviceToken, loadDeviceToken, clearDeviceToken, loadSeenFiles, saveSeenFiles, saveCustomFolder, loadCustomFolder };
+module.exports = { saveSession, loadSession, clearSession, saveDeviceToken, loadDeviceToken, clearDeviceToken, loadSeenFiles, saveSeenFiles, loadFullScanDone, saveFullScanDone, saveCustomFolder, loadCustomFolder };
