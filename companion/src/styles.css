@@ -104,3 +104,8 @@ button.secondary:hover { background: #18181b; }
 .footer { margin-top: auto; font-size: 11px; color: #52525b; text-align: center; }
 a { color: #ef4444; text-decoration: none; }
 a:hover { text-decoration: underline; }
+.tabs { display: flex; gap: 4px; background: #15151b; border: 1px solid #27272a; border-radius: 8px; padding: 4px; }
+.tab { flex: 1; background: transparent; color: #a1a1aa; padding: 8px; font-size: 12px; font-weight: 500; border-radius: 6px; width: auto; }
+.tab:hover { background: #1f1f25; }
+.tab.active { background: #ef4444; color: white; }
+.tab.active:hover { background: #dc2626; }
