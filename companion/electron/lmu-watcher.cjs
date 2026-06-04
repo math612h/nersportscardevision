@@ -68,6 +68,8 @@ class LmuWatcher {
     this.timer = null;
     this.folder = null;
     this.customFolder = customFolder || null;
+    this.initialScanDone = false;
+    this.scanRunning = false;
   }
 
   setCustomFolder(folder) {
@@ -93,6 +95,12 @@ class LmuWatcher {
     }
     this.onStatus({ lmuFound: true, folder: this.folder });
 
+    if (!this.initialScanDone) {
+      this.initialScanDone = true;
+      await this.scanAll();
+      return;
+    }
+
     const files = listXmlFiles(this.folder);
     for (const f of files) {
       const key = f.name;
@@ -110,22 +118,28 @@ class LmuWatcher {
 
   // Force re-scan ALL files in the folder, ignoring the seen-list.
   async scanAll() {
+    if (this.scanRunning) return { uploaded: 0, total: 0, busy: true };
+    this.scanRunning = true;
     if (!this.folder) this.folder = findResultsFolder(this.customFolder);
-    if (!this.folder) return { uploaded: 0, total: 0 };
-    const files = listXmlFiles(this.folder);
-    let uploaded = 0;
-    for (const f of files) {
-      try {
-        const parsed = parseFile(f.path);
-        const res = await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
-        if (res && res.uploaded) uploaded += res.uploaded;
-        if (res && !res.error) this.seen.add(f.name);
-      } catch (err) {
-        console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
-        this.seen.add(f.name);
+    if (!this.folder) { this.scanRunning = false; return { uploaded: 0, total: 0 }; }
+    try {
+      const files = listXmlFiles(this.folder);
+      let uploaded = 0;
+      for (const f of files) {
+        try {
+          const parsed = parseFile(f.path);
+          const res = await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
+          if (res && res.uploaded) uploaded += res.uploaded;
+          if (res && !res.error) this.seen.add(f.name);
+        } catch (err) {
+          console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
+          this.seen.add(f.name);
+        }
       }
+      return { uploaded, total: files.length };
+    } finally {
+      this.scanRunning = false;
     }
-    return { uploaded, total: files.length };
   }
 }
 
