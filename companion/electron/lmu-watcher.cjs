@@ -77,6 +77,7 @@ class LmuWatcher {
   setCustomFolder(folder) {
     this.customFolder = folder || null;
     this.folder = null;
+    this.initialScanDone = false;
   }
 
   start() {
