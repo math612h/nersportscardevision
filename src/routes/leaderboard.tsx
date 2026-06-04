@@ -12,6 +12,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
+// ⬇️ Update this once GitHub repo is connected and first companion release is built.
+//    Format: https://github.com/<OWNER>/<REPO>/releases/latest/download/NER-Sportscar-Companion-Setup.exe
+const COMPANION_INSTALLER_URL: string | null = null;
+// Fallback: old zip download (kept as backup until installer is live)
 import companionZip from "@/assets/companion-zip.asset.json";
 
 const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
@@ -292,18 +296,28 @@ function LeaderboardPage() {
             <span className="text-xs font-semibold uppercase tracking-[0.18em]">Desktop Companion</span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Download vores desktop app og få tiderne uploadet automatisk. Appen kører i baggrunden, overvåger din LMU resultat-mappe og sender nye tider direkte til leaderboardet — helt uden at du behøver gøre noget.
-          </p>
-          <p className="text-[11px] text-muted-foreground">
-            Appen starter automatisk ved Windows-opstart, minimerer til systembakken og husker dit login.
+            Download companion-appen, dobbeltklik installeren og log ind én gang. Derefter starter den automatisk ved Windows-opstart, kører i baggrunden og uploader dine tider når du har kørt i LMU.
           </p>
           <div className="flex items-center gap-3 pt-1">
-            <Button asChild className="gap-2">
-              <a href={companionZip.url} download="NER-Sportscar-Companion-Windows.zip">
-                <Upload className="h-4 w-4" /> Download til Windows
-              </a>
-            </Button>
-            <span className="text-[11px] text-muted-foreground">~138 MB · .zip</span>
+            {COMPANION_INSTALLER_URL ? (
+              <>
+                <Button asChild className="gap-2">
+                  <a href={COMPANION_INSTALLER_URL} download="NER-Sportscar-Companion-Setup.exe">
+                    <Upload className="h-4 w-4" /> Download til Windows
+                  </a>
+                </Button>
+                <span className="text-[11px] text-muted-foreground">~80 MB · .exe installer</span>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="outline" className="gap-2">
+                  <a href={companionZip.url} download="NER-Sportscar-Companion-Windows.zip">
+                    <Upload className="h-4 w-4" /> Download (gammel version)
+                  </a>
+                </Button>
+                <span className="text-[11px] text-muted-foreground">Ny installer kommer snart — bygges via GitHub Actions</span>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
