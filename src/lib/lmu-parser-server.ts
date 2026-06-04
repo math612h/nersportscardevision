@@ -12,10 +12,25 @@ function parseLayoutFromTrackData(trackData: unknown): string | null {
 
 const parser = new XMLParser({ ignoreAttributes: true, trimValues: true, parseTagValue: false });
 
+function findRaceResultsNode(obj: any): any | null {
+  if (!obj || typeof obj !== "object") return null;
+  if (obj.RaceResults) return Array.isArray(obj.RaceResults) ? obj.RaceResults.at(-1) : obj.RaceResults;
+  if (obj.rFactorXML?.RaceResults) {
+    return Array.isArray(obj.rFactorXML.RaceResults) ? obj.rFactorXML.RaceResults.at(-1) : obj.rFactorXML.RaceResults;
+  }
+  for (const value of Object.values(obj)) {
+    if (value && typeof value === "object" && (value as any).RaceResults) {
+      const raceResults = (value as any).RaceResults;
+      return Array.isArray(raceResults) ? raceResults.at(-1) : raceResults;
+    }
+  }
+  return null;
+}
+
 export function parseLmuRaceFileServer(xml: string): ParsedRace {
   let obj: any;
   try { obj = parser.parse(xml); } catch { throw new Error("Filen kunne ikke læses som XML"); }
-  const rr = obj?.RaceResults ?? obj;
+  const rr = findRaceResultsNode(obj);
   if (!rr) throw new Error("Filen indeholder ikke RaceResults");
 
   const track = String(rr.TrackVenue ?? rr.TrackCourse ?? "").trim();
