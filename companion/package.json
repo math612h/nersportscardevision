@@ -1,9 +1,9 @@
 {
-  "name": "ner-sportscar-companion",
+  "name": "des-companion",
   "version": "1.0.0",
-  "description": "NER Sportscar Companion — uploader automatisk dine LMU omgangstider til leaderboardet",
+  "description": "DanishEnduranceSeries.dk Companion — uploader automatisk dine LMU omgangstider til leaderboardet",
   "main": "electron/main.cjs",
-  "author": "NER Sportscar Division",
+  "author": "DanishEnduranceSeries.dk",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/math612h/nersportscardevision.git"
@@ -33,9 +33,9 @@
     "vite": "^5.3.5"
   },
   "build": {
-    "appId": "com.nersportscar.companion",
-    "productName": "NER Sportscar Companion",
-    "artifactName": "NER-Sportscar-Companion-Setup.${ext}",
+    "appId": "com.danishenduranceseries.companion",
+    "productName": "DanishEnduranceSeries.dk Companion",
+    "artifactName": "DES-Companion-Setup.${ext}",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -60,7 +60,7 @@
       "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "NER Sportscar Companion",
+      "shortcutName": "DanishEnduranceSeries.dk Companion",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false
     }

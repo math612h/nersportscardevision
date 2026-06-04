@@ -35,17 +35,17 @@ export default function App() {
     return off;
   }, []);
 
-  if (!status) return <div className="app"><div className="brand"><span className="brand-dot" />NER Sportscar</div><p className="sub">Indlæser…</p></div>;
+  if (!status) return <div className="app"><div className="brand"><span className="brand-dot" />DanishEnduranceSeries.dk</div><p className="sub">Indlæser…</p></div>;
 
   return (
     <div className="app">
       <div className="brand">
         <span className="brand-dot" />
-        NER Sportscar Companion
+        DanishEnduranceSeries.dk Companion
       </div>
       {status.signedIn ? <SignedIn status={status} /> : <SignIn />}
       <div className="footer">
-        Læs mere på <a href="https://nersportscardevision.lovable.app/leaderboard" onClick={(e) => { e.preventDefault(); window.open("https://nersportscardevision.lovable.app/leaderboard"); }}>nersportscardevision.lovable.app</a>
+        Læs mere på <a href="https://danishenduranceseries.dk/leaderboard" onClick={(e) => { e.preventDefault(); window.open("https://danishenduranceseries.dk/leaderboard"); }}>danishenduranceseries.dk</a>
       </div>
     </div>
   );
