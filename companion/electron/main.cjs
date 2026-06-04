@@ -1,5 +1,5 @@
 // Main Electron process — system tray, auto-start, login flow, LMU watcher.
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, shell } = require("electron");
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, shell, dialog } = require("electron");
 const path = require("path");
 const { POLL_INTERVAL_MS } = require("./config.cjs");
 const authStore = require("./auth-store.cjs");
