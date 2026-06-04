@@ -23,6 +23,8 @@ type Status = {
   lmu: { lmuFound: boolean; folder: string | null };
   uploadCount: number;
   lastError: string | null;
+  lastScan: { uploaded: number; total: number; processed?: number; skipped?: number; errors?: number; note?: string | null; busy?: boolean } | null;
+  scanning: boolean;
   customFolder?: string | null;
 };
 
@@ -226,7 +228,14 @@ function SignedIn({ status }: { status: Status }) {
           </div>
         )}
         <div className="row"><span className="k">Uploadede tider</span><span className="v">{status.uploadCount}</span></div>
+        <div className="row"><span className="k">Scanner</span><span className={`v ${status.scanning ? "warn" : "ok"}`}>{status.scanning ? "I gang" : "Automatisk"}</span></div>
       </div>
+
+      {status.lastScan && (
+        <p className="hint" style={{ margin: 0 }}>
+          Sidste scan: {status.lastScan.total} fil{status.lastScan.total === 1 ? "" : "er"} læst, {status.lastScan.uploaded} tid{status.lastScan.uploaded === 1 ? "" : "er"} uploadet{status.lastScan.errors ? `, ${status.lastScan.errors} fejl` : ""}{status.lastScan.note ? ` — ${status.lastScan.note}` : ""}.
+        </p>
+      )}
 
       {status.lastError && (
         <p className="err" style={{ fontSize: 12, margin: 0 }}>Sidste fejl: {status.lastError}</p>
@@ -242,7 +251,7 @@ function SignedIn({ status }: { status: Status }) {
       )}
 
       <button onClick={scan} disabled={scanning || !status.lmu.lmuFound}>
-        {scanning ? "Scanner…" : "Scan alle gamle resultater"}
+        {scanning ? "Scanner…" : "Scan alle filer igen"}
       </button>
       <button className="secondary" onClick={out}>Log ud</button>
 
