@@ -12,9 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
-// ⬇️ Update this once GitHub repo is connected and first companion release is built.
-//    Format: https://github.com/<OWNER>/<REPO>/releases/latest/download/NER-Sportscar-Companion-Setup.exe
-const COMPANION_INSTALLER_URL: string | null = null;
+const COMPANION_INSTALLER_URL = "https://github.com/math612h/nersportscardevision/releases/latest/download/NER-Sportscar-Companion-Setup.exe";
 // Fallback: old zip download (kept as backup until installer is live)
 import companionZip from "@/assets/companion-zip.asset.json";
 
