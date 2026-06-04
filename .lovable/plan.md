@@ -1,52 +1,91 @@
-## Mål
-Når en protest oprettes med indklagede kørere, får de besked i appen (og på email), kan afgive deres version, og admin/stewards afgør sagen med status + begrundelse + evt. straf-detaljer.
+# NER Sportscar Companion v2 — plan
 
-## Database (én migration)
+## Hvad slutbrugeren oplever
 
-**Ny tabel `protest_involved`** — kobler indklagede brugere til en protest:
-- `protest_id`, `user_id` (unik kombination)
-- `response` (tekst, deres version), `responded_at`
-- RLS: indklaget bruger ser/opdaterer egen række; klager + admin læser alle på sine sager.
+1. Klikker på "Download Companion" på leaderboard-siden → henter **én fil**: `NER-Sportscar-Companion-Setup.exe` (~80 MB)
+2. Dobbeltklikker filen → installerer sig selv på 5 sekunder → genvej på skrivebordet og i startmenuen → appen starter automatisk
+3. Logger ind én gang med sin NER-konto (samme som hjemmesiden) → forbliver logget ind for altid (også efter genstart)
+4. Appen kører usynligt i baggrunden hver gang PC'en startes (system tray-ikon nede til højre)
+5. Når brugeren kører i Le Mans Ultimate, læses omgangstider automatisk og uploades til leaderboardet
 
-**Udvid `protests`**:
-- `status` (`open` | `awaiting_responses` | `ruled`)
-- `verdict_outcome` (enum: `no_penalty` | `warning` | `time_penalty` | `position_penalty` | `disqualified`)
-- `verdict_reason` (tekst)
-- `verdict_details` (jsonb — fx sekunder, antal positioner)
-- `ruled_by`, `ruled_at`
-- Skærp SELECT-policy: kun klager, indklagede, og admin må læse (involvering tjekkes via `protest_involved`).
+## Hvad jeg bygger
 
-## Protestformular (afdelingsside)
-- "Involverede kørere" bliver dropdown over tilmeldte i ligaen (entries), undtagen klager selv.
-- Plus-knap tilføjer endnu en dropdown-række. Gemmer som rækker i `protest_involved`. Beholder `involved_drivers` tekstfelt til visning/historik.
+### Companion-appen (Electron + React)
 
-## "Mine sager"-side (`/mine-protests`)
-Eksisterer allerede til klagerens sager — udvides til to tabs:
-- **Indsendt af mig** — som nu, plus visning af indklagedes svar + endelig afgørelse.
-- **Indklaget** — nye sager hvor jeg er indklaget; "Afgiv din version"-form pr. sag (én gang, kan opdateres indtil ruling).
-- Badge i top-menuen viser antal sager der venter på mit svar.
+Placeret i `companion/` mappen i dette projekt. Indeholder:
 
-## Admin-panel (`/admin/protests`)
-- Liste viser status-badge pr. sag.
-- Klik åbner detalje-side: original protest, alle indklagedes svar (eller "Ikke svaret endnu"), og formular til afgørelse:
-  - Udfald (radio/select)
-  - Begrundelse (textarea)
-  - Betingede felter: sekunder hvis tidsstraf, positioner hvis position penalty
-  - "Send afgørelse" — sætter status, gemmer rul-felter, trigger email.
+- **Hovedproces** (`companion/electron/main.cjs`)
+  - System tray-ikon (højreklik → "Åbn", "Log ud", "Afslut")
+  - Auto-start ved Windows-boot via `app.setLoginItemSettings({ openAtLogin: true, openAsHidden: true })`
+  - Skjult vindue der kan kaldes frem fra tray
+  - Læser LMU's resultatfiler fra `%UserProfile%\Documents\Le Mans Ultimate\UserData\Log\Results\` (og `Replays/` for tidligere sessioner) hvert 10. sekund
+  - Parser XML/JSON-resultater til omgangstider per bil/bane/spiller
 
-## Email-notifikationer
-Kræver ops\u00e6tning af Lovable email-domæne (DNS-trin). Tre tidspunkter:
-1. **Ny protest** → email til hver indklaget med link til "Mine sager".
-2. **Indklaget har svaret** → email til admins.
-3. **Afgørelse afsendt** → email til klager + alle indklagede med udfald + begrundelse.
+- **UI** (lille React-app i `companion/src/`)
+  - Login-skærm (e-mail + adgangskode + Google) — kun vist første gang
+  - Status-skærm: "Forbundet som [navn] · LMU fundet · X omgange uploaded i dag"
+  - Login-token gemmes krypteret i Electron's `safeStorage` (Windows DPAPI) → overlever genstart
 
-Server-fn `notify-protest` kaldes fra hver mutation. Selve email-infrastrukturen (domæne, queue, skabeloner) sættes op via Lovable email-værktøjerne efter du godkender planen — første skridt vil være at vælge afsender-domæne.
+- **Upload-logik**
+  - Kalder Lovable Cloud (Supabase) direkte med brugerens token
+  - Skriver til `leaderboard_times`-tabellen via en ny serverfunktion `submitLapTimes` der validerer ejerskab og deduplikerer
 
-## Synlighed
-- Klager + indklagede + admin ser fuld sag og afgørelse.
-- Øvrige brugere ser intet om sagen; eventuelle straffe afspejles indirekte i stillinger (eksisterende side, ingen ny visning her).
+### På hjemmesiden (denne app)
 
-## Tekniske noter
-- Migration tilføjer enum-typer `protest_status` og `verdict_outcome`.
-- Email-skabeloner som React Email i `src/lib/email-templates/` (oprettes når infra er klar).
-- Realtime-opdatering er ikke en del af dette — siden re-fetcher ved navigation.
+- Ny serverfunktion `src/lib/companion.functions.ts` → `submitLapTimes()` der modtager omgangstider fra companion
+- Opdater download-knappen på `src/routes/leaderboard.tsx` til at pege på den nye installer-URL (GitHub Release)
+
+### Auto-build pipeline (GitHub Actions)
+
+- `.github/workflows/build-companion.yml`
+  - Kører på `windows-latest` når der pushes en tag som `companion-v1.0.0`
+  - Bygger med `electron-builder --win nsis` (giver én `Setup.exe` med:
+    - one-click installation (ingen "Næste → Næste")
+    - genvej på skrivebordet og startmenu
+    - auto-start ved boot)
+  - Uploader `.exe`'en som GitHub Release-asset
+- Hjemmesidens download-knap peger på `https://github.com/<dit-repo>/releases/latest/download/NER-Sportscar-Companion-Setup.exe`
+
+## Hvad DU skal gøre (én gang, ~5 min)
+
+1. **Forbind dette Lovable-projekt til GitHub** (Plus-menu → GitHub → Connect)
+2. **Push første tag** når jeg siger til:
+   ```
+   git tag companion-v1.0.0
+   git push origin companion-v1.0.0
+   ```
+3. **Vent ~5 min** mens GitHub bygger `.exe`'en
+4. **Færdig** — download-knappen virker automatisk
+
+Fremover: når jeg laver ændringer i companion-koden, pusher du bare en ny tag (`companion-v1.0.1` osv.) og den nye installer er klar 5 min efter.
+
+## Tekniske detaljer
+
+```text
+companion/
+├── package.json              electron-builder config med NSIS one-click
+├── electron/
+│   ├── main.cjs              main process: tray, auto-start, LMU watcher
+│   ├── preload.cjs           IPC bridge
+│   └── lmu-watcher.cjs       parser for LMU's results-filer
+├── src/                      React UI (login + status)
+├── build/
+│   └── icon.ico              app-ikon
+└── vite.config.ts            base: './' (krav for Electron)
+
+.github/workflows/
+└── build-companion.yml       Windows-build → GitHub Release
+```
+
+LMU's resultatfiler ligger som XML i `Log\Results\` (samme format som rFactor 2 — Le Mans Ultimate er bygget på samme motor). Hver session genererer én XML med alle omgangstider per kører.
+
+## Forbehold / antagelser
+
+- **LMU's filformat** er det samme som rFactor 2. Hvis det viser sig at LMU bruger noget andet, justerer jeg parseren — men jeg har set i tidligere builds at denne sti virker
+- **Auto-update** (appen henter selv nye versioner) er IKKE med i v1. Kan tilføjes senere via electron-updater hvis ønsket
+- **macOS/Linux** support er ikke med — kun Windows (LMU findes kun til Windows)
+- **Den eksisterende zip-download** fjernes når den nye installer er klar
+
+## Klar til at gå i gang?
+
+Sig "kør" hvis planen ser god ud, så bygger jeg companion-koden + workflow nu. Når det er færdigt giver jeg dig præcise instrukser til GitHub-forbindelse og første tag-push.
