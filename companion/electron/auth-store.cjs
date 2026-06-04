@@ -6,7 +6,42 @@ const fs = require("fs");
 const path = require("path");
 
 const FILE = path.join(app.getPath("userData"), "session.bin");
+const TOKEN_FILE = path.join(app.getPath("userData"), "device-token.bin");
 const SEEN_FILES = path.join(app.getPath("userData"), "seen-files.json");
+
+function saveDeviceToken(token) {
+  try {
+    if (!token) {
+      if (fs.existsSync(TOKEN_FILE)) fs.unlinkSync(TOKEN_FILE);
+      if (fs.existsSync(TOKEN_FILE + ".plain")) fs.unlinkSync(TOKEN_FILE + ".plain");
+      return;
+    }
+    if (safeStorage.isEncryptionAvailable()) {
+      fs.writeFileSync(TOKEN_FILE, safeStorage.encryptString(token));
+    } else {
+      fs.writeFileSync(TOKEN_FILE + ".plain", token);
+    }
+  } catch (err) {
+    console.error("[auth-store] saveDeviceToken failed:", err);
+  }
+}
+
+function loadDeviceToken() {
+  try {
+    if (fs.existsSync(TOKEN_FILE) && safeStorage.isEncryptionAvailable()) {
+      return safeStorage.decryptString(fs.readFileSync(TOKEN_FILE));
+    }
+    const plain = TOKEN_FILE + ".plain";
+    if (fs.existsSync(plain)) return fs.readFileSync(plain, "utf8");
+  } catch (err) {
+    console.error("[auth-store] loadDeviceToken failed:", err);
+  }
+  return null;
+}
+
+function clearDeviceToken() {
+  saveDeviceToken(null);
+}
 
 function saveSession(session) {
   try {
@@ -72,4 +107,4 @@ function saveSeenFiles(set) {
   }
 }
 
-module.exports = { saveSession, loadSession, clearSession, loadSeenFiles, saveSeenFiles };
+module.exports = { saveSession, loadSession, clearSession, saveDeviceToken, loadDeviceToken, clearDeviceToken, loadSeenFiles, saveSeenFiles };

@@ -17,6 +17,7 @@ let win = null;
 let tray = null;
 let watcher = null;
 let session = null;
+let deviceToken = null; // Set when user logs in with engangsnøgle (mutually exclusive med session)
 let userInfo = null; // { display_name, lmu_name, approved }
 let lmuStatus = { lmuFound: false, folder: null };
 let uploadCount = 0;
@@ -86,11 +87,14 @@ function buildTrayMenu() {
     { type: "separator" },
     {
       label: "Log ud",
-      enabled: !!session,
+      enabled: !!session || !!deviceToken,
       click: async () => {
         authStore.clearSession();
+        authStore.clearDeviceToken();
         session = null;
+        deviceToken = null;
         userInfo = null;
+        if (watcher) { watcher.stop(); watcher = null; }
         updateStatus();
         showWindow();
       },
@@ -114,7 +118,7 @@ function broadcast(channel, payload) {
 function updateStatus() {
   refreshTray();
   broadcast("status:update", {
-    signedIn: !!session,
+    signedIn: !!session || !!deviceToken,
     user: userInfo,
     lmu: lmuStatus,
     uploadCount,
@@ -123,7 +127,7 @@ function updateStatus() {
 }
 
 async function triggerScan() {
-  if (!session || !watcher) return { uploaded: 0 };
+  if ((!session && !deviceToken) || !watcher) return { uploaded: 0 };
   try {
     const res = await watcher.scanAll();
     return res;
@@ -146,9 +150,11 @@ function startWatcher() {
       lmuStatus = s;
       if (changed) updateStatus();
     },
-    onNewResults: async ({ fileName, parsed }) => {
+    onNewResults: async ({ filePath, fileName, parsed }) => {
       try {
-        const res = await uploader.uploadParsedResults({ session, parsed });
+        const res = deviceToken
+          ? await uploader.uploadParsedResultsViaToken({ token: deviceToken, filePath })
+          : await uploader.uploadParsedResults({ session, parsed });
         if (res.uploaded > 0) {
           uploadCount += res.uploaded;
           updateStatus();
@@ -167,8 +173,31 @@ function startWatcher() {
 }
 
 async function restoreOnStartup() {
+  // 1) Prøv device-token først (foretrukket flow)
+  const savedToken = authStore.loadDeviceToken();
+  if (savedToken) {
+    try {
+      const { user } = await uploader.verifyDeviceToken(savedToken);
+      deviceToken = savedToken;
+      userInfo = {
+        id: user.id,
+        email: null,
+        display_name: user.display_name || "Bruger",
+        lmu_name: user.lmu_name || null,
+        approved: !!user.approved,
+      };
+      startWatcher();
+      updateStatus();
+      return;
+    } catch (err) {
+      console.error("[restore-token] failed:", err);
+      authStore.clearDeviceToken();
+    }
+  }
+
+  // 2) Fallback: gammel Supabase-session
   const saved = authStore.loadSession();
-  if (!saved) return;
+  if (!saved) { updateStatus(); return; }
   try {
     session = await uploader.restoreSession(saved);
     authStore.saveSession(session);
@@ -192,7 +221,7 @@ async function restoreOnStartup() {
 
 // ---- IPC handlers ----------------------------------------------------------
 ipcMain.handle("auth:status", () => ({
-  signedIn: !!session,
+  signedIn: !!session || !!deviceToken,
   user: userInfo,
   lmu: lmuStatus,
   uploadCount,
@@ -248,9 +277,37 @@ ipcMain.handle("auth:verifyOtp", async (_e, { email, token }) => {
   }
 });
 
+ipcMain.handle("auth:signInWithToken", async (_e, { token }) => {
+  try {
+    const cleaned = String(token || "").trim().toLowerCase();
+    if (!/^[a-f0-9]{64}$/.test(cleaned)) {
+      return { ok: false, error: "Ugyldigt nøgleformat. Generér en ny på din profil." };
+    }
+    const { user } = await uploader.verifyDeviceToken(cleaned);
+    deviceToken = cleaned;
+    session = null;
+    authStore.clearSession();
+    authStore.saveDeviceToken(cleaned);
+    userInfo = {
+      id: user.id,
+      email: null,
+      display_name: user.display_name || "Bruger",
+      lmu_name: user.lmu_name || null,
+      approved: !!user.approved,
+    };
+    startWatcher();
+    updateStatus();
+    return { ok: true, user: userInfo };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+});
+
 ipcMain.handle("auth:signOut", async () => {
   authStore.clearSession();
+  authStore.clearDeviceToken();
   session = null;
+  deviceToken = null;
   userInfo = null;
   if (watcher) { watcher.stop(); watcher = null; }
   updateStatus();
