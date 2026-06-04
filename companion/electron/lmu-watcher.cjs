@@ -99,8 +99,8 @@ class LmuWatcher {
       if (this.seen.has(key)) continue;
       try {
         const parsed = parseFile(f.path);
-        this.seen.add(key);
-        await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
+        const res = await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
+        if (res && !res.error) this.seen.add(key);
       } catch (err) {
         console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
         this.seen.add(key);
@@ -108,19 +108,20 @@ class LmuWatcher {
     }
   }
 
+  // Force re-scan ALL files in the folder, ignoring the seen-list.
   async scanAll() {
     if (!this.folder) this.folder = findResultsFolder(this.customFolder);
     if (!this.folder) return { uploaded: 0, total: 0 };
     const files = listXmlFiles(this.folder);
     let uploaded = 0;
     for (const f of files) {
-      if (this.seen.has(f.name)) continue;
       try {
         const parsed = parseFile(f.path);
-        this.seen.add(f.name);
         const res = await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
         if (res && res.uploaded) uploaded += res.uploaded;
+        if (res && !res.error) this.seen.add(f.name);
       } catch (err) {
+        console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
         this.seen.add(f.name);
       }
     }
