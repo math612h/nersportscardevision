@@ -141,6 +141,7 @@ async function triggerScan() {
 function startWatcher() {
   if (watcher) watcher.stop();
   const seen = authStore.loadSeenFiles();
+  const customFolder = authStore.loadCustomFolder();
 
   watcher = new LmuWatcher({
     seenFiles: seen,
