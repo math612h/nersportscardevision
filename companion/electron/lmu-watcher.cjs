@@ -37,16 +37,55 @@ function candidateResultsFolders() {
   return list;
 }
 
+function unique(paths) {
+  const seen = new Set();
+  return paths.filter((p) => {
+    const key = String(p || "").toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function virtualStoreMirrorFor(folder) {
+  const raw = String(folder || "").trim();
+  if (!/^[A-Za-z]:[/\\]/.test(raw)) return null;
+  const withoutDrive = raw.replace(/^[A-Za-z]:[/\\]+/, "");
+  const lower = withoutDrive.toLowerCase();
+  if (!lower.startsWith("program files") && !lower.startsWith("program files (x86)")) return null;
+  return path.join(os.homedir(), "AppData", "Local", "VirtualStore", withoutDrive);
+}
+
+function expandFolderAlternates(folder) {
+  const raw = String(folder || "").trim();
+  if (!raw) return [];
+  const variants = [raw];
+  if (path.basename(raw).toLowerCase() !== "results") variants.push(path.join(raw, "Results"));
+  const mirror = virtualStoreMirrorFor(raw);
+  if (mirror) {
+    variants.push(mirror);
+    if (path.basename(mirror).toLowerCase() !== "results") variants.push(path.join(mirror, "Results"));
+  }
+  return unique(variants);
+}
+
+function isDirectory(folder) {
+  try { return fs.statSync(folder).isDirectory(); } catch { return false; }
+}
+
+function xmlCount(folder) {
+  try { return fs.readdirSync(folder).filter((f) => f.toLowerCase().endsWith(".xml")).length; } catch { return 0; }
+}
+
 function findResultsFolder(customFolder) {
   if (customFolder) {
-    try { if (fs.statSync(customFolder).isDirectory()) return customFolder; } catch {}
+    const customCandidates = expandFolderAlternates(customFolder).filter(isDirectory);
+    const withFiles = customCandidates.find((p) => xmlCount(p) > 0);
+    if (withFiles) return withFiles;
+    if (customCandidates[0]) return customCandidates[0];
   }
-  for (const p of candidateResultsFolders()) {
-    try {
-      if (fs.statSync(p).isDirectory()) return p;
-    } catch {}
-  }
-  return null;
+  const candidates = unique(candidateResultsFolders()).filter(isDirectory);
+  return candidates.find((p) => xmlCount(p) > 0) || candidates[0] || null;
 }
 
 function listXmlFiles(folder) {

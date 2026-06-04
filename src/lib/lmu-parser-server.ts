@@ -10,6 +10,27 @@ function parseLayoutFromTrackData(trackData: unknown): string | null {
   return m[1].replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").trim() || null;
 }
 
+function cleanTrackName(raw: unknown): string {
+  return String(raw ?? "")
+    .replace(/\.mas$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b(v|version)?\d+(\.\d+)+\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function parseTrackFromTrackData(trackData: unknown): string {
+  if (trackData == null) return "";
+  const parts = String(trackData).replace(/\\/g, "/").split("/").filter(Boolean);
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i];
+    if (/^layout/i.test(part) || /^\d+(\.\d+)*$/.test(part)) continue;
+    const cleaned = cleanTrackName(part);
+    if (cleaned) return cleaned;
+  }
+  return "";
+}
+
 const parser = new XMLParser({ ignoreAttributes: true, trimValues: true, parseTagValue: false });
 
 function findRaceResultsNode(obj: any): any | null {
@@ -33,7 +54,7 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
   const rr = findRaceResultsNode(obj);
   if (!rr) throw new Error("Filen indeholder ikke RaceResults");
 
-  const track = String(rr.TrackVenue ?? rr.TrackCourse ?? "").trim();
+  const track = cleanTrackName(rr.TrackVenue ?? rr.TrackCourse ?? rr.TrackEvent ?? rr.TrackName ?? rr.CircuitName) || parseTrackFromTrackData(rr.TrackData);
   if (!track) throw new Error("Kunne ikke finde banens navn i filen");
 
   const layout = parseLayoutFromTrackData(rr.TrackData);
@@ -52,6 +73,14 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
   const drivers: ParsedDriver[] = driverArr.map((d): ParsedDriver => {
     const finishStatus = String(d.FinishStatus ?? "");
     const blt = parseFloat(String(d.BestLapTime ?? ""));
+    let bestLapMs = Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null;
+    if (bestLapMs == null && d.Lap) {
+      const laps = Array.isArray(d.Lap) ? d.Lap : [d.Lap];
+      const lapSeconds = laps
+        .map((lap: unknown) => parseFloat(String(typeof lap === "object" && lap !== null ? (lap as Record<string, unknown>)["#text"] : lap)))
+        .filter((n: number) => Number.isFinite(n) && n > 0);
+      if (lapSeconds.length) bestLapMs = Math.round(Math.min(...lapSeconds) * 1000);
+    }
     const fin = parseFloat(String(d.FinishTime ?? ""));
     const carClass = String(d.CarClass ?? "");
     const manufacturer = String(d.Manufacturer ?? "");
@@ -66,7 +95,7 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
       carClass,
       carClassNorm: normalizeCarClass(carClass),
       carModel: carModel ? carModel.trim() || null : null,
-      bestLapMs: Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null,
+      bestLapMs,
       finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
       finished: finishStatus.toLowerCase().startsWith("finished"),
     };
