@@ -59,19 +59,23 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
 
   const text = (sel: string) => doc.querySelector(sel)?.textContent?.trim() ?? "";
 
-  const track = text("RaceResults > TrackVenue") || text("TrackVenue") || text("TrackCourse");
+  const raceResults = doc.querySelector("RaceResults");
+  if (!raceResults) throw new Error("Filen indeholder ikke RaceResults");
+  const childText = (sel: string) => raceResults.querySelector(`:scope > ${sel}`)?.textContent?.trim() ?? "";
+
+  const track = childText("TrackVenue") || childText("TrackCourse") || text("TrackVenue") || text("TrackCourse");
   if (!track) throw new Error("Kunne ikke finde banens navn i filen");
 
-  const layout = parseLayoutFromTrackData(text("RaceResults > TrackData") || text("TrackData"));
+  const layout = parseLayoutFromTrackData(childText("TrackData") || text("TrackData"));
 
   let recordedAt: string | null = null;
-  const ts = text("RaceResults > Race > DateTime") || text("RaceResults > DateTime");
+  const ts = raceResults.querySelector(":scope > Race > DateTime")?.textContent?.trim() || childText("DateTime");
   if (ts) {
     const n = Number(ts);
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
   }
 
-  const driverEls = Array.from(doc.querySelectorAll("RaceResults Race Driver"));
+  const driverEls = Array.from(raceResults.querySelectorAll("Race Driver"));
   const drivers: ParsedDriver[] = driverEls.map((el) => {
     const get = (t: string) => el.querySelector(`:scope > ${t}`)?.textContent?.trim() ?? "";
     const finishStatus = get("FinishStatus");

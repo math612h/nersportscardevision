@@ -60,19 +60,24 @@ function parseFile(filePath) {
 }
 
 class LmuWatcher {
-  constructor({ seenFiles, onNewResults, onStatus, pollMs, customFolder }) {
+  constructor({ seenFiles, onNewResults, onStatus, onScanComplete, onSeenChanged, initialFullScanDone, pollMs, customFolder }) {
     this.seen = seenFiles;
     this.onNewResults = onNewResults;
     this.onStatus = onStatus;
+    this.onScanComplete = onScanComplete;
+    this.onSeenChanged = onSeenChanged;
     this.pollMs = pollMs || 10_000;
     this.timer = null;
     this.folder = null;
     this.customFolder = customFolder || null;
+    this.initialScanDone = !!initialFullScanDone;
+    this.scanRunning = false;
   }
 
   setCustomFolder(folder) {
     this.customFolder = folder || null;
     this.folder = null;
+    this.initialScanDone = false;
   }
 
   start() {
@@ -93,6 +98,12 @@ class LmuWatcher {
     }
     this.onStatus({ lmuFound: true, folder: this.folder });
 
+    if (!this.initialScanDone) {
+      this.initialScanDone = true;
+      await this.scanAll({ markFullScan: true });
+      return;
+    }
+
     const files = listXmlFiles(this.folder);
     for (const f of files) {
       const key = f.name;
@@ -100,32 +111,48 @@ class LmuWatcher {
       try {
         const parsed = parseFile(f.path);
         const res = await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
-        if (res && !res.error) this.seen.add(key);
+        if (res && !res.error) { this.seen.add(key); if (this.onSeenChanged) this.onSeenChanged(this.seen); }
       } catch (err) {
         console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
-        this.seen.add(key);
       }
     }
   }
 
   // Force re-scan ALL files in the folder, ignoring the seen-list.
-  async scanAll() {
+  async scanAll({ markFullScan = false } = {}) {
+    if (this.scanRunning) return { uploaded: 0, total: 0, processed: 0, skipped: 0, errors: 0, busy: true };
+    this.scanRunning = true;
     if (!this.folder) this.folder = findResultsFolder(this.customFolder);
-    if (!this.folder) return { uploaded: 0, total: 0 };
-    const files = listXmlFiles(this.folder);
-    let uploaded = 0;
-    for (const f of files) {
-      try {
-        const parsed = parseFile(f.path);
-        const res = await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
-        if (res && res.uploaded) uploaded += res.uploaded;
-        if (res && !res.error) this.seen.add(f.name);
-      } catch (err) {
-        console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
-        this.seen.add(f.name);
+    if (!this.folder) { this.scanRunning = false; return { uploaded: 0, total: 0, processed: 0, skipped: 0, errors: 0 }; }
+    try {
+      const files = listXmlFiles(this.folder);
+      let uploaded = 0;
+      let processed = 0;
+      let skipped = 0;
+      let errors = 0;
+      let lastNote = null;
+      for (const f of files) {
+        try {
+          const parsed = parseFile(f.path);
+          const res = await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
+          if (res && res.error) { errors += 1; lastNote = res.error; }
+          if (res && !res.error) processed += 1;
+          if (res && res.uploaded) uploaded += res.uploaded;
+          if (res && res.skipped) skipped += res.skipped;
+          if (res && (res.note || res.reason)) lastNote = res.note || res.reason;
+          if (res && !res.error) { this.seen.add(f.name); if (this.onSeenChanged) this.onSeenChanged(this.seen); }
+        } catch (err) {
+          console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
+          errors += 1;
+          lastNote = err.message;
+        }
       }
+      const result = { uploaded, total: files.length, processed, skipped, errors, note: lastNote };
+      if (this.onScanComplete) this.onScanComplete(result, { markFullScan });
+      return result;
+    } finally {
+      this.scanRunning = false;
     }
-    return { uploaded, total: files.length };
   }
 }
 

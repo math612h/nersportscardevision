@@ -35,9 +35,23 @@ const parser = new XMLParser({
   parseTagValue: false,
 });
 
+function findRaceResultsNode(obj) {
+  if (!obj || typeof obj !== "object") return null;
+  if (obj.RaceResults) return Array.isArray(obj.RaceResults) ? obj.RaceResults.at(-1) : obj.RaceResults;
+  if (obj.rFactorXML?.RaceResults) {
+    return Array.isArray(obj.rFactorXML.RaceResults) ? obj.rFactorXML.RaceResults.at(-1) : obj.rFactorXML.RaceResults;
+  }
+  for (const value of Object.values(obj)) {
+    if (value && typeof value === "object" && value.RaceResults) {
+      return Array.isArray(value.RaceResults) ? value.RaceResults.at(-1) : value.RaceResults;
+    }
+  }
+  return null;
+}
+
 function parseLmuRaceFile(xml) {
   const doc = parser.parse(xml);
-  const rr = doc.RaceResults;
+  const rr = findRaceResultsNode(doc);
   if (!rr) throw new Error("Not an LMU race result file (missing RaceResults)");
 
   const track =
