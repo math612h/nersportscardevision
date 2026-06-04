@@ -32,6 +32,23 @@ async function signInWithPassword(email, password) {
   return data.session;
 }
 
+async function sendEmailOtp(email) {
+  const client = makeClient(null);
+  const { error } = await client.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: false },
+  });
+  if (error) throw error;
+  return true;
+}
+
+async function verifyEmailOtp(email, token) {
+  const client = makeClient(null);
+  const { data, error } = await client.auth.verifyOtp({ email, token, type: "email" });
+  if (error) throw error;
+  return data.session;
+}
+
 async function restoreSession(session) {
   const client = makeClient(null);
   const { data, error } = await client.auth.setSession({
