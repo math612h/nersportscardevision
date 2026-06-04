@@ -137,4 +137,4 @@ async function uploadParsedResults({ session, parsed }) {
   return { uploaded: rows.length, skipped: parsed.drivers.length - rows.length };
 }
 
-module.exports = { makeClient, signInWithPassword, restoreSession, getUserProfile, uploadParsedResults };
+module.exports = { makeClient, signInWithPassword, sendEmailOtp, verifyEmailOtp, restoreSession, getUserProfile, uploadParsedResults };
