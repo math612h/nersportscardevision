@@ -9,7 +9,7 @@ declare global {
       verifyOtp: (email: string, token: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
       signInWithToken: (token: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
       signOut: () => Promise<{ ok: boolean }>;
-      scanNow: () => Promise<{ uploaded: number; error?: string }>;
+      scanNow: () => Promise<{ uploaded: number; total?: number; processed?: number; skipped?: number; errors?: number; error?: string }>;
       pickFolder: () => Promise<{ ok: boolean; folder?: string }>;
       clearFolder: () => Promise<{ ok: boolean }>;
       onStatusUpdate: (cb: (s: Status) => void) => () => void;
@@ -250,8 +250,8 @@ function SignedIn({ status }: { status: Status }) {
         </button>
       )}
 
-      <button onClick={scan} disabled={scanning || !status.lmu.lmuFound}>
-        {scanning ? "Scanner…" : "Scan alle filer igen"}
+      <button onClick={scan} disabled={scanning || status.scanning || !status.lmu.lmuFound}>
+        {scanning || status.scanning ? "Scanner…" : "Scan alle filer igen"}
       </button>
       <button className="secondary" onClick={out}>Log ud</button>
 
