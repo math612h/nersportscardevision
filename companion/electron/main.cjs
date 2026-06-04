@@ -249,6 +249,7 @@ ipcMain.handle("auth:status", () => ({
   lastError,
   lastScan,
   scanning,
+  customFolder: authStore.loadCustomFolder(),
 }));
 
 ipcMain.handle("auth:signIn", async (_e, { email, password }) => {
