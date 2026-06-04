@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const Route = createFileRoute("/_authenticated/profil")({
-  head: () => ({ meta: [{ title: "Min profil – LMU-Hub" }] }),
+  head: () => ({ meta: [{ title: "Min profil – DanishEnduranceSeries.dk" }] }),
   component: ProfilePage,
 });
 

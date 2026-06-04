@@ -1,9 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowUpRight, Flag, Shield } from "lucide-react";
 
-const PAGE_TITLE = "LMU – vælg hub – LMU-Hub";
+const PAGE_TITLE = "LMU – vælg hub – DanishEnduranceSeries.dk";
 const PAGE_DESC = "Vælg Liga Hub for ligaer og løb, eller Teams Hub for hold-fællesskab.";
-const PAGE_URL = "https://nersportscardevision.lovable.app/lmu";
+const PAGE_URL = "https://danishenduranceseries.dk/lmu";
 
 export const Route = createFileRoute("/lmu/")({
   component: LmuHubPicker,

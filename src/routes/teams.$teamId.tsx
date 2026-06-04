@@ -25,11 +25,11 @@ import {
 export const Route = createFileRoute("/teams/$teamId")({
   head: ({ params }) => ({
     meta: [
-      { title: "Team – LMU-Hub" },
-      { property: "og:title", content: "Team – LMU-Hub" },
+      { title: "Team – DanishEnduranceSeries.dk" },
+      { property: "og:title", content: "Team – DanishEnduranceSeries.dk" },
       { name: "robots", content: "index,follow" },
     ],
-    links: [{ rel: "canonical", href: `https://nersportscardevision.lovable.app/teams/${params.teamId}` }],
+    links: [{ rel: "canonical", href: `https://danishenduranceseries.dk/teams/${params.teamId}` }],
   }),
   component: TeamDetailPage,
 });
