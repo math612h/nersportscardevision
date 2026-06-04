@@ -146,6 +146,7 @@ function startWatcher() {
   watcher = new LmuWatcher({
     seenFiles: seen,
     pollMs: POLL_INTERVAL_MS,
+    customFolder,
     onStatus: (s) => {
       const changed = s.lmuFound !== lmuStatus.lmuFound || s.folder !== lmuStatus.folder;
       lmuStatus = s;
