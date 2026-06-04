@@ -297,10 +297,10 @@ function LeaderboardPage() {
             Download companion-appen, dobbeltklik installeren og log ind én gang. Derefter starter den automatisk ved Windows-opstart, kører i baggrunden og uploader dine tider når du har kørt i LMU.
           </p>
           <div className="flex items-center gap-3 pt-1">
-            {COMPANION_INSTALLER_URL ? (
+          {COMPANION_INSTALLER_URL ? (
               <>
                 <Button asChild className="gap-2">
-                  <a href={COMPANION_INSTALLER_URL} download="NER-Sportscar-Companion-Setup.exe">
+                  <a href={COMPANION_INSTALLER_URL} download="DES-Companion-Setup.exe">
                     <Upload className="h-4 w-4" /> Download til Windows
                   </a>
                 </Button>
@@ -309,7 +309,7 @@ function LeaderboardPage() {
             ) : (
               <>
                 <Button asChild variant="outline" className="gap-2">
-                  <a href={companionZip.url} download="NER-Sportscar-Companion-Windows.zip">
+                  <a href={companionZip.url} download="DES-Companion-Windows.zip">
                     <Upload className="h-4 w-4" /> Download (gammel version)
                   </a>
                 </Button>
