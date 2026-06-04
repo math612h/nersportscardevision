@@ -96,6 +96,8 @@ function buildTrayMenu() {
         session = null;
         deviceToken = null;
         userInfo = null;
+        lastScan = null;
+        scanning = false;
         if (watcher) { watcher.stop(); watcher = null; }
         updateStatus();
         showWindow();
@@ -245,6 +247,8 @@ ipcMain.handle("auth:status", () => ({
   lmu: lmuStatus,
   uploadCount,
   lastError,
+  lastScan,
+  scanning,
 }));
 
 ipcMain.handle("auth:signIn", async (_e, { email, password }) => {
@@ -328,12 +332,14 @@ ipcMain.handle("auth:signOut", async () => {
   session = null;
   deviceToken = null;
   userInfo = null;
+  lastScan = null;
+  scanning = false;
   if (watcher) { watcher.stop(); watcher = null; }
   updateStatus();
   return { ok: true };
 });
 
-ipcMain.handle("lmu:status", () => ({ ...lmuStatus, uploadCount, customFolder: authStore.loadCustomFolder() }));
+ipcMain.handle("lmu:status", () => ({ ...lmuStatus, uploadCount, lastScan, scanning, customFolder: authStore.loadCustomFolder() }));
 ipcMain.handle("lmu:scanNow", () => triggerScan());
 ipcMain.handle("lmu:pickFolder", async () => {
   const res = await dialog.showOpenDialog(win, {
