@@ -107,4 +107,16 @@ function saveSeenFiles(set) {
   }
 }
 
-module.exports = { saveSession, loadSession, clearSession, saveDeviceToken, loadDeviceToken, clearDeviceToken, loadSeenFiles, saveSeenFiles };
+const FOLDER_FILE = path.join(app.getPath("userData"), "custom-folder.txt");
+function saveCustomFolder(folder) {
+  try {
+    if (!folder) { if (fs.existsSync(FOLDER_FILE)) fs.unlinkSync(FOLDER_FILE); return; }
+    fs.writeFileSync(FOLDER_FILE, folder, "utf8");
+  } catch (err) { console.error("[auth-store] saveCustomFolder failed:", err); }
+}
+function loadCustomFolder() {
+  try { if (fs.existsSync(FOLDER_FILE)) return fs.readFileSync(FOLDER_FILE, "utf8").trim() || null; } catch {}
+  return null;
+}
+
+module.exports = { saveSession, loadSession, clearSession, saveDeviceToken, loadDeviceToken, clearDeviceToken, loadSeenFiles, saveSeenFiles, saveCustomFolder, loadCustomFolder };
