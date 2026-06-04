@@ -23,6 +23,7 @@ type Status = {
   lmu: { lmuFound: boolean; folder: string | null };
   uploadCount: number;
   lastError: string | null;
+  customFolder?: string | null;
 };
 
 export default function App() {
