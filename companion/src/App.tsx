@@ -10,6 +10,8 @@ declare global {
       signInWithToken: (token: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
       signOut: () => Promise<{ ok: boolean }>;
       scanNow: () => Promise<{ uploaded: number; error?: string }>;
+      pickFolder: () => Promise<{ ok: boolean; folder?: string }>;
+      clearFolder: () => Promise<{ ok: boolean }>;
       onStatusUpdate: (cb: (s: Status) => void) => () => void;
     };
   }
@@ -21,6 +23,7 @@ type Status = {
   lmu: { lmuFound: boolean; folder: string | null };
   uploadCount: number;
   lastError: string | null;
+  customFolder?: string | null;
 };
 
 export default function App() {
@@ -211,9 +214,17 @@ function SignedIn({ status }: { status: Status }) {
         <div className="row">
           <span className="k">LMU fundet</span>
           <span className={`v ${status.lmu.lmuFound ? "ok" : "err"}`}>
-            {status.lmu.lmuFound ? "Ja" : "Nej — start LMU mindst én gang"}
+            {status.lmu.lmuFound ? "Ja" : "Nej — vælg mappe manuelt"}
           </span>
         </div>
+        {status.lmu.folder && (
+          <div className="row" style={{ alignItems: "flex-start" }}>
+            <span className="k">Mappe</span>
+            <span className="v" style={{ fontSize: 10, wordBreak: "break-all", textAlign: "right", maxWidth: "70%" }}>
+              {status.lmu.folder}
+            </span>
+          </div>
+        )}
         <div className="row"><span className="k">Uploadede tider</span><span className="v">{status.uploadCount}</span></div>
       </div>
 
@@ -221,10 +232,23 @@ function SignedIn({ status }: { status: Status }) {
         <p className="err" style={{ fontSize: 12, margin: 0 }}>Sidste fejl: {status.lastError}</p>
       )}
 
+      <button className="secondary" onClick={async () => { await window.companion.pickFolder(); }}>
+        {status.customFolder || !status.lmu.lmuFound ? "Vælg LMU Results-mappe…" : "Skift LMU-mappe…"}
+      </button>
+      {status.customFolder && (
+        <button className="secondary" onClick={() => window.companion.clearFolder()}>
+          Brug automatisk fundet mappe
+        </button>
+      )}
+
       <button onClick={scan} disabled={scanning || !status.lmu.lmuFound}>
         {scanning ? "Scanner…" : "Scan alle gamle resultater"}
       </button>
       <button className="secondary" onClick={out}>Log ud</button>
+
+      <p className="hint" style={{ marginTop: 4 }}>
+        Tip: typisk sti er <code>Steam\steamapps\common\Le Mans Ultimate\UserData\Log\Results</code>.
+      </p>
 
       <p className="hint">
         Du kan lukke dette vindue — appen kører videre i system tray (nede ved siden af uret). Højreklik på ikonet for menu.

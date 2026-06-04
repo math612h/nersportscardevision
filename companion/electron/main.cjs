@@ -1,5 +1,5 @@
 // Main Electron process — system tray, auto-start, login flow, LMU watcher.
-const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, shell } = require("electron");
+const { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, shell, dialog } = require("electron");
 const path = require("path");
 const { POLL_INTERVAL_MS } = require("./config.cjs");
 const authStore = require("./auth-store.cjs");
@@ -123,6 +123,7 @@ function updateStatus() {
     lmu: lmuStatus,
     uploadCount,
     lastError,
+    customFolder: authStore.loadCustomFolder(),
   });
 }
 
@@ -141,10 +142,12 @@ async function triggerScan() {
 function startWatcher() {
   if (watcher) watcher.stop();
   const seen = authStore.loadSeenFiles();
+  const customFolder = authStore.loadCustomFolder();
 
   watcher = new LmuWatcher({
     seenFiles: seen,
     pollMs: POLL_INTERVAL_MS,
+    customFolder,
     onStatus: (s) => {
       const changed = s.lmuFound !== lmuStatus.lmuFound || s.folder !== lmuStatus.folder;
       lmuStatus = s;
@@ -314,8 +317,27 @@ ipcMain.handle("auth:signOut", async () => {
   return { ok: true };
 });
 
-ipcMain.handle("lmu:status", () => ({ ...lmuStatus, uploadCount }));
+ipcMain.handle("lmu:status", () => ({ ...lmuStatus, uploadCount, customFolder: authStore.loadCustomFolder() }));
 ipcMain.handle("lmu:scanNow", () => triggerScan());
+ipcMain.handle("lmu:pickFolder", async () => {
+  const res = await dialog.showOpenDialog(win, {
+    title: "Vælg LMU Results-mappe",
+    properties: ["openDirectory"],
+  });
+  if (res.canceled || !res.filePaths[0]) return { ok: false };
+  const folder = res.filePaths[0];
+  authStore.saveCustomFolder(folder);
+  if (watcher) { watcher.setCustomFolder(folder); await watcher.tick(); }
+  else if (session || deviceToken) startWatcher();
+  updateStatus();
+  return { ok: true, folder };
+});
+ipcMain.handle("lmu:clearFolder", async () => {
+  authStore.saveCustomFolder(null);
+  if (watcher) { watcher.setCustomFolder(null); await watcher.tick(); }
+  updateStatus();
+  return { ok: true };
+});
 
 // ---- App lifecycle ---------------------------------------------------------
 app.on("second-instance", () => showWindow());
