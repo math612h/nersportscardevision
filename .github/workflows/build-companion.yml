@@ -1,0 +1,54 @@
+name: Build Companion Windows Installer
+
+on:
+  push:
+    tags:
+      - 'companion-v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    defaults:
+      run:
+        working-directory: companion
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install companion dependencies
+        run: npm install
+
+      - name: Build renderer (Vite)
+        run: npm run build
+
+      - name: Build Windows installer (NSIS)
+        run: npx electron-builder --win nsis --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload installer as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NER-Sportscar-Companion-Setup
+          path: companion/release/*Setup*.exe
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/companion-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: companion/release/*Setup*.exe
+          generate_release_notes: true
+          name: "Companion ${{ github.ref_name }}"
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
