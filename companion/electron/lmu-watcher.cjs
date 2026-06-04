@@ -8,6 +8,7 @@ function candidateResultsFolders() {
   const home = os.homedir();
   const list = [
     path.join(home, "Documents", "My Games", "LeMansUltimate", "UserData", "Log", "Results"),
+    path.join(home, "Documents", "My Games", "Le Mans Ultimate", "UserData", "Log", "Results"),
     path.join(home, "Documents", "Le Mans Ultimate", "UserData", "Log", "Results"),
   ];
   // Common Steam install locations
@@ -20,8 +21,18 @@ function candidateResultsFolders() {
     "E:/SteamLibrary",
     "C:/SteamLibrary",
   ];
+  const suffix = path.join("steamapps", "common", "Le Mans Ultimate", "UserData", "Log", "Results");
   for (const r of steamRoots) {
-    list.push(path.join(r, "steamapps", "common", "Le Mans Ultimate", "UserData", "Log", "Results"));
+    list.push(path.join(r, suffix));
+  }
+  // Windows VirtualStore — LMU writes here when installed under Program Files
+  // without admin rights. Stifinder viser dem "smeltet sammen" med Program Files,
+  // men det fysiske disk-location er VirtualStore.
+  const virtualStoreRoot = path.join(home, "AppData", "Local", "VirtualStore");
+  for (const r of steamRoots) {
+    // Strip drive letter — VirtualStore mirrors paths under Program Files only
+    const rel = r.replace(/^[A-Za-z]:[/\\]?/, "");
+    list.push(path.join(virtualStoreRoot, rel, suffix));
   }
   return list;
 }
