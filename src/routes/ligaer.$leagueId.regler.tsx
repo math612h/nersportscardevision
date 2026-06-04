@@ -16,9 +16,9 @@ export const Route = createFileRoute("/ligaer/$leagueId/regler")({
   },
   head: ({ params, loaderData }) => {
     const name = loaderData?.leagueName ?? "ligaen";
-    const title = `Regelsæt for ${name} — LMU-Hub`;
-    const desc = `Det fulde regelsæt for ${name} i NER Sportscar Division: sportslige, tekniske og adfærdsmæssige regler.`;
-    const url = `https://nersportscardevision.lovable.app/ligaer/${params.leagueId}/regler`;
+    const title = `Regelsæt for ${name} — DanishEnduranceSeries.dk`;
+    const desc = `Det fulde regelsæt for ${name} i DanishEnduranceSeries.dk: sportslige, tekniske og adfærdsmæssige regler.`;
+    const url = `https://danishenduranceseries.dk/ligaer/${params.leagueId}/regler`;
     return {
       meta: [
         { title },

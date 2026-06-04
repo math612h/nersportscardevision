@@ -3,10 +3,10 @@ import { ArrowUpRight, Lock, Flag } from "lucide-react";
 import lmuCover from "@/assets/lmu-cover.jpg.asset.json";
 import accCover from "@/assets/acc-cover.jpg.asset.json";
 
-const PAGE_TITLE = "Vælg simulator — LMU-Hub";
+const PAGE_TITLE = "Vælg simulator — DanishEnduranceSeries.dk";
 const PAGE_DESC =
-  "Vælg simulator og hop ind i NER Sportscar Divisions sim-racing ligaer. Le Mans Ultimate er aktiv; Assetto Corsa Competizione kommer snart.";
-const PAGE_URL = "https://nersportscardevision.lovable.app/";
+  "Vælg simulator og hop ind i DanishEnduranceSeries.dk sim-racing ligaer. Le Mans Ultimate er aktiv; Assetto Corsa Competizione kommer snart.";
+const PAGE_URL = "https://danishenduranceseries.dk/";
 
 export const Route = createFileRoute("/")({
   component: SimPicker,
@@ -28,13 +28,13 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "WebSite",
-          name: "LMU-Hub",
-          url: "https://nersportscardevision.lovable.app",
+          name: "DanishEnduranceSeries.dk",
+          url: "https://danishenduranceseries.dk",
           description:
-            "Sim-racing liga-hub til NER Sportscar Division med ligaer i Le Mans Ultimate.",
+            "Sim-racing liga-hub til DanishEnduranceSeries.dk med ligaer i Le Mans Ultimate.",
           publisher: {
             "@type": "Organization",
-            name: "NER Sportscar Division",
+            name: "DanishEnduranceSeries.dk",
           },
         }),
       },
@@ -46,7 +46,7 @@ function SimPicker() {
   return (
     <div className="space-y-10">
       <header className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">NER Sportscar Division</p>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">DanishEnduranceSeries.dk</p>
         <h1 className="text-2xl font-bold tracking-tight">Vælg simulator</h1>
         <p className="text-sm text-muted-foreground">Hvilken platform kører du på?</p>
       </header>

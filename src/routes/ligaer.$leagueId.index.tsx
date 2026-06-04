@@ -37,11 +37,11 @@ export const Route = createFileRoute("/ligaer/$leagueId/")({
   head: ({ params, loaderData }) => {
     const name = loaderData?.leagueName ?? "Liga";
     const kind = loaderData?.isOffseason ? "Off-season event" : "Liga";
-    const title = `${name} — ${kind} | LMU-Hub`;
+    const title = `${name} — ${kind} | DanishEnduranceSeries.dk`;
     const desc =
       loaderData?.leagueDesc?.slice(0, 155) ??
-      `${name}: afdelinger, tilmeldte kørere, regelsæt og stillinger i NER Sportscar Division.`;
-    const url = `https://nersportscardevision.lovable.app/ligaer/${params.leagueId}`;
+      `${name}: afdelinger, tilmeldte kørere, regelsæt og stillinger i DanishEnduranceSeries.dk.`;
+    const url = `https://danishenduranceseries.dk/ligaer/${params.leagueId}`;
     return {
       meta: [
         { title },

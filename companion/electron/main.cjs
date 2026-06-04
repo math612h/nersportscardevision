@@ -37,7 +37,7 @@ function createWindow() {
     show: false,
     resizable: false,
     backgroundColor: "#0b0b0f",
-    title: "NER Sportscar Companion",
+    title: "DanishEnduranceSeries.dk Companion",
     autoHideMenuBar: true,
     icon: getTrayIcon(),
     webPreferences: {
@@ -83,7 +83,7 @@ function buildTrayMenu() {
     { type: "separator" },
     { label: "Åbn vindue", click: () => showWindow() },
     { label: "Scan nu", click: () => triggerScan() },
-    { label: "Åbn leaderboard", click: () => shell.openExternal("https://nersportscardevision.lovable.app/leaderboard") },
+    { label: "Åbn leaderboard", click: () => shell.openExternal("https://danishenduranceseries.dk/leaderboard") },
     { type: "separator" },
     {
       label: "Log ud",
@@ -106,7 +106,7 @@ function buildTrayMenu() {
 function refreshTray() {
   if (!tray) return;
   tray.setToolTip(
-    `NER Sportscar Companion\n${userInfo ? "Logget ind" : "Ikke logget ind"} · LMU ${lmuStatus.lmuFound ? "fundet" : "mangler"}`
+    `DanishEnduranceSeries.dk Companion\n${userInfo ? "Logget ind" : "Ikke logget ind"} · LMU ${lmuStatus.lmuFound ? "fundet" : "mangler"}`
   );
   tray.setContextMenu(buildTrayMenu());
 }
@@ -345,7 +345,7 @@ app.on("second-instance", () => showWindow());
 app.whenReady().then(async () => {
   // Tray icon
   tray = new Tray(getTrayIcon());
-  tray.setToolTip("NER Sportscar Companion");
+  tray.setToolTip("DanishEnduranceSeries.dk Companion");
   tray.on("click", () => showWindow());
   refreshTray();
 

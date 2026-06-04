@@ -15,7 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const Route = createFileRoute("/_authenticated/profil")({
-  head: () => ({ meta: [{ title: "Min profil – LMU-Hub" }] }),
+  head: () => ({ meta: [{ title: "Min profil – DanishEnduranceSeries.dk" }] }),
   component: ProfilePage,
 });
 
@@ -356,7 +356,7 @@ function DeviceTokensCard() {
           <div>
             <CardTitle className="flex items-center gap-2"><Monitor className="h-5 w-5" />Desktop companion</CardTitle>
             <CardDescription>
-              Generér en adgangsnøgle som du paster ind i NER Companion-appen på din PC. Den overvåger din LMU
+              Generér en adgangsnøgle som du paster ind i DES Companion-appen på din PC. Den overvåger din LMU
               Results-mappe og uploader automatisk nye race-filer til leaderboardet.
             </CardDescription>
           </div>

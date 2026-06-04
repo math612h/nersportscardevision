@@ -7,10 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
 import type { ClassConfig } from "@/lib/tracks";
 
-const LMU_TITLE = "Le Mans Ultimate ligaer & løb — LMU-Hub";
+const LMU_TITLE = "Le Mans Ultimate ligaer & løb — DanishEnduranceSeries.dk";
 const LMU_DESC =
-  "Oversigt over alle Le Mans Ultimate-ligaer og off-season events i NER Sportscar Division. Tilmeld dig, se afdelinger, regler og stillinger.";
-const LMU_URL = "https://nersportscardevision.lovable.app/lmu/liga";
+  "Oversigt over alle Le Mans Ultimate-ligaer og off-season events i DanishEnduranceSeries.dk. Tilmeld dig, se afdelinger, regler og stillinger.";
+const LMU_URL = "https://danishenduranceseries.dk/lmu/liga";
 
 export const Route = createFileRoute("/lmu/liga")({
   component: ParticipantDashboard,

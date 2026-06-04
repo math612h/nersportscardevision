@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/profil/$userId")({
-  head: () => ({ meta: [{ title: "Profil – LMU-Hub" }] }),
+  head: () => ({ meta: [{ title: "Profil – DanishEnduranceSeries.dk" }] }),
   component: PublicProfile,
 });
 

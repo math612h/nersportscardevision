@@ -12,14 +12,14 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
-const COMPANION_INSTALLER_URL = "https://github.com/math612h/nersportscardevision/releases/latest/download/NER-Sportscar-Companion-Setup.exe";
+const COMPANION_INSTALLER_URL = "https://github.com/math612h/nersportscardevision/releases/latest/download/DES-Companion-Setup.exe";
 // Fallback: old zip download (kept as backup until installer is live)
 import companionZip from "@/assets/companion-zip.asset.json";
 
 const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
 const LB_DESC =
-  "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle NER Sportscar Division-løb i Le Mans Ultimate. Upload din race-fil og kom på listen.";
-const LB_URL = "https://nersportscardevision.lovable.app/leaderboard";
+  "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle DanishEnduranceSeries.dk-løb i Le Mans Ultimate. Upload din race-fil og kom på listen.";
+const LB_URL = "https://danishenduranceseries.dk/leaderboard";
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -37,10 +37,10 @@ export const Route = createFileRoute("/leaderboard")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Dataset",
-          name: "NER Sportscar Division — Le Mans Ultimate leaderboard",
+          name: "DanishEnduranceSeries.dk — Le Mans Ultimate leaderboard",
           description: LB_DESC,
           url: LB_URL,
-          creator: { "@type": "Organization", name: "NER Sportscar Division" },
+          creator: { "@type": "Organization", name: "DanishEnduranceSeries.dk" },
           variableMeasured: ["best lap time", "track", "car class"],
         }),
       },
@@ -297,10 +297,10 @@ function LeaderboardPage() {
             Download companion-appen, dobbeltklik installeren og log ind én gang. Derefter starter den automatisk ved Windows-opstart, kører i baggrunden og uploader dine tider når du har kørt i LMU.
           </p>
           <div className="flex items-center gap-3 pt-1">
-            {COMPANION_INSTALLER_URL ? (
+          {COMPANION_INSTALLER_URL ? (
               <>
                 <Button asChild className="gap-2">
-                  <a href={COMPANION_INSTALLER_URL} download="NER-Sportscar-Companion-Setup.exe">
+                  <a href={COMPANION_INSTALLER_URL} download="DES-Companion-Setup.exe">
                     <Upload className="h-4 w-4" /> Download til Windows
                   </a>
                 </Button>
@@ -309,7 +309,7 @@ function LeaderboardPage() {
             ) : (
               <>
                 <Button asChild variant="outline" className="gap-2">
-                  <a href={companionZip.url} download="NER-Sportscar-Companion-Windows.zip">
+                  <a href={companionZip.url} download="DES-Companion-Windows.zip">
                     <Upload className="h-4 w-4" /> Download (gammel version)
                   </a>
                 </Button>
