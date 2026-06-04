@@ -59,16 +59,18 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
 
   const layout = parseLayoutFromTrackData(rr.TrackData);
 
+  const session = rr.Race ?? rr.Qualify ?? rr.Practice ?? rr.TestDay ?? rr.WarmUp;
+  const sessionNode = Array.isArray(session) ? session[session.length - 1] : session;
+
   let recordedAt: string | null = null;
-  const ts = rr?.Race?.DateTime ?? rr?.DateTime;
+  const ts = sessionNode?.DateTime ?? rr?.DateTime;
   if (ts != null) {
     const n = Number(ts);
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
   }
 
-  const race = rr.Race;
   let driverArr: any[] = [];
-  if (race?.Driver) driverArr = Array.isArray(race.Driver) ? race.Driver : [race.Driver];
+  if (sessionNode?.Driver) driverArr = Array.isArray(sessionNode.Driver) ? sessionNode.Driver : [sessionNode.Driver];
 
   const drivers: ParsedDriver[] = driverArr.map((d): ParsedDriver => {
     const finishStatus = String(d.FinishStatus ?? "");
