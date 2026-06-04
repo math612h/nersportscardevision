@@ -298,7 +298,7 @@ function LeaderboardPage() {
           </p>
           <div className="flex items-center gap-3 pt-1">
             <Button asChild className="gap-2">
-              <a href="/api/public/download/companion" download>
+              <a href={companionZip.url} download="NER-Sportscar-Companion-Windows.zip">
                 <Upload className="h-4 w-4" /> Download til Windows
               </a>
             </Button>
