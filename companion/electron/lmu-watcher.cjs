@@ -134,6 +134,7 @@ class LmuWatcher {
         try {
           const parsed = parseFile(f.path);
           const res = await this.onNewResults({ filePath: f.path, fileName: f.name, parsed });
+          if (res && res.error) { errors += 1; lastNote = res.error; }
           if (res && !res.error) processed += 1;
           if (res && res.uploaded) uploaded += res.uploaded;
           if (res && res.skipped) skipped += res.skipped;
