@@ -60,10 +60,11 @@ function parseFile(filePath) {
 }
 
 class LmuWatcher {
-  constructor({ seenFiles, onNewResults, onStatus, pollMs, customFolder }) {
+  constructor({ seenFiles, onNewResults, onStatus, onScanComplete, pollMs, customFolder }) {
     this.seen = seenFiles;
     this.onNewResults = onNewResults;
     this.onStatus = onStatus;
+    this.onScanComplete = onScanComplete;
     this.pollMs = pollMs || 10_000;
     this.timer = null;
     this.folder = null;
@@ -143,7 +144,9 @@ class LmuWatcher {
           lastNote = err.message;
         }
       }
-      return { uploaded, total: files.length, processed, skipped, errors, note: lastNote };
+      const result = { uploaded, total: files.length, processed, skipped, errors, note: lastNote };
+      if (this.onScanComplete) this.onScanComplete(result);
+      return result;
     } finally {
       this.scanRunning = false;
     }
