@@ -12,6 +12,8 @@ contextBridge.exposeInMainWorld("companion", {
   // LMU
   getLmuStatus: () => ipcRenderer.invoke("lmu:status"),
   scanNow: () => ipcRenderer.invoke("lmu:scanNow"),
+  pickFolder: () => ipcRenderer.invoke("lmu:pickFolder"),
+  clearFolder: () => ipcRenderer.invoke("lmu:clearFolder"),
 
   // Events from main → renderer
   onStatusUpdate: (cb) => {
