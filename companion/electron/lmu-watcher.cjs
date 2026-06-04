@@ -60,7 +60,7 @@ function parseFile(filePath) {
 }
 
 class LmuWatcher {
-  constructor({ seenFiles, onNewResults, onStatus, onScanComplete, onSeenChanged, pollMs, customFolder }) {
+  constructor({ seenFiles, onNewResults, onStatus, onScanComplete, onSeenChanged, initialFullScanDone, pollMs, customFolder }) {
     this.seen = seenFiles;
     this.onNewResults = onNewResults;
     this.onStatus = onStatus;
@@ -70,7 +70,7 @@ class LmuWatcher {
     this.timer = null;
     this.folder = null;
     this.customFolder = customFolder || null;
-    this.initialScanDone = false;
+    this.initialScanDone = !!initialFullScanDone;
     this.scanRunning = false;
   }
 
@@ -99,7 +99,7 @@ class LmuWatcher {
 
     if (!this.initialScanDone) {
       this.initialScanDone = true;
-      await this.scanAll();
+      await this.scanAll({ markFullScan: true });
       return;
     }
 
@@ -118,7 +118,7 @@ class LmuWatcher {
   }
 
   // Force re-scan ALL files in the folder, ignoring the seen-list.
-  async scanAll() {
+  async scanAll({ markFullScan = false } = {}) {
     if (this.scanRunning) return { uploaded: 0, total: 0, processed: 0, skipped: 0, errors: 0, busy: true };
     this.scanRunning = true;
     if (!this.folder) this.folder = findResultsFolder(this.customFolder);
@@ -146,7 +146,7 @@ class LmuWatcher {
         }
       }
       const result = { uploaded, total: files.length, processed, skipped, errors, note: lastNote };
-      if (this.onScanComplete) this.onScanComplete(result);
+      if (this.onScanComplete) this.onScanComplete(result, { markFullScan });
       return result;
     } finally {
       this.scanRunning = false;
