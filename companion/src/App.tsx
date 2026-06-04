@@ -7,6 +7,7 @@ declare global {
       signIn: (email: string, password: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
       sendOtp: (email: string) => Promise<{ ok: boolean; error?: string }>;
       verifyOtp: (email: string, token: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
+      signInWithToken: (token: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
       signOut: () => Promise<{ ok: boolean }>;
       scanNow: () => Promise<{ uploaded: number; error?: string }>;
       onStatusUpdate: (cb: (s: Status) => void) => () => void;
@@ -48,10 +49,11 @@ export default function App() {
 }
 
 function SignIn() {
-  const [mode, setMode] = useState<"otp" | "password">("otp");
+  const [mode, setMode] = useState<"key" | "otp" | "password">("key");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
+  const [keyToken, setKeyToken] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
@@ -83,6 +85,14 @@ function SignIn() {
     if (!r.ok) setError(r.error || "Forkert eller udløbet kode");
   };
 
+  const submitKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null); setLoading(true);
+    const r = await window.companion.signInWithToken(keyToken.trim());
+    setLoading(false);
+    if (!r.ok) setError(r.error || "Kunne ikke logge ind med nøglen");
+  };
+
   return (
     <div className="stack">
       <div>
@@ -91,15 +101,43 @@ function SignIn() {
       </div>
 
       <div className="tabs">
+        <button type="button" className={mode === "key" ? "tab active" : "tab"} onClick={() => { setMode("key"); setError(null); }}>
+          Nøgle
+        </button>
         <button type="button" className={mode === "otp" ? "tab active" : "tab"} onClick={() => { setMode("otp"); setError(null); }}>
-          Engangskode på mail
+          Mail-kode
         </button>
         <button type="button" className={mode === "password" ? "tab active" : "tab"} onClick={() => { setMode("password"); setError(null); }}>
           Adgangskode
         </button>
       </div>
 
-      {mode === "password" ? (
+      {mode === "key" ? (
+        <form className="stack" onSubmit={submitKey}>
+          <div>
+            <label>Adgangsnøgle fra hjemmesiden</label>
+            <input
+              type="text"
+              value={keyToken}
+              onChange={(e) => setKeyToken(e.target.value)}
+              required
+              autoFocus
+              spellCheck={false}
+              autoComplete="off"
+              placeholder="64 tegn — paste her"
+              style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", fontSize: 12 }}
+            />
+          </div>
+          {error && <p className="err" style={{ fontSize: 12, margin: 0 }}>{error}</p>}
+          <button type="submit" disabled={loading || !keyToken.trim()}>
+            {loading ? "Logger ind…" : "Log ind"}
+          </button>
+          <p className="hint">
+            Gå ind på din profil på hjemmesiden → <b>Desktop companion</b> → <b>Ny nøgle</b>, og kopiér koden ind her.
+            Nøglen virker uden mail eller adgangskode.
+          </p>
+        </form>
+      ) : mode === "password" ? (
         <form className="stack" onSubmit={submitPassword}>
           <div>
             <label>E-mail</label>
