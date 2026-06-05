@@ -165,18 +165,22 @@ export function PointsSystemEditor({
 
       <div>
         <Label className="text-xs">Point pr. position</Label>
-        <div className="grid grid-cols-3 gap-1 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-5">
           {points.map((p, i) => (
-            <div key={i} className="flex items-center gap-1">
-              <span className="w-6 text-right text-xs text-muted-foreground">{i + 1}.</span>
+            <div key={i} className="flex items-center gap-1 min-w-0">
+              <span className="w-8 shrink-0 text-right text-xs text-muted-foreground">{i + 1}.</span>
               <Input
-                className="h-8"
-                type="number"
-                min={0}
-                value={p}
-                onChange={(e) => setPos(i, Number(e.target.value))}
+                className="h-8 min-w-0 flex-1"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={String(p)}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9]/g, "");
+                  setPos(i, raw === "" ? 0 : Number(raw));
+                }}
               />
-              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => removePos(i)}>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removePos(i)}>
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
