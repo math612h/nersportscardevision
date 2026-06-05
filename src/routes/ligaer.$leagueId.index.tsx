@@ -145,7 +145,7 @@ function LeagueDetail() {
             {(league as any)?.is_offseason ? "Off-Season event" : "Liga"}
           </p>
           <h1 className="text-2xl font-bold tracking-tight">{league?.name}</h1>
-          {league?.description && <p className="text-sm text-muted-foreground">{league.description}</p>}
+          {league?.description && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{league.description}</p>}
         </div>
 
         <div className="flex flex-wrap gap-2">
