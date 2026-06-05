@@ -288,7 +288,7 @@ function AdminLeagues() {
               <DialogHeader><DialogTitle>Opret liga eller off-season event</DialogTitle></DialogHeader>
               <form onSubmit={create} className="space-y-3">
                 <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
-                <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+                <div><Label>Beskrivelse</Label><Textarea rows={8} className="min-h-[200px]" placeholder="Brug tomme linjer for at adskille afsnit." maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
                 <BannerPicker pathOrUrl={null} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerFile(null)} />
                 <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
                   <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
@@ -325,7 +325,7 @@ function AdminLeagues() {
                       {l.name}
                       {l.is_offseason && <Badge variant="secondary" className="text-[10px]">Off-season</Badge>}
                     </CardTitle>
-                    {l.description && <p className="mt-1 text-sm text-muted-foreground">{l.description}</p>}
+                    {l.description && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{l.description}</p>}
                     <div className="mt-2 flex flex-wrap gap-2">
                       {cfgs.length > 0
                         ? cfgs.map((c, i) => (
@@ -435,7 +435,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         <DialogHeader><DialogTitle>Rediger liga</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div><Label>Beskrivelse</Label><Textarea maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+          <div><Label>Beskrivelse</Label><Textarea rows={8} className="min-h-[200px]" placeholder="Brug tomme linjer for at adskille afsnit." maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
           <BannerPicker pathOrUrl={bannerPath} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerPath(null)} />
           <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
             <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
