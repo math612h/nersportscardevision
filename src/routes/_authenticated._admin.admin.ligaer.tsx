@@ -325,7 +325,7 @@ function AdminLeagues() {
                       {l.name}
                       {l.is_offseason && <Badge variant="secondary" className="text-[10px]">Off-season</Badge>}
                     </CardTitle>
-                    {l.description && <p className="mt-1 text-sm text-muted-foreground">{l.description}</p>}
+                    {l.description && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{l.description}</p>}
                     <div className="mt-2 flex flex-wrap gap-2">
                       {cfgs.length > 0
                         ? cfgs.map((c, i) => (
