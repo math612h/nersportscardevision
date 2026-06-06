@@ -171,6 +171,7 @@ function LeagueDetail() {
             <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
           </Link>
           {league && <SignupDialog leagueId={leagueId} configs={configs} />}
+          {league && <EditEntryDialog leagueId={leagueId} />}
           {league && <LeaveLeagueButton leagueId={leagueId} />}
         </div>
       </header>

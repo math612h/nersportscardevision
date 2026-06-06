@@ -29,6 +29,8 @@ export const Route = createFileRoute("/lmu/liga")({
 function ParticipantDashboard() {
   const { data: leagues, isLoading } = useQuery({
     queryKey: ["leagues"],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
@@ -44,6 +46,8 @@ function ParticipantDashboard() {
   const { data: entriesByLeague } = useQuery({
     queryKey: ["leagues-entries-counts", leagueIds.sort().join(",")],
     enabled: leagueIds.length > 0,
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")

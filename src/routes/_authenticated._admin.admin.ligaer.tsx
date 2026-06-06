@@ -423,6 +423,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
+    qc.invalidateQueries({ queryKey: ["leagues-entries-counts"] });
     qc.invalidateQueries({ queryKey: ["league", league.id] });
   };
 
