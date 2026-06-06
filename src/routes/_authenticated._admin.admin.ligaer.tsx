@@ -212,6 +212,7 @@ function AdminLeagues() {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
   const [pointsSystem, setPointsSystem] = useState<PointsSystem>({});
+  const [signupOpensAt, setSignupOpensAt] = useState<string>("");
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
