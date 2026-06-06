@@ -72,15 +72,18 @@ function LeaderboardPage() {
   const [uploading, setUploading] = useState(false);
 
   const { data: rows, isLoading } = useQuery({
-    queryKey: ["leaderboard"],
+    queryKey: ["leaderboard", user ? "auth" : "anon"],
     queryFn: async () => {
+      const cols = user
+        ? "id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at"
+        : "id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at";
       const { data, error } = await supabase
         .from("leaderboard_times")
-        .select("id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at")
+        .select(cols)
         .order("best_lap_ms", { ascending: true })
         .limit(1000);
       if (error) throw error;
-      return (data ?? []) as Row[];
+      return ((data ?? []) as any[]).map((r) => ({ user_id: null, ...r })) as Row[];
     },
   });
 
