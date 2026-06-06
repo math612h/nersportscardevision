@@ -797,6 +797,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     if (!user) return toast.error("Du skal være logget ind.");
     if (!selected) return toast.error("Vælg en klasse.");
     if (carNumber == null) return toast.error("Vælg et kørenummer.");
+    if (!carModel) return toast.error("Vælg din bil.");
     if (!driverName) return toast.error("Dit kørernavn mangler på profilen.");
     if (!effectiveLmu) return toast.error("Indtast dit LMU-navn præcis som det står i spillet.");
 
