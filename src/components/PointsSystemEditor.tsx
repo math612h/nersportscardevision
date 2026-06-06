@@ -112,7 +112,7 @@ export function PointsSystemEditor({
   };
 
   return (
-    <div className="space-y-2 rounded-md border border-border p-2">
+    <div className="space-y-3 rounded-md border border-border p-3">
       <div className="flex items-center justify-between gap-2">
         <Label>Pointsystem</Label>
         <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
@@ -153,34 +153,35 @@ export function PointsSystemEditor({
         </div>
       )}
 
-      <div>
+      <div className="space-y-1.5">
         <Label className="text-xs">FL-point (hurtigste omgang)</Label>
         <Input
           type="number"
           min={0}
+          className="max-w-40"
           value={flPoints}
           onChange={(e) => onChange({ ...value, fastest_lap_points: Math.max(0, Number(e.target.value) | 0) })}
         />
       </div>
 
-      <div>
+      <div className="space-y-2">
         <Label className="text-xs">Point pr. position</Label>
-        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(8.25rem,1fr))] gap-2">
           {points.map((p, i) => (
-            <div key={i} className="flex items-center gap-1 min-w-0">
-              <span className="w-8 shrink-0 text-right text-xs text-muted-foreground">{i + 1}.</span>
+            <div key={i} className="grid min-w-0 grid-cols-[1.75rem_minmax(3.75rem,1fr)_1.75rem] items-center gap-1.5 rounded-md border border-border/70 bg-background/40 p-1.5">
+              <span className="shrink-0 text-right text-xs font-medium tabular-nums text-muted-foreground">{i + 1}.</span>
               <Input
-                className="h-8 min-w-0 flex-1"
-                type="text"
+                className="h-9 min-w-0 px-2 text-center font-mono tabular-nums"
+                type="number"
+                min={0}
                 inputMode="numeric"
-                pattern="[0-9]*"
                 value={String(p)}
                 onChange={(e) => {
                   const raw = e.target.value.replace(/[^0-9]/g, "");
                   setPos(i, raw === "" ? 0 : Number(raw));
                 }}
               />
-              <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removePos(i)}>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removePos(i)} aria-label={`Fjern position ${i + 1}`}>
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
