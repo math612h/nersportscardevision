@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_AID_FIELDS, getTrackImageFile } from "@/lib/tracks";
+import { CARS_BY_CLASS, classColor } from "@/lib/lmu-cars";
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
   component: LeagueDetail,
@@ -150,9 +151,15 @@ function LeagueDetail() {
 
         <div className="flex flex-wrap gap-2">
           {configs.length > 0
-            ? configs.map((c, i) => (
-                <Badge key={i} variant="outline">{c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}</Badge>
-              ))
+            ? configs.map((c, i) => {
+                const col = classColor(c.car_class);
+                return (
+                  <Badge key={i} variant="outline" className={`gap-1.5 ${col.badge}`}>
+                    <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+                    {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
+                  </Badge>
+                );
+              })
             : (<>
                 {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
                 {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
@@ -259,7 +266,7 @@ function useLeagueSignups(leagueId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id,car_model")
         .eq("league_id", leagueId)
         .is("division_id", null)
         .order("created_at", { ascending: true });
@@ -348,11 +355,13 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
           const cfg = configs.find((c) => c.car_class === cls && c.driver_category === cat);
           const grid = list.filter((e) => !e.waitlist).sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0));
           const wait = list.filter((e) => e.waitlist).sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+          const col = classColor(cls);
           return (
-            <Card key={k}>
+            <Card key={k} className={`border-l-4 ${col.border}`}>
               <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <span>{cls}</span>
+                  <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
+                  <span className={col.text}>{cls}</span>
                   <Badge variant="outline" className="text-[10px]">{cat}</Badge>
                 </CardTitle>
                 <span className="text-xs text-muted-foreground">
@@ -366,7 +375,12 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                       <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
                         #{e.car_number}
                       </span>
-                      <span className="flex-1 truncate">{e.driver_name}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate">{e.driver_name}</div>
+                        {(e as any).car_model && (
+                          <div className="truncate text-[11px] text-muted-foreground">{(e as any).car_model}</div>
+                        )}
+                      </div>
                       {(e as any).team_id && teamMap?.[(e as any).team_id] && (
                         <Badge variant="outline" className="text-[10px] shrink-0" title="Team">
                           {teamMap[(e as any).team_id]}
@@ -736,6 +750,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
   const [teamId, setTeamId] = useState<string>("");
+  const [carModel, setCarModel] = useState<string>("");
   const { data: myTeams } = useMyTeams(user?.id);
 
   const { data: profile } = useQuery({
@@ -782,6 +797,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
     if (!user) return toast.error("Du skal være logget ind.");
     if (!selected) return toast.error("Vælg en klasse.");
     if (carNumber == null) return toast.error("Vælg et kørenummer.");
+    if (!carModel) return toast.error("Vælg din bil.");
     if (!driverName) return toast.error("Dit kørernavn mangler på profilen.");
     if (!effectiveLmu) return toast.error("Indtast dit LMU-navn præcis som det står i spillet.");
 
@@ -800,6 +816,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
       car_number: carNumber,
       waitlist: goesToWaitlist,
       team_id: teamId || null,
+      car_model: carModel || null,
     } as any);
     if (error) return toast.error(error.message);
     toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
@@ -849,15 +866,37 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
           </div>
           <div>
             <Label>Bilklasse</Label>
-            <Select value={cfgIdx} onValueChange={(v) => { setCfgIdx(v); setCarNumber(null); }}>
+            <Select value={cfgIdx} onValueChange={(v) => { setCfgIdx(v); setCarNumber(null); setCarModel(""); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {configs.map((c, i) => (
-                  <SelectItem key={i} value={String(i)}>{c.car_class} · {c.driver_category} (#{c.number_from}-{c.number_to})</SelectItem>
-                ))}
+                {configs.map((c, i) => {
+                  const col = classColor(c.car_class);
+                  return (
+                    <SelectItem key={i} value={String(i)}>
+                      <span className="inline-flex items-center gap-2">
+                        <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+                        {c.car_class} · {c.driver_category} (#{c.number_from}-{c.number_to})
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
+          {selected && (CARS_BY_CLASS[selected.car_class]?.length ?? 0) > 0 && (
+            <div>
+              <Label>Bil</Label>
+              <Select value={carModel} onValueChange={setCarModel}>
+                <SelectTrigger><SelectValue placeholder={`Vælg ${selected.car_class}-bil`} /></SelectTrigger>
+                <SelectContent>
+                  {CARS_BY_CLASS[selected.car_class].map((car) => (
+                    <SelectItem key={car} value={car}>{car}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="mt-1 text-xs text-muted-foreground">Du kan ændre bil indtil første afdeling er kørt.</p>
+            </div>
+          )}
           {(myTeams ?? []).length > 0 && (
             <div>
               <Label>Team (valgfri)</Label>
@@ -902,7 +941,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
               <p className="text-xs text-muted-foreground">{available.length} ledige · {taken.length} optaget</p>
             </div>
           )}
-          <DialogFooter><Button type="submit" disabled={carNumber == null}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
+          <DialogFooter><Button type="submit" disabled={carNumber == null || !carModel}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
