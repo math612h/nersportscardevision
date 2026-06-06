@@ -187,13 +187,16 @@ export function PointsSystemEditor({
       <div className="space-y-1.5">
         <Label className="text-xs">FL-point (hurtigste omgang)</Label>
         <Input
-          type="number"
-          min={0}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           className="max-w-40"
-          value={flPoints}
-          onChange={(e) =>
-            onChange({ ...value, fastest_lap_points: Math.max(0, Number(e.target.value) | 0) })
-          }
+          value={flPoints === 0 ? "" : String(flPoints)}
+          placeholder="0"
+          onChange={(e) => {
+            const raw = e.target.value.replace(/[^0-9]/g, "");
+            onChange({ ...value, fastest_lap_points: raw === "" ? 0 : Number(raw) });
+          }}
         />
       </div>
 
@@ -210,10 +213,11 @@ export function PointsSystemEditor({
               </span>
               <Input
                 className="h-9 min-w-0 px-2 text-center font-mono tabular-nums"
-                type="number"
-                min={0}
+                type="text"
                 inputMode="numeric"
-                value={String(p)}
+                pattern="[0-9]*"
+                value={p === 0 ? "" : String(p)}
+                placeholder="0"
                 onChange={(e) => {
                   const raw = e.target.value.replace(/[^0-9]/g, "");
                   setPos(i, raw === "" ? 0 : Number(raw));
