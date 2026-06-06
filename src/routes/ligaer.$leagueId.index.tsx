@@ -880,8 +880,8 @@ function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2" disabled={alreadySignedUp}>
-          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : "Tilmeld dig"}
+        <Button size="sm" className="gap-2" disabled={alreadySignedUp || !signupOpen}>
+          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
