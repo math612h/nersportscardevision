@@ -212,6 +212,7 @@ function AdminLeagues() {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
   const [pointsSystem, setPointsSystem] = useState<PointsSystem>({});
+  const [signupOpensAt, setSignupOpensAt] = useState<string>("");
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -247,8 +248,9 @@ function AdminLeagues() {
       banner_url: bannerPath,
       event_settings: eventSettings as any,
       points_system: pointsSystem as any,
+      signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
       created_by: user?.id,
-    });
+    } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
     toast.success(isOffseason ? "Off-season event oprettet" : "Liga oprettet");
@@ -261,6 +263,7 @@ function AdminLeagues() {
     setBannerFile(null);
     setEventSettings({});
     setPointsSystem({});
+    setSignupOpensAt("");
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
@@ -295,6 +298,11 @@ function AdminLeagues() {
                   <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
                 </label>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
+                <div className="space-y-1 rounded-md border border-border p-2">
+                  <Label>Tilmelding åbner</Label>
+                  <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">Lad være tom for at holde tilmelding lukket. En nedtælling vises på ligasiden indtil tidspunktet.</p>
+                </div>
                 <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
@@ -377,6 +385,14 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [pointsSystem, setPointsSystem] = useState<PointsSystem>(
     (league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem,
   );
+  const toLocalInput = (iso: string | null | undefined): string => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const [signupOpensAt, setSignupOpensAt] = useState<string>(toLocalInput(league.signup_opens_at));
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
@@ -388,6 +404,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setBannerFile(null);
     setEventSettings((league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings);
     setPointsSystem((league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem);
+    setSignupOpensAt(toLocalInput(league.signup_opens_at));
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -415,7 +432,8 @@ function EditLeagueDialog({ league }: { league: any }) {
         banner_url: newBanner,
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
-      })
+        signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
+      } as any)
       .eq("id", league.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -445,6 +463,11 @@ function EditLeagueDialog({ league }: { league: any }) {
             <span className="text-sm">Off-season event</span>
           </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
+          <div className="space-y-1 rounded-md border border-border p-2">
+            <Label>Tilmelding åbner</Label>
+            <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
+            <p className="text-xs text-muted-foreground">Lad være tom for at holde tilmelding lukket. En nedtælling vises på ligasiden indtil tidspunktet.</p>
+          </div>
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />

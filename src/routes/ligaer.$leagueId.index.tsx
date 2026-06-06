@@ -56,6 +56,44 @@ export const Route = createFileRoute("/ligaer/$leagueId/")({
   },
 });
 
+function useCountdown(target: number | null) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (target == null) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [target]);
+  if (target == null) return null;
+  const diff = target - now;
+  if (diff <= 0) return { diff: 0, d: 0, h: 0, m: 0, s: 0 };
+  const s = Math.floor(diff / 1000);
+  return { diff, d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 };
+}
+
+function SignupOpensBanner({ opensAt }: { opensAt: string | null }) {
+  const target = opensAt ? new Date(opensAt).getTime() : null;
+  const c = useCountdown(target);
+  if (!opensAt) {
+    return (
+      <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+        Tilmelding er endnu ikke åbnet. En administrator fastsætter en åbningstid.
+      </div>
+    );
+  }
+  if (!target || Number.isNaN(target)) return null;
+  if (!c || c.diff <= 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
+      <Timer className="h-4 w-4 text-primary" />
+      <span className="font-medium">Tilmelding åbner om</span>
+      <span className="font-mono tabular-nums font-semibold text-primary">
+        {c.d}d {String(c.h).padStart(2, "0")}t {String(c.m).padStart(2, "0")}m {String(c.s).padStart(2, "0")}s
+      </span>
+      <span className="text-xs text-muted-foreground">({format(new Date(opensAt), "dd MMM yyyy HH:mm")})</span>
+    </div>
+  );
+}
+
 function RaceCountdown({ raceDate }: { raceDate: string }) {
   const target = new Date(raceDate).getTime();
   const [now, setNow] = useState(() => Date.now());
@@ -170,11 +208,13 @@ function LeagueDetail() {
               </>)}
         </div>
 
+        <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
+
         <div className="flex flex-wrap gap-2 pt-1">
           <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
             <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
           </Link>
-          {league && <SignupDialog leagueId={leagueId} configs={configs} />}
+          {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} />}
           {league && <EditEntryDialog leagueId={leagueId} />}
           {league && <LeaveLeagueButton leagueId={leagueId} />}
         </div>
@@ -747,7 +787,7 @@ function TeamStandings({
 }
 
 
-function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
+function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; configs: ClassConfig[]; signupOpensAt: string | null }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
@@ -778,6 +818,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
   const effectiveLmu = (existingLmu || lmuInput).trim();
 
   const alreadySignedUp = !!user && (signups ?? []).some((s) => s.user_id === user.id);
+  const signupOpen = !signupOpensAt ? false : new Date(signupOpensAt).getTime() <= Date.now();
   const selected = configs[Number(cfgIdx)];
 
   const { taken, available } = useMemo(() => {
@@ -800,6 +841,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return toast.error("Du skal være logget ind.");
+    if (!signupOpen) return toast.error("Tilmelding er ikke åbnet endnu.");
     if (!selected) return toast.error("Vælg en klasse.");
     if (carNumber == null) return toast.error("Vælg et kørenummer.");
     if (!carModel) return toast.error("Vælg din bil.");
@@ -840,8 +882,8 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2" disabled={alreadySignedUp}>
-          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : "Tilmeld dig"}
+        <Button size="sm" className="gap-2" disabled={alreadySignedUp || !signupOpen}>
+          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">

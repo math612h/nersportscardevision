@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +34,7 @@ function ParticipantDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("*, divisions(count)")
+        .select("*, divisions(settings)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
@@ -87,8 +87,20 @@ function ParticipantDashboard() {
     return bannerMap?.[l.banner_url] ?? null;
   };
 
-  const regular = (leagues ?? []).filter((l: any) => !l.is_offseason);
-  const offseason = (leagues ?? []).filter((l: any) => l.is_offseason);
+  const now = Date.now();
+  const classify = (l: any): "past" | "active" | "upcoming" => {
+    const divs: any[] = Array.isArray(l.divisions) ? l.divisions : [];
+    const hasDivs = divs.length > 0;
+    const allCompleted = hasDivs && divs.every((d) => !!d?.settings?.completed);
+    if (allCompleted) return "past";
+    const opens = l.signup_opens_at ? new Date(l.signup_opens_at).getTime() : null;
+    if (opens == null || opens > now) return "upcoming";
+    return "active";
+  };
+
+  const upcoming = (leagues ?? []).filter((l: any) => classify(l) === "upcoming");
+  const active = (leagues ?? []).filter((l: any) => classify(l) === "active");
+  const past = (leagues ?? []).filter((l: any) => classify(l) === "past");
 
   return (
     <div className="space-y-10">
@@ -105,11 +117,11 @@ function ParticipantDashboard() {
       <LeaderboardTeaser />
 
       {isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <CardGrid>
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="h-44 animate-pulse rounded-xl border border-border bg-card/50" />
           ))}
-        </div>
+        </CardGrid>
       )}
 
       {!isLoading && leagues?.length === 0 && (
@@ -118,22 +130,30 @@ function ParticipantDashboard() {
         </div>
       )}
 
-      {regular.length > 0 && (
-        <Section title="Ligaer" icon={<Flag className="h-4 w-4" />}>
+      {active.length > 0 && (
+        <Section title="Aktive ligaer" icon={<Flag className="h-4 w-4" />}>
           <CardGrid>
-            {regular.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} />)}
+            {active.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} />)}
           </CardGrid>
         </Section>
       )}
 
-      {offseason.length > 0 && (
+      {upcoming.length > 0 && (
         <Section
-          title="Off-Season events"
+          title="Kommende ligaer"
           icon={<Sparkles className="h-4 w-4" />}
-          description="Enkeltløb uden for de faste ligaer."
+          description="Tilmelding er endnu ikke åbnet."
         >
           <CardGrid>
-            {offseason.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason />)}
+            {upcoming.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming />)}
+          </CardGrid>
+        </Section>
+      )}
+
+      {past.length > 0 && (
+        <Section title="Tidligere ligaer" icon={<Trophy className="h-4 w-4" />}>
+          <CardGrid>
+            {past.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past />)}
           </CardGrid>
         </Section>
       )}
@@ -157,7 +177,12 @@ function Section({ title, icon, description, children }: { title: string; icon: 
 }
 
 function CardGrid({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
+  return (
+    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:[grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
+      {children}
+    </div>
+  );
+
 }
 
 function LeaderboardTeaser() {
@@ -227,11 +252,15 @@ function LeagueCard({
   bannerUrl,
   entries,
   offseason,
+  upcoming,
+  past,
 }: {
   l: any;
   bannerUrl: string | null;
   entries: { car_class: string; driver_category: string; waitlist: boolean }[];
   offseason?: boolean;
+  upcoming?: boolean;
+  past?: boolean;
 }) {
   const Icon = offseason ? Sparkles : Flag;
   const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
@@ -271,6 +300,14 @@ function LeagueCard({
         <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
           <ArrowUpRight className="h-3.5 w-3.5" />
         </div>
+        {upcoming && (
+          <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
+            <CardCountdown opensAt={l.signup_opens_at ?? null} />
+          </Badge>
+        )}
+        {past && (
+          <Badge variant="secondary" className="absolute left-3 top-3">Afsluttet</Badge>
+        )}
       </div>
 
       <div className="flex items-center gap-3 px-4 pb-4 pt-3">
@@ -293,4 +330,26 @@ function LeagueCard({
       </div>
     </Link>
   );
+}
+
+function CardCountdown({ opensAt }: { opensAt: string | null }) {
+  const target = opensAt ? new Date(opensAt).getTime() : null;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (target == null) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [target]);
+  if (!opensAt || target == null || Number.isNaN(target)) {
+    return <><Timer className="h-3 w-3" /> Tilmelding lukket</>;
+  }
+  const diff = target - now;
+  if (diff <= 0) return <><Timer className="h-3 w-3" /> Åbnet</>;
+  const s = Math.floor(diff / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const label = d > 0 ? `${d}d ${h}t ${m}m` : h > 0 ? `${h}t ${m}m` : `${m}m ${String(sec).padStart(2, "0")}s`;
+  return <><Timer className="h-3 w-3" /> Åbner om {label}</>;
 }
