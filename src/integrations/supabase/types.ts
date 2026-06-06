@@ -856,6 +856,77 @@ export type Database = {
         }
         Relationships: []
       }
+      leaderboard_times_public: {
+        Row: {
+          best_lap_ms: number | null
+          car_class: string | null
+          car_model: string | null
+          created_at: string | null
+          division_id: string | null
+          driver_name: string | null
+          id: string | null
+          layout: string | null
+          recorded_at: string | null
+          source: string | null
+          track: string | null
+        }
+        Insert: {
+          best_lap_ms?: number | null
+          car_class?: string | null
+          car_model?: string | null
+          created_at?: string | null
+          division_id?: string | null
+          driver_name?: string | null
+          id?: string | null
+          layout?: string | null
+          recorded_at?: string | null
+          source?: string | null
+          track?: string | null
+        }
+        Update: {
+          best_lap_ms?: number | null
+          car_class?: string | null
+          car_model?: string | null
+          created_at?: string | null
+          division_id?: string | null
+          driver_name?: string | null
+          id?: string | null
+          layout?: string | null
+          recorded_at?: string | null
+          source?: string | null
+          track?: string | null
+        }
+        Relationships: []
+      }
+      team_members_public: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          role: Database["public"]["Enums"]["team_member_role"] | null
+          team_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          role?: Database["public"]["Enums"]["team_member_role"] | null
+          team_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          role?: Database["public"]["Enums"]["team_member_role"] | null
+          team_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_profile_private: {
