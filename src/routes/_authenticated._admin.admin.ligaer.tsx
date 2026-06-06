@@ -463,6 +463,11 @@ function EditLeagueDialog({ league }: { league: any }) {
             <span className="text-sm">Off-season event</span>
           </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
+          <div className="space-y-1 rounded-md border border-border p-2">
+            <Label>Tilmelding åbner</Label>
+            <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
+            <p className="text-xs text-muted-foreground">Lad være tom for at holde tilmelding lukket. En nedtælling vises på ligasiden indtil tidspunktet.</p>
+          </div>
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
