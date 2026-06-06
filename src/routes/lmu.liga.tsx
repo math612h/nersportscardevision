@@ -5,7 +5,9 @@ import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowLeft }
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
+import { cn } from "@/lib/utils";
 import type { ClassConfig } from "@/lib/tracks";
+import type { Tabs } from "@/lib/tracks";
 
 const LMU_TITLE = "Le Mans Ultimate ligaer & løb — DanishEnduranceSeries.dk";
 const LMU_DESC =
