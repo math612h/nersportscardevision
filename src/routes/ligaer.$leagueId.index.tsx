@@ -94,6 +94,8 @@ function LeagueDetail() {
 
   const { data: league } = useQuery({
     queryKey: ["league", leagueId],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase.from("leagues").select("*").eq("id", leagueId).single();
       if (error) throw error;
@@ -103,6 +105,8 @@ function LeagueDetail() {
 
   const { data: divisions } = useQuery({
     queryKey: ["divisions", leagueId],
+    staleTime: 0,
+    refetchOnMount: "always",
     queryFn: async () => {
       const { data, error } = await supabase
         .from("divisions")
