@@ -34,7 +34,7 @@ function ParticipantDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("*, divisions(count)")
+        .select("*, divisions(settings)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
