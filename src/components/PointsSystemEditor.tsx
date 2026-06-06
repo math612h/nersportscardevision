@@ -122,12 +122,22 @@ export function PointsSystemEditor({
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Arkivér pointsystem</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Arkivér pointsystem</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3">
-              <div><Label>Navn</Label><Input value={tplName} onChange={(e) => setTplName(e.target.value)} maxLength={100} /></div>
-              <div><Label>Beskrivelse</Label><Textarea value={tplDesc} onChange={(e) => setTplDesc(e.target.value)} maxLength={500} /></div>
+              <div>
+                <Label>Navn</Label>
+                <Input value={tplName} onChange={(e) => setTplName(e.target.value)} maxLength={100} />
+              </div>
+              <div>
+                <Label>Beskrivelse</Label>
+                <Textarea value={tplDesc} onChange={(e) => setTplDesc(e.target.value)} maxLength={500} />
+              </div>
             </div>
-            <DialogFooter><Button type="button" onClick={saveTemplate}>Gem</Button></DialogFooter>
+            <DialogFooter>
+              <Button type="button" onClick={saveTemplate}>Gem</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -137,7 +147,9 @@ export function PointsSystemEditor({
           <div className="flex-1">
             <Label className="text-xs">Indlæs fra arkiv</Label>
             <Select value={selectedTpl} onValueChange={applyTemplate}>
-              <SelectTrigger><SelectValue placeholder="Vælg arkiveret pointsystem" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Vælg arkiveret pointsystem" />
+              </SelectTrigger>
               <SelectContent>
                 {templates.map((t: any) => (
                   <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
@@ -146,7 +158,13 @@ export function PointsSystemEditor({
             </Select>
           </div>
           {selectedTpl && (
-            <Button type="button" variant="ghost" size="icon" className="mt-5" onClick={() => deleteTemplate(selectedTpl)}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="mt-5"
+              onClick={() => deleteTemplate(selectedTpl)}
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
@@ -168,7 +186,10 @@ export function PointsSystemEditor({
         <Label className="text-xs">Point pr. position</Label>
         <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2">
           {points.map((p, i) => (
-            <div key={i} className="grid min-w-0 grid-cols-[1.75rem_minmax(3.75rem,1fr)_1.75rem] items-center gap-1.5 rounded-md border border-border/70 bg-background/40 p-1.5">
+            <div
+              key={i}
+              className="grid min-w-0 grid-cols-[1.75rem_minmax(3.75rem,1fr)_1.75rem] items-center gap-1.5 rounded-md border border-border/70 bg-background/40 p-1.5"
+            >
               <span className="shrink-0 text-right text-xs font-medium tabular-nums text-muted-foreground">{i + 1}.</span>
               <Input
                 className="h-9 min-w-0 px-2 text-center font-mono tabular-nums"
@@ -181,7 +202,14 @@ export function PointsSystemEditor({
                   setPos(i, raw === "" ? 0 : Number(raw));
                 }}
               />
-              <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removePos(i)} aria-label={`Fjern position ${i + 1}`}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0"
+                onClick={() => removePos(i)}
+                aria-label={`Fjern position ${i + 1}`}
+              >
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
