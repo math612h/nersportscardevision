@@ -248,8 +248,9 @@ function AdminLeagues() {
       banner_url: bannerPath,
       event_settings: eventSettings as any,
       points_system: pointsSystem as any,
+      signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
       created_by: user?.id,
-    });
+    } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
     toast.success(isOffseason ? "Off-season event oprettet" : "Liga oprettet");
@@ -262,6 +263,7 @@ function AdminLeagues() {
     setBannerFile(null);
     setEventSettings({});
     setPointsSystem({});
+    setSignupOpensAt("");
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
