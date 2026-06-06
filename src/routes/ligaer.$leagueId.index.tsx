@@ -56,6 +56,44 @@ export const Route = createFileRoute("/ligaer/$leagueId/")({
   },
 });
 
+function useCountdown(target: number | null) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (target == null) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [target]);
+  if (target == null) return null;
+  const diff = target - now;
+  if (diff <= 0) return { diff: 0, d: 0, h: 0, m: 0, s: 0 };
+  const s = Math.floor(diff / 1000);
+  return { diff, d: Math.floor(s / 86400), h: Math.floor((s % 86400) / 3600), m: Math.floor((s % 3600) / 60), s: s % 60 };
+}
+
+function SignupOpensBanner({ opensAt }: { opensAt: string | null }) {
+  const target = opensAt ? new Date(opensAt).getTime() : null;
+  const c = useCountdown(target);
+  if (!opensAt) {
+    return (
+      <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+        Tilmelding er endnu ikke åbnet. En administrator fastsætter en åbningstid.
+      </div>
+    );
+  }
+  if (!target || Number.isNaN(target)) return null;
+  if (!c || c.diff <= 0) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
+      <Timer className="h-4 w-4 text-primary" />
+      <span className="font-medium">Tilmelding åbner om</span>
+      <span className="font-mono tabular-nums font-semibold text-primary">
+        {c.d}d {String(c.h).padStart(2, "0")}t {String(c.m).padStart(2, "0")}m {String(c.s).padStart(2, "0")}s
+      </span>
+      <span className="text-xs text-muted-foreground">({format(new Date(opensAt), "dd MMM yyyy HH:mm")})</span>
+    </div>
+  );
+}
+
 function RaceCountdown({ raceDate }: { raceDate: string }) {
   const target = new Date(raceDate).getTime();
   const [now, setNow] = useState(() => Date.now());
