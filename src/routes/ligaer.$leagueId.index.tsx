@@ -750,6 +750,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
   const [teamId, setTeamId] = useState<string>("");
+  const [carModel, setCarModel] = useState<string>("");
   const { data: myTeams } = useMyTeams(user?.id);
 
   const { data: profile } = useQuery({
