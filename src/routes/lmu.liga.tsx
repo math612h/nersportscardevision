@@ -178,18 +178,8 @@ function Section({ title, icon, description, children }: { title: string; icon: 
 
 function CardGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      className="grid gap-3 grid-cols-1 sm:grid-cols-2"
-      style={{ gridTemplateColumns: undefined }}
-    >
-      <div className="contents sm:hidden">{children}</div>
-      <div className="contents hidden sm:grid sm:grid-cols-2 md:hidden">{children}</div>
-      <div
-        className="contents hidden md:grid"
-        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}
-      >
-        {children}
-      </div>
+    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:[grid-template-columns:repeat(auto-fill,minmax(280px,1fr))]">
+      {children}
     </div>
   );
 
