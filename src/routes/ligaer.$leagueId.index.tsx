@@ -355,11 +355,13 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
           const cfg = configs.find((c) => c.car_class === cls && c.driver_category === cat);
           const grid = list.filter((e) => !e.waitlist).sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0));
           const wait = list.filter((e) => e.waitlist).sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+          const col = classColor(cls);
           return (
-            <Card key={k}>
+            <Card key={k} className={`border-l-4 ${col.border}`}>
               <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <span>{cls}</span>
+                  <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
+                  <span className={col.text}>{cls}</span>
                   <Badge variant="outline" className="text-[10px]">{cat}</Badge>
                 </CardTitle>
                 <span className="text-xs text-muted-foreground">
@@ -373,7 +375,12 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                       <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
                         #{e.car_number}
                       </span>
-                      <span className="flex-1 truncate">{e.driver_name}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="truncate">{e.driver_name}</div>
+                        {(e as any).car_model && (
+                          <div className="truncate text-[11px] text-muted-foreground">{(e as any).car_model}</div>
+                        )}
+                      </div>
                       {(e as any).team_id && teamMap?.[(e as any).team_id] && (
                         <Badge variant="outline" className="text-[10px] shrink-0" title="Team">
                           {teamMap[(e as any).team_id]}
