@@ -432,7 +432,8 @@ function EditLeagueDialog({ league }: { league: any }) {
         banner_url: newBanner,
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
-      })
+        signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
+      } as any)
       .eq("id", league.id);
     setSaving(false);
     if (error) return toast.error(error.message);
