@@ -166,7 +166,7 @@ export function PointsSystemEditor({
 
       <div className="space-y-2">
         <Label className="text-xs">Point pr. position</Label>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(8.25rem,1fr))] gap-2">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2">
           {points.map((p, i) => (
             <div key={i} className="grid min-w-0 grid-cols-[1.75rem_minmax(3.75rem,1fr)_1.75rem] items-center gap-1.5 rounded-md border border-border/70 bg-background/40 p-1.5">
               <span className="shrink-0 text-right text-xs font-medium tabular-nums text-muted-foreground">{i + 1}.</span>
