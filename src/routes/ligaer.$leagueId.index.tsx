@@ -841,6 +841,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return toast.error("Du skal være logget ind.");
+    if (!signupOpen) return toast.error("Tilmelding er ikke åbnet endnu.");
     if (!selected) return toast.error("Vælg en klasse.");
     if (carNumber == null) return toast.error("Vælg et kørenummer.");
     if (!carModel) return toast.error("Vælg din bil.");
