@@ -35,10 +35,20 @@ export function CreateTeamDialog({ trigger }: { trigger?: React.ReactNode }) {
       if (error) throw error;
       return (data as any).id as string;
     },
-    onSuccess: (id) => {
+    onSuccess: async (id) => {
+      // Backfill existing sign-ups without a team to the newly created team
+      if (user) {
+        await (supabase as any)
+          .from("entries")
+          .update({ team_id: id })
+          .eq("user_id", user.id)
+          .is("team_id", null);
+      }
       toast.success("Team oprettet!");
       qc.invalidateQueries({ queryKey: ["teams"] });
       qc.invalidateQueries({ queryKey: ["my-teams"] });
+      qc.invalidateQueries({ queryKey: ["league-signups"] });
+      qc.invalidateQueries({ queryKey: ["teams-by-id"] });
       setOpen(false);
       setName("");
       setBio("");
