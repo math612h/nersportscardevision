@@ -45,9 +45,11 @@ export function PointsSystemEditor({
   const [tplDesc, setTplDesc] = useState("");
   const [selectedTpl, setSelectedTpl] = useState<string>("");
 
-  const points = (value.points_per_position && value.points_per_position.length > 0
-    ? value.points_per_position
-    : DEFAULT_POINTS).map((n) => Number(n) || 0);
+  const points = (
+    value.points_per_position && value.points_per_position.length > 0
+      ? value.points_per_position
+      : DEFAULT_POINTS
+  ).map((n) => Number(n) || 0);
   const flPoints = Number(value.fastest_lap_points ?? 1);
 
   const { data: templates } = useQuery({
@@ -67,8 +69,7 @@ export function PointsSystemEditor({
     next[i] = Math.max(0, v | 0);
     onChange({ ...value, points_per_position: next });
   };
-  const addPos = () =>
-    onChange({ ...value, points_per_position: [...points, 0] });
+  const addPos = () => onChange({ ...value, points_per_position: [...points, 0] });
   const removePos = (i: number) =>
     onChange({
       ...value,
@@ -112,7 +113,7 @@ export function PointsSystemEditor({
   };
 
   return (
-    <div className="space-y-2 rounded-md border border-border p-2">
+    <div className="space-y-3 rounded-md border border-border p-3">
       <div className="flex items-center justify-between gap-2">
         <Label>Pointsystem</Label>
         <Dialog open={saveOpen} onOpenChange={setSaveOpen}>
@@ -122,12 +123,32 @@ export function PointsSystemEditor({
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Arkivér pointsystem</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Arkivér pointsystem</DialogTitle>
+            </DialogHeader>
             <div className="space-y-3">
-              <div><Label>Navn</Label><Input value={tplName} onChange={(e) => setTplName(e.target.value)} maxLength={100} /></div>
-              <div><Label>Beskrivelse</Label><Textarea value={tplDesc} onChange={(e) => setTplDesc(e.target.value)} maxLength={500} /></div>
+              <div>
+                <Label>Navn</Label>
+                <Input
+                  value={tplName}
+                  onChange={(e) => setTplName(e.target.value)}
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <Label>Beskrivelse</Label>
+                <Textarea
+                  value={tplDesc}
+                  onChange={(e) => setTplDesc(e.target.value)}
+                  maxLength={500}
+                />
+              </div>
             </div>
-            <DialogFooter><Button type="button" onClick={saveTemplate}>Gem</Button></DialogFooter>
+            <DialogFooter>
+              <Button type="button" onClick={saveTemplate}>
+                Gem
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -137,50 +158,75 @@ export function PointsSystemEditor({
           <div className="flex-1">
             <Label className="text-xs">Indlæs fra arkiv</Label>
             <Select value={selectedTpl} onValueChange={applyTemplate}>
-              <SelectTrigger><SelectValue placeholder="Vælg arkiveret pointsystem" /></SelectTrigger>
+              <SelectTrigger>
+                <SelectValue placeholder="Vælg arkiveret pointsystem" />
+              </SelectTrigger>
               <SelectContent>
                 {templates.map((t: any) => (
-                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           {selectedTpl && (
-            <Button type="button" variant="ghost" size="icon" className="mt-5" onClick={() => deleteTemplate(selectedTpl)}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="mt-5"
+              onClick={() => deleteTemplate(selectedTpl)}
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
         </div>
       )}
 
-      <div>
+      <div className="space-y-1.5">
         <Label className="text-xs">FL-point (hurtigste omgang)</Label>
         <Input
           type="number"
           min={0}
+          className="max-w-40"
           value={flPoints}
-          onChange={(e) => onChange({ ...value, fastest_lap_points: Math.max(0, Number(e.target.value) | 0) })}
+          onChange={(e) =>
+            onChange({ ...value, fastest_lap_points: Math.max(0, Number(e.target.value) | 0) })
+          }
         />
       </div>
 
-      <div>
+      <div className="space-y-2">
         <Label className="text-xs">Point pr. position</Label>
-        <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-5">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(9.5rem,1fr))] gap-2">
           {points.map((p, i) => (
-            <div key={i} className="flex items-center gap-1 min-w-0">
-              <span className="w-8 shrink-0 text-right text-xs text-muted-foreground">{i + 1}.</span>
+            <div
+              key={i}
+              className="grid min-w-0 grid-cols-[1.75rem_minmax(3.75rem,1fr)_1.75rem] items-center gap-1.5 rounded-md border border-border/70 bg-background/40 p-1.5"
+            >
+              <span className="shrink-0 text-right text-xs font-medium tabular-nums text-muted-foreground">
+                {i + 1}.
+              </span>
               <Input
-                className="h-8 min-w-0 flex-1"
-                type="text"
+                className="h-9 min-w-0 px-2 text-center font-mono tabular-nums"
+                type="number"
+                min={0}
                 inputMode="numeric"
-                pattern="[0-9]*"
                 value={String(p)}
                 onChange={(e) => {
                   const raw = e.target.value.replace(/[^0-9]/g, "");
                   setPos(i, raw === "" ? 0 : Number(raw));
                 }}
               />
-              <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => removePos(i)}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0"
+                onClick={() => removePos(i)}
+                aria-label={`Fjern position ${i + 1}`}
+              >
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>

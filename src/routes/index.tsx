@@ -1,15 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowUpRight, Lock, Flag } from "lucide-react";
-import lmuCover from "@/assets/lmu-cover.jpg.asset.json";
-import accCover from "@/assets/acc-cover.jpg.asset.json";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowUpRight, Calendar, Flag, MapPin, Trophy } from "lucide-react";
+import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { getTrackImageFile } from "@/lib/tracks";
 
-const PAGE_TITLE = "Vælg simulator — DanishEnduranceSeries.dk";
+const PAGE_TITLE = "Nyheder — DanishEnduranceSeries.dk";
 const PAGE_DESC =
-  "Vælg simulator og hop ind i DanishEnduranceSeries.dk sim-racing ligaer. Le Mans Ultimate er aktiv; Assetto Corsa Competizione kommer snart.";
+  "Seneste afviklede løb i DanishEnduranceSeries.dk med baneinfo, klassevindere og top 3-resultater.";
 const PAGE_URL = "https://danishenduranceseries.dk/";
 
+type ResultRow = {
+  car_number?: number;
+  driver_name: string;
+  car_class: string;
+  driver_category?: string;
+  class_position?: number;
+  points?: number;
+  fastest_lap?: boolean;
+  dns?: boolean;
+  dnf?: boolean;
+};
+
 export const Route = createFileRoute("/")({
-  component: SimPicker,
+  component: NewsHome,
   head: () => ({
     meta: [
       { title: PAGE_TITLE },
@@ -18,120 +34,201 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: PAGE_DESC },
       { property: "og:url", content: PAGE_URL },
     ],
-    links: [
-      { rel: "canonical", href: PAGE_URL },
-      { rel: "preload", as: "image", href: lmuCover.url, fetchpriority: "high" } as any,
-    ],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "DanishEnduranceSeries.dk",
-          url: "https://danishenduranceseries.dk",
-          description:
-            "Sim-racing liga-hub til DanishEnduranceSeries.dk med ligaer i Le Mans Ultimate.",
-          publisher: {
-            "@type": "Organization",
-            name: "DanishEnduranceSeries.dk",
-          },
-        }),
-      },
-    ],
+    links: [{ rel: "canonical", href: PAGE_URL }],
   }),
 });
 
-function SimPicker() {
+function NewsHome() {
+  const { data: divisions, isLoading } = useQuery({
+    queryKey: ["home-recent-results"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("divisions")
+        .select("id,league_id,name,track,layout,race_date,created_at,settings,leagues(name)")
+        .order("race_date", { ascending: false, nullsFirst: false })
+        .limit(50);
+      if (error) throw error;
+      return (data ?? []).filter(
+        (d: any) =>
+          d.settings?.completed &&
+          Array.isArray(d.settings?.results) &&
+          d.settings.results.length > 0,
+      );
+    },
+  });
+
+  const latest = divisions?.[0] as any | undefined;
+  const otherResults = (divisions ?? []).slice(1, 4) as any[];
+  const trackFile = getTrackImageFile(latest?.track);
+
+  const { data: trackImageMap } = useQuery({
+    queryKey: ["home-track-image", trackFile ?? "none"],
+    enabled: !!trackFile,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from("track-images")
+        .createSignedUrls([trackFile!], 60 * 60 * 24 * 7);
+      if (error) throw error;
+      return data?.[0]?.signedUrl ?? null;
+    },
+  });
+
+  const groupedResults = groupTopThree((latest?.settings?.results ?? []) as ResultRow[]);
+
   return (
     <div className="space-y-10">
-      <header className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">DanishEnduranceSeries.dk</p>
-        <h1 className="text-2xl font-bold tracking-tight">Vælg simulator</h1>
-        <p className="text-sm text-muted-foreground">Hvilken platform kører du på?</p>
+      <header className="space-y-3">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+            DanishEnduranceSeries.dk
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight">Nyheder</h1>
+          <p className="text-sm text-muted-foreground">Seneste afviklede løb og resultater.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild className="gap-2">
+            <Link to="/lmu/liga">
+              <Flag className="h-4 w-4" /> Liga Hub
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/lmu/teams">
+              <ArrowUpRight className="h-4 w-4" /> Teams Hub
+            </Link>
+          </Button>
+        </div>
       </header>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <SimCard
-          to="/lmu"
-          title="Le Mans Ultimate"
-          image={lmuCover.url}
-          priority
-        />
-        <SimCard
-          title="Assetto Corsa Competizione"
-          subtitle="Kommer snart"
-          image={accCover.url}
-          disabled
-        />
-      </div>
+      {isLoading && (
+        <div className="h-96 animate-pulse rounded-xl border border-border bg-card/50" />
+      )}
+
+      {!isLoading && !latest && (
+        <section className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Der vises nyheder her, når første afdeling er markeret som afsluttet med resultater.
+        </section>
+      )}
+
+      {latest && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 text-primary">
+            <Trophy className="h-4 w-4" />
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Seneste løb</h2>
+          </div>
+          <article className="overflow-hidden rounded-xl border border-border bg-card">
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted sm:aspect-[21/9]">
+              {trackImageMap ? (
+                <img
+                  src={trackImageMap}
+                  alt={latest.track ?? latest.name}
+                  className="h-full w-full object-cover"
+                  loading="eager"
+                />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-card via-card/45 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 space-y-3 p-4 sm:p-6">
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">Afsluttet</Badge>
+                  {latest.leagues?.name && <Badge variant="outline">{latest.leagues.name}</Badge>}
+                  {latest.race_date && (
+                    <Badge variant="outline" className="gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(new Date(latest.race_date), "dd MMM yyyy")}
+                    </Badge>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight sm:text-3xl">{latest.name}</h2>
+                  {latest.track && (
+                    <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {latest.track}
+                      {latest.layout ? ` · ${latest.layout}` : ""}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-5 p-4 sm:p-6">
+              {groupedResults.map((group) => (
+                <div key={group.key} className="space-y-2 rounded-md border border-border p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold">{group.label}</h3>
+                    {group.winner && (
+                      <Badge className="gap-1">
+                        <Trophy className="h-3 w-3" />
+                        {group.winner.driver_name}
+                      </Badge>
+                    )}
+                  </div>
+                  <ol className="grid gap-2 sm:grid-cols-3">
+                    {group.top.map((row) => (
+                      <li
+                        key={`${group.key}-${row.class_position}-${row.driver_name}`}
+                        className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
+                      >
+                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-background font-semibold tabular-nums">
+                          {row.class_position}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate font-medium">
+                          {row.driver_name}
+                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {row.points ?? 0} p
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              ))}
+            </div>
+          </article>
+        </section>
+      )}
+
+      {otherResults.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 text-primary">
+            <Calendar className="h-4 w-4" />
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Tidligere løb</h2>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {otherResults.map((d) => (
+              <div key={d.id} className="rounded-xl border border-border bg-card p-4">
+                <p className="text-sm font-semibold">{d.name}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{d.leagues?.name ?? "Liga"}</p>
+                {d.track && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {d.track}
+                    {d.layout ? ` · ${d.layout}` : ""}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
 
-function SimCard({
-  to,
-  title,
-  subtitle,
-  image,
-  disabled,
-  priority,
-}: {
-  to?: string;
-  title: string;
-  subtitle?: string;
-  image: string;
-  disabled?: boolean;
-  priority?: boolean;
-}) {
-  const content = (
-    <div
-      className={`group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition ${
-        disabled
-          ? "opacity-60"
-          : "hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
-      }`}
-    >
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-        <img
-          src={image}
-          alt={`${title} cover art`}
-          width={1280}
-          height={720}
-          loading={priority ? "eager" : "lazy"}
-          decoding={priority ? "sync" : "async"}
-          {...(priority ? { fetchpriority: "high" as any } : {})}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
-        <div
-          className={`absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full backdrop-blur transition ${
-            disabled
-              ? "bg-background/60 text-muted-foreground"
-              : "bg-background/70 text-foreground group-hover:bg-primary group-hover:text-primary-foreground"
-          }`}
-          aria-hidden="true"
-        >
-          {disabled ? <Lock className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5" />}
-        </div>
-      </div>
-
-      <div className="flex items-center gap-3 px-4 pb-4 pt-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary" aria-hidden="true">
-          <Flag className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate text-base font-semibold tracking-tight">{title}</h2>
-          {subtitle && <p className="truncate text-xs text-muted-foreground">{subtitle}</p>}
-        </div>
-      </div>
-    </div>
-  );
-
-  if (disabled || !to) return content;
-  return (
-    <Link to={to} className="block h-full" aria-label={`Åbn ${title}`}>
-      {content}
-    </Link>
-  );
+function groupTopThree(results: ResultRow[]) {
+  const groups = new Map<string, ResultRow[]>();
+  for (const r of results) {
+    if (r.dns || r.dnf || !r.driver_name) continue;
+    const key = `${r.car_class}${r.driver_category ? ` · ${r.driver_category}` : ""}`;
+    (groups.get(key) ?? groups.set(key, []).get(key)!).push(r);
+  }
+  return Array.from(groups.entries())
+    .map(([key, rows]) => {
+      const top = rows
+        .filter((r) => Number(r.class_position) > 0)
+        .sort((a, b) => Number(a.class_position) - Number(b.class_position))
+        .slice(0, 3);
+      return { key, label: key, top, winner: top[0] };
+    })
+    .filter((g) => g.top.length > 0);
 }
