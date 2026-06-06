@@ -816,6 +816,7 @@ function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassC
       car_number: carNumber,
       waitlist: goesToWaitlist,
       team_id: teamId || null,
+      car_model: carModel || null,
     } as any);
     if (error) return toast.error(error.message);
     toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
