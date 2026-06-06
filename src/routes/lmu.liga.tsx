@@ -331,3 +331,25 @@ function LeagueCard({
     </Link>
   );
 }
+
+function CardCountdown({ opensAt }: { opensAt: string | null }) {
+  const target = opensAt ? new Date(opensAt).getTime() : null;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (target == null) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [target]);
+  if (!opensAt || target == null || Number.isNaN(target)) {
+    return <><Timer className="h-3 w-3" /> Tilmelding lukket</>;
+  }
+  const diff = target - now;
+  if (diff <= 0) return <><Timer className="h-3 w-3" /> Åbnet</>;
+  const s = Math.floor(diff / 1000);
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const label = d > 0 ? `${d}d ${h}t ${m}m` : h > 0 ? `${h}t ${m}m` : `${m}m ${String(sec).padStart(2, "0")}s`;
+  return <><Timer className="h-3 w-3" /> Åbner om {label}</>;
+}
