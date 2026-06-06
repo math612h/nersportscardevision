@@ -87,8 +87,20 @@ function ParticipantDashboard() {
     return bannerMap?.[l.banner_url] ?? null;
   };
 
-  const regular = (leagues ?? []).filter((l: any) => !l.is_offseason);
-  const offseason = (leagues ?? []).filter((l: any) => l.is_offseason);
+  const now = Date.now();
+  const classify = (l: any): "past" | "active" | "upcoming" => {
+    const divs: any[] = Array.isArray(l.divisions) ? l.divisions : [];
+    const hasDivs = divs.length > 0;
+    const allCompleted = hasDivs && divs.every((d) => !!d?.settings?.completed);
+    if (allCompleted) return "past";
+    const opens = l.signup_opens_at ? new Date(l.signup_opens_at).getTime() : null;
+    if (opens == null || opens > now) return "upcoming";
+    return "active";
+  };
+
+  const upcoming = (leagues ?? []).filter((l: any) => classify(l) === "upcoming");
+  const active = (leagues ?? []).filter((l: any) => classify(l) === "active");
+  const past = (leagues ?? []).filter((l: any) => classify(l) === "past");
 
   return (
     <div className="space-y-10">
@@ -105,11 +117,11 @@ function ParticipantDashboard() {
       <LeaderboardTeaser />
 
       {isLoading && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <CardGrid>
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="h-44 animate-pulse rounded-xl border border-border bg-card/50" />
           ))}
-        </div>
+        </CardGrid>
       )}
 
       {!isLoading && leagues?.length === 0 && (
@@ -118,22 +130,30 @@ function ParticipantDashboard() {
         </div>
       )}
 
-      {regular.length > 0 && (
-        <Section title="Ligaer" icon={<Flag className="h-4 w-4" />}>
+      {active.length > 0 && (
+        <Section title="Aktive ligaer" icon={<Flag className="h-4 w-4" />}>
           <CardGrid>
-            {regular.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} />)}
+            {active.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} />)}
           </CardGrid>
         </Section>
       )}
 
-      {offseason.length > 0 && (
+      {upcoming.length > 0 && (
         <Section
-          title="Off-Season events"
+          title="Kommende ligaer"
           icon={<Sparkles className="h-4 w-4" />}
-          description="Enkeltløb uden for de faste ligaer."
+          description="Tilmelding er endnu ikke åbnet."
         >
           <CardGrid>
-            {offseason.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason />)}
+            {upcoming.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming />)}
+          </CardGrid>
+        </Section>
+      )}
+
+      {past.length > 0 && (
+        <Section title="Tidligere ligaer" icon={<Trophy className="h-4 w-4" />}>
+          <CardGrid>
+            {past.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past />)}
           </CardGrid>
         </Section>
       )}
@@ -157,7 +177,22 @@ function Section({ title, icon, description, children }: { title: string; icon: 
 }
 
 function CardGrid({ children }: { children: React.ReactNode }) {
-  return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{children}</div>;
+  return (
+    <div
+      className="grid gap-3 grid-cols-1 sm:grid-cols-2"
+      style={{ gridTemplateColumns: undefined }}
+    >
+      <div className="contents sm:hidden">{children}</div>
+      <div className="contents hidden sm:grid sm:grid-cols-2 md:hidden">{children}</div>
+      <div
+        className="contents hidden md:grid"
+        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+
 }
 
 function LeaderboardTeaser() {
