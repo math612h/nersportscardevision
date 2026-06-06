@@ -818,6 +818,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; 
   const effectiveLmu = (existingLmu || lmuInput).trim();
 
   const alreadySignedUp = !!user && (signups ?? []).some((s) => s.user_id === user.id);
+  const signupOpen = !signupOpensAt ? false : new Date(signupOpensAt).getTime() <= Date.now();
   const selected = configs[Number(cfgIdx)];
 
   const { taken, available } = useMemo(() => {
