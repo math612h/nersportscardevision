@@ -91,14 +91,23 @@ function ProfilePage() {
       .update({
         display_name: name,
         lmu_name: lmu,
-        age: ageNum,
         bio: bio.trim() || null,
         achievements: achievements.trim() || null,
-        discord_username: discord.trim() || null,
       })
       .eq("id", user.id);
+    if (error) {
+      setSaving(false);
+      return toast.error(error.message);
+    }
+    const { error: privErr } = await (supabase as any)
+      .from("profiles_private")
+      .upsert({
+        user_id: user.id,
+        age: ageNum,
+        discord_username: discord.trim() || null,
+      }, { onConflict: "user_id" });
     setSaving(false);
-    if (error) return toast.error(error.message);
+    if (privErr) return toast.error(privErr.message);
     toast.success("Profil opdateret.");
     qc.invalidateQueries({ queryKey: ["my-profile", user.id] });
     if (window.history.length > 1) router.history.back();

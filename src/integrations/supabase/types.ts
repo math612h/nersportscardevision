@@ -378,12 +378,10 @@ export type Database = {
       profiles: {
         Row: {
           achievements: string | null
-          age: number | null
           approved: boolean
           avatar_url: string | null
           bio: string | null
           created_at: string
-          discord_username: string | null
           display_name: string | null
           id: string
           lmu_name: string | null
@@ -391,12 +389,10 @@ export type Database = {
         }
         Insert: {
           achievements?: string | null
-          age?: number | null
           approved?: boolean
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
-          discord_username?: string | null
           display_name?: string | null
           id: string
           lmu_name?: string | null
@@ -404,16 +400,38 @@ export type Database = {
         }
         Update: {
           achievements?: string | null
-          age?: number | null
           approved?: boolean
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
-          discord_username?: string | null
           display_name?: string | null
           id?: string
           lmu_name?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles_private: {
+        Row: {
+          age: number | null
+          created_at: string
+          discord_username: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          age?: number | null
+          created_at?: string
+          discord_username?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          age?: number | null
+          created_at?: string
+          discord_username?: string | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
