@@ -260,7 +260,7 @@ function useLeagueSignups(leagueId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id,car_model")
         .eq("league_id", leagueId)
         .is("division_id", null)
         .order("created_at", { ascending: true });
