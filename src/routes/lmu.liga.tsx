@@ -300,6 +300,14 @@ function LeagueCard({
         <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
           <ArrowUpRight className="h-3.5 w-3.5" />
         </div>
+        {upcoming && (
+          <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
+            <CardCountdown opensAt={l.signup_opens_at ?? null} />
+          </Badge>
+        )}
+        {past && (
+          <Badge variant="secondary" className="absolute left-3 top-3">Afsluttet</Badge>
+        )}
       </div>
 
       <div className="flex items-center gap-3 px-4 pb-4 pt-3">
