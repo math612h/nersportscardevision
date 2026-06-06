@@ -45,9 +45,11 @@ export function PointsSystemEditor({
   const [tplDesc, setTplDesc] = useState("");
   const [selectedTpl, setSelectedTpl] = useState<string>("");
 
-  const points = (value.points_per_position && value.points_per_position.length > 0
-    ? value.points_per_position
-    : DEFAULT_POINTS).map((n) => Number(n) || 0);
+  const points = (
+    value.points_per_position && value.points_per_position.length > 0
+      ? value.points_per_position
+      : DEFAULT_POINTS
+  ).map((n) => Number(n) || 0);
   const flPoints = Number(value.fastest_lap_points ?? 1);
 
   const { data: templates } = useQuery({
@@ -67,8 +69,7 @@ export function PointsSystemEditor({
     next[i] = Math.max(0, v | 0);
     onChange({ ...value, points_per_position: next });
   };
-  const addPos = () =>
-    onChange({ ...value, points_per_position: [...points, 0] });
+  const addPos = () => onChange({ ...value, points_per_position: [...points, 0] });
   const removePos = (i: number) =>
     onChange({
       ...value,
@@ -128,15 +129,25 @@ export function PointsSystemEditor({
             <div className="space-y-3">
               <div>
                 <Label>Navn</Label>
-                <Input value={tplName} onChange={(e) => setTplName(e.target.value)} maxLength={100} />
+                <Input
+                  value={tplName}
+                  onChange={(e) => setTplName(e.target.value)}
+                  maxLength={100}
+                />
               </div>
               <div>
                 <Label>Beskrivelse</Label>
-                <Textarea value={tplDesc} onChange={(e) => setTplDesc(e.target.value)} maxLength={500} />
+                <Textarea
+                  value={tplDesc}
+                  onChange={(e) => setTplDesc(e.target.value)}
+                  maxLength={500}
+                />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" onClick={saveTemplate}>Gem</Button>
+              <Button type="button" onClick={saveTemplate}>
+                Gem
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -152,7 +163,9 @@ export function PointsSystemEditor({
               </SelectTrigger>
               <SelectContent>
                 {templates.map((t: any) => (
-                  <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -178,7 +191,9 @@ export function PointsSystemEditor({
           min={0}
           className="max-w-40"
           value={flPoints}
-          onChange={(e) => onChange({ ...value, fastest_lap_points: Math.max(0, Number(e.target.value) | 0) })}
+          onChange={(e) =>
+            onChange({ ...value, fastest_lap_points: Math.max(0, Number(e.target.value) | 0) })
+          }
         />
       </div>
 
@@ -190,7 +205,9 @@ export function PointsSystemEditor({
               key={i}
               className="grid min-w-0 grid-cols-[1.75rem_minmax(3.75rem,1fr)_1.75rem] items-center gap-1.5 rounded-md border border-border/70 bg-background/40 p-1.5"
             >
-              <span className="shrink-0 text-right text-xs font-medium tabular-nums text-muted-foreground">{i + 1}.</span>
+              <span className="shrink-0 text-right text-xs font-medium tabular-nums text-muted-foreground">
+                {i + 1}.
+              </span>
               <Input
                 className="h-9 min-w-0 px-2 text-center font-mono tabular-nums"
                 type="number"

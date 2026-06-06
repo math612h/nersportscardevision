@@ -49,7 +49,10 @@ function NewsHome() {
         .limit(50);
       if (error) throw error;
       return (data ?? []).filter(
-        (d: any) => d.settings?.completed && Array.isArray(d.settings?.results) && d.settings.results.length > 0,
+        (d: any) =>
+          d.settings?.completed &&
+          Array.isArray(d.settings?.results) &&
+          d.settings.results.length > 0,
       );
     },
   });
@@ -76,7 +79,9 @@ function NewsHome() {
     <div className="space-y-10">
       <header className="space-y-3">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">DanishEnduranceSeries.dk</p>
+          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
+            DanishEnduranceSeries.dk
+          </p>
           <h1 className="text-2xl font-bold tracking-tight">Nyheder</h1>
           <p className="text-sm text-muted-foreground">Seneste afviklede løb og resultater.</p>
         </div>
@@ -94,7 +99,9 @@ function NewsHome() {
         </div>
       </header>
 
-      {isLoading && <div className="h-96 animate-pulse rounded-xl border border-border bg-card/50" />}
+      {isLoading && (
+        <div className="h-96 animate-pulse rounded-xl border border-border bg-card/50" />
+      )}
 
       {!isLoading && !latest && (
         <section className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
@@ -166,8 +173,12 @@ function NewsHome() {
                         <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-background font-semibold tabular-nums">
                           {row.class_position}
                         </span>
-                        <span className="min-w-0 flex-1 truncate font-medium">{row.driver_name}</span>
-                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{row.points ?? 0} p</span>
+                        <span className="min-w-0 flex-1 truncate font-medium">
+                          {row.driver_name}
+                        </span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {row.points ?? 0} p
+                        </span>
                       </li>
                     ))}
                   </ol>
