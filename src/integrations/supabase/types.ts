@@ -165,6 +165,7 @@ export type Database = {
       entries: {
         Row: {
           car_class: string
+          car_model: string | null
           car_number: number | null
           created_at: string
           division_id: string | null
@@ -178,6 +179,7 @@ export type Database = {
         }
         Insert: {
           car_class: string
+          car_model?: string | null
           car_number?: number | null
           created_at?: string
           division_id?: string | null
@@ -191,6 +193,7 @@ export type Database = {
         }
         Update: {
           car_class?: string
+          car_model?: string | null
           car_number?: number | null
           created_at?: string
           division_id?: string | null
