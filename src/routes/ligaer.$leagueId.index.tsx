@@ -787,7 +787,7 @@ function TeamStandings({
 }
 
 
-function SignupDialog({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
+function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; configs: ClassConfig[]; signupOpensAt: string | null }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
