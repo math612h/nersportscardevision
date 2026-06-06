@@ -170,11 +170,13 @@ function LeagueDetail() {
               </>)}
         </div>
 
+        <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
+
         <div className="flex flex-wrap gap-2 pt-1">
           <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
             <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
           </Link>
-          {league && <SignupDialog leagueId={leagueId} configs={configs} />}
+          {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} />}
           {league && <EditEntryDialog leagueId={leagueId} />}
           {league && <LeaveLeagueButton leagueId={leagueId} />}
         </div>
