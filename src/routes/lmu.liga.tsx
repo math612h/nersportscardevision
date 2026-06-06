@@ -252,11 +252,15 @@ function LeagueCard({
   bannerUrl,
   entries,
   offseason,
+  upcoming,
+  past,
 }: {
   l: any;
   bannerUrl: string | null;
   entries: { car_class: string; driver_category: string; waitlist: boolean }[];
   offseason?: boolean;
+  upcoming?: boolean;
+  past?: boolean;
 }) {
   const Icon = offseason ? Sparkles : Flag;
   const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
