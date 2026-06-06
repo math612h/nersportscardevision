@@ -769,11 +769,11 @@ function TeamStandings({
                         if (!slot || slot.count === 0) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
                         return (
                           <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`${slot.sum} pt / ${slot.count} kørere`}>
-                            {(slot.sum / slot.count).toFixed(1)}
+                            {Math.round(slot.sum / slot.count)}
                           </td>
                         );
                       })}
-                      <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{t.total.toFixed(1)}</td>
+                      <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{Math.round(t.total)}</td>
                     </tr>
                   ))}
                 </tbody>
