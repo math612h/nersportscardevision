@@ -28,6 +28,8 @@ export const Route = createFileRoute("/lmu/liga")({
 });
 
 function ParticipantDashboard() {
+  const [tab, setTab] = useState<"active" | "upcoming" | "past">("active");
+
   const { data: leagues, isLoading } = useQuery({
     queryKey: ["leagues"],
     staleTime: 0,
@@ -131,32 +133,74 @@ function ParticipantDashboard() {
         </div>
       )}
 
-      {active.length > 0 && (
-        <Section title="Aktive ligaer" icon={<Flag className="h-4 w-4" />}>
-          <CardGrid>
-            {active.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} />)}
-          </CardGrid>
-        </Section>
-      )}
+      {!isLoading && leagues && leagues.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setTab("active")}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Flag className="h-3.5 w-3.5" /> Aktive
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("upcoming")}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                tab === "upcoming" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Sparkles className="h-3.5 w-3.5" /> Kommende
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("past")}
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
+                tab === "past" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Trophy className="h-3.5 w-3.5" /> Tidligere
+            </button>
+          </div>
 
-      {upcoming.length > 0 && (
-        <Section
-          title="Kommende ligaer"
-          icon={<Sparkles className="h-4 w-4" />}
-          description="Tilmelding er endnu ikke åbnet."
-        >
-          <CardGrid>
-            {upcoming.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming />)}
-          </CardGrid>
-        </Section>
-      )}
+          {tab === "active" && active.length > 0 && (
+            <CardGrid>
+              {active.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} />)}
+            </CardGrid>
+          )}
+          {tab === "active" && active.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+              Ingen aktive ligaer i øjeblikket.
+            </div>
+          )}
 
-      {past.length > 0 && (
-        <Section title="Tidligere ligaer" icon={<Trophy className="h-4 w-4" />}>
-          <CardGrid>
-            {past.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past />)}
-          </CardGrid>
-        </Section>
+          {tab === "upcoming" && upcoming.length > 0 && (
+            <CardGrid>
+              {upcoming.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming />)}
+            </CardGrid>
+          )}
+          {tab === "upcoming" && upcoming.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+              Ingen kommende ligaer i øjeblikket.
+            </div>
+          )}
+
+          {tab === "past" && past.length > 0 && (
+            <CardGrid>
+              {past.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past />)}
+            </CardGrid>
+          )}
+          {tab === "past" && past.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+              Ingen tidligere ligaer endnu.
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
