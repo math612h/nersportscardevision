@@ -284,6 +284,7 @@ export type Database = {
           is_offseason: boolean
           name: string
           points_system: Json
+          signup_opens_at: string | null
         }
         Insert: {
           banner_url?: string | null
@@ -298,6 +299,7 @@ export type Database = {
           is_offseason?: boolean
           name: string
           points_system?: Json
+          signup_opens_at?: string | null
         }
         Update: {
           banner_url?: string | null
@@ -312,6 +314,7 @@ export type Database = {
           is_offseason?: boolean
           name?: string
           points_system?: Json
+          signup_opens_at?: string | null
         }
         Relationships: []
       }
