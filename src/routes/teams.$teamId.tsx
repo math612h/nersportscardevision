@@ -76,7 +76,8 @@ function TeamDetailPage() {
   });
 
   const { data: members } = useQuery({
-    queryKey: ["team-members", teamId],
+    queryKey: ["team-members", teamId, user?.id ?? "anon"],
+    enabled: !!user,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("team_members")
