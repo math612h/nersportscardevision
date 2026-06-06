@@ -385,6 +385,14 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [pointsSystem, setPointsSystem] = useState<PointsSystem>(
     (league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem,
   );
+  const toLocalInput = (iso: string | null | undefined): string => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  const [signupOpensAt, setSignupOpensAt] = useState<string>(toLocalInput(league.signup_opens_at));
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
@@ -396,6 +404,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setBannerFile(null);
     setEventSettings((league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings);
     setPointsSystem((league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem);
+    setSignupOpensAt(toLocalInput(league.signup_opens_at));
   };
 
   const submit = async (e: React.FormEvent) => {
