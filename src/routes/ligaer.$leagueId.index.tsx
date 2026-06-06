@@ -151,9 +151,15 @@ function LeagueDetail() {
 
         <div className="flex flex-wrap gap-2">
           {configs.length > 0
-            ? configs.map((c, i) => (
-                <Badge key={i} variant="outline">{c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}</Badge>
-              ))
+            ? configs.map((c, i) => {
+                const col = classColor(c.car_class);
+                return (
+                  <Badge key={i} variant="outline" className={`gap-1.5 ${col.badge}`}>
+                    <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+                    {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
+                  </Badge>
+                );
+              })
             : (<>
                 {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
                 {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
