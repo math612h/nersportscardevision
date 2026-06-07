@@ -820,7 +820,54 @@ function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; 
 
   const alreadySignedUp = !!user && (signups ?? []).some((s) => s.user_id === user.id);
   const signupOpen = !signupOpensAt ? false : new Date(signupOpensAt).getTime() <= Date.now();
+
+  // Fetch allowed driver_categories per car_class for this user
+  const uniqueClasses = useMemo(
+    () => Array.from(new Set(configs.map((c) => c.car_class))),
+    [configs],
+  );
+  const fetchAllowed = useServerFn(getAllowedCategories);
+  const { data: allowedMap } = useQuery({
+    queryKey: ["allowed-cats", leagueId, user?.id, uniqueClasses.join(",")],
+    enabled: !!user && open && uniqueClasses.length > 0,
+    queryFn: async () => {
+      const out: Record<string, { allowed: string[]; reason: string; user_score: number }> = {};
+      await Promise.all(
+        uniqueClasses.map(async (cc) => {
+          try {
+            const r = await fetchAllowed({ data: { leagueId, carClass: cc } });
+            out[cc] = { allowed: r.allowed, reason: r.reason, user_score: r.user_score };
+          } catch {
+            out[cc] = { allowed: [], reason: "insufficient_data", user_score: 50 };
+          }
+        }),
+      );
+      return out;
+    },
+  });
+
+  const filteredConfigs = useMemo(() => {
+    if (!allowedMap) return configs;
+    return configs.filter((c) => {
+      const a = allowedMap[c.car_class];
+      if (!a) return true;
+      if (a.reason === "insufficient_data" || a.reason === "single_category" || a.reason === "no_categories") return true;
+      return a.allowed.includes(c.driver_category);
+    });
+  }, [configs, allowedMap]);
+
+  // Reset cfgIdx if current selection is filtered out
+  useEffect(() => {
+    if (filteredConfigs.length === 0) return;
+    const cur = configs[Number(cfgIdx)];
+    if (!cur || !filteredConfigs.some((c) => c.car_class === cur.car_class && c.driver_category === cur.driver_category)) {
+      const newIdx = configs.findIndex((c) => c === filteredConfigs[0]);
+      setCfgIdx(String(newIdx >= 0 ? newIdx : 0));
+    }
+  }, [filteredConfigs, configs, cfgIdx]);
+
   const selected = configs[Number(cfgIdx)];
+  const selectedAllowedInfo = selected ? allowedMap?.[selected.car_class] : undefined;
 
   const { taken, available } = useMemo(() => {
     if (!selected) return { taken: [] as number[], available: [] as number[] };
