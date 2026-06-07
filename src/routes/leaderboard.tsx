@@ -494,6 +494,12 @@ function LeaderboardPage() {
           </Card>
         )}
       </section>
+        </TabsContent>
+
+        <TabsContent value="personal" className="pt-4">
+          <PersonalBestPanel />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
