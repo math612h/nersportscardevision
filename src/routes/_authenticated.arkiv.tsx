@@ -156,18 +156,9 @@ function ArchivePage() {
           <Card>
             <CardHeader>
               <CardTitle>ELO-udvikling</CardTitle>
-              <CardDescription>Din rating-progression over tid pr. bilklasse. Hvert datapunkt er en opdatering af din rating.</CardDescription>
+              <CardDescription>Din samlede ELO-rating over tid. Beregnet med klassisk ELO-formel ud fra dine løbsresultater (K=32 indtil 30 løb, derefter 16). Alle starter på 1500.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Select value={eloClass} onValueChange={setEloClass}>
-                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Alle klasser (snit)</SelectItem>
-                    {eloClasses.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
               {eloChartData.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Ingen rating-historik endnu. Den bygges op efterhånden som du uploader tider og kører liga-løb.</p>
               ) : (
