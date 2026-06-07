@@ -39,9 +39,9 @@ export function RatingBadge({ score, confidence, carClass, size = "sm", showLabe
         </TooltipTrigger>
         <TooltipContent>
           <div className="text-xs space-y-0.5">
-            <div><strong>Rating: {rounded}/100</strong>{carClass ? ` · ${carClass}` : ""}</div>
+            <div><strong>Rating: {rounded}</strong>{carClass ? ` · ${carClass}` : ""}</div>
             <div className="text-muted-foreground">{confText}</div>
-            <div className="text-muted-foreground">40% bedste omgang · 60% løbsresultater</div>
+            <div className="text-muted-foreground">50 = platform-median · 20% bedste omgang · 80% løbsresultater</div>
           </div>
         </TooltipContent>
       </Tooltip>
