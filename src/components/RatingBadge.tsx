@@ -28,21 +28,23 @@ export function RatingBadge({ score, confidence, carClass, size = "sm", showLabe
     : "Estimat (baseret på platform-median)";
   const cls = size === "xs" ? "text-[10px] px-1.5 py-0 h-5" : "text-xs";
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Badge variant="outline" className={`gap-1 ${color} ${cls} shrink-0`}>
-          <Gauge className="h-3 w-3" />
-          {showLabel ? "Rating " : ""}{rounded}
-          {conf < 1 && <span className="opacity-60">~</span>}
-        </Badge>
-      </TooltipTrigger>
-      <TooltipContent>
-        <div className="text-xs space-y-0.5">
-          <div><strong>Rating: {rounded}/100</strong>{carClass ? ` · ${carClass}` : ""}</div>
-          <div className="text-muted-foreground">{confText}</div>
-          <div className="text-muted-foreground">40% bedste omgang · 60% løbsresultater</div>
-        </div>
-      </TooltipContent>
-    </Tooltip>
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Badge variant="outline" className={`gap-1 ${color} ${cls} shrink-0 cursor-help`}>
+            <Gauge className="h-3 w-3" />
+            {showLabel ? "Rating " : ""}{rounded}
+            {conf < 1 && <span className="opacity-60">~</span>}
+          </Badge>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="text-xs space-y-0.5">
+            <div><strong>Rating: {rounded}/100</strong>{carClass ? ` · ${carClass}` : ""}</div>
+            <div className="text-muted-foreground">{confText}</div>
+            <div className="text-muted-foreground">40% bedste omgang · 60% løbsresultater</div>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
