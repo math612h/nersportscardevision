@@ -964,7 +964,8 @@ function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; 
             <Select value={cfgIdx} onValueChange={(v) => { setCfgIdx(v); setCarNumber(null); setCarModel(""); }}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                {configs.map((c, i) => {
+                {filteredConfigs.map((c) => {
+                  const i = configs.indexOf(c);
                   const col = classColor(c.car_class);
                   return (
                     <SelectItem key={i} value={String(i)}>
@@ -977,6 +978,16 @@ function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; 
                 })}
               </SelectContent>
             </Select>
+            {selectedAllowedInfo && selectedAllowedInfo.reason === "algorithm" && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Algoritmen vurderer at <strong>{selectedAllowedInfo.allowed.join("/")}</strong> passer bedst til dit niveau i {selected?.car_class}.
+              </p>
+            )}
+            {selectedAllowedInfo && selectedAllowedInfo.reason === "insufficient_data" && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Få tilmeldte indtil videre – alle kategorier er åbne.
+              </p>
+            )}
           </div>
           {selected && (CARS_BY_CLASS[selected.car_class]?.length ?? 0) > 0 && (
             <div>
