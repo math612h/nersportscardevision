@@ -29,11 +29,7 @@ export function RatingBadge({ score, percentile, confidence, carClass, size = "s
   if (score == null) return null;
   const rounded = Math.round(score);
   const tier = tierFor(percentile);
-  const conf = confidence ?? 0;
-  const confText =
-    conf >= 1 ? "Fuld datagrundlag (leaderboard + resultater)"
-    : conf >= 0.5 ? "Delvist datagrundlag – kun én datakilde"
-    : "Estimat (baseret på platform-median)";
+  const conf = confidence ?? 1;
   const cls = size === "xs" ? "text-[10px] px-1.5 py-0 h-5" : "text-xs";
   return (
     <TooltipProvider delayDuration={150}>
@@ -41,16 +37,14 @@ export function RatingBadge({ score, percentile, confidence, carClass, size = "s
         <TooltipTrigger asChild>
           <Badge variant="outline" className={`gap-1 ${tier.cls} ${cls} shrink-0 cursor-help`}>
             <Gauge className="h-3 w-3" />
-            {showLabel ? "Rating " : ""}{rounded}
-            {conf < 1 && <span className="opacity-60">~</span>}
+            {showLabel ? "ELO " : ""}{rounded}
           </Badge>
         </TooltipTrigger>
         <TooltipContent>
           <div className="text-xs space-y-0.5">
-            <div><strong>Rating: {rounded}</strong>{carClass ? ` · ${carClass}` : ""}</div>
+            <div><strong>ELO: {rounded}</strong>{carClass ? ` · ${carClass}` : ""}</div>
             <div>{tier.label}{percentile != null ? ` (${Math.round(percentile)}. percentil)` : ""}</div>
-            <div className="text-muted-foreground">{confText}</div>
-            <div className="text-muted-foreground">Beregnes på tværs af alle ligaer · 20% bedste omgang · 80% løbsresultater</div>
+            <div className="text-muted-foreground">Klassisk ELO-formel · K=32 (&lt;30 løb) / K=16 · alle starter på 1500</div>
           </div>
         </TooltipContent>
       </Tooltip>
