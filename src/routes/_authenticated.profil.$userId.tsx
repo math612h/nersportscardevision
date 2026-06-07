@@ -47,12 +47,13 @@ function PublicProfile() {
   });
 
   const { data: ratings } = useQuery({
-    queryKey: ["user-ratings", userId],
+    queryKey: ["user-class-ratings", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_league_ratings")
-        .select("league_id,car_class,score,confidence,leagues(name)")
-        .eq("user_id", userId);
+      const { data, error } = await (supabase as any)
+        .from("user_class_ratings")
+        .select("car_class,score,percentile,confidence")
+        .eq("user_id", userId)
+        .order("score", { ascending: false });
       if (error) throw error;
       return (data ?? []) as any[];
     },
