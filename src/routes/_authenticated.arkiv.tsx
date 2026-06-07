@@ -212,7 +212,48 @@ function ArchivePage() {
         </TabsContent>
 
 
-        <TabsContent value="leagues">
+        <TabsContent value="leagues" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Liga-udvikling</CardTitle>
+              <CardDescription>Bedste runde pr. liga-løb over tid.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Select value={leagueChartClass} onValueChange={setLeagueChartClass}>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Alle klasser</SelectItem>
+                    {leagueClasses.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={leagueChartTrack} onValueChange={setLeagueChartTrack}>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Alle baner</SelectItem>
+                    {leagueTracks.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {leagueChartData.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Ingen liga-data endnu.</p>
+              ) : (
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={leagueChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} reversed />
+                      <Tooltip formatter={(v: number) => `${v.toFixed(3)} s`} />
+                      <Line type="monotone" dataKey="lap" stroke="hsl(var(--muted-foreground))" dot={false} name="Bedste runde i løb (s)" />
+                      <Line type="monotone" dataKey="best" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="Personlig bedste" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Liga-resultater</CardTitle>
@@ -220,6 +261,8 @@ function ArchivePage() {
             </CardHeader>
             <CardContent>
               {leagueResults.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Ingen liga-resultater endnu.</p>
+              ) : (
                 <p className="text-sm text-muted-foreground">Ingen liga-resultater endnu.</p>
               ) : (
                 <Table>
