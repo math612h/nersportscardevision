@@ -20,7 +20,7 @@ export function AppHeader() {
         <nav className="flex items-center gap-1 text-sm">
           {!isAdminRoute && (
             <Link to="/" className="rounded px-2 py-1 hover:bg-accent" activeOptions={{ exact: true }}>
-              <span className="flex items-center gap-1"><LayoutGrid className="h-4 w-4" /> Ligaer</span>
+              <span className="flex items-center gap-1"><Home className="h-4 w-4" /> Forside</span>
             </Link>
           )}
           {!isAdminRoute && (
