@@ -448,6 +448,14 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                           {teamMap[(e as any).team_id]}
                         </Badge>
                       )}
+                      {ratingMap?.[`${e.user_id}|${e.car_class}`] && (
+                        <RatingBadge
+                          score={ratingMap[`${e.user_id}|${e.car_class}`].score}
+                          confidence={ratingMap[`${e.user_id}|${e.car_class}`].confidence}
+                          carClass={e.car_class}
+                          size="xs"
+                        />
+                      )}
                       {approvedMap?.has(e.user_id) && (
                         <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
                           <CheckCircle2 className="h-3 w-3" />Godkendt
