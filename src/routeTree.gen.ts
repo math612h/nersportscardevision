@@ -33,6 +33,7 @@ import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/l
 import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
+import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
 import { Route as AuthenticatedAdminAdminBrugereRouteImport } from './routes/_authenticated._admin.admin.brugere'
 import { Route as AuthenticatedAdminAdminAfventerRouteImport } from './routes/_authenticated._admin.admin.afventer'
@@ -169,6 +170,12 @@ const AuthenticatedAdminAdminProtestsRoute =
     path: '/admin/protests',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminNyhedsbrevRoute =
+  AuthenticatedAdminAdminNyhedsbrevRouteImport.update({
+    id: '/admin/nyhedsbrev',
+    path: '/admin/nyhedsbrev',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminLigaerRoute =
   AuthenticatedAdminAdminLigaerRouteImport.update({
     id: '/admin/ligaer',
@@ -245,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
+  '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
@@ -277,6 +285,7 @@ export interface FileRoutesByTo {
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
+  '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
@@ -312,6 +321,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/_authenticated/_admin/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
+  '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/admin/afventer'
     | '/admin/brugere'
     | '/admin/ligaer'
+    | '/admin/nyhedsbrev'
     | '/admin/protests'
     | '/api/public/companion/verify-token'
     | '/api/public/download/companion'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/admin/afventer'
     | '/admin/brugere'
     | '/admin/ligaer'
+    | '/admin/nyhedsbrev'
     | '/api/public/companion/verify-token'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
@@ -413,6 +425,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/afventer'
     | '/_authenticated/_admin/admin/brugere'
     | '/_authenticated/_admin/admin/ligaer'
+    | '/_authenticated/_admin/admin/nyhedsbrev'
     | '/_authenticated/_admin/admin/protests'
     | '/api/public/companion/verify-token'
     | '/api/public/download/companion'
@@ -613,6 +626,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminProtestsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/nyhedsbrev': {
+      id: '/_authenticated/_admin/admin/nyhedsbrev'
+      path: '/admin/nyhedsbrev'
+      fullPath: '/admin/nyhedsbrev'
+      preLoaderRoute: typeof AuthenticatedAdminAdminNyhedsbrevRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/ligaer': {
       id: '/_authenticated/_admin/admin/ligaer'
       path: '/admin/ligaer'
@@ -725,6 +745,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminAfventerRoute: typeof AuthenticatedAdminAdminAfventerRoute
   AuthenticatedAdminAdminBrugereRoute: typeof AuthenticatedAdminAdminBrugereRoute
   AuthenticatedAdminAdminLigaerRoute: typeof AuthenticatedAdminAdminLigaerRouteWithChildren
+  AuthenticatedAdminAdminNyhedsbrevRoute: typeof AuthenticatedAdminAdminNyhedsbrevRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
 }
@@ -734,6 +755,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminBrugereRoute: AuthenticatedAdminAdminBrugereRoute,
   AuthenticatedAdminAdminLigaerRoute:
     AuthenticatedAdminAdminLigaerRouteWithChildren,
+  AuthenticatedAdminAdminNyhedsbrevRoute:
+    AuthenticatedAdminAdminNyhedsbrevRoute,
   AuthenticatedAdminAdminProtestsRoute:
     AuthenticatedAdminAdminProtestsRouteWithChildren,
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
