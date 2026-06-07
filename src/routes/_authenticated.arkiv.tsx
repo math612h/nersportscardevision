@@ -175,38 +175,30 @@ function ArchivePage() {
         <TabsContent value="curve">
           <Card>
             <CardHeader>
-              <CardTitle>Leaderboard-udvikling</CardTitle>
-              <CardDescription>Dine bedste hotlap-tider over tid (fra companion- og manuel upload — ikke liga-løb).</CardDescription>
+              <CardTitle>ELO-udvikling</CardTitle>
+              <CardDescription>Din rating-progression over tid pr. bilklasse. Hvert datapunkt er en opdatering af din rating.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
-                <Select value={chartClass} onValueChange={setChartClass}>
+                <Select value={eloClass} onValueChange={setEloClass}>
                   <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ALL">Alle klasser</SelectItem>
-                    {classes.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-                <Select value={chartTrack} onValueChange={setChartTrack}>
-                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Alle baner</SelectItem>
-                    {tracks.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    <SelectItem value="ALL">Alle klasser (snit)</SelectItem>
+                    {eloClasses.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              {chartData.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Ingen data for valget.</p>
+              {eloChartData.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Ingen rating-historik endnu. Den bygges op efterhånden som du uploader tider og kører liga-løb.</p>
               ) : (
                 <div className="h-72 w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <LineChart data={eloChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} reversed />
-                      <Tooltip formatter={(v: number) => `${v.toFixed(3)} s`} />
-                      <Line type="monotone" dataKey="lap" stroke="hsl(var(--muted-foreground))" dot={false} name="Runde (s)" />
-                      <Line type="monotone" dataKey="best" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="Personlig bedste" />
+                      <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
+                      <Tooltip formatter={(v: number) => `${v.toFixed(2)}`} />
+                      <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} name="ELO rating" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
