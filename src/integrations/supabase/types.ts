@@ -270,6 +270,78 @@ export type Database = {
         }
         Relationships: []
       }
+      league_results: {
+        Row: {
+          avg_lap_ms: number | null
+          best_lap_ms: number | null
+          car_class: string
+          car_model: string | null
+          created_at: string
+          division_id: string | null
+          id: string
+          layout: string | null
+          league_id: string
+          notes: string | null
+          points: number | null
+          position: number | null
+          round: number | null
+          track: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_lap_ms?: number | null
+          best_lap_ms?: number | null
+          car_class: string
+          car_model?: string | null
+          created_at?: string
+          division_id?: string | null
+          id?: string
+          layout?: string | null
+          league_id: string
+          notes?: string | null
+          points?: number | null
+          position?: number | null
+          round?: number | null
+          track: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_lap_ms?: number | null
+          best_lap_ms?: number | null
+          car_class?: string
+          car_model?: string | null
+          created_at?: string
+          division_id?: string | null
+          id?: string
+          layout?: string | null
+          league_id?: string
+          notes?: string | null
+          points?: number | null
+          position?: number | null
+          round?: number | null
+          track?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_results_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "league_results_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leagues: {
         Row: {
           banner_url: string | null
@@ -811,6 +883,44 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      user_league_ratings: {
+        Row: {
+          car_class: string
+          components: Json
+          confidence: number
+          league_id: string
+          score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          car_class: string
+          components?: Json
+          confidence?: number
+          league_id: string
+          score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          car_class?: string
+          components?: Json
+          confidence?: number
+          league_id?: string
+          score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_league_ratings_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
