@@ -968,12 +968,24 @@ export type Database = {
       }
     }
     Functions: {
+      allowed_categories_for_signup: {
+        Args: { _car_class: string; _league_id: string; _user_id: string }
+        Returns: Json
+      }
+      compute_user_league_score: {
+        Args: { _car_class: string; _league_id: string; _user_id: string }
+        Returns: Json
+      }
       get_profile_private: {
         Args: { _user_id: string }
         Returns: {
           age: number
           discord_username: string
         }[]
+      }
+      refresh_user_league_rating: {
+        Args: { _car_class: string; _league_id: string; _user_id: string }
+        Returns: undefined
       }
     }
     Enums: {
