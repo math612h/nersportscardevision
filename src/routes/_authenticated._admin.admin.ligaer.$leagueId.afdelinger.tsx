@@ -1,9 +1,11 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { ArrowLeft, Plus, Trash2, Pencil, Check } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { useState, useRef } from "react";
+import { ArrowLeft, Plus, Trash2, Pencil, Check, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { uploadLeagueRaceResult } from "@/lib/league-results.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { LMU_TRACKS, WEATHER_OPTIONS, WEATHER_BY_KEY, WEATHER_SLOT_COUNT, type WeatherKey, type EventSettings } from "@/lib/tracks";
 import { SessionSettingsEditor } from "@/components/SessionSettingsEditor";
@@ -81,6 +83,7 @@ function AdminDivisions() {
                     {completed && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" />Afsluttet</Badge>}
                   </CardTitle>
                   <div className="flex gap-1">
+                    <UploadResultButton leagueId={leagueId} divisionId={d.id} />
                     <EditDivisionDialog division={d} onDone={() => qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] })} />
                     <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet afdeling?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </div>
