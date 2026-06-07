@@ -12,7 +12,7 @@ import { getMyArchive, getMyRatingHistory } from "@/lib/rating.functions";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/arkiv")({
-  head: () => ({ meta: [{ title: "Mit arkiv – DanishEnduranceSeries.dk" }] }),
+  head: () => ({ meta: [{ title: "Mit arkiv – LMU Danmark" }] }),
   component: ArchivePage,
 });
 

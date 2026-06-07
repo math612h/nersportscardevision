@@ -11,9 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export const Route = createFileRoute("/brugere")({
   head: () => ({
     meta: [
-      { title: "Brugere – DanishEnduranceSeries.dk" },
+      { title: "Brugere – LMU Danmark" },
       { name: "description", content: "Se alle brugere på platformen." },
-      { property: "og:title", content: "Brugere – DanishEnduranceSeries.dk" },
+      { property: "og:title", content: "Brugere – LMU Danmark" },
       { property: "og:description", content: "Find andre racere og se deres profiler." },
     ],
   }),
@@ -82,7 +82,7 @@ function UsersPage() {
           <Users className="h-5 w-5" />
           <h1 className="text-2xl font-bold tracking-tight">Brugere</h1>
         </div>
-        <p className="text-sm text-muted-foreground">Alle brugere på DanishEnduranceSeries.dk.</p>
+        <p className="text-sm text-muted-foreground">Alle brugere på LMU Danmark.</p>
       </header>
 
       <div className="relative max-w-sm">

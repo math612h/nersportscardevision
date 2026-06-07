@@ -7,9 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTrackImageFile } from "@/lib/tracks";
 
-const PAGE_TITLE = "Nyheder — DanishEnduranceSeries.dk";
+const PAGE_TITLE = "Nyheder — LMU Danmark";
 const PAGE_DESC =
-  "Seneste afviklede løb i DanishEnduranceSeries.dk med baneinfo, klassevindere og top 3-resultater.";
+  "Seneste afviklede løb i LMU Danmark med baneinfo, klassevindere og top 3-resultater.";
 const PAGE_URL = "https://danishenduranceseries.dk/";
 
 type ResultRow = {

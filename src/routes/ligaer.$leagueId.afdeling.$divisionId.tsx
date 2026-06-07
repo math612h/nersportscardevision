@@ -41,7 +41,7 @@ export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
     const trackStr = loaderData?.track
       ? `${loaderData.track}${loaderData.layout ? ` (${loaderData.layout})` : ""}`
       : "";
-    const title = `${div}${league ? ` – ${league}` : ""} | DanishEnduranceSeries.dk`;
+    const title = `${div}${league ? ` – ${league}` : ""} | LMU Danmark`;
     const desc =
       `Detaljer for afdelingen ${div}${league ? ` i ${league}` : ""}: ` +
       `${trackStr ? `${trackStr}, ` : ""}deltagere, lobby info og protest-formular.`;
@@ -67,7 +67,7 @@ export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
           eventStatus: "https://schema.org/EventScheduled",
           organizer: {
             "@type": "Organization",
-            name: "DanishEnduranceSeries.dk",
+            name: "LMU Danmark",
           },
         }),
       });

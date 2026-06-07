@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/RatingBadge";
 
 export const Route = createFileRoute("/_authenticated/profil/$userId")({
-  head: () => ({ meta: [{ title: "Profil – DanishEnduranceSeries.dk" }] }),
+  head: () => ({ meta: [{ title: "Profil – LMU Danmark" }] }),
   component: PublicProfile,
 });
 

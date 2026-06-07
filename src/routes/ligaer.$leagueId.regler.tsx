@@ -16,8 +16,8 @@ export const Route = createFileRoute("/ligaer/$leagueId/regler")({
   },
   head: ({ params, loaderData }) => {
     const name = loaderData?.leagueName ?? "ligaen";
-    const title = `Regelsæt for ${name} — DanishEnduranceSeries.dk`;
-    const desc = `Det fulde regelsæt for ${name} i DanishEnduranceSeries.dk: sportslige, tekniske og adfærdsmæssige regler.`;
+    const title = `Regelsæt for ${name} — LMU Danmark`;
+    const desc = `Det fulde regelsæt for ${name} i LMU Danmark: sportslige, tekniske og adfærdsmæssige regler.`;
     const url = `https://danishenduranceseries.dk/ligaer/${params.leagueId}/regler`;
     return {
       meta: [
