@@ -884,6 +884,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_class_ratings: {
+        Row: {
+          car_class: string
+          components: Json | null
+          confidence: number
+          created_at: string
+          id: string
+          percentile: number | null
+          score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          car_class: string
+          components?: Json | null
+          confidence?: number
+          created_at?: string
+          id?: string
+          percentile?: number | null
+          score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          car_class?: string
+          components?: Json | null
+          confidence?: number
+          created_at?: string
+          id?: string
+          percentile?: number | null
+          score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_league_ratings: {
         Row: {
           car_class: string
@@ -972,6 +1008,10 @@ export type Database = {
         Args: { _car_class: string; _league_id: string; _user_id: string }
         Returns: Json
       }
+      compute_user_class_score: {
+        Args: { _car_class: string; _user_id: string }
+        Returns: Json
+      }
       compute_user_league_score: {
         Args: { _car_class: string; _league_id: string; _user_id: string }
         Returns: Json
@@ -982,6 +1022,14 @@ export type Database = {
           age: number
           discord_username: string
         }[]
+      }
+      refresh_class_percentiles: {
+        Args: { _car_class: string }
+        Returns: undefined
+      }
+      refresh_user_class_rating: {
+        Args: { _car_class: string; _user_id: string }
+        Returns: undefined
       }
       refresh_user_league_rating: {
         Args: { _car_class: string; _league_id: string; _user_id: string }
