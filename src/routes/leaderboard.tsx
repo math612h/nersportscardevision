@@ -69,6 +69,7 @@ function LeaderboardPage() {
   const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const folderRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
   const { data: rows, isLoading } = useQuery({
