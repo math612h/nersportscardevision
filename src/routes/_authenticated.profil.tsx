@@ -147,13 +147,18 @@ function ProfilePage() {
         <CardHeader>
           <div className="flex items-center justify-between gap-2">
             <CardTitle>Min profil</CardTitle>
-            {profile?.approved ? (
-              <Badge variant="secondary" className="gap-1 text-green-700 dark:text-green-400">
-                <CheckCircle2 className="h-3 w-3" /> Godkendt kører
-              </Badge>
-            ) : (
-              <Badge variant="outline" className="text-muted-foreground">Afventer godkendelse</Badge>
-            )}
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/arkiv">Mit arkiv</Link>
+              </Button>
+              {profile?.approved ? (
+                <Badge variant="secondary" className="gap-1 text-green-700 dark:text-green-400">
+                  <CheckCircle2 className="h-3 w-3" /> Godkendt kører
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-muted-foreground">Afventer godkendelse</Badge>
+              )}
+            </div>
           </div>
           <CardDescription>Opdater dine oplysninger – LMU-navnet bruges til at koble løbsresultater til dig.</CardDescription>
         </CardHeader>
