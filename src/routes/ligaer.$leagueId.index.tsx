@@ -376,19 +376,18 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
     },
   });
   const { data: ratingMap } = useQuery({
-    queryKey: ["entry-class-ratings", userIds.sort().join(",")],
+    queryKey: ["entry-ratings", userIds.sort().join(",")],
     enabled: userIds.length > 0,
     queryFn: async () => {
       const { data: rs, error } = await (supabase as any)
-        .from("user_class_ratings")
-        .select("user_id,car_class,score,percentile,confidence")
+        .from("user_ratings")
+        .select("user_id,score,percentile")
         .in("user_id", userIds);
       if (error) throw error;
-      const m: Record<string, { score: number; percentile: number | null; confidence: number }> = {};
-      for (const r of (rs ?? []) as any[]) m[`${r.user_id}|${r.car_class}`] = {
+      const m: Record<string, { score: number; percentile: number | null }> = {};
+      for (const r of (rs ?? []) as any[]) m[r.user_id] = {
         score: Number(r.score),
         percentile: r.percentile != null ? Number(r.percentile) : null,
-        confidence: Number(r.confidence),
       };
       return m;
     },
