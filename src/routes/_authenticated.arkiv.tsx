@@ -45,39 +45,19 @@ function ArchivePage() {
     queryFn: () => fetchRatingHistory(),
   });
 
-  const [eloClass, setEloClass] = useState<string>("ALL");
-  const [chartTrack, setChartTrack] = useState<string>("ALL");
   const [leagueChartClass, setLeagueChartClass] = useState<string>("ALL");
   const [leagueChartTrack, setLeagueChartTrack] = useState<string>("ALL");
 
-  // ELO-udvikling over tid (pr. bilklasse)
-  const eloClasses = useMemo(
-    () => Array.from(new Set((ratingHistory ?? []).map((h) => h.car_class))).sort(),
-    [ratingHistory],
-  );
-
+  // ELO-udvikling over tid (samlet rating)
   const eloChartData = useMemo(() => {
     const rows = (ratingHistory ?? [])
-      .filter((h) => eloClass === "ALL" || h.car_class === eloClass)
+      .slice()
       .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-    if (eloClass === "ALL") {
-      // Vis sidste kendte score pr. klasse på hvert tidspunkt → gennemsnit
-      const lastByClass = new Map<string, number>();
-      return rows.map((r) => {
-        lastByClass.set(r.car_class, Number(r.score));
-        const vals = Array.from(lastByClass.values());
-        const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-        return {
-          date: new Date(r.recorded_at).toLocaleDateString("da-DK"),
-          score: Math.round(avg * 100) / 100,
-        };
-      });
-    }
     return rows.map((r) => ({
       date: new Date(r.recorded_at).toLocaleDateString("da-DK"),
       score: Math.round(Number(r.score) * 100) / 100,
     }));
-  }, [ratingHistory, eloClass]);
+  }, [ratingHistory]);
 
   // Liga-graf bygges fra league_results
   const leagueClasses = useMemo(
