@@ -104,6 +104,22 @@ function PublicProfile() {
               <p className="whitespace-pre-wrap text-sm">{profile.achievements}</p>
             </section>
           )}
+          {ratings && ratings.length > 0 && (
+            <section>
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Liga-rating</h3>
+              <div className="space-y-1.5">
+                {ratings.map((r) => (
+                  <div key={`${r.league_id}|${r.car_class}`} className="flex items-center justify-between gap-2 text-sm">
+                    <div className="min-w-0 flex-1 truncate">
+                      <span className="font-medium">{r.leagues?.name ?? "Liga"}</span>
+                      <span className="text-muted-foreground"> · {r.car_class}</span>
+                    </div>
+                    <RatingBadge score={Number(r.score)} confidence={Number(r.confidence)} carClass={r.car_class} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
           {!profile.bio && !profile.achievements && (
             <p className="text-sm text-muted-foreground">Brugeren har endnu ikke udfyldt sin profil.</p>
           )}
