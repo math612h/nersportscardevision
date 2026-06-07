@@ -171,8 +171,8 @@ function ArchivePage() {
         <TabsContent value="curve">
           <Card>
             <CardHeader>
-              <CardTitle>Udviklingskurve</CardTitle>
-              <CardDescription>Hver runde du har sat, og din løbende personlige bedste.</CardDescription>
+              <CardTitle>Leaderboard-udvikling</CardTitle>
+              <CardDescription>Dine bedste hotlap-tider over tid (fra companion- og manuel upload — ikke liga-løb).</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -210,6 +210,7 @@ function ArchivePage() {
             </CardContent>
           </Card>
         </TabsContent>
+
 
         <TabsContent value="leagues">
           <Card>
