@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Flag, MessageSquareWarning, Users, UserCheck, Shield as ShieldIcon } from "lucide-react";
+import { Shield, Flag, MessageSquareWarning, Newspaper, Users, UserCheck, Shield as ShieldIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
