@@ -70,7 +70,7 @@ export const getMyRatingHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<RatingHistoryRow[]> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await (supabaseAdmin as any)
       .from("user_class_rating_history")
       .select("recorded_at,car_class,score,percentile")
       .eq("user_id", context.userId)
