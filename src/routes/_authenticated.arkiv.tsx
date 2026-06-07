@@ -33,13 +33,19 @@ function sourceBadge(src: string) {
 function ArchivePage() {
   const { user } = useAuth();
   const fetchArchive = useServerFn(getMyArchive);
+  const fetchRatingHistory = useServerFn(getMyRatingHistory);
   const { data, isLoading } = useQuery({
     queryKey: ["my-archive", user?.id],
     enabled: !!user,
     queryFn: () => fetchArchive(),
   });
+  const { data: ratingHistory } = useQuery({
+    queryKey: ["my-rating-history", user?.id],
+    enabled: !!user,
+    queryFn: () => fetchRatingHistory(),
+  });
 
-  const [chartClass, setChartClass] = useState<string>("ALL");
+  const [eloClass, setEloClass] = useState<string>("ALL");
   const [chartTrack, setChartTrack] = useState<string>("ALL");
   const [leagueChartClass, setLeagueChartClass] = useState<string>("ALL");
   const [leagueChartTrack, setLeagueChartTrack] = useState<string>("ALL");
