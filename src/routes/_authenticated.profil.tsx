@@ -226,44 +226,41 @@ function ProfilePage() {
 }
 
 function MyRatingsCard({ userId }: { userId: string | null }) {
-  const { data: ratings } = useQuery({
-    queryKey: ["my-class-ratings", userId],
+  const { data: rating } = useQuery({
+    queryKey: ["my-rating", userId],
     enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from("user_class_ratings")
-        .select("car_class,score,percentile,confidence")
+        .from("user_ratings")
+        .select("score,percentile,races_count")
         .eq("user_id", userId!)
-        .order("score", { ascending: false });
+        .maybeSingle();
       if (error) throw error;
-      return (data ?? []) as any[];
+      return data as { score: number; percentile: number | null; races_count: number } | null;
     },
   });
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Min rating</CardTitle>
+        <CardTitle>Min ELO-rating</CardTitle>
         <CardDescription>
-          Én rating pr. bilklasse, beregnet på tværs af alle ligaer. Top 5% = blå · top 25% = guld · top 50% = sølv · resten = bronze. <span className="opacity-60">~</span> = estimat indtil der er nok data.
+          Én samlet ELO på tværs af alle klasser og ligaer. Top 5% = blå · top 25% = guld · top 50% = sølv · resten = bronze. Alle starter på 1500.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-1.5">
-        {!ratings || ratings.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Ingen rating endnu. Du får en så snart du har data i en bilklasse.</p>
+      <CardContent>
+        {!rating ? (
+          <p className="text-sm text-muted-foreground">Ingen rating endnu.</p>
         ) : (
-          ratings.map((r) => (
-            <div key={r.car_class} className="flex items-center justify-between gap-2 text-sm">
-              <div className="min-w-0 flex-1 truncate">
-                <span className="font-medium">{r.car_class}</span>
-              </div>
-              <RatingBadge
-                score={Number(r.score)}
-                percentile={r.percentile != null ? Number(r.percentile) : null}
-                confidence={Number(r.confidence)}
-                carClass={r.car_class}
-              />
-            </div>
-          ))
+          <div className="flex items-center justify-between gap-2 text-sm">
+            <span className="text-muted-foreground">
+              {rating.races_count} løb kørt
+            </span>
+            <RatingBadge
+              score={Number(rating.score)}
+              percentile={rating.percentile != null ? Number(rating.percentile) : null}
+              confidence={1}
+            />
+          </div>
         )}
       </CardContent>
     </Card>
