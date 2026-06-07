@@ -1,91 +1,89 @@
-# NER Sportscar Companion v2 — plan
+# Personligt arkiv + Pro/Am rating
 
-## Hvad slutbrugeren oplever
+## Mål
+- Brugere kan se deres egen udviklingskurve (personligt arkiv)
+- Ved tilmelding til en liga vurderer en algoritme om brugeren må vælge Pro, Am eller begge
+- Algoritmen er dynamisk: opdateres når der kommer nye liga-resultater
+- Lukkes en klasse, ryger eksisterende entries automatisk på venteliste
 
-1. Klikker på "Download Companion" på leaderboard-siden → henter **én fil**: `NER-Sportscar-Companion-Setup.exe` (~80 MB)
-2. Dobbeltklikker filen → installerer sig selv på 5 sekunder → genvej på skrivebordet og i startmenuen → appen starter automatisk
-3. Logger ind én gang med sin NER-konto (samme som hjemmesiden) → forbliver logget ind for altid (også efter genstart)
-4. Appen kører usynligt i baggrunden hver gang PC'en startes (system tray-ikon nede til højre)
-5. Når brugeren kører i Le Mans Ultimate, læses omgangstider automatisk og uploades til leaderboardet
+## 1. Klasse-lukning → venteliste
+Når en `division` deaktiveres/slettes:
+- Alle `entries` der peger på den division får `division_id = NULL` og `status = 'venteliste'`
+- Implementeres via trigger på `divisions` (BEFORE DELETE + AFTER UPDATE når aktiv-flag ændres)
 
-## Hvad jeg bygger
+## 2. Datamodel for rating
 
-### Companion-appen (Electron + React)
+### Lagring (gemmer alt — viser kun det bedste)
+- Eksisterende `leaderboard_times` bruges som råmateriale (alle uploads beholdes)
+- Tilføj kolonne `source` på `leaderboard_times`: `'daily'` (bruger-upload via companion) eller `'league'` (officielt liga-resultat). Dette adskiller dem klart.
+- Liga-resultater logges separat per race i ny tabel `league_results`:
+  - `user_id`, `league_id`, `division_id`, `race_id/round`, `track`, `car_class`, `best_lap_ms`, `avg_lap_ms`, `position`, `points`, `created_at`
+  - Bruges som "tidligere resultater" (60% vægt)
 
-Placeret i `companion/` mappen i dette projekt. Indeholder:
+### Visning (personligt arkiv)
+Ny side `/profil/arkiv` (eller fane på `/profil`):
+- Bedste tid per (bane, bil-klasse) kombination
+- Liste over alle liga-deltagelser (resultater pr. løb)
+- Udviklingskurve (graf) over bedste runde over tid
 
-- **Hovedproces** (`companion/electron/main.cjs`)
-  - System tray-ikon (højreklik → "Åbn", "Log ud", "Afslut")
-  - Auto-start ved Windows-boot via `app.setLoginItemSettings({ openAtLogin: true, openAsHidden: true })`
-  - Skjult vindue der kan kaldes frem fra tray
-  - Læser LMU's resultatfiler fra `%UserProfile%\Documents\Le Mans Ultimate\UserData\Log\Results\` (og `Replays/` for tidligere sessioner) hvert 10. sekund
-  - Parser XML/JSON-resultater til omgangstider per bil/bane/spiller
+## 3. Rating-algoritme
 
-- **UI** (lille React-app i `companion/src/`)
-  - Login-skærm (e-mail + adgangskode + Google) — kun vist første gang
-  - Status-skærm: "Forbundet som [navn] · LMU fundet · X omgange uploaded i dag"
-  - Login-token gemmes krypteret i Electron's `safeStorage` (Windows DPAPI) → overlever genstart
+### Skjult skill-score per (user, league)
+Beregnes server-side, cached i tabel `user_league_ratings`:
+- `user_id`, `league_id`, `car_class`, `score`, `confidence`, `updated_at`
 
-- **Upload-logik**
-  - Kalder Lovable Cloud (Supabase) direkte med brugerens token
-  - Skriver til `leaderboard_times`-tabellen via en ny serverfunktion `submitLapTimes` der validerer ejerskab og deduplikerer
-
-### På hjemmesiden (denne app)
-
-- Ny serverfunktion `src/lib/companion.functions.ts` → `submitLapTimes()` der modtager omgangstider fra companion
-- Opdater download-knappen på `src/routes/leaderboard.tsx` til at pege på den nye installer-URL (GitHub Release)
-
-### Auto-build pipeline (GitHub Actions)
-
-- `.github/workflows/build-companion.yml`
-  - Kører på `windows-latest` når der pushes en tag som `companion-v1.0.0`
-  - Bygger med `electron-builder --win nsis` (giver én `Setup.exe` med:
-    - one-click installation (ingen "Næste → Næste")
-    - genvej på skrivebordet og startmenu
-    - auto-start ved boot)
-  - Uploader `.exe`'en som GitHub Release-asset
-- Hjemmesidens download-knap peger på `https://github.com/<dit-repo>/releases/latest/download/NER-Sportscar-Companion-Setup.exe`
-
-## Hvad DU skal gøre (én gang, ~5 min)
-
-1. **Forbind dette Lovable-projekt til GitHub** (Plus-menu → GitHub → Connect)
-2. **Push første tag** når jeg siger til:
-   ```
-   git tag companion-v1.0.0
-   git push origin companion-v1.0.0
-   ```
-3. **Vent ~5 min** mens GitHub bygger `.exe`'en
-4. **Færdig** — download-knappen virker automatisk
-
-Fremover: når jeg laver ændringer i companion-koden, pusher du bare en ny tag (`companion-v1.0.1` osv.) og den nye installer er klar 5 min efter.
-
-## Tekniske detaljer
-
-```text
-companion/
-├── package.json              electron-builder config med NSIS one-click
-├── electron/
-│   ├── main.cjs              main process: tray, auto-start, LMU watcher
-│   ├── preload.cjs           IPC bridge
-│   └── lmu-watcher.cjs       parser for LMU's results-filer
-├── src/                      React UI (login + status)
-├── build/
-│   └── icon.ico              app-ikon
-└── vite.config.ts            base: './' (krav for Electron)
-
-.github/workflows/
-└── build-companion.yml       Windows-build → GitHub Release
+**Formel:**
+```
+score = 0.4 * leaderboard_component + 0.6 * results_component
 ```
 
-LMU's resultatfiler ligger som XML i `Log\Results\` (samme format som rFactor 2 — Le Mans Ultimate er bygget på samme motor). Hver session genererer én XML med alle omgangstider per kører.
+- `leaderboard_component`: brugerens bedste runde pr. bane (kun bil-klassen for ligaen) sammenlignet med øvrige liga-medlemmers bedste tider — normaliseret til 0–100
+- `results_component`: gennemsnit af brugerens position/point i tidligere races i samme liga (eller andre ligaer som fallback)
+- Når der er <3 deltagere med data: brug **median af hele leaderboardet** (alle brugere på platformen) i den ønskede bil-klasse som reference indtil nok data
 
-## Forbehold / antagelser
+### Klasse-tildeling ved tilmelding
+- Brugerens score sammenlignes mod medianen af de allerede tilmeldte i ligaen i hver klasse
+- Tillad **kun den klasse hvor brugeren ligger tættest på medianen** (mindst spredning → undgår 2 sek/omgang forskel)
+- Hvis ligaen er tom / ingen data: tillad begge
+- UI: tilmeldings-dropdown viser kun tilladte klasser + forklaring ("Algoritmen vurderer Pro passer bedst")
 
-- **LMU's filformat** er det samme som rFactor 2. Hvis det viser sig at LMU bruger noget andet, justerer jeg parseren — men jeg har set i tidligere builds at denne sti virker
-- **Auto-update** (appen henter selv nye versioner) er IKKE med i v1. Kan tilføjes senere via electron-updater hvis ønsket
-- **macOS/Linux** support er ikke med — kun Windows (LMU findes kun til Windows)
-- **Den eksisterende zip-download** fjernes når den nye installer er klar
+### Dynamisk opdatering
+- Trigger på `league_results` insert → re-beregn `user_league_ratings` for alle i ligaen
+- Trigger på `leaderboard_times` insert (kun `source='league'` påvirker rating; `daily` gemmes men vægter mindre/ikke for klasse-beslutning)
+- Eksisterende entries re-evalueres IKKE automatisk (kun nye tilmeldinger)
 
-## Klar til at gå i gang?
+## 4. Teknisk opdeling
 
-Sig "kør" hvis planen ser god ud, så bygger jeg companion-koden + workflow nu. Når det er færdigt giver jeg dig præcise instrukser til GitHub-forbindelse og første tag-push.
+### Migration 1 — schema
+- `ALTER leaderboard_times ADD source text DEFAULT 'daily'`
+- `CREATE TABLE league_results (...)`
+- `CREATE TABLE user_league_ratings (...)`
+- Trigger på `divisions` for venteliste-flytning
+- RLS + GRANTs
+
+### Migration 2 — funktioner
+- `compute_user_league_rating(_user_id, _league_id)` (security definer)
+- `allowed_classes_for_signup(_user_id, _league_id)` returns text[]
+- Triggers der kalder ovenstående
+
+### Server functions (`createServerFn`)
+- `getMyArchive` → personligt arkiv (bedste tider + liga-historik + udviklingsdata)
+- `getAllowedClasses({ leagueId })` → bruges af tilmeldings-UI
+- `recomputeLeagueRatings({ leagueId })` (admin)
+
+### UI
+- `/profil` — ny fane "Mit arkiv" med graf (recharts) + tabel
+- Tilmeldingsdialog — vis kun tilladte klasser
+- Admin: knap til manuel re-beregning af rating
+
+## Rækkefølge
+1. Migration 1 (schema + trigger til venteliste)
+2. Migration 2 (rating-funktioner)
+3. Server functions
+4. UI for personligt arkiv
+5. UI for begrænset klassevalg ved tilmelding
+
+## Åbne spørgsmål (jeg bygger ud fra disse antagelser hvis du ikke svarer)
+- "Bedste tid pr. kombination" = bedste enkelt-runde i (bane × bil-klasse), uanset session
+- Daily-uploads tæller IKKE for klasse-beslutning men vises i arkivet
+- Eksisterende `leaderboard_times` markeres som `source='daily'` ved migration (alle gamle er bruger-uploads)
