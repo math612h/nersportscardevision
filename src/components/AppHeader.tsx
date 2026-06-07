@@ -24,6 +24,11 @@ export function AppHeader() {
             </Link>
           )}
           {!isAdminRoute && (
+            <Link to="/lmu/liga" className="rounded px-2 py-1 hover:bg-accent">
+              <span className="flex items-center gap-1"><Flag className="h-4 w-4" /> Ligaer</span>
+            </Link>
+          )}
+          {!isAdminRoute && (
             <Link to="/teams" className="hidden sm:flex items-center gap-1 rounded px-2 py-1 hover:bg-accent">
               <Shield className="h-4 w-4" /> Teams
             </Link>
