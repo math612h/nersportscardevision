@@ -8,9 +8,9 @@ import { msToLapStr } from "@/lib/lmu-parser";
 import { cn } from "@/lib/utils";
 import type { ClassConfig } from "@/lib/tracks";
 
-const LMU_TITLE = "Le Mans Ultimate ligaer & løb — DanishEnduranceSeries.dk";
+const LMU_TITLE = "Le Mans Ultimate ligaer & løb — LMU Danmark";
 const LMU_DESC =
-  "Oversigt over alle Le Mans Ultimate-ligaer og off-season events i DanishEnduranceSeries.dk. Tilmeld dig, se afdelinger, regler og stillinger.";
+  "Oversigt over alle Le Mans Ultimate-ligaer og off-season events i LMU Danmark. Tilmeld dig, se afdelinger, regler og stillinger.";
 const LMU_URL = "https://danishenduranceseries.dk/lmu/liga";
 
 export const Route = createFileRoute("/lmu/liga")({

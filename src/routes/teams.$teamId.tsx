@@ -25,8 +25,8 @@ import {
 export const Route = createFileRoute("/teams/$teamId")({
   head: ({ params }) => ({
     meta: [
-      { title: "Team – DanishEnduranceSeries.dk" },
-      { property: "og:title", content: "Team – DanishEnduranceSeries.dk" },
+      { title: "Team – LMU Danmark" },
+      { property: "og:title", content: "Team – LMU Danmark" },
       { name: "robots", content: "index,follow" },
     ],
     links: [{ rel: "canonical", href: `https://danishenduranceseries.dk/teams/${params.teamId}` }],

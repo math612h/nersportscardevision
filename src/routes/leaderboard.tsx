@@ -22,7 +22,7 @@ import companionZip from "@/assets/companion-zip.asset.json";
 
 const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
 const LB_DESC =
-  "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle DanishEnduranceSeries.dk-løb i Le Mans Ultimate. Upload din race-fil og kom på listen.";
+  "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle LMU Danmark-løb i Le Mans Ultimate. Upload din race-fil og kom på listen.";
 const LB_URL = "https://danishenduranceseries.dk/leaderboard";
 
 export const Route = createFileRoute("/leaderboard")({
@@ -41,10 +41,10 @@ export const Route = createFileRoute("/leaderboard")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Dataset",
-          name: "DanishEnduranceSeries.dk — Le Mans Ultimate leaderboard",
+          name: "LMU Danmark — Le Mans Ultimate leaderboard",
           description: LB_DESC,
           url: LB_URL,
-          creator: { "@type": "Organization", name: "DanishEnduranceSeries.dk" },
+          creator: { "@type": "Organization", name: "LMU Danmark" },
           variableMeasured: ["best lap time", "track", "car class"],
         }),
       },

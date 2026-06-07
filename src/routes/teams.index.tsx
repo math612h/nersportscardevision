@@ -4,9 +4,9 @@ import { TeamsHub } from "@/components/TeamsHub";
 export const Route = createFileRoute("/teams/")({
   head: () => ({
     meta: [
-      { title: "Teams – DanishEnduranceSeries.dk" },
+      { title: "Teams – LMU Danmark" },
       { name: "description", content: "Se alle teams og deres medlemmer." },
-      { property: "og:title", content: "Teams – DanishEnduranceSeries.dk" },
+      { property: "og:title", content: "Teams – LMU Danmark" },
       { property: "og:description", content: "Find teams, deres medlemmer og bios." },
     ],
   }),

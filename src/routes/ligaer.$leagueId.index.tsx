@@ -40,10 +40,10 @@ export const Route = createFileRoute("/ligaer/$leagueId/")({
   head: ({ params, loaderData }) => {
     const name = loaderData?.leagueName ?? "Liga";
     const kind = loaderData?.isOffseason ? "Off-season event" : "Liga";
-    const title = `${name} — ${kind} | DanishEnduranceSeries.dk`;
+    const title = `${name} — ${kind} | LMU Danmark`;
     const desc =
       loaderData?.leagueDesc?.slice(0, 155) ??
-      `${name}: afdelinger, tilmeldte kørere, regelsæt og stillinger i DanishEnduranceSeries.dk.`;
+      `${name}: afdelinger, tilmeldte kørere, regelsæt og stillinger i LMU Danmark.`;
     const url = `https://danishenduranceseries.dk/ligaer/${params.leagueId}`;
     return {
       meta: [

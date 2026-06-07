@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RatingBadge } from "@/components/RatingBadge";
 
 export const Route = createFileRoute("/_authenticated/profil")({
-  head: () => ({ meta: [{ title: "Min profil – DanishEnduranceSeries.dk" }] }),
+  head: () => ({ meta: [{ title: "Min profil – LMU Danmark" }] }),
   component: ProfilePage,
 });
 

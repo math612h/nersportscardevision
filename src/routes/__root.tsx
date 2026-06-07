@@ -78,7 +78,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => {
-    const siteTitle = "DanishEnduranceSeries.dk — Sim-racing ligaer i Le Mans Ultimate";
+    const siteTitle = "LMU Danmark — Sim-racing ligaer i Le Mans Ultimate";
     const siteDesc =
       "Sim-racing liga-hub til Le Mans Ultimate: tilmeld dig ligaer og off-season events, læs regelsæt, følg stillinger og se hurtigste omgangstider på leaderboardet.";
     const ogImage =
@@ -89,7 +89,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { name: "viewport", content: "width=device-width, initial-scale=1" },
         { title: siteTitle },
         { name: "description", content: siteDesc },
-        { property: "og:site_name", content: "DanishEnduranceSeries.dk" },
+        { property: "og:site_name", content: "LMU Danmark" },
         { property: "og:title", content: siteTitle },
         { property: "og:description", content: siteDesc },
         { property: "og:type", content: "website" },
@@ -105,7 +105,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           children: JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Organization",
-            name: "DanishEnduranceSeries.dk",
+            name: "LMU Danmark",
             url: "https://danishenduranceseries.dk",
             description:
               "Dansk sim-racing community med ligaer i Le Mans Ultimate.",
