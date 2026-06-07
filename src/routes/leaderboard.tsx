@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
-import { getMyArchive } from "@/lib/rating.functions";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
 const COMPANION_INSTALLER_URL = "https://github.com/math612h/nersportscardevision/releases/latest/download/DES-Companion-Setup.exe";
 // Fallback: old zip download (kept as backup until installer is live)
