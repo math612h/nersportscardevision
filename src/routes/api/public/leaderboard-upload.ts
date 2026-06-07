@@ -135,7 +135,7 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
             .eq("id", tokenRow.id);
 
           return Response.json(
-            { inserted: rows.length, skipped: skipped.length, track: parsed.track, layout: parsed.layout },
+            { inserted: insertedCount, duplicates: rows.length - insertedCount, skipped: skipped.length, track: parsed.track, layout: parsed.layout },
             { status: 200, headers: CORS },
           );
         } catch (e: any) {
