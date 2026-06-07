@@ -11,8 +11,8 @@ type Props = {
 };
 
 function ratingColor(score: number) {
-  if (score >= 80) return "border-emerald-500/50 text-emerald-700 dark:text-emerald-400";
-  if (score >= 60) return "border-sky-500/50 text-sky-700 dark:text-sky-400";
+  if (score >= 75) return "border-emerald-500/50 text-emerald-700 dark:text-emerald-400";
+  if (score >= 55) return "border-sky-500/50 text-sky-700 dark:text-sky-400";
   if (score >= 40) return "border-amber-500/50 text-amber-700 dark:text-amber-400";
   return "border-rose-500/50 text-rose-700 dark:text-rose-400";
 }
