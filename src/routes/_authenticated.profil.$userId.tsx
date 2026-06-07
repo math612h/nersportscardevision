@@ -105,23 +105,16 @@ function PublicProfile() {
               <p className="whitespace-pre-wrap text-sm">{profile.achievements}</p>
             </section>
           )}
-          {ratings && ratings.length > 0 && (
+          {rating && (
             <section>
-              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Rating pr. klasse</h3>
-              <div className="space-y-1.5">
-                {ratings.map((r) => (
-                  <div key={r.car_class} className="flex items-center justify-between gap-2 text-sm">
-                    <div className="min-w-0 flex-1 truncate">
-                      <span className="font-medium">{r.car_class}</span>
-                    </div>
-                    <RatingBadge
-                      score={Number(r.score)}
-                      percentile={r.percentile != null ? Number(r.percentile) : null}
-                      confidence={Number(r.confidence)}
-                      carClass={r.car_class}
-                    />
-                  </div>
-                ))}
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">ELO-rating</h3>
+              <div className="flex items-center justify-between gap-2 text-sm">
+                <span className="text-muted-foreground">{rating.races_count} løb kørt</span>
+                <RatingBadge
+                  score={Number(rating.score)}
+                  percentile={rating.percentile != null ? Number(rating.percentile) : null}
+                  confidence={1}
+                />
               </div>
             </section>
           )}
