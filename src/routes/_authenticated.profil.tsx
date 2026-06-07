@@ -218,9 +218,50 @@ function ProfilePage() {
         </CardContent>
       </Card>
 
+      <MyRatingsCard userId={user?.id ?? null} />
       <MyTeamsCard userId={user?.id ?? null} />
       <DeviceTokensCard />
     </div>
+  );
+}
+
+function MyRatingsCard({ userId }: { userId: string | null }) {
+  const { data: ratings } = useQuery({
+    queryKey: ["my-ratings", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_league_ratings")
+        .select("league_id,car_class,score,confidence,leagues(name)")
+        .eq("user_id", userId!);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Min liga-rating</CardTitle>
+        <CardDescription>
+          0–100 pr. liga og bilklasse. 40% bedste omgang (leaderboard) + 60% løbsresultater. <span className="opacity-60">~</span> = estimat indtil der er nok data.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-1.5">
+        {!ratings || ratings.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Ingen rating endnu. Du får en så snart du tilmelder dig en liga.</p>
+        ) : (
+          ratings.map((r) => (
+            <div key={`${r.league_id}|${r.car_class}`} className="flex items-center justify-between gap-2 text-sm">
+              <div className="min-w-0 flex-1 truncate">
+                <span className="font-medium">{r.leagues?.name ?? "Liga"}</span>
+                <span className="text-muted-foreground"> · {r.car_class}</span>
+              </div>
+              <RatingBadge score={Number(r.score)} confidence={Number(r.confidence)} carClass={r.car_class} />
+            </div>
+          ))
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
