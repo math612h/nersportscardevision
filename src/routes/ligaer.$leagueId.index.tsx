@@ -477,12 +477,11 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                           </span>
                           <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
                           <span className="flex-1 truncate">{e.driver_name}</span>
-                          {ratingMap?.[`${e.user_id}|${e.car_class}`] && (
+                          {ratingMap?.[e.user_id] && (
                             <RatingBadge
-                              score={ratingMap[`${e.user_id}|${e.car_class}`].score}
-                              percentile={ratingMap[`${e.user_id}|${e.car_class}`].percentile}
-                              confidence={ratingMap[`${e.user_id}|${e.car_class}`].confidence}
-                              carClass={e.car_class}
+                              score={ratingMap[e.user_id].score}
+                              percentile={ratingMap[e.user_id].percentile}
+                              confidence={1}
                               size="xs"
                             />
                           )}
