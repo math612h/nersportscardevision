@@ -77,6 +77,8 @@ function NewsHome() {
 
   return (
     <div className="space-y-10">
+      <NewsPostsSection />
+
       <header className="space-y-3">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
