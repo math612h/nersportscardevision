@@ -156,7 +156,7 @@ function ArchivePage() {
           <Card>
             <CardHeader>
               <CardTitle>ELO-udvikling</CardTitle>
-              <CardDescription>Din samlede ELO-rating over tid. Beregnet med klassisk ELO-formel ud fra dine løbsresultater (K=32 indtil 30 løb, derefter 16). Alle starter på 1500.</CardDescription>
+              <CardDescription>Din samlede ELO-rating over tid. Beregnet med klassisk ELO-formel ud fra dine løbsresultater (K=32 indtil 5 løb, derefter 16). Alle starter på 1500.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {eloChartData.length === 0 ? (
