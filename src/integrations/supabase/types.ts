@@ -884,6 +884,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_class_rating_history: {
+        Row: {
+          car_class: string
+          components: Json | null
+          confidence: number | null
+          id: string
+          percentile: number | null
+          recorded_at: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          car_class: string
+          components?: Json | null
+          confidence?: number | null
+          id?: string
+          percentile?: number | null
+          recorded_at?: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          car_class?: string
+          components?: Json | null
+          confidence?: number | null
+          id?: string
+          percentile?: number | null
+          recorded_at?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_class_ratings: {
         Row: {
           car_class: string
