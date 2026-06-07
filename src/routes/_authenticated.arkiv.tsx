@@ -263,8 +263,6 @@ function ArchivePage() {
               {leagueResults.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Ingen liga-resultater endnu.</p>
               ) : (
-                <p className="text-sm text-muted-foreground">Ingen liga-resultater endnu.</p>
-              ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
