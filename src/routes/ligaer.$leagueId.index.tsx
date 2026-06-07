@@ -773,7 +773,7 @@ function TeamStandings({
                           </td>
                         );
                       })}
-                      <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{Math.round(t.total)}</td>
+                      <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{Math.floor(t.total)}</td>
                     </tr>
                   ))}
                 </tbody>
