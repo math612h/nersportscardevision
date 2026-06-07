@@ -11,8 +11,8 @@ type Props = {
 };
 
 function ratingColor(score: number) {
-  if (score >= 80) return "border-emerald-500/50 text-emerald-700 dark:text-emerald-400";
-  if (score >= 60) return "border-sky-500/50 text-sky-700 dark:text-sky-400";
+  if (score >= 75) return "border-emerald-500/50 text-emerald-700 dark:text-emerald-400";
+  if (score >= 55) return "border-sky-500/50 text-sky-700 dark:text-sky-400";
   if (score >= 40) return "border-amber-500/50 text-amber-700 dark:text-amber-400";
   return "border-rose-500/50 text-rose-700 dark:text-rose-400";
 }
@@ -39,9 +39,9 @@ export function RatingBadge({ score, confidence, carClass, size = "sm", showLabe
         </TooltipTrigger>
         <TooltipContent>
           <div className="text-xs space-y-0.5">
-            <div><strong>Rating: {rounded}/100</strong>{carClass ? ` · ${carClass}` : ""}</div>
+            <div><strong>Rating: {rounded}</strong>{carClass ? ` · ${carClass}` : ""}</div>
             <div className="text-muted-foreground">{confText}</div>
-            <div className="text-muted-foreground">40% bedste omgang · 60% løbsresultater</div>
+            <div className="text-muted-foreground">50 = platform-median · 20% bedste omgang · 80% løbsresultater</div>
           </div>
         </TooltipContent>
       </Tooltip>
