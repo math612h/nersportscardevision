@@ -275,6 +275,15 @@ function LeaderboardPage() {
         <p className="text-sm text-muted-foreground">Hurtigste omgangstider på tværs af alle løb, samlet pr. bane og bilklasse.</p>
       </header>
 
+      <Tabs defaultValue="board">
+        <TabsList>
+          <TabsTrigger value="board" className="gap-2"><Trophy className="h-4 w-4" /> Leaderboard</TabsTrigger>
+          <TabsTrigger value="personal" className="gap-2"><UserIcon className="h-4 w-4" /> Personal bedst</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="board" className="space-y-8 pt-4">
+
+
       <Card>
         <CardContent className="space-y-3 py-4">
           <div className="flex flex-wrap items-center gap-3">
