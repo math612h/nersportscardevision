@@ -374,6 +374,21 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
       return new Set((profs ?? []).filter((p) => p.approved).map((p) => p.id));
     },
   });
+  const { data: ratingMap } = useQuery({
+    queryKey: ["entry-ratings", leagueId, userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const { data: rs, error } = await supabase
+        .from("user_league_ratings")
+        .select("user_id,car_class,score,confidence")
+        .eq("league_id", leagueId)
+        .in("user_id", userIds);
+      if (error) throw error;
+      const m: Record<string, { score: number; confidence: number }> = {};
+      for (const r of (rs ?? []) as any[]) m[`${r.user_id}|${r.car_class}`] = { score: Number(r.score), confidence: Number(r.confidence) };
+      return m;
+    },
+  });
 
   if (!data || data.length === 0) return null;
 
