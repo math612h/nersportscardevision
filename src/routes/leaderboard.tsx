@@ -137,97 +137,118 @@ function LeaderboardPage() {
     });
   }, [rows, carClass, track, layout]);
 
-  const handleFile = async (file: File) => {
+  const handleFiles = async (files: FileList) => {
     if (!user) { toast.error("Log ind for at uploade din egen tid."); return; }
+    if (files.length === 0) return;
     setUploading(true);
     try {
-      const text = await file.text();
-      const parsed = parseLmuRaceFile(text);
-
-      // Look up the uploader's profile (must be approved) + all known LMU names for matching
       const [{ data: profile, error: pErr }, { data: allProfiles, error: aErr }] = await Promise.all([
         supabase.from("profiles").select("lmu_name, approved").eq("id", user.id).maybeSingle(),
         supabase.from("profiles").select("id,lmu_name").not("lmu_name", "is", null),
       ]);
       if (pErr) throw pErr;
       if (aErr) throw aErr;
-
       if (!profile?.approved) {
         toast.error("Kun godkendte brugere kan uploade tider. Bed en admin om at godkende din profil.");
         return;
       }
-
       const lmu = (profile?.lmu_name ?? "").trim().toLowerCase();
       if (!lmu) {
         toast.error("Du mangler at sætte dit LMU-navn på profilen først.");
         return;
       }
+      const profiles = (allProfiles ?? []) as Array<{ id: string; lmu_name: string | null }>;
 
-      // Confirm uploader is in the file (exact or fuzzy ≥85%)
-      let me = parsed.drivers.find((d) => d.name.trim().toLowerCase() === lmu);
-      if (!me) {
-        let bestScore = 0;
-        for (const d of parsed.drivers) {
-          const s = nameSimilarity(d.name, lmu);
-          if (s > bestScore) { bestScore = s; me = s >= 0.85 ? d : me; }
-        }
-      }
-      if (!me) {
-        toast.error(`Dit navn “${profile!.lmu_name}” findes ikke i filen. Tjek at det matcher (mindst 85%).`);
+      const xmlFiles = Array.from(files).filter((f) => /\.xml$/i.test(f.name));
+      if (xmlFiles.length === 0) {
+        toast.warning("Ingen XML-filer fundet.");
         return;
       }
 
-      // Match every driver in the file against known profiles — only registered users land on the leaderboard
-      const profiles = (allProfiles ?? []) as Array<{ id: string; lmu_name: string | null }>;
-      const allParsed = parsed.drivers.filter((d) => d.bestLapMs != null);
-      const skipped: string[] = [];
-      const rows = allParsed
-        .map((d) => {
-          const dn = d.name.trim().toLowerCase();
-          let matchId: string | null = null;
-          const exact = profiles.find((p) => (p.lmu_name ?? "").trim().toLowerCase() === dn);
-          if (exact) matchId = exact.id;
-          else {
+      let totalInserted = 0;
+      let totalDuplicates = 0;
+      let totalSkippedDrivers = 0;
+      let filesProcessed = 0;
+      let filesFailed = 0;
+      let filesWithoutMe = 0;
+
+      for (const file of xmlFiles) {
+        try {
+          const text = await file.text();
+          const parsed = parseLmuRaceFile(text);
+
+          let me = parsed.drivers.find((d) => d.name.trim().toLowerCase() === lmu);
+          if (!me) {
             let bestScore = 0;
-            for (const p of profiles) {
-              const s = nameSimilarity(d.name, p.lmu_name ?? "");
-              if (s >= 0.85 && s > bestScore) { bestScore = s; matchId = p.id; }
+            for (const d of parsed.drivers) {
+              const s = nameSimilarity(d.name, lmu);
+              if (s >= 0.85 && s > bestScore) { bestScore = s; me = d; }
             }
           }
-          if (!matchId) { skipped.push(d.name); return null; }
-          return {
-            user_id: matchId,
-            driver_name: d.name,
-            track: parsed.track,
-            layout: parsed.layout,
-            car_class: normalizeCarClass(d.carClass),
-            car_model: d.carModel,
-            best_lap_ms: d.bestLapMs as number,
-            source: "user" as const,
-            uploaded_by: user.id,
-            recorded_at: parsed.recordedAt,
-          };
-        })
-        .filter((r): r is NonNullable<typeof r> => r !== null);
+          if (!me) { filesWithoutMe += 1; continue; }
 
-      if (rows.length === 0) {
-        toast.warning("Ingen af kørerne i filen er registreret i app'en — intet uploadet.");
-        return;
+          const rows = parsed.drivers
+            .filter((d) => d.bestLapMs != null)
+            .map((d) => {
+              const dn = d.name.trim().toLowerCase();
+              let matchId: string | null = null;
+              const exact = profiles.find((p) => (p.lmu_name ?? "").trim().toLowerCase() === dn);
+              if (exact) matchId = exact.id;
+              else {
+                let bestScore = 0;
+                for (const p of profiles) {
+                  const s = nameSimilarity(d.name, p.lmu_name ?? "");
+                  if (s >= 0.85 && s > bestScore) { bestScore = s; matchId = p.id; }
+                }
+              }
+              if (!matchId) { totalSkippedDrivers += 1; return null; }
+              return {
+                user_id: matchId,
+                driver_name: d.name,
+                track: parsed.track,
+                layout: parsed.layout,
+                car_class: normalizeCarClass(d.carClass),
+                car_model: d.carModel,
+                best_lap_ms: d.bestLapMs as number,
+                source: "user" as const,
+                uploaded_by: user.id,
+                recorded_at: parsed.recordedAt,
+              };
+            })
+            .filter((r): r is NonNullable<typeof r> => r !== null);
+
+          if (rows.length > 0) {
+            const { data: ins, error } = await supabase
+              .from("leaderboard_times")
+              .upsert(rows, { onConflict: "user_id,track,layout,car_class,recorded_at", ignoreDuplicates: true })
+              .select("id");
+            if (error) throw error;
+            const inserted = ins?.length ?? 0;
+            totalInserted += inserted;
+            totalDuplicates += rows.length - inserted;
+          }
+          filesProcessed += 1;
+        } catch (err) {
+          console.warn("[leaderboard upload]", file.name, err);
+          filesFailed += 1;
+        }
       }
 
-      const { error } = await supabase.from("leaderboard_times").insert(rows);
-      if (error) throw error;
-
-      toast.success(
-        `${rows.length} tid${rows.length === 1 ? "" : "er"} uploadet fra ${parsed.track}${parsed.layout ? ` (${parsed.layout})` : ""}${skipped.length ? ` — ${skipped.length} ukendt${skipped.length === 1 ? "" : "e"} kører${skipped.length === 1 ? "" : "e"} sprunget over.` : "."}`,
-      );
+      const parts: string[] = [];
+      parts.push(`${filesProcessed}/${xmlFiles.length} fil${xmlFiles.length === 1 ? "" : "er"} behandlet`);
+      parts.push(`${totalInserted} ny${totalInserted === 1 ? "" : "e"} tid${totalInserted === 1 ? "" : "er"}`);
+      if (totalDuplicates) parts.push(`${totalDuplicates} dublet${totalDuplicates === 1 ? "" : "ter"} sprunget over`);
+      if (filesWithoutMe) parts.push(`${filesWithoutMe} uden dig`);
+      if (filesFailed) parts.push(`${filesFailed} fejlede`);
+      toast.success(parts.join(" · "));
       qc.invalidateQueries({ queryKey: ["leaderboard"] });
     } catch (e: any) {
-      toast.error(e.message ?? "Kunne ikke læse filen");
+      toast.error(e.message ?? "Kunne ikke læse filerne");
     } finally {
       setUploading(false);
     }
   };
+
 
   const handleDelete = async (id: string) => {
     if (!confirm("Slet denne tid fra leaderboardet?")) return;
