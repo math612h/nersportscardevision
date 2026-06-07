@@ -16,7 +16,6 @@ import { Route as BrugereRouteImport } from './routes/brugere'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeamsIndexRouteImport } from './routes/teams.index'
-import { Route as LmuIndexRouteImport } from './routes/lmu.index'
 import { Route as TeamsTeamIdRouteImport } from './routes/teams.$teamId'
 import { Route as LmuTeamsRouteImport } from './routes/lmu.teams'
 import { Route as LmuLigaRouteImport } from './routes/lmu.liga'
@@ -76,11 +75,6 @@ const IndexRoute = IndexRouteImport.update({
 const TeamsIndexRoute = TeamsIndexRouteImport.update({
   id: '/teams/',
   path: '/teams/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LmuIndexRoute = LmuIndexRouteImport.update({
-  id: '/lmu/',
-  path: '/lmu/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeamsTeamIdRoute = TeamsTeamIdRouteImport.update({
@@ -243,7 +237,6 @@ export interface FileRoutesByFullPath {
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
-  '/lmu/': typeof LmuIndexRoute
   '/teams/': typeof TeamsIndexRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
@@ -276,7 +269,6 @@ export interface FileRoutesByTo {
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
-  '/lmu': typeof LmuIndexRoute
   '/teams': typeof TeamsIndexRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
@@ -312,7 +304,6 @@ export interface FileRoutesById {
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
-  '/lmu/': typeof LmuIndexRoute
   '/teams/': typeof TeamsIndexRoute
   '/_authenticated/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
@@ -348,7 +339,6 @@ export interface FileRouteTypes {
     | '/lmu/liga'
     | '/lmu/teams'
     | '/teams/$teamId'
-    | '/lmu/'
     | '/teams/'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
@@ -381,7 +371,6 @@ export interface FileRouteTypes {
     | '/lmu/liga'
     | '/lmu/teams'
     | '/teams/$teamId'
-    | '/lmu'
     | '/teams'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
@@ -416,7 +405,6 @@ export interface FileRouteTypes {
     | '/lmu/liga'
     | '/lmu/teams'
     | '/teams/$teamId'
-    | '/lmu/'
     | '/teams/'
     | '/_authenticated/profil/$userId'
     | '/api/public/leaderboard-upload'
@@ -449,7 +437,6 @@ export interface RootRouteChildren {
   LmuLigaRoute: typeof LmuLigaRoute
   LmuTeamsRoute: typeof LmuTeamsRoute
   TeamsTeamIdRoute: typeof TeamsTeamIdRoute
-  LmuIndexRoute: typeof LmuIndexRoute
   TeamsIndexRoute: typeof TeamsIndexRoute
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
@@ -505,13 +492,6 @@ declare module '@tanstack/react-router' {
       path: '/teams'
       fullPath: '/teams/'
       preLoaderRoute: typeof TeamsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lmu/': {
-      id: '/lmu/'
-      path: '/lmu'
-      fullPath: '/lmu/'
-      preLoaderRoute: typeof LmuIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/teams/$teamId': {
@@ -818,7 +798,6 @@ const rootRouteChildren: RootRouteChildren = {
   LmuLigaRoute: LmuLigaRoute,
   LmuTeamsRoute: LmuTeamsRoute,
   TeamsTeamIdRoute: TeamsTeamIdRoute,
-  LmuIndexRoute: LmuIndexRoute,
   TeamsIndexRoute: TeamsIndexRoute,
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
@@ -827,3 +806,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

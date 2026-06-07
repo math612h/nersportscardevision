@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Flag, Gauge, LayoutGrid, LogOut, Shield, User as UserIcon, UserCircle2, Users } from "lucide-react";
+import { Flag, Gauge, Home, LayoutGrid, LogOut, Shield, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
