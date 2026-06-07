@@ -107,15 +107,19 @@ function PublicProfile() {
           )}
           {ratings && ratings.length > 0 && (
             <section>
-              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Liga-rating</h3>
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Rating pr. klasse</h3>
               <div className="space-y-1.5">
                 {ratings.map((r) => (
-                  <div key={`${r.league_id}|${r.car_class}`} className="flex items-center justify-between gap-2 text-sm">
+                  <div key={r.car_class} className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0 flex-1 truncate">
-                      <span className="font-medium">{r.leagues?.name ?? "Liga"}</span>
-                      <span className="text-muted-foreground"> · {r.car_class}</span>
+                      <span className="font-medium">{r.car_class}</span>
                     </div>
-                    <RatingBadge score={Number(r.score)} confidence={Number(r.confidence)} carClass={r.car_class} />
+                    <RatingBadge
+                      score={Number(r.score)}
+                      percentile={r.percentile != null ? Number(r.percentile) : null}
+                      confidence={Number(r.confidence)}
+                      carClass={r.car_class}
+                    />
                   </div>
                 ))}
               </div>
