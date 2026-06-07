@@ -41,22 +41,29 @@ function ArchivePage() {
 
   const [chartClass, setChartClass] = useState<string>("ALL");
   const [chartTrack, setChartTrack] = useState<string>("ALL");
+  const [leagueChartClass, setLeagueChartClass] = useState<string>("ALL");
+  const [leagueChartTrack, setLeagueChartTrack] = useState<string>("ALL");
 
-  const classes = useMemo(
-    () => Array.from(new Set((data?.history ?? []).map((h) => h.car_class))).sort(),
+  // Leaderboard-graf bruger KUN bruger-uploadede tider (ikke liga-resultater)
+  const leaderboardHistory = useMemo(
+    () => (data?.history ?? []).filter((h) => h.source !== "league"),
     [data],
   );
+
+  const classes = useMemo(
+    () => Array.from(new Set(leaderboardHistory.map((h) => h.car_class))).sort(),
+    [leaderboardHistory],
+  );
   const tracks = useMemo(
-    () => Array.from(new Set((data?.history ?? []).map((h) => h.track))).sort(),
-    [data],
+    () => Array.from(new Set(leaderboardHistory.map((h) => h.track))).sort(),
+    [leaderboardHistory],
   );
 
   const chartData = useMemo(() => {
-    const rows = (data?.history ?? [])
-      .filter((h) => (chartClass === "ALL" || h.car_class === chartClass))
-      .filter((h) => (chartTrack === "ALL" || h.track === chartTrack))
+    const rows = leaderboardHistory
+      .filter((h) => chartClass === "ALL" || h.car_class === chartClass)
+      .filter((h) => chartTrack === "ALL" || h.track === chartTrack)
       .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-    // For chart: show best-so-far (running min) for clarity
     let runMin = Infinity;
     return rows.map((r) => {
       runMin = Math.min(runMin, r.best_lap_ms);
@@ -66,7 +73,37 @@ function ArchivePage() {
         best: runMin / 1000,
       };
     });
-  }, [data, chartClass, chartTrack]);
+  }, [leaderboardHistory, chartClass, chartTrack]);
+
+  // Liga-graf bygges fra league_results
+  const leagueClasses = useMemo(
+    () => Array.from(new Set((data?.leagueResults ?? []).map((r) => r.car_class))).sort(),
+    [data],
+  );
+  const leagueTracks = useMemo(
+    () => Array.from(new Set((data?.leagueResults ?? []).map((r) => r.track))).sort(),
+    [data],
+  );
+
+  const leagueChartData = useMemo(() => {
+    const rows = (data?.leagueResults ?? [])
+      .filter((r) => r.best_lap_ms != null)
+      .filter((r) => leagueChartClass === "ALL" || r.car_class === leagueChartClass)
+      .filter((r) => leagueChartTrack === "ALL" || r.track === leagueChartTrack)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    let runMin = Infinity;
+    return rows.map((r) => {
+      const ms = r.best_lap_ms as number;
+      runMin = Math.min(runMin, ms);
+      return {
+        date: new Date(r.created_at).toLocaleDateString("da-DK"),
+        lap: ms / 1000,
+        best: runMin / 1000,
+        position: r.position ?? null,
+      };
+    });
+  }, [data, leagueChartClass, leagueChartTrack]);
+
 
   if (isLoading) return <div className="mx-auto max-w-4xl px-4 py-10 text-muted-foreground">Indlæser…</div>;
 
