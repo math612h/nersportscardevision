@@ -88,12 +88,12 @@ function NewsHome() {
         <div className="flex flex-wrap gap-2">
           <Button asChild className="gap-2">
             <Link to="/lmu/liga">
-              <Flag className="h-4 w-4" /> Liga Hub
+              <Flag className="h-4 w-4" /> Ligaer
             </Link>
           </Button>
           <Button asChild variant="outline" className="gap-2">
             <Link to="/lmu/teams">
-              <ArrowUpRight className="h-4 w-4" /> Teams Hub
+              <ArrowUpRight className="h-4 w-4" /> Teams
             </Link>
           </Button>
         </div>
