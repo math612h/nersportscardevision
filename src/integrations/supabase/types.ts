@@ -991,6 +991,63 @@ export type Database = {
           },
         ]
       }
+      user_rating_history: {
+        Row: {
+          car_class: string | null
+          delta: number | null
+          id: string
+          league_id: string | null
+          recorded_at: string
+          round: number | null
+          score: number
+          user_id: string
+        }
+        Insert: {
+          car_class?: string | null
+          delta?: number | null
+          id?: string
+          league_id?: string | null
+          recorded_at?: string
+          round?: number | null
+          score: number
+          user_id: string
+        }
+        Update: {
+          car_class?: string | null
+          delta?: number | null
+          id?: string
+          league_id?: string | null
+          recorded_at?: string
+          round?: number | null
+          score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_ratings: {
+        Row: {
+          percentile: number | null
+          races_count: number
+          score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          percentile?: number | null
+          races_count?: number
+          score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          percentile?: number | null
+          races_count?: number
+          score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1056,6 +1113,7 @@ export type Database = {
           discord_username: string
         }[]
       }
+      recompute_all_elo: { Args: never; Returns: undefined }
       refresh_class_percentiles: {
         Args: { _car_class: string }
         Returns: undefined
@@ -1068,6 +1126,7 @@ export type Database = {
         Args: { _car_class: string; _league_id: string; _user_id: string }
         Returns: undefined
       }
+      refresh_user_rating_percentiles: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "racer"
