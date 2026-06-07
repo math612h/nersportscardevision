@@ -33,6 +33,18 @@ export const getBriefingToken = createServerFn({ method: "POST" })
 
     const admin = await isAdmin(supabase, userId);
 
+    // Only enrolled, non-waitlist drivers (or admins) may join a briefing room
+    if (!admin) {
+      const { data: entry } = await supabase
+        .from("entries")
+        .select("id")
+        .eq("division_id", data.divisionId)
+        .eq("user_id", userId)
+        .eq("waitlist", false)
+        .maybeSingle();
+      if (!entry) throw new Error("Du er ikke tilmeldt denne afdeling.");
+    }
+
     // Fetch display info for the token (name + avatar)
     const { data: profile } = await supabase
       .from("profiles")
