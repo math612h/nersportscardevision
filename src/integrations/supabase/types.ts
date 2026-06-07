@@ -390,6 +390,39 @@ export type Database = {
         }
         Relationships: []
       }
+      news_posts: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string
+          id: string
+          image_path: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at: string
+          id?: string
+          image_path?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string
+          id?: string
+          image_path?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           body: string | null
