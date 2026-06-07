@@ -82,42 +82,24 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
             );
           }
 
-          const { data: allProfiles, error: aErr } = await supabaseAdmin
-            .from("profiles")
-            .select("id, lmu_name")
-            .not("lmu_name", "is", null);
-          if (aErr) throw aErr;
-
+          // Device-token uploads only insert a row for the token owner themselves,
+          // preventing forged XML from attributing fake lap times to other users.
           const skipped: string[] = [];
-          const rows = parsed.drivers
-            .filter((d) => d.bestLapMs != null)
-            .map((d) => {
-              const dn = d.name.trim().toLowerCase();
-              let matchId: string | null = null;
-              const exact = allProfiles!.find((p) => (p.lmu_name ?? "").trim().toLowerCase() === dn);
-              if (exact) matchId = exact.id;
-              else {
-                let bestScore = 0;
-                for (const p of allProfiles!) {
-                  const s = nameSimilarity(d.name, p.lmu_name ?? "");
-                  if (s >= 0.85 && s > bestScore) { bestScore = s; matchId = p.id; }
-                }
-              }
-              if (!matchId) { skipped.push(d.name); return null; }
-              return {
-                user_id: matchId,
-                driver_name: d.name,
-                track: parsed.track,
-                layout: parsed.layout,
-                car_class: normalizeCarClass(d.carClass),
-                car_model: d.carModel,
-                best_lap_ms: d.bestLapMs as number,
-                source: "user" as const,
-                uploaded_by: tokenRow.user_id,
-                recorded_at: parsed.recordedAt,
-              };
-            })
-            .filter((r): r is NonNullable<typeof r> => r !== null);
+          const rows = me.bestLapMs != null ? [{
+            user_id: tokenRow.user_id,
+            driver_name: me.name,
+            track: parsed.track,
+            layout: parsed.layout,
+            car_class: normalizeCarClass(me.carClass),
+            car_model: me.carModel,
+            best_lap_ms: me.bestLapMs as number,
+            source: "user" as const,
+            uploaded_by: tokenRow.user_id,
+            recorded_at: parsed.recordedAt,
+          }] : [];
+          for (const d of parsed.drivers) {
+            if (d !== me) skipped.push(d.name);
+          }
 
           let insertedCount = 0;
           if (rows.length > 0) {
