@@ -376,19 +376,18 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
     },
   });
   const { data: ratingMap } = useQuery({
-    queryKey: ["entry-class-ratings", userIds.sort().join(",")],
+    queryKey: ["entry-ratings", userIds.sort().join(",")],
     enabled: userIds.length > 0,
     queryFn: async () => {
       const { data: rs, error } = await (supabase as any)
-        .from("user_class_ratings")
-        .select("user_id,car_class,score,percentile,confidence")
+        .from("user_ratings")
+        .select("user_id,score,percentile")
         .in("user_id", userIds);
       if (error) throw error;
-      const m: Record<string, { score: number; percentile: number | null; confidence: number }> = {};
-      for (const r of (rs ?? []) as any[]) m[`${r.user_id}|${r.car_class}`] = {
+      const m: Record<string, { score: number; percentile: number | null }> = {};
+      for (const r of (rs ?? []) as any[]) m[r.user_id] = {
         score: Number(r.score),
         percentile: r.percentile != null ? Number(r.percentile) : null,
-        confidence: Number(r.confidence),
       };
       return m;
     },
@@ -451,12 +450,11 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                           {teamMap[(e as any).team_id]}
                         </Badge>
                       )}
-                      {ratingMap?.[`${e.user_id}|${e.car_class}`] && (
+                      {ratingMap?.[e.user_id] && (
                         <RatingBadge
-                          score={ratingMap[`${e.user_id}|${e.car_class}`].score}
-                          percentile={ratingMap[`${e.user_id}|${e.car_class}`].percentile}
-                          confidence={ratingMap[`${e.user_id}|${e.car_class}`].confidence}
-                          carClass={e.car_class}
+                          score={ratingMap[e.user_id].score}
+                          percentile={ratingMap[e.user_id].percentile}
+                          confidence={1}
                           size="xs"
                         />
                       )}
@@ -479,12 +477,11 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                           </span>
                           <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
                           <span className="flex-1 truncate">{e.driver_name}</span>
-                          {ratingMap?.[`${e.user_id}|${e.car_class}`] && (
+                          {ratingMap?.[e.user_id] && (
                             <RatingBadge
-                              score={ratingMap[`${e.user_id}|${e.car_class}`].score}
-                              percentile={ratingMap[`${e.user_id}|${e.car_class}`].percentile}
-                              confidence={ratingMap[`${e.user_id}|${e.car_class}`].confidence}
-                              carClass={e.car_class}
+                              score={ratingMap[e.user_id].score}
+                              percentile={ratingMap[e.user_id].percentile}
+                              confidence={1}
                               size="xs"
                             />
                           )}

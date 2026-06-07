@@ -45,39 +45,19 @@ function ArchivePage() {
     queryFn: () => fetchRatingHistory(),
   });
 
-  const [eloClass, setEloClass] = useState<string>("ALL");
-  const [chartTrack, setChartTrack] = useState<string>("ALL");
   const [leagueChartClass, setLeagueChartClass] = useState<string>("ALL");
   const [leagueChartTrack, setLeagueChartTrack] = useState<string>("ALL");
 
-  // ELO-udvikling over tid (pr. bilklasse)
-  const eloClasses = useMemo(
-    () => Array.from(new Set((ratingHistory ?? []).map((h) => h.car_class))).sort(),
-    [ratingHistory],
-  );
-
+  // ELO-udvikling over tid (samlet rating)
   const eloChartData = useMemo(() => {
     const rows = (ratingHistory ?? [])
-      .filter((h) => eloClass === "ALL" || h.car_class === eloClass)
+      .slice()
       .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-    if (eloClass === "ALL") {
-      // Vis sidste kendte score pr. klasse på hvert tidspunkt → gennemsnit
-      const lastByClass = new Map<string, number>();
-      return rows.map((r) => {
-        lastByClass.set(r.car_class, Number(r.score));
-        const vals = Array.from(lastByClass.values());
-        const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-        return {
-          date: new Date(r.recorded_at).toLocaleDateString("da-DK"),
-          score: Math.round(avg * 100) / 100,
-        };
-      });
-    }
     return rows.map((r) => ({
       date: new Date(r.recorded_at).toLocaleDateString("da-DK"),
       score: Math.round(Number(r.score) * 100) / 100,
     }));
-  }, [ratingHistory, eloClass]);
+  }, [ratingHistory]);
 
   // Liga-graf bygges fra league_results
   const leagueClasses = useMemo(
@@ -176,18 +156,9 @@ function ArchivePage() {
           <Card>
             <CardHeader>
               <CardTitle>ELO-udvikling</CardTitle>
-              <CardDescription>Din rating-progression over tid pr. bilklasse. Hvert datapunkt er en opdatering af din rating.</CardDescription>
+              <CardDescription>Din samlede ELO-rating over tid. Beregnet med klassisk ELO-formel ud fra dine løbsresultater (K=32 indtil 30 løb, derefter 16). Alle starter på 1500.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex flex-wrap gap-2">
-                <Select value={eloClass} onValueChange={setEloClass}>
-                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Alle klasser (snit)</SelectItem>
-                    {eloClasses.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
               {eloChartData.length === 0 ? (
                 <p className="text-sm text-muted-foreground">Ingen rating-historik endnu. Den bygges op efterhånden som du uploader tider og kører liga-løb.</p>
               ) : (
