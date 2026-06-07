@@ -46,6 +46,18 @@ function PublicProfile() {
     queryFn: () => signedAvatarUrl(profile!.avatar_url),
   });
 
+  const { data: ratings } = useQuery({
+    queryKey: ["user-ratings", userId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("user_league_ratings")
+        .select("league_id,car_class,score,confidence,leagues(name)")
+        .eq("user_id", userId);
+      if (error) throw error;
+      return (data ?? []) as any[];
+    },
+  });
+
   if (isLoading) return <div className="mx-auto max-w-2xl px-4 py-10 text-muted-foreground">Indlæser…</div>;
   if (!profile) return <div className="mx-auto max-w-2xl px-4 py-10">Profil ikke fundet.</div>;
 
