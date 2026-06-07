@@ -340,3 +340,38 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     </Dialog>
   );
 }
+
+function UploadResultButton({ leagueId, divisionId }: { leagueId: string; divisionId: string }) {
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const upload = useServerFn(uploadLeagueRaceResult);
+
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 5_000_000) { toast.error("Filen er for stor (max 5 MB)"); return; }
+    setBusy(true);
+    try {
+      const xml = await file.text();
+      const res = await upload({ data: { leagueId, divisionId, xml } });
+      toast.success(`Liga-resultat gemt: ${res.inserted} placeringer, ${res.leaderboard_inserted} tider`);
+      if (res.unmatched?.length) {
+        toast.warning(`Ikke matchet: ${res.unmatched.slice(0, 3).join(", ")}${res.unmatched.length > 3 ? "…" : ""}`);
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Upload fejlede");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <input ref={fileRef} type="file" accept=".xml,application/xml,text/xml" className="hidden" onChange={onPick} />
+      <Button variant="ghost" size="sm" disabled={busy} onClick={() => fileRef.current?.click()} title="Upload liga-resultat (XML)">
+        <Upload className="h-4 w-4" />
+      </Button>
+    </>
+  );
+}
