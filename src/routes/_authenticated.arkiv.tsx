@@ -41,22 +41,29 @@ function ArchivePage() {
 
   const [chartClass, setChartClass] = useState<string>("ALL");
   const [chartTrack, setChartTrack] = useState<string>("ALL");
+  const [leagueChartClass, setLeagueChartClass] = useState<string>("ALL");
+  const [leagueChartTrack, setLeagueChartTrack] = useState<string>("ALL");
 
-  const classes = useMemo(
-    () => Array.from(new Set((data?.history ?? []).map((h) => h.car_class))).sort(),
+  // Leaderboard-graf bruger KUN bruger-uploadede tider (ikke liga-resultater)
+  const leaderboardHistory = useMemo(
+    () => (data?.history ?? []).filter((h) => h.source !== "league"),
     [data],
   );
+
+  const classes = useMemo(
+    () => Array.from(new Set(leaderboardHistory.map((h) => h.car_class))).sort(),
+    [leaderboardHistory],
+  );
   const tracks = useMemo(
-    () => Array.from(new Set((data?.history ?? []).map((h) => h.track))).sort(),
-    [data],
+    () => Array.from(new Set(leaderboardHistory.map((h) => h.track))).sort(),
+    [leaderboardHistory],
   );
 
   const chartData = useMemo(() => {
-    const rows = (data?.history ?? [])
-      .filter((h) => (chartClass === "ALL" || h.car_class === chartClass))
-      .filter((h) => (chartTrack === "ALL" || h.track === chartTrack))
+    const rows = leaderboardHistory
+      .filter((h) => chartClass === "ALL" || h.car_class === chartClass)
+      .filter((h) => chartTrack === "ALL" || h.track === chartTrack)
       .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-    // For chart: show best-so-far (running min) for clarity
     let runMin = Infinity;
     return rows.map((r) => {
       runMin = Math.min(runMin, r.best_lap_ms);
@@ -66,7 +73,37 @@ function ArchivePage() {
         best: runMin / 1000,
       };
     });
-  }, [data, chartClass, chartTrack]);
+  }, [leaderboardHistory, chartClass, chartTrack]);
+
+  // Liga-graf bygges fra league_results
+  const leagueClasses = useMemo(
+    () => Array.from(new Set((data?.leagueResults ?? []).map((r) => r.car_class))).sort(),
+    [data],
+  );
+  const leagueTracks = useMemo(
+    () => Array.from(new Set((data?.leagueResults ?? []).map((r) => r.track))).sort(),
+    [data],
+  );
+
+  const leagueChartData = useMemo(() => {
+    const rows = (data?.leagueResults ?? [])
+      .filter((r) => r.best_lap_ms != null)
+      .filter((r) => leagueChartClass === "ALL" || r.car_class === leagueChartClass)
+      .filter((r) => leagueChartTrack === "ALL" || r.track === leagueChartTrack)
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    let runMin = Infinity;
+    return rows.map((r) => {
+      const ms = r.best_lap_ms as number;
+      runMin = Math.min(runMin, ms);
+      return {
+        date: new Date(r.created_at).toLocaleDateString("da-DK"),
+        lap: ms / 1000,
+        best: runMin / 1000,
+        position: r.position ?? null,
+      };
+    });
+  }, [data, leagueChartClass, leagueChartTrack]);
+
 
   if (isLoading) return <div className="mx-auto max-w-4xl px-4 py-10 text-muted-foreground">Indlæser…</div>;
 
@@ -134,8 +171,8 @@ function ArchivePage() {
         <TabsContent value="curve">
           <Card>
             <CardHeader>
-              <CardTitle>Udviklingskurve</CardTitle>
-              <CardDescription>Hver runde du har sat, og din løbende personlige bedste.</CardDescription>
+              <CardTitle>Leaderboard-udvikling</CardTitle>
+              <CardDescription>Dine bedste hotlap-tider over tid (fra companion- og manuel upload — ikke liga-løb).</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -174,7 +211,49 @@ function ArchivePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="leagues">
+
+        <TabsContent value="leagues" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Liga-udvikling</CardTitle>
+              <CardDescription>Bedste runde pr. liga-løb over tid.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap gap-2">
+                <Select value={leagueChartClass} onValueChange={setLeagueChartClass}>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Alle klasser</SelectItem>
+                    {leagueClasses.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <Select value={leagueChartTrack} onValueChange={setLeagueChartTrack}>
+                  <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">Alle baner</SelectItem>
+                    {leagueTracks.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              {leagueChartData.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Ingen liga-data endnu.</p>
+              ) : (
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={leagueChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                      <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} reversed />
+                      <Tooltip formatter={(v: number) => `${v.toFixed(3)} s`} />
+                      <Line type="monotone" dataKey="lap" stroke="hsl(var(--muted-foreground))" dot={false} name="Bedste runde i løb (s)" />
+                      <Line type="monotone" dataKey="best" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="Personlig bedste" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Liga-resultater</CardTitle>
