@@ -119,9 +119,14 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
             })
             .filter((r): r is NonNullable<typeof r> => r !== null);
 
+          let insertedCount = 0;
           if (rows.length > 0) {
-            const { error: insErr } = await supabaseAdmin.from("leaderboard_times").insert(rows);
+            const { data: ins, error: insErr } = await supabaseAdmin
+              .from("leaderboard_times")
+              .upsert(rows, { onConflict: "user_id,track,layout,car_class,recorded_at", ignoreDuplicates: true })
+              .select("id");
             if (insErr) throw insErr;
+            insertedCount = ins?.length ?? 0;
           }
 
           await supabaseAdmin
