@@ -59,6 +59,26 @@ export type ArchiveHistoryRow = {
   source: string;
 };
 
+export type RatingHistoryRow = {
+  recorded_at: string;
+  car_class: string;
+  score: number;
+  percentile: number | null;
+};
+
+export const getMyRatingHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<RatingHistoryRow[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("user_class_rating_history")
+      .select("recorded_at,car_class,score,percentile")
+      .eq("user_id", context.userId)
+      .order("recorded_at", { ascending: true });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as RatingHistoryRow[];
+  });
+
 export const getMyArchive = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
