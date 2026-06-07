@@ -47,12 +47,13 @@ function PublicProfile() {
   });
 
   const { data: ratings } = useQuery({
-    queryKey: ["user-ratings", userId],
+    queryKey: ["user-class-ratings", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("user_league_ratings")
-        .select("league_id,car_class,score,confidence,leagues(name)")
-        .eq("user_id", userId);
+      const { data, error } = await (supabase as any)
+        .from("user_class_ratings")
+        .select("car_class,score,percentile,confidence")
+        .eq("user_id", userId)
+        .order("score", { ascending: false });
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -106,15 +107,19 @@ function PublicProfile() {
           )}
           {ratings && ratings.length > 0 && (
             <section>
-              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Liga-rating</h3>
+              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Rating pr. klasse</h3>
               <div className="space-y-1.5">
                 {ratings.map((r) => (
-                  <div key={`${r.league_id}|${r.car_class}`} className="flex items-center justify-between gap-2 text-sm">
+                  <div key={r.car_class} className="flex items-center justify-between gap-2 text-sm">
                     <div className="min-w-0 flex-1 truncate">
-                      <span className="font-medium">{r.leagues?.name ?? "Liga"}</span>
-                      <span className="text-muted-foreground"> · {r.car_class}</span>
+                      <span className="font-medium">{r.car_class}</span>
                     </div>
-                    <RatingBadge score={Number(r.score)} confidence={Number(r.confidence)} carClass={r.car_class} />
+                    <RatingBadge
+                      score={Number(r.score)}
+                      percentile={r.percentile != null ? Number(r.percentile) : null}
+                      confidence={Number(r.confidence)}
+                      carClass={r.car_class}
+                    />
                   </div>
                 ))}
               </div>

@@ -1,89 +1,49 @@
-# Personligt arkiv + Pro/Am rating
-
 ## Mål
-- Brugere kan se deres egen udviklingskurve (personligt arkiv)
-- Ved tilmelding til en liga vurderer en algoritme om brugeren må vælge Pro, Am eller begge
-- Algoritmen er dynamisk: opdateres når der kommer nye liga-resultater
-- Lukkes en klasse, ryger eksisterende entries automatisk på venteliste
 
-## 1. Klasse-lukning → venteliste
-Når en `division` deaktiveres/slettes:
-- Alle `entries` der peger på den division får `division_id = NULL` og `status = 'venteliste'`
-- Implementeres via trigger på `divisions` (BEFORE DELETE + AFTER UPDATE når aktiv-flag ændres)
+1. **Én samlet rating pr. bruger pr. bilklasse** (ELO-agtigt på tværs af alle ligaer på platformen) — ikke længere pr. liga.
+2. **Farve på rating-badge** bestemmes af brugerens percentil i den klasse:
+   - Top 5% → **Blå**
+   - Top 25% → **Guld**
+   - Top 50% → **Sølv**
+   - Resten → **Bronze**
+3. **På entry-listen** vises kun den klasse-rating der matcher det entry brugeren er tilmeldt (er du i LMGT3, vises din LMGT3-rating).
+4. **Arkivet flyttes til Leaderboard-siden** som en "Personal bedst"-knap/tab, så enhver bruger kan få indblik i sine PB'er der.
 
-## 2. Datamodel for rating
+---
 
-### Lagring (gemmer alt — viser kun det bedste)
-- Eksisterende `leaderboard_times` bruges som råmateriale (alle uploads beholdes)
-- Tilføj kolonne `source` på `leaderboard_times`: `'daily'` (bruger-upload via companion) eller `'league'` (officielt liga-resultat). Dette adskiller dem klart.
-- Liga-resultater logges separat per race i ny tabel `league_results`:
-  - `user_id`, `league_id`, `division_id`, `race_id/round`, `track`, `car_class`, `best_lap_ms`, `avg_lap_ms`, `position`, `points`, `created_at`
-  - Bruges som "tidligere resultater" (60% vægt)
+## Plan
 
-### Visning (personligt arkiv)
-Ny side `/profil/arkiv` (eller fane på `/profil`):
-- Bedste tid per (bane, bil-klasse) kombination
-- Liste over alle liga-deltagelser (resultater pr. løb)
-- Udviklingskurve (graf) over bedste runde over tid
+### 1. Database
+Ny tabel `user_class_ratings (user_id, car_class, score, percentile, confidence, components, updated_at)` med unique `(user_id, car_class)`.
 
-## 3. Rating-algoritme
+Nye/ændrede funktioner:
+- `compute_user_class_score(_user_id, _car_class)` — samme 20/80 leaderboard/results-formel som i dag, men aggregerer på tværs af **alle** ligaer.
+- `refresh_user_class_rating(_user_id, _car_class)` — opdaterer score + udregner percentil ift. alle brugere i klassen.
+- `refresh_class_percentiles(_car_class)` — recompute percentiles for hele klassen (kaldes efter writes).
+- Triggers på `leaderboard_times`, `league_results`, `entries` refaktoreres til at kalde class-versionen.
 
-### Skjult skill-score per (user, league)
-Beregnes server-side, cached i tabel `user_league_ratings`:
-- `user_id`, `league_id`, `car_class`, `score`, `confidence`, `updated_at`
+Den gamle `user_league_ratings` beholdes midlertidigt så `allowed_categories_for_signup` ikke knækker — opdateres til at læse fra `user_class_ratings` i samme migration.
 
-**Formel:**
-```
-score = 0.4 * leaderboard_component + 0.6 * results_component
-```
+### 2. RatingBadge
+- Tilføj `percentile` prop.
+- Ny farveskala: `>=95 → blå`, `>=75 → guld`, `>=50 → sølv`, ellers `bronze`.
+- Bevarer score-tal + tooltip; tilføjer percentil i tooltip.
 
-- `leaderboard_component`: brugerens bedste runde pr. bane (kun bil-klassen for ligaen) sammenlignet med øvrige liga-medlemmers bedste tider — normaliseret til 0–100
-- `results_component`: gennemsnit af brugerens position/point i tidligere races i samme liga (eller andre ligaer som fallback)
-- Når der er <3 deltagere med data: brug **median af hele leaderboardet** (alle brugere på platformen) i den ønskede bil-klasse som reference indtil nok data
+### 3. Visning
+- **Entry-listen** (`ligaer.$leagueId.index.tsx`): slå rating op pr. (user_id, car_class) ud fra entryens egen `car_class`.
+- **Profil** (egen + `/profil/$userId`): vis liste af ratings pr. klasse brugeren har data i.
+- **Brugere-listen**: vis hver brugers højeste klasse-rating (eller alle, kompakt).
 
-### Klasse-tildeling ved tilmelding
-- Brugerens score sammenlignes mod medianen af de allerede tilmeldte i ligaen i hver klasse
-- Tillad **kun den klasse hvor brugeren ligger tættest på medianen** (mindst spredning → undgår 2 sek/omgang forskel)
-- Hvis ligaen er tom / ingen data: tillad begge
-- UI: tilmeldings-dropdown viser kun tilladte klasser + forklaring ("Algoritmen vurderer Pro passer bedst")
+### 4. Leaderboard ↔ Arkiv
+- Tilføj knap/tab "Personal bedst" på `/leaderboard`, som åbner samme indhold som `/arkiv` (best tider + udviklingsgraf + liga-historik) for den indloggede bruger.
+- Eksisterende `/arkiv` route bevares og linker bare derhen, så ingen links knækker.
 
-### Dynamisk opdatering
-- Trigger på `league_results` insert → re-beregn `user_league_ratings` for alle i ligaen
-- Trigger på `leaderboard_times` insert (kun `source='league'` påvirker rating; `daily` gemmes men vægter mindre/ikke for klasse-beslutning)
-- Eksisterende entries re-evalueres IKKE automatisk (kun nye tilmeldinger)
+---
 
-## 4. Teknisk opdeling
+## Teknisk
 
-### Migration 1 — schema
-- `ALTER leaderboard_times ADD source text DEFAULT 'daily'`
-- `CREATE TABLE league_results (...)`
-- `CREATE TABLE user_league_ratings (...)`
-- Trigger på `divisions` for venteliste-flytning
-- RLS + GRANTs
+- Migration kører `refresh_user_class_rating` for alle eksisterende `(user_id, car_class)` kombinationer + initial percentil-beregning.
+- Percentil opbevares i tabellen (ikke beregnet on-the-fly) for hurtig listevisning.
+- `getMyArchive` genbruges som-er på leaderboard-siden via en ny tab.
 
-### Migration 2 — funktioner
-- `compute_user_league_rating(_user_id, _league_id)` (security definer)
-- `allowed_classes_for_signup(_user_id, _league_id)` returns text[]
-- Triggers der kalder ovenstående
-
-### Server functions (`createServerFn`)
-- `getMyArchive` → personligt arkiv (bedste tider + liga-historik + udviklingsdata)
-- `getAllowedClasses({ leagueId })` → bruges af tilmeldings-UI
-- `recomputeLeagueRatings({ leagueId })` (admin)
-
-### UI
-- `/profil` — ny fane "Mit arkiv" med graf (recharts) + tabel
-- Tilmeldingsdialog — vis kun tilladte klasser
-- Admin: knap til manuel re-beregning af rating
-
-## Rækkefølge
-1. Migration 1 (schema + trigger til venteliste)
-2. Migration 2 (rating-funktioner)
-3. Server functions
-4. UI for personligt arkiv
-5. UI for begrænset klassevalg ved tilmelding
-
-## Åbne spørgsmål (jeg bygger ud fra disse antagelser hvis du ikke svarer)
-- "Bedste tid pr. kombination" = bedste enkelt-runde i (bane × bil-klasse), uanset session
-- Daily-uploads tæller IKKE for klasse-beslutning men vises i arkivet
-- Eksisterende `leaderboard_times` markeres som `source='daily'` ved migration (alle gamle er bruger-uploads)
+Sig til hvis du vil have det udført.
