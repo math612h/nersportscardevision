@@ -270,6 +270,78 @@ export type Database = {
         }
         Relationships: []
       }
+      league_results: {
+        Row: {
+          avg_lap_ms: number | null
+          best_lap_ms: number | null
+          car_class: string
+          car_model: string | null
+          created_at: string
+          division_id: string | null
+          id: string
+          layout: string | null
+          league_id: string
+          notes: string | null
+          points: number | null
+          position: number | null
+          round: number | null
+          track: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avg_lap_ms?: number | null
+          best_lap_ms?: number | null
+          car_class: string
+          car_model?: string | null
+          created_at?: string
+          division_id?: string | null
+          id?: string
+          layout?: string | null
+          league_id: string
+          notes?: string | null
+          points?: number | null
+          position?: number | null
+          round?: number | null
+          track: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avg_lap_ms?: number | null
+          best_lap_ms?: number | null
+          car_class?: string
+          car_model?: string | null
+          created_at?: string
+          division_id?: string | null
+          id?: string
+          layout?: string | null
+          league_id?: string
+          notes?: string | null
+          points?: number | null
+          position?: number | null
+          round?: number | null
+          track?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_results_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "league_results_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leagues: {
         Row: {
           banner_url: string | null
@@ -812,6 +884,44 @@ export type Database = {
         }
         Relationships: []
       }
+      user_league_ratings: {
+        Row: {
+          car_class: string
+          components: Json
+          confidence: number
+          league_id: string
+          score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          car_class: string
+          components?: Json
+          confidence?: number
+          league_id: string
+          score?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          car_class?: string
+          components?: Json
+          confidence?: number
+          league_id?: string
+          score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_league_ratings_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -858,12 +968,24 @@ export type Database = {
       }
     }
     Functions: {
+      allowed_categories_for_signup: {
+        Args: { _car_class: string; _league_id: string; _user_id: string }
+        Returns: Json
+      }
+      compute_user_league_score: {
+        Args: { _car_class: string; _league_id: string; _user_id: string }
+        Returns: Json
+      }
       get_profile_private: {
         Args: { _user_id: string }
         Returns: {
           age: number
           discord_username: string
         }[]
+      }
+      refresh_user_league_rating: {
+        Args: { _car_class: string; _league_id: string; _user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

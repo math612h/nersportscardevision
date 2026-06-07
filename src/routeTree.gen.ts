@@ -23,6 +23,7 @@ import { Route as LmuLigaRouteImport } from './routes/lmu.liga'
 import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
+import { Route as AuthenticatedArkivRouteImport } from './routes/_authenticated.arkiv'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
 import { Route as LigaerLeagueIdIndexRouteImport } from './routes/ligaer.$leagueId.index'
 import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
@@ -113,6 +114,11 @@ const AuthenticatedMineProtestsRoute =
     path: '/mine-protests',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedArkivRoute = AuthenticatedArkivRouteImport.update({
+  id: '/arkiv',
+  path: '/arkiv',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/_admin',
   getParentRoute: () => AuthenticatedRoute,
@@ -230,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/arkiv': typeof AuthenticatedArkivRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
@@ -263,6 +270,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/arkiv': typeof AuthenticatedArkivRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/lmu/liga': typeof LmuLigaRoute
@@ -297,6 +305,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/arkiv': typeof AuthenticatedArkivRoute
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRouteWithChildren
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
@@ -332,6 +341,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/sitemap.xml'
+    | '/arkiv'
     | '/mine-protests'
     | '/profil'
     | '/ligaer/$leagueId'
@@ -365,6 +375,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/login'
     | '/sitemap.xml'
+    | '/arkiv'
     | '/mine-protests'
     | '/profil'
     | '/lmu/liga'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/sitemap.xml'
     | '/_authenticated/_admin'
+    | '/_authenticated/arkiv'
     | '/_authenticated/mine-protests'
     | '/_authenticated/profil'
     | '/ligaer/$leagueId'
@@ -542,6 +554,13 @@ declare module '@tanstack/react-router' {
       path: '/mine-protests'
       fullPath: '/mine-protests'
       preLoaderRoute: typeof AuthenticatedMineProtestsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/arkiv': {
+      id: '/_authenticated/arkiv'
+      path: '/arkiv'
+      fullPath: '/arkiv'
+      preLoaderRoute: typeof AuthenticatedArkivRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_admin': {
@@ -756,12 +775,14 @@ const AuthenticatedProfilRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedArkivRoute: typeof AuthenticatedArkivRoute
   AuthenticatedMineProtestsRoute: typeof AuthenticatedMineProtestsRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedArkivRoute: AuthenticatedArkivRoute,
   AuthenticatedMineProtestsRoute: AuthenticatedMineProtestsRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRouteWithChildren,
 }
