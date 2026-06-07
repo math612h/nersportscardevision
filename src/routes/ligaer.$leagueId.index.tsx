@@ -12,6 +12,7 @@ import { leaveLeague } from "@/lib/leagues.functions";
 import { getAllowedCategories } from "@/lib/rating.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { RatingBadge } from "@/components/RatingBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -374,6 +375,21 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
       return new Set((profs ?? []).filter((p) => p.approved).map((p) => p.id));
     },
   });
+  const { data: ratingMap } = useQuery({
+    queryKey: ["entry-ratings", leagueId, userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const { data: rs, error } = await supabase
+        .from("user_league_ratings")
+        .select("user_id,car_class,score,confidence")
+        .eq("league_id", leagueId)
+        .in("user_id", userIds);
+      if (error) throw error;
+      const m: Record<string, { score: number; confidence: number }> = {};
+      for (const r of (rs ?? []) as any[]) m[`${r.user_id}|${r.car_class}`] = { score: Number(r.score), confidence: Number(r.confidence) };
+      return m;
+    },
+  });
 
   if (!data || data.length === 0) return null;
 
@@ -432,6 +448,14 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                           {teamMap[(e as any).team_id]}
                         </Badge>
                       )}
+                      {ratingMap?.[`${e.user_id}|${e.car_class}`] && (
+                        <RatingBadge
+                          score={ratingMap[`${e.user_id}|${e.car_class}`].score}
+                          confidence={ratingMap[`${e.user_id}|${e.car_class}`].confidence}
+                          carClass={e.car_class}
+                          size="xs"
+                        />
+                      )}
                       {approvedMap?.has(e.user_id) && (
                         <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
                           <CheckCircle2 className="h-3 w-3" />Godkendt
@@ -451,6 +475,14 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                           </span>
                           <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
                           <span className="flex-1 truncate">{e.driver_name}</span>
+                          {ratingMap?.[`${e.user_id}|${e.car_class}`] && (
+                            <RatingBadge
+                              score={ratingMap[`${e.user_id}|${e.car_class}`].score}
+                              confidence={ratingMap[`${e.user_id}|${e.car_class}`].confidence}
+                              carClass={e.car_class}
+                              size="xs"
+                            />
+                          )}
                           {approvedMap?.has(e.user_id) && (
                             <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
                               <CheckCircle2 className="h-3 w-3" />Godkendt
