@@ -46,16 +46,16 @@ function PublicProfile() {
     queryFn: () => signedAvatarUrl(profile!.avatar_url),
   });
 
-  const { data: ratings } = useQuery({
-    queryKey: ["user-class-ratings", userId],
+  const { data: rating } = useQuery({
+    queryKey: ["user-rating", userId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from("user_class_ratings")
-        .select("car_class,score,percentile,confidence")
+        .from("user_ratings")
+        .select("score,percentile,races_count")
         .eq("user_id", userId)
-        .order("score", { ascending: false });
+        .maybeSingle();
       if (error) throw error;
-      return (data ?? []) as any[];
+      return data as { score: number; percentile: number | null; races_count: number } | null;
     },
   });
 
