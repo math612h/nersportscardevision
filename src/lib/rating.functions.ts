@@ -61,9 +61,9 @@ export type ArchiveHistoryRow = {
 
 export type RatingHistoryRow = {
   recorded_at: string;
-  car_class: string;
   score: number;
-  percentile: number | null;
+  delta: number | null;
+  car_class: string | null;
 };
 
 export const getMyRatingHistory = createServerFn({ method: "GET" })
@@ -71,8 +71,8 @@ export const getMyRatingHistory = createServerFn({ method: "GET" })
   .handler(async ({ context }): Promise<RatingHistoryRow[]> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await (supabaseAdmin as any)
-      .from("user_class_rating_history")
-      .select("recorded_at,car_class,score,percentile")
+      .from("user_rating_history")
+      .select("recorded_at,score,delta,car_class")
       .eq("user_id", context.userId)
       .order("recorded_at", { ascending: true });
     if (error) throw new Error(error.message);
