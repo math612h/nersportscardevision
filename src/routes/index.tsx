@@ -77,12 +77,10 @@ function NewsHome() {
 
   return (
     <div className="space-y-10">
-      <NewsPostsSection />
-
       <header className="space-y-3">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-            DanishEnduranceSeries.dk
+            LMU Danmark
           </p>
           <h1 className="text-2xl font-bold tracking-tight">Nyheder</h1>
           <p className="text-sm text-muted-foreground">Seneste afviklede løb og resultater.</p>
@@ -100,6 +98,8 @@ function NewsHome() {
           </Button>
         </div>
       </header>
+
+      <NewsPostsSection />
 
       {isLoading && (
         <div className="h-96 animate-pulse rounded-xl border border-border bg-card/50" />
