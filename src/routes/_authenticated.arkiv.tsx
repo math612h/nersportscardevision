@@ -50,36 +50,34 @@ function ArchivePage() {
   const [leagueChartClass, setLeagueChartClass] = useState<string>("ALL");
   const [leagueChartTrack, setLeagueChartTrack] = useState<string>("ALL");
 
-  // Leaderboard-graf bruger KUN bruger-uploadede tider (ikke liga-resultater)
-  const leaderboardHistory = useMemo(
-    () => (data?.history ?? []).filter((h) => h.source !== "league"),
-    [data],
+  // ELO-udvikling over tid (pr. bilklasse)
+  const eloClasses = useMemo(
+    () => Array.from(new Set((ratingHistory ?? []).map((h) => h.car_class))).sort(),
+    [ratingHistory],
   );
 
-  const classes = useMemo(
-    () => Array.from(new Set(leaderboardHistory.map((h) => h.car_class))).sort(),
-    [leaderboardHistory],
-  );
-  const tracks = useMemo(
-    () => Array.from(new Set(leaderboardHistory.map((h) => h.track))).sort(),
-    [leaderboardHistory],
-  );
-
-  const chartData = useMemo(() => {
-    const rows = leaderboardHistory
-      .filter((h) => chartClass === "ALL" || h.car_class === chartClass)
-      .filter((h) => chartTrack === "ALL" || h.track === chartTrack)
+  const eloChartData = useMemo(() => {
+    const rows = (ratingHistory ?? [])
+      .filter((h) => eloClass === "ALL" || h.car_class === eloClass)
       .sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-    let runMin = Infinity;
-    return rows.map((r) => {
-      runMin = Math.min(runMin, r.best_lap_ms);
-      return {
-        date: new Date(r.recorded_at).toLocaleDateString("da-DK"),
-        lap: r.best_lap_ms / 1000,
-        best: runMin / 1000,
-      };
-    });
-  }, [leaderboardHistory, chartClass, chartTrack]);
+    if (eloClass === "ALL") {
+      // Vis sidste kendte score pr. klasse på hvert tidspunkt → gennemsnit
+      const lastByClass = new Map<string, number>();
+      return rows.map((r) => {
+        lastByClass.set(r.car_class, Number(r.score));
+        const vals = Array.from(lastByClass.values());
+        const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+        return {
+          date: new Date(r.recorded_at).toLocaleDateString("da-DK"),
+          score: Math.round(avg * 100) / 100,
+        };
+      });
+    }
+    return rows.map((r) => ({
+      date: new Date(r.recorded_at).toLocaleDateString("da-DK"),
+      score: Math.round(Number(r.score) * 100) / 100,
+    }));
+  }, [ratingHistory, eloClass]);
 
   // Liga-graf bygges fra league_results
   const leagueClasses = useMemo(
