@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowLeft } from "lucide-react";
+import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
@@ -107,12 +107,8 @@ function ParticipantDashboard() {
 
   return (
     <div className="space-y-10">
-      <Link to="/lmu" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
-        <ArrowLeft className="h-3 w-3" /> LMU hub
-      </Link>
-
       <header className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Liga Hub</p>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Ligaer</p>
         <h1 className="text-2xl font-bold tracking-tight">Ligaer & løb</h1>
         <p className="text-sm text-muted-foreground">Vælg en liga for at se afdelinger, regler og tilmelde dig.</p>
       </header>

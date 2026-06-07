@@ -265,7 +265,7 @@ function LeaderboardPage() {
 
   return (
     <div className="space-y-8">
-      <Link to="/lmu" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
+      <Link to="/lmu/liga" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Tilbage
       </Link>
 

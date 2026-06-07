@@ -77,6 +77,8 @@ function NewsHome() {
 
   return (
     <div className="space-y-10">
+      <NewsPostsSection />
+
       <header className="space-y-3">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
@@ -88,12 +90,12 @@ function NewsHome() {
         <div className="flex flex-wrap gap-2">
           <Button asChild className="gap-2">
             <Link to="/lmu/liga">
-              <Flag className="h-4 w-4" /> Liga Hub
+              <Flag className="h-4 w-4" /> Ligaer
             </Link>
           </Button>
           <Button asChild variant="outline" className="gap-2">
             <Link to="/lmu/teams">
-              <ArrowUpRight className="h-4 w-4" /> Teams Hub
+              <ArrowUpRight className="h-4 w-4" /> Teams
             </Link>
           </Button>
         </div>
@@ -232,3 +234,74 @@ function groupTopThree(results: ResultRow[]) {
     })
     .filter((g) => g.top.length > 0);
 }
+
+type NewsPost = {
+  id: string;
+  title: string;
+  body: string | null;
+  image_path: string | null;
+  expires_at: string;
+};
+
+function NewsPostsSection() {
+  const { data: posts } = useQuery({
+    queryKey: ["home-news-posts"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("news_posts")
+        .select("id,title,body,image_path,expires_at")
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as NewsPost[];
+    },
+  });
+
+  const imagePaths = (posts ?? []).map((p) => p.image_path).filter((p): p is string => !!p);
+
+  const { data: imageMap } = useQuery({
+    queryKey: ["home-news-images", imagePaths.sort().join(",")],
+    enabled: imagePaths.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from("news-images")
+        .createSignedUrls(imagePaths, 60 * 60 * 24 * 7);
+      if (error) throw error;
+      const m: Record<string, string> = {};
+      data?.forEach((d) => {
+        if (d.path && d.signedUrl) m[d.path] = d.signedUrl;
+      });
+      return m;
+    },
+  });
+
+  if (!posts || posts.length === 0) return null;
+
+  return (
+    <section className="space-y-4">
+      {posts.map((post) => (
+        <article
+          key={post.id}
+          className="overflow-hidden rounded-xl border border-primary/30 bg-card"
+        >
+          <div className="space-y-3 p-4 sm:p-6">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Nyhed</p>
+            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{post.title}</h2>
+            {post.body && (
+              <p className="whitespace-pre-wrap text-sm text-foreground/90">{post.body}</p>
+            )}
+          </div>
+          {post.image_path && imageMap?.[post.image_path] && (
+            <img
+              src={imageMap[post.image_path]}
+              alt={post.title}
+              className="w-full object-cover"
+              loading="lazy"
+            />
+          )}
+        </article>
+      ))}
+    </section>
+  );
+}
+

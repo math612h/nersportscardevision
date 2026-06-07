@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Flag, Gauge, LayoutGrid, LogOut, Shield, User as UserIcon, UserCircle2, Users } from "lucide-react";
+import { Flag, Gauge, Home, LayoutGrid, LogOut, Shield, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -20,7 +20,12 @@ export function AppHeader() {
         <nav className="flex items-center gap-1 text-sm">
           {!isAdminRoute && (
             <Link to="/" className="rounded px-2 py-1 hover:bg-accent" activeOptions={{ exact: true }}>
-              <span className="flex items-center gap-1"><LayoutGrid className="h-4 w-4" /> Ligaer</span>
+              <span className="flex items-center gap-1"><Home className="h-4 w-4" /> Forside</span>
+            </Link>
+          )}
+          {!isAdminRoute && (
+            <Link to="/lmu/liga" className="rounded px-2 py-1 hover:bg-accent">
+              <span className="flex items-center gap-1"><Flag className="h-4 w-4" /> Ligaer</span>
             </Link>
           )}
           {!isAdminRoute && (

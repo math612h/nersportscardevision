@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Flag, MessageSquareWarning, Users, UserCheck, Shield as ShieldIcon } from "lucide-react";
+import { Shield, Flag, MessageSquareWarning, Newspaper, Users, UserCheck, Shield as ShieldIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,7 @@ function AdminHub() {
   const items = [
     { to: "/admin/ligaer", title: "Ligaer & afdelinger", desc: "Opret og rediger ligaer, afdelinger, regler og entries.", icon: Flag, badge: null as number | null },
     { to: "/admin/protests", title: "Protests", desc: "Se alle indsendte protests.", icon: MessageSquareWarning, badge: null },
+    { to: "/admin/nyhedsbrev", title: "Nyhedsbrev", desc: "Skriv nyheder der vises på forsiden.", icon: Newspaper, badge: null },
     { to: "/admin/afventer", title: "Afventer godkendelse", desc: "Godkend nye brugere som lige har oprettet en profil.", icon: UserCheck, badge: pendingCount ?? null },
     { to: "/admin/brugere", title: "Brugere", desc: "Administrér godkendte brugere og roller.", icon: Users, badge: null },
     { to: "/teams", title: "Teams", desc: "Se alle teams, opret nyt og administrér medlemmer.", icon: ShieldIcon, badge: null },
