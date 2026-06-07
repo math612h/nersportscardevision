@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RatingBadge } from "@/components/RatingBadge";
 
 export const Route = createFileRoute("/_authenticated/profil/$userId")({
   head: () => ({ meta: [{ title: "Profil – DanishEnduranceSeries.dk" }] }),
