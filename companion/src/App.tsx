@@ -47,7 +47,7 @@ export default function App() {
       </div>
       {status.signedIn ? <SignedIn status={status} /> : <SignIn />}
       <div className="footer">
-        Læs mere på <a href="https://danishenduranceseries.dk/leaderboard" onClick={(e) => { e.preventDefault(); window.open("https://danishenduranceseries.dk/leaderboard"); }}>danishenduranceseries.dk</a>
+        Læs mere på <a href="https://lmudanmark.dk/leaderboard" onClick={(e) => { e.preventDefault(); window.open("https://lmudanmark.dk/leaderboard"); }}>lmudanmark.dk</a>
       </div>
     </div>
   );
