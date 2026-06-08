@@ -363,12 +363,12 @@ function LeaderboardPage() {
               </>
             ) : (
               <>
-                <Button asChild variant="outline" className="gap-2">
-                  <a href={companionZip.url} download="DES-Companion-Windows.zip">
-                    <Upload className="h-4 w-4" /> Download (gammel version)
+                <Button asChild className="gap-2">
+                  <a href={companionZip.url} download="NER-Sportscar-Companion-Windows.zip">
+                    <Upload className="h-4 w-4" /> Download til Windows
                   </a>
                 </Button>
-                <span className="text-[11px] text-muted-foreground">Ny installer kommer snart — bygges via GitHub Actions</span>
+                <span className="text-[11px] text-muted-foreground">~140 MB · .zip · pak ud og kør NER-Sportscar-Companion.exe</span>
               </>
             )}
           </div>
