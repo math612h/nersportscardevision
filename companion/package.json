@@ -1,7 +1,7 @@
 {
   "name": "des-companion",
   "version": "1.0.1",
-  "description": "DanishEnduranceSeries.dk Companion — uploader automatisk dine LMU omgangstider til leaderboardet",
+  "description": "Leaderboard tracker LMU — uploader automatisk dine LMU omgangstider til LMU Danmark leaderboardet",
   "main": "electron/main.cjs",
   "author": "DanishEnduranceSeries.dk",
   "repository": {
@@ -34,7 +34,7 @@
   },
   "build": {
     "appId": "com.danishenduranceseries.companion",
-    "productName": "DanishEnduranceSeries.dk Companion",
+    "productName": "Leaderboard tracker LMU",
     "artifactName": "DES-Companion-Setup.${ext}",
     "directories": {
       "output": "release",
@@ -60,7 +60,7 @@
       "allowToChangeInstallationDirectory": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "DanishEnduranceSeries.dk Companion",
+      "shortcutName": "Leaderboard tracker LMU",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false
     }

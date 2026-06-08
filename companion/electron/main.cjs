@@ -39,7 +39,7 @@ function createWindow() {
     show: false,
     resizable: false,
     backgroundColor: "#0b0b0f",
-    title: "DanishEnduranceSeries.dk Companion",
+    title: "Leaderboard tracker LMU",
     autoHideMenuBar: true,
     icon: getTrayIcon(),
     webPreferences: {
@@ -110,7 +110,7 @@ function buildTrayMenu() {
 function refreshTray() {
   if (!tray) return;
   tray.setToolTip(
-    `DanishEnduranceSeries.dk Companion\n${userInfo ? "Logget ind" : "Ikke logget ind"} · LMU ${lmuStatus.lmuFound ? "fundet" : "mangler"}`
+    `Leaderboard tracker LMU\n${userInfo ? "Logget ind" : "Ikke logget ind"} · LMU ${lmuStatus.lmuFound ? "fundet" : "mangler"}`
   );
   tray.setContextMenu(buildTrayMenu());
 }
@@ -372,7 +372,7 @@ app.on("second-instance", () => showWindow());
 app.whenReady().then(async () => {
   // Tray icon
   tray = new Tray(getTrayIcon());
-  tray.setToolTip("DanishEnduranceSeries.dk Companion");
+  tray.setToolTip("Leaderboard tracker LMU");
   tray.on("click", () => showWindow());
   refreshTray();
 
