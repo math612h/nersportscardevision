@@ -37,13 +37,13 @@ export default function App() {
     return off;
   }, []);
 
-  if (!status) return <div className="app"><div className="brand"><span className="brand-dot" />DanishEnduranceSeries.dk</div><p className="sub">Indlæser…</p></div>;
+  if (!status) return <div className="app"><div className="brand"><span className="brand-dot" />LMU Danmark</div><p className="sub">Indlæser…</p></div>;
 
   return (
     <div className="app">
       <div className="brand">
         <span className="brand-dot" />
-        DanishEnduranceSeries.dk Companion
+        Leaderboard tracker LMU
       </div>
       {status.signedIn ? <SignedIn status={status} /> : <SignIn />}
       <div className="footer">
