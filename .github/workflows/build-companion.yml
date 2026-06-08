@@ -48,7 +48,39 @@ jobs:
         run: npm run build
 
       - name: Build Windows installer (NSIS)
-        run: npx electron-builder --win nsis --publish never
+        env:
+          ELECTRON_GET_USE_PROXY: "true"
+          npm_config_fetch_retries: "5"
+          npm_config_fetch_retry_mintimeout: "20000"
+          npm_config_fetch_retry_maxtimeout: "120000"
+          npm_config_fetch_timeout: "600000"
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $mirrors = @("", "https://npmmirror.com/mirrors/electron/")
+
+          for ($i = 1; $i -le 6; $i++) {
+            $mirror = $mirrors[($i - 1) % $mirrors.Count]
+            if ($mirror) {
+              $env:ELECTRON_MIRROR = $mirror
+              Write-Host "Attempt $i of 6 using Electron mirror: $mirror"
+            } else {
+              Remove-Item Env:ELECTRON_MIRROR -ErrorAction SilentlyContinue
+              Write-Host "Attempt $i of 6 using default Electron download host"
+            }
+
+            npx electron-builder --win nsis --publish never
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+
+            Write-Host "electron-builder failed (exit $LASTEXITCODE), cleaning Electron caches and retrying in 20s..."
+            Remove-Item -Recurse -Force "$env:LOCALAPPDATA\electron\Cache" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "$env:LOCALAPPDATA\electron-builder\Cache" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "$env:APPDATA\electron" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "$env:APPDATA\electron-builder" -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 20
+          }
+
+          exit 1
 
       - name: Upload installer as workflow artifact
         uses: actions/upload-artifact@v4
