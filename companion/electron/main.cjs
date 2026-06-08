@@ -85,7 +85,7 @@ function buildTrayMenu() {
     { type: "separator" },
     { label: "Åbn vindue", click: () => showWindow() },
     { label: "Scan nu", click: () => triggerScan() },
-    { label: "Åbn leaderboard", click: () => shell.openExternal("https://danishenduranceseries.dk/leaderboard") },
+    { label: "Åbn leaderboard", click: () => shell.openExternal("https://lmudanmark.dk/leaderboard") },
     { type: "separator" },
     {
       label: "Log ud",
