@@ -54,41 +54,9 @@ export default function App() {
 }
 
 function SignIn() {
-  const [mode, setMode] = useState<"key" | "otp" | "password">("key");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
   const [keyToken, setKeyToken] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const submitPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
-    const r = await window.companion.signIn(email, password);
-    setLoading(false);
-    if (!r.ok) setError(r.error || "Login fejlede");
-  };
-
-  const sendCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null); setInfo(null); setLoading(true);
-    const r = await window.companion.sendOtp(email);
-    setLoading(false);
-    if (!r.ok) setError(r.error || "Kunne ikke sende kode");
-    else { setOtpSent(true); setInfo("Kode sendt — tjek din mail (også spam)."); }
-  };
-
-  const verifyCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null); setLoading(true);
-    const r = await window.companion.verifyOtp(email, code.trim());
-    setLoading(false);
-    if (!r.ok) setError(r.error || "Forkert eller udløbet kode");
-  };
 
   const submitKey = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,83 +70,32 @@ function SignIn() {
     <div className="stack">
       <div>
         <h1>Log ind</h1>
-        <p className="sub">Samme bruger som på hjemmesiden.</p>
+        <p className="sub">Brug din adgangsnøgle fra hjemmesiden.</p>
       </div>
 
-      <div className="tabs">
-        <button type="button" className={mode === "key" ? "tab active" : "tab"} onClick={() => { setMode("key"); setError(null); }}>
-          Nøgle
+      <form className="stack" onSubmit={submitKey}>
+        <div>
+          <label>Adgangsnøgle fra hjemmesiden</label>
+          <input
+            type="text"
+            value={keyToken}
+            onChange={(e) => setKeyToken(e.target.value)}
+            required
+            autoFocus
+            spellCheck={false}
+            autoComplete="off"
+            placeholder="64 tegn — paste her"
+            style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", fontSize: 12 }}
+          />
+        </div>
+        {error && <p className="err" style={{ fontSize: 12, margin: 0 }}>{error}</p>}
+        <button type="submit" disabled={loading || !keyToken.trim()}>
+          {loading ? "Logger ind…" : "Log ind"}
         </button>
-        <button type="button" className={mode === "otp" ? "tab active" : "tab"} onClick={() => { setMode("otp"); setError(null); }}>
-          Mail-kode
-        </button>
-        <button type="button" className={mode === "password" ? "tab active" : "tab"} onClick={() => { setMode("password"); setError(null); }}>
-          Adgangskode
-        </button>
-      </div>
-
-      {mode === "key" ? (
-        <form className="stack" onSubmit={submitKey}>
-          <div>
-            <label>Adgangsnøgle fra hjemmesiden</label>
-            <input
-              type="text"
-              value={keyToken}
-              onChange={(e) => setKeyToken(e.target.value)}
-              required
-              autoFocus
-              spellCheck={false}
-              autoComplete="off"
-              placeholder="64 tegn — paste her"
-              style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", fontSize: 12 }}
-            />
-          </div>
-          {error && <p className="err" style={{ fontSize: 12, margin: 0 }}>{error}</p>}
-          <button type="submit" disabled={loading || !keyToken.trim()}>
-            {loading ? "Logger ind…" : "Log ind"}
-          </button>
-          <p className="hint">
-            Gå ind på din profil på hjemmesiden → <b>Desktop companion</b> → <b>Ny nøgle</b>, og kopiér koden ind her.
-            Nøglen virker uden mail eller adgangskode.
-          </p>
-        </form>
-      ) : mode === "password" ? (
-        <form className="stack" onSubmit={submitPassword}>
-          <div>
-            <label>E-mail</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
-          </div>
-          <div>
-            <label>Adgangskode</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </div>
-          {error && <p className="err" style={{ fontSize: 12, margin: 0 }}>{error}</p>}
-          <button type="submit" disabled={loading}>{loading ? "Logger ind…" : "Log ind"}</button>
-        </form>
-      ) : !otpSent ? (
-        <form className="stack" onSubmit={sendCode}>
-          <div>
-            <label>E-mail</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
-          </div>
-          {error && <p className="err" style={{ fontSize: 12, margin: 0 }}>{error}</p>}
-          <button type="submit" disabled={loading}>{loading ? "Sender…" : "Send mig en kode"}</button>
-          <p className="hint">Vi sender en 6-cifret kode til din mail. Ingen adgangskode nødvendig.</p>
-        </form>
-      ) : (
-        <form className="stack" onSubmit={verifyCode}>
-          <div>
-            <label>Kode fra mailen</label>
-            <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} value={code} onChange={(e) => setCode(e.target.value)} required autoFocus placeholder="123456" />
-          </div>
-          {info && <p className="hint" style={{ margin: 0 }}>{info}</p>}
-          {error && <p className="err" style={{ fontSize: 12, margin: 0 }}>{error}</p>}
-          <button type="submit" disabled={loading}>{loading ? "Tjekker…" : "Log ind"}</button>
-          <button type="button" className="secondary" onClick={() => { setOtpSent(false); setCode(""); setInfo(null); setError(null); }}>
-            Brug en anden mail
-          </button>
-        </form>
-      )}
+        <p className="hint">
+          Gå ind på din profil på hjemmesiden → <b>Desktop companion</b> → <b>Ny nøgle</b>, og kopiér koden ind her.
+        </p>
+      </form>
     </div>
   );
 }
