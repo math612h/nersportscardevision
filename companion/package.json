@@ -1,9 +1,9 @@
 {
-  "name": "des-companion",
+  "name": "lmu-danmark-tracker",
   "version": "1.0.1",
   "description": "Leaderboard tracker LMU — uploader automatisk dine LMU omgangstider til LMU Danmark leaderboardet",
   "main": "electron/main.cjs",
-  "author": "DanishEnduranceSeries.dk",
+  "author": "LMU Danmark",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/math612h/nersportscardevision.git"
@@ -33,9 +33,9 @@
     "vite": "^5.3.5"
   },
   "build": {
-    "appId": "com.danishenduranceseries.companion",
+    "appId": "com.lmudanmark.tracker",
     "productName": "Leaderboard tracker LMU",
-    "artifactName": "DES-Companion-Setup.${ext}",
+    "artifactName": "LMU-Danmark-Tracker-Setup.${ext}",
     "directories": {
       "output": "release",
       "buildResources": "build"

@@ -85,7 +85,7 @@ jobs:
       - name: Upload installer as workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NER-Sportscar-Companion-Setup
+          name: LMU-Danmark-Tracker-Setup
           path: companion/release/*Setup*.exe
           if-no-files-found: error
 
