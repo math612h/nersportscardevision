@@ -17,7 +17,6 @@ import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nam
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
 import companionZip from "@/assets/companion-zip.asset.json";
-const COMPANION_INSTALLER_URL: string | null = null;
 
 const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
 const LB_DESC =
@@ -352,25 +351,12 @@ function LeaderboardPage() {
             Download companion-appen, dobbeltklik installeren og log ind én gang. Derefter starter den automatisk ved Windows-opstart, kører i baggrunden og uploader dine tider når du har kørt i LMU.
           </p>
           <div className="flex items-center gap-3 pt-1">
-          {COMPANION_INSTALLER_URL ? (
-              <>
-                <Button asChild className="gap-2">
-                  <a href={COMPANION_INSTALLER_URL} download="DES-Companion-Setup.exe">
-                    <Upload className="h-4 w-4" /> Download til Windows
-                  </a>
-                </Button>
-                <span className="text-[11px] text-muted-foreground">~80 MB · .exe installer</span>
-              </>
-            ) : (
-              <>
-                <Button asChild className="gap-2">
-                  <a href={companionZip.url} download="NER-Sportscar-Companion-Windows.zip">
-                    <Upload className="h-4 w-4" /> Download til Windows
-                  </a>
-                </Button>
-                <span className="text-[11px] text-muted-foreground">~140 MB · .zip · pak ud og kør NER-Sportscar-Companion.exe</span>
-              </>
-            )}
+            <Button asChild className="gap-2">
+              <a href={companionZip.url} download="LMU-Danmark-Companion-Windows-v1.0.1.zip">
+                <Upload className="h-4 w-4" /> Download til Windows
+              </a>
+            </Button>
+            <span className="text-[11px] text-muted-foreground">Ny blå version · ~140 MB · .zip · pak ud og kør appen</span>
           </div>
         </CardContent>
       </Card>
