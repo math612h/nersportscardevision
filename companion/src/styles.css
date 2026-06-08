@@ -1,12 +1,24 @@
 :root {
+  --bg: #0b1c2c;
+  --card: #142a41;
+  --card-border: #1e3a5f;
+  --text: #eff6fb;
+  --muted: #bcd1df;
+  --dim: #8aa4b8;
+  --primary: #00bdff;
+  --primary-hover: #0095d3;
+  --accent: #0095d3;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --err: #ef4444;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; margin: 0; }
 body {
-  background: #0b0b0f;
-  color: #f4f4f5;
+  background: var(--bg);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 .app {
@@ -23,13 +35,13 @@ body {
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #ef4444;
+  color: var(--primary);
   font-weight: 600;
 }
 .brand-dot {
   width: 8px; height: 8px; border-radius: 50%;
-  background: #ef4444;
-  box-shadow: 0 0 12px #ef4444;
+  background: var(--primary);
+  box-shadow: 0 0 12px var(--primary);
 }
 h1 {
   font-size: 20px;
@@ -39,12 +51,12 @@ h1 {
 }
 .sub {
   font-size: 13px;
-  color: #a1a1aa;
+  color: var(--muted);
   margin: 4px 0 0;
 }
 .card {
-  background: #15151b;
-  border: 1px solid #27272a;
+  background: var(--card);
+  border: 1px solid var(--card-border);
   border-radius: 12px;
   padding: 16px;
 }
@@ -55,35 +67,35 @@ h1 {
   padding: 6px 0;
   font-size: 13px;
 }
-.row + .row { border-top: 1px solid #27272a; }
-.row .k { color: #a1a1aa; }
+.row + .row { border-top: 1px solid var(--card-border); }
+.row .k { color: var(--muted); }
 .row .v { font-weight: 500; }
-.ok { color: #22c55e; }
-.warn { color: #f59e0b; }
-.err { color: #ef4444; }
+.ok { color: var(--ok); }
+.warn { color: var(--warn); }
+.err { color: var(--err); }
 label {
   display: block;
   font-size: 11px;
-  color: #a1a1aa;
+  color: var(--muted);
   margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
 input {
   width: 100%;
-  background: #0b0b0f;
-  border: 1px solid #27272a;
+  background: var(--bg);
+  border: 1px solid var(--card-border);
   border-radius: 8px;
-  color: #f4f4f5;
+  color: var(--text);
   padding: 10px 12px;
   font-size: 14px;
   outline: none;
 }
-input:focus { border-color: #ef4444; }
+input:focus { border-color: var(--primary); }
 button {
   width: 100%;
-  background: #ef4444;
-  color: white;
+  background: var(--primary);
+  color: var(--bg);
   border: none;
   border-radius: 8px;
   padding: 11px;
@@ -91,21 +103,21 @@ button {
   font-weight: 600;
   cursor: pointer;
 }
-button:hover { background: #dc2626; }
+button:hover { background: var(--primary-hover); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 button.secondary {
   background: transparent;
-  border: 1px solid #27272a;
-  color: #f4f4f5;
+  border: 1px solid var(--card-border);
+  color: var(--text);
 }
-button.secondary:hover { background: #18181b; }
+button.secondary:hover { background: var(--card); }
 .stack { display: flex; flex-direction: column; gap: 12px; }
-.hint { font-size: 11px; color: #71717a; line-height: 1.5; }
-.footer { margin-top: auto; font-size: 11px; color: #52525b; text-align: center; }
-a { color: #ef4444; text-decoration: none; }
+.hint { font-size: 11px; color: var(--dim); line-height: 1.5; }
+.footer { margin-top: auto; font-size: 11px; color: var(--dim); text-align: center; }
+a { color: var(--primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
-.tabs { display: flex; gap: 4px; background: #15151b; border: 1px solid #27272a; border-radius: 8px; padding: 4px; }
-.tab { flex: 1; background: transparent; color: #a1a1aa; padding: 8px; font-size: 12px; font-weight: 500; border-radius: 6px; width: auto; }
-.tab:hover { background: #1f1f25; }
-.tab.active { background: #ef4444; color: white; }
-.tab.active:hover { background: #dc2626; }
+.tabs { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--card-border); border-radius: 8px; padding: 4px; }
+.tab { flex: 1; background: transparent; color: var(--muted); padding: 8px; font-size: 12px; font-weight: 500; border-radius: 6px; width: auto; }
+.tab:hover { background: rgba(0,189,255,0.08); }
+.tab.active { background: var(--primary); color: var(--bg); }
+.tab.active:hover { background: var(--primary-hover); }

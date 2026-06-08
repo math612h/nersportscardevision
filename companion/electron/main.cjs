@@ -38,7 +38,7 @@ function createWindow() {
     height: 620,
     show: false,
     resizable: false,
-    backgroundColor: "#0b0b0f",
+    backgroundColor: "#0b1c2c",
     title: "Leaderboard tracker LMU",
     autoHideMenuBar: true,
     icon: getTrayIcon(),
