@@ -29,6 +29,11 @@ export function AppHeader() {
             </Link>
           )}
           {!isAdminRoute && (
+            <Link to="/leaderboard" className="hidden sm:flex items-center gap-1 rounded px-2 py-1 hover:bg-accent">
+              <Trophy className="h-4 w-4" /> Leaderboard
+            </Link>
+          )}
+          {!isAdminRoute && (
             <Link to="/teams" className="hidden sm:flex items-center gap-1 rounded px-2 py-1 hover:bg-accent">
               <Shield className="h-4 w-4" /> Teams
             </Link>
