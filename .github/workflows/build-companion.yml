@@ -2,6 +2,11 @@ name: Build Companion Windows Installer
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - 'companion/**'
+      - '.github/workflows/build-companion.yml'
     tags:
       - 'companion-v*'
   workflow_dispatch:
@@ -89,7 +94,20 @@ jobs:
           path: companion/release/*Setup*.exe
           if-no-files-found: error
 
-      - name: Create GitHub Release
+      - name: Publish rolling "latest" release (main branch)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: companion/release/*Setup*.exe
+          tag_name: companion-latest
+          name: "Companion (seneste build)"
+          body: "Automatisk bygget fra main. Hent .exe-filen herunder og kør den for at installere companion-appen."
+          prerelease: false
+          make_latest: "true"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create tagged GitHub Release
         if: startsWith(github.ref, 'refs/tags/companion-v')
         uses: softprops/action-gh-release@v2
         with:
