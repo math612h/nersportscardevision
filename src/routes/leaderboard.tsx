@@ -353,11 +353,11 @@ function LeaderboardPage() {
           </p>
           <div className="flex items-center gap-3 pt-1">
             <Button asChild className="gap-2">
-              <a href={companionZip.url} download="LMU-Danmark-Companion-Windows-v1.0.3.zip">
+              <a href={COMPANION_DOWNLOAD_URL}>
                 <Upload className="h-4 w-4" /> Download til Windows
               </a>
             </Button>
-            <span className="text-[11px] text-muted-foreground">Ny blå version · ~140 MB · .zip · pak ud og kør appen</span>
+            <span className="text-[11px] text-muted-foreground">Officiel installer · .exe · auto-bygget fra GitHub</span>
           </div>
         </CardContent>
       </Card>
