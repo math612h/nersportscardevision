@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Flag, Gauge, Home, LayoutGrid, LogOut, Shield, User as UserIcon, UserCircle2, Users } from "lucide-react";
+import { Flag, Gauge, Home, LayoutGrid, LogOut, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -26,6 +26,11 @@ export function AppHeader() {
           {!isAdminRoute && (
             <Link to="/lmu/liga" className="rounded px-2 py-1 hover:bg-accent">
               <span className="flex items-center gap-1"><Flag className="h-4 w-4" /> Ligaer</span>
+            </Link>
+          )}
+          {!isAdminRoute && (
+            <Link to="/leaderboard" className="hidden sm:flex items-center gap-1 rounded px-2 py-1 hover:bg-accent">
+              <Trophy className="h-4 w-4" /> Leaderboard
             </Link>
           )}
           {!isAdminRoute && (
