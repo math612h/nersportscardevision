@@ -1,6 +1,6 @@
 {
   "name": "des-companion",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "DanishEnduranceSeries.dk Companion — uploader automatisk dine LMU omgangstider til leaderboardet",
   "main": "electron/main.cjs",
   "author": "DanishEnduranceSeries.dk",
