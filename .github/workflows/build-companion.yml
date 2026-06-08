@@ -25,7 +25,24 @@ jobs:
           node-version: '20'
 
       - name: Install companion dependencies
-        run: npm install
+        env:
+          ELECTRON_GET_USE_PROXY: "true"
+          npm_config_fetch_retries: "5"
+          npm_config_fetch_retry_mintimeout: "20000"
+          npm_config_fetch_retry_maxtimeout: "120000"
+          npm_config_fetch_timeout: "600000"
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          for ($i = 1; $i -le 4; $i++) {
+            Write-Host "Attempt $i of 4..."
+            npm install
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            Write-Host "npm install failed (exit $LASTEXITCODE), cleaning and retrying in 15s..."
+            Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+            Start-Sleep -Seconds 15
+          }
+          exit 1
 
       - name: Build renderer (Vite)
         run: npm run build
