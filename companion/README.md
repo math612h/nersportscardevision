@@ -1,6 +1,6 @@
-# DanishEnduranceSeries.dk Companion
+# Leaderboard tracker LMU
 
-Lille Windows-app der overvåger Le Mans Ultimate's resultatfiler og automatisk uploader nye omgangstider til DanishEnduranceSeries.dk leaderboard.
+Lille Windows-app der overvåger Le Mans Ultimate's resultatfiler og automatisk uploader nye omgangstider til LMU Danmark leaderboard.
 
 ## Features
 
@@ -22,7 +22,7 @@ npm run electron:dev
 
 ```bash
 npm run dist
-# → release/DES-Companion-Setup.exe
+# → release/LMU-Danmark-Tracker-Setup.exe
 ```
 
 ## Produktions-build via GitHub Actions
@@ -34,7 +34,7 @@ git tag companion-v1.0.0
 git push origin companion-v1.0.0
 ```
 
-Workflow'en i `.github/workflows/build-companion.yml` bygger automatisk `.exe`'en og uploader den som GitHub Release. Hjemmesidens download-knap peger på `releases/latest/download/DES-Companion-Setup.exe`.
+Workflow'en i `.github/workflows/build-companion.yml` bygger automatisk `.exe`'en og uploader den som GitHub Release. Hjemmesidens download-knap peger på `releases/latest/download/LMU-Danmark-Tracker-Setup.exe`.
 
 ## Konfiguration
 
