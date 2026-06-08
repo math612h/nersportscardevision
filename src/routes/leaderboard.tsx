@@ -16,9 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
-const COMPANION_INSTALLER_URL = "https://github.com/math612h/nersportscardevision/releases/latest/download/DES-Companion-Setup.exe";
-// Fallback: old zip download (kept as backup until installer is live)
 import companionZip from "@/assets/companion-zip.asset.json";
+const COMPANION_INSTALLER_URL: string | null = null;
 
 const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
 const LB_DESC =
