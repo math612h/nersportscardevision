@@ -16,9 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
-const COMPANION_INSTALLER_URL = "https://github.com/math612h/nersportscardevision/releases/latest/download/DES-Companion-Setup.exe";
-// Fallback: old zip download (kept as backup until installer is live)
 import companionZip from "@/assets/companion-zip.asset.json";
+const COMPANION_INSTALLER_URL: string | null = null;
 
 const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
 const LB_DESC =
@@ -364,12 +363,12 @@ function LeaderboardPage() {
               </>
             ) : (
               <>
-                <Button asChild variant="outline" className="gap-2">
-                  <a href={companionZip.url} download="DES-Companion-Windows.zip">
-                    <Upload className="h-4 w-4" /> Download (gammel version)
+                <Button asChild className="gap-2">
+                  <a href={companionZip.url} download="NER-Sportscar-Companion-Windows.zip">
+                    <Upload className="h-4 w-4" /> Download til Windows
                   </a>
                 </Button>
-                <span className="text-[11px] text-muted-foreground">Ny installer kommer snart — bygges via GitHub Actions</span>
+                <span className="text-[11px] text-muted-foreground">~140 MB · .zip · pak ud og kør NER-Sportscar-Companion.exe</span>
               </>
             )}
           </div>
