@@ -16,7 +16,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
-import companionZip from "@/assets/companion-zip.asset.json";
+const COMPANION_DOWNLOAD_URL =
+  "https://github.com/math612h/nersportscardevision/releases/latest/download/LMU-Danmark-Tracker-Setup.exe";
 
 const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
 const LB_DESC =
