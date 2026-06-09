@@ -93,6 +93,7 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     if (c.querySelector(":scope > Driver")) { sessionNode = c; break; }
     if (!sessionNode) sessionNode = c;
   }
+  const driverEls = sessionNode ? Array.from(sessionNode.querySelectorAll(":scope > Driver")) : [];
   const drivers: ParsedDriver[] = driverEls.map((el) => {
     const get = (t: string) => el.querySelector(`:scope > ${t}`)?.textContent?.trim() ?? "";
     const finishStatus = get("FinishStatus");
