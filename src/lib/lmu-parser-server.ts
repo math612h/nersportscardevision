@@ -59,8 +59,24 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
 
   const layout = parseLayoutFromTrackData(rr.TrackData);
 
-  const session = rr.Race ?? rr.Qualify ?? rr.Practice ?? rr.TestDay ?? rr.WarmUp;
-  const sessionNode = Array.isArray(session) ? session[session.length - 1] : session;
+  const sessionPriority = (key: string) => {
+    const k = key.toLowerCase();
+    if (k.startsWith("race")) return 0;
+    if (k.startsWith("qualify")) return 1;
+    if (k.startsWith("practice")) return 2;
+    if (k.startsWith("warmup")) return 3;
+    if (k.startsWith("testday")) return 4;
+    return 99;
+  };
+  const sessionKeys = Object.keys(rr).filter((k) => /^(Race|Qualify|Practice|TestDay|WarmUp)\d*$/i.test(k));
+  sessionKeys.sort((a, b) => sessionPriority(a) - sessionPriority(b) || b.localeCompare(a));
+  let sessionNode: any = null;
+  for (const key of sessionKeys) {
+    let node = (rr as any)[key];
+    if (Array.isArray(node)) node = node[node.length - 1];
+    if (node && node.Driver) { sessionNode = node; break; }
+    if (node && !sessionNode) sessionNode = node;
+  }
 
   let recordedAt: string | null = null;
   const ts = sessionNode?.DateTime ?? rr?.DateTime;
