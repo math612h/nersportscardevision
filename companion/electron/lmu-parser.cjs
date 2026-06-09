@@ -80,9 +80,26 @@ function parseLmuRaceFile(xml) {
 
   const layout = parseLayoutFromTrackData(rr.TrackData);
 
-  // Find session node — Race, Qualify, or Practice (in order of preference)
-  let race = rr.Race || rr.Qualify || rr.Practice || rr.TestDay || rr.WarmUp;
-  if (Array.isArray(race)) race = race[race.length - 1];
+  // Find session node — Race/Qualify/Practice/TestDay/WarmUp, optionally numbered
+  // (e.g. Practice1, Qualify2, Race1). Prefer Race > Qualify > Practice > others.
+  const sessionPriority = (key) => {
+    const k = key.toLowerCase();
+    if (k.startsWith("race")) return 0;
+    if (k.startsWith("qualify")) return 1;
+    if (k.startsWith("practice")) return 2;
+    if (k.startsWith("warmup")) return 3;
+    if (k.startsWith("testday")) return 4;
+    return 99;
+  };
+  const sessionKeys = Object.keys(rr).filter((k) => /^(Race|Qualify|Practice|TestDay|WarmUp)\d*$/i.test(k));
+  sessionKeys.sort((a, b) => sessionPriority(a) - sessionPriority(b) || b.localeCompare(a));
+  let race = null;
+  for (const key of sessionKeys) {
+    let node = rr[key];
+    if (Array.isArray(node)) node = node[node.length - 1];
+    if (node && node.Driver) { race = node; break; }
+    if (node && !race) race = node;
+  }
   if (!race) throw new Error("Missing session node (Race/Qualify/Practice)");
 
   let recordedAt = null;
