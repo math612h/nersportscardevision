@@ -75,7 +75,24 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
   }
 
-  const sessionNode = raceResults.querySelector(":scope > Race, :scope > Qualify, :scope > Practice, :scope > TestDay, :scope > WarmUp");
+  const sessionPriority = (tag: string): number => {
+    const k = tag.toLowerCase();
+    if (k.startsWith("race")) return 0;
+    if (k.startsWith("qualify")) return 1;
+    if (k.startsWith("practice")) return 2;
+    if (k.startsWith("warmup")) return 3;
+    if (k.startsWith("testday")) return 4;
+    return 99;
+  };
+  const sessionCandidates = Array.from(raceResults.children).filter((c) =>
+    /^(Race|Qualify|Practice|TestDay|WarmUp)\d*$/i.test(c.tagName),
+  );
+  sessionCandidates.sort((a, b) => sessionPriority(a.tagName) - sessionPriority(b.tagName));
+  let sessionNode: Element | null = null;
+  for (const c of sessionCandidates) {
+    if (c.querySelector(":scope > Driver")) { sessionNode = c; break; }
+    if (!sessionNode) sessionNode = c;
+  }
   const driverEls = sessionNode ? Array.from(sessionNode.querySelectorAll(":scope > Driver")) : [];
   const drivers: ParsedDriver[] = driverEls.map((el) => {
     const get = (t: string) => el.querySelector(`:scope > ${t}`)?.textContent?.trim() ?? "";
