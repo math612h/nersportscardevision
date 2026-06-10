@@ -344,7 +344,9 @@ export type Database = {
       }
       leagues: {
         Row: {
+          approved_only: boolean
           banner_url: string | null
+          briefing_required: boolean
           car_class: string | null
           class_configs: Json
           created_at: string
@@ -359,7 +361,9 @@ export type Database = {
           signup_opens_at: string | null
         }
         Insert: {
+          approved_only?: boolean
           banner_url?: string | null
+          briefing_required?: boolean
           car_class?: string | null
           class_configs?: Json
           created_at?: string
@@ -374,7 +378,9 @@ export type Database = {
           signup_opens_at?: string | null
         }
         Update: {
+          approved_only?: boolean
           banner_url?: string | null
+          briefing_required?: boolean
           car_class?: string | null
           class_configs?: Json
           created_at?: string
