@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { parseLmuRaceFileServer } from "@/lib/lmu-parser-server";
-import { normalizeCarClass, nameSimilarity } from "@/lib/lmu-parser";
+import { normalizeCarClass, nameSimilarity, type ParsedRace } from "@/lib/lmu-parser";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -60,14 +60,15 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
             return Response.json({ error: "Filen er for stor (max 5 MB)" }, { status: 413, headers: CORS });
           }
 
-          let parsed;
+          let parsed: ParsedRace;
           try {
             if (contentType.toLowerCase().includes("application/json")) {
               const body = JSON.parse(bodyText);
-              parsed = body?.parsed;
-              if (!parsed || typeof parsed.track !== "string" || !Array.isArray(parsed.drivers)) {
+              const payload = body?.parsed;
+              if (!payload || typeof payload.track !== "string" || !Array.isArray(payload.drivers)) {
                 throw new Error("Ugyldigt companion-payload");
               }
+              parsed = payload as ParsedRace;
             } else {
               parsed = parseLmuRaceFileServer(bodyText);
             }
