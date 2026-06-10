@@ -113,6 +113,15 @@ function NewsHome() {
               <ArrowUpRight className="h-4 w-4" /> Teams
             </Link>
           </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <a
+              href="https://discord.gg/Vz4JvSk4dm"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MessageCircle className="h-4 w-4" /> Discord
+            </a>
+          </Button>
         </div>
       </header>
 
