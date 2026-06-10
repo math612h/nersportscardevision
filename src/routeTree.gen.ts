@@ -30,6 +30,8 @@ import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/pub
 import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated._admin.admin.index'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
 import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
@@ -153,6 +155,16 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LigaerLeagueIdAfdelingDivisionIdRoute =
   LigaerLeagueIdAfdelingDivisionIdRouteImport.update({
     id: '/afdeling/$divisionId',
@@ -264,6 +276,8 @@ export interface FileRoutesByFullPath {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
@@ -297,6 +311,8 @@ export interface FileRoutesByTo {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
@@ -335,6 +351,8 @@ export interface FileRoutesById {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
+  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
+  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/_admin/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
@@ -372,6 +390,8 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/admin/'
     | '/admin/protests/$protestId'
@@ -405,6 +425,8 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/admin'
     | '/admin/protests/$protestId'
@@ -442,6 +464,8 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
+    | '/lovable/email/auth/preview'
+    | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/_admin/admin/protests/$protestId'
@@ -467,6 +491,8 @@ export interface RootRouteChildren {
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
+  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
+  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
@@ -617,6 +643,20 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/queue/process'
       fullPath: '/lovable/email/queue/process'
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ligaer/$leagueId/afdeling/$divisionId': {
@@ -846,6 +886,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
+  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
+  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
