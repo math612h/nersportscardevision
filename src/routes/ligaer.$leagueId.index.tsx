@@ -216,7 +216,7 @@ function LeagueDetail() {
           <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
             <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
           </Link>
-          {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} />}
+          {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} approvedOnly={!!(league as any)?.approved_only} />}
           {league && <EditEntryDialog leagueId={leagueId} />}
           {league && <LeaveLeagueButton leagueId={leagueId} />}
         </div>
@@ -822,7 +822,7 @@ function TeamStandings({
 }
 
 
-function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; configs: ClassConfig[]; signupOpensAt: string | null }) {
+function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leagueId: string; configs: ClassConfig[]; signupOpensAt: string | null; approvedOnly: boolean }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
