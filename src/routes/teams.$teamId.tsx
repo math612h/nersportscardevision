@@ -128,24 +128,23 @@ function TeamDetailPage() {
     queryFn: () => signed("team-logos", team!.logo_url!),
   });
 
-  const { data: memberRatings } = useQuery({
-    queryKey: ["team-member-ratings", memberIds.sort().join(",")],
-    enabled: memberIds.length > 0,
+  const { data: teamRatingRow } = useQuery({
+    queryKey: ["team-rating", teamId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from("user_ratings")
-        .select("user_id,score")
-        .in("user_id", memberIds);
+        .from("team_ratings")
+        .select("score, percentile, confidence")
+        .eq("team_id", teamId)
+        .maybeSingle();
       if (error) throw error;
-      return (data ?? []) as { user_id: string; score: number }[];
+      return data as { score: number; percentile: number | null; confidence: number } | null;
     },
   });
 
   const teamRating = useMemo(() => {
-    if (!memberRatings || memberRatings.length === 0) return null;
-    const sum = memberRatings.reduce((acc, r) => acc + Number(r.score), 0);
-    return Math.round(sum / memberRatings.length);
-  }, [memberRatings]);
+    if (!teamRatingRow || Number(teamRatingRow.confidence) <= 0) return null;
+    return Math.round(Number(teamRatingRow.score));
+  }, [teamRatingRow]);
 
   const isMember = !!user && (members ?? []).some((m) => m.user_id === user.id);
   const isOwner = !!user && team?.owner_id === user.id;
