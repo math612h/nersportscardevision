@@ -154,7 +154,8 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
           {filtered.map((t) => {
             const initials = t.name.slice(0, 2).toUpperCase();
             const logo = logoMap?.[t.id];
-            const count = memberCounts?.[t.id] ?? 0;
+            const count = memberCounts[t.id] ?? 0;
+            const rating = teamRatings[t.id];
             return (
               <Link key={t.id} to="/teams/$teamId" params={{ teamId: t.id }}>
                 <Card className="h-full transition hover:border-primary">
@@ -170,10 +171,15 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
                       </CardDescription>
                     </div>
                   </CardHeader>
-                  <CardContent className="flex items-center gap-2 pt-0 text-xs text-muted-foreground">
+                  <CardContent className="flex flex-wrap items-center gap-2 pt-0 text-xs text-muted-foreground">
                     <Badge variant="outline" className="gap-1">
                       <Users className="h-3 w-3" /> {count} medlem{count === 1 ? "" : "mer"}
                     </Badge>
+                    {rating != null && (
+                      <Badge variant="outline" className="gap-1" title="Teamets gennemsnitlige rating">
+                        <Star className="h-3 w-3 text-primary" /> {rating}
+                      </Badge>
+                    )}
                   </CardContent>
                 </Card>
               </Link>
