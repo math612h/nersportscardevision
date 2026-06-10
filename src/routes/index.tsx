@@ -130,9 +130,21 @@ function NewsHome() {
 
       {latest && (
         <section className="space-y-4">
-          <div className="flex items-center gap-2 text-primary">
-            <Trophy className="h-4 w-4" />
-            <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Seneste løb</h2>
+          <div className="flex items-center justify-between gap-2 text-primary">
+            <div className="flex items-center gap-2">
+              <Trophy className="h-4 w-4" />
+              <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Seneste løb</h2>
+            </div>
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => hideLatest(latest)}
+                className="gap-1 text-xs text-muted-foreground hover:text-destructive"
+              >
+                <EyeOff className="h-3.5 w-3.5" /> Skjul fra forsiden
+              </Button>
+            )}
           </div>
           <article className="overflow-hidden rounded-xl border border-border bg-card">
             <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted sm:aspect-[21/9]">
