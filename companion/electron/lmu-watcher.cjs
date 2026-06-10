@@ -181,7 +181,14 @@ class LmuWatcher {
     if (!this.folder) this.folder = findResultsFolder(this.customFolder);
     if (!this.folder) { this.scanRunning = false; return { uploaded: 0, total: 0, processed: 0, skipped: 0, errors: 0 }; }
     try {
-      const files = listXmlFiles(this.folder);
+      let files;
+      try {
+        files = listXmlFiles(this.folder);
+      } catch (err) {
+        const result = { uploaded: 0, total: 0, processed: 0, skipped: 0, errors: 1, note: err.message };
+        if (this.onScanComplete) this.onScanComplete(result, { markFullScan: false });
+        return result;
+      }
       let uploaded = 0;
       let processed = 0;
       let skipped = 0;
