@@ -630,6 +630,104 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     ? configs.map((c) => `${c.car_class} · ${c.driver_category}`)
     : Array.from(new Set(allRows.map((r) => `${r.car_class} · ${r.driver_category}`)));
 
+  if (separateDivisionStandings) {
+    return (
+      <section id="stillinger" className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Trophy className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger pr. afdeling</h2>
+        </div>
+        {completed.map((d: any) => {
+          const flPts = Number(d.settings?.fastest_lap_points ?? 0);
+          const results = (d.settings.results as ResultRow[]) ?? [];
+          const classKeys = groupKeys.filter((k) => {
+            const [cls, cat] = k.split(" · ");
+            return results.some((r) => r.car_class === cls && r.driver_category === cat);
+          });
+          if (classKeys.length === 0) return null;
+          return (
+            <div key={d.id} className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <span>{d.name}</span>
+                {d.race_date && <span className="text-xs font-normal text-muted-foreground">{format(new Date(d.race_date), "dd MMM yyyy")}</span>}
+              </div>
+              {classKeys.map((k) => {
+                const [cls, cat] = k.split(" · ");
+                const rows = results
+                  .filter((r) => r.car_class === cls && r.driver_category === cat)
+                  .map((r) => {
+                    const earnedFl = r.fastest_lap ? flPts : 0;
+                    const ptsPen = Math.max(0, Number(r.penalty_points ?? 0));
+                    const pen = Number(r.penalty_seconds ?? 0);
+                    return {
+                      car_number: r.car_number,
+                      driver_name: r.driver_name,
+                      points: r.points,
+                      fl: !!r.fastest_lap,
+                      flPts: earnedFl,
+                      penalty: pen,
+                      pointPenalty: ptsPen,
+                      dns: !!r.dns,
+                      total: Math.max(0, r.points + earnedFl - ptsPen),
+                    };
+                  })
+                  .sort((a, b) => b.total - a.total);
+                if (rows.length === 0) return null;
+                return (
+                  <Card key={`${d.id}-${k}`}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <span>{cls}</span>
+                        <Badge variant="outline" className="text-[10px]">{cat}</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-xs text-muted-foreground">
+                            <th className="py-1 pr-2 w-8">#</th>
+                            <th className="py-1 pr-2">Kører</th>
+                            <th className="py-1 pr-2">Team</th>
+                            <th className="py-1 pr-2 w-12 text-center">Nr.</th>
+                            <th className="py-1 px-1 w-10 text-center" title="Fastest lap points">FL</th>
+                            <th className="py-1 px-1 w-12 text-center" title="Tidsstraf">Straf</th>
+                            <th className="py-1 px-1 w-14 text-center" title="Pointstraf">Pt-straf</th>
+                            <th className="py-1 pl-2 w-12 text-right">Pts</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map((r, i) => {
+                            const tId = entryTeamMap[`${cls}|${cat}|${r.car_number}`];
+                            const teamName = tId ? (teamMap?.[tId] ?? "") : "";
+                            return (
+                              <tr key={r.car_number} className="border-t border-border">
+                                <td className="py-1.5 pr-2 font-semibold tabular-nums">{r.dns ? "–" : i + 1}</td>
+                                <td className="py-1.5 pr-2 truncate">{r.driver_name}</td>
+                                <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{teamName || "–"}</td>
+                                <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
+                                <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
+                                  {r.fl ? <span className="inline-flex items-center gap-0.5">{r.flPts}<Zap className="h-3 w-3 text-primary" /></span> : "–"}
+                                </td>
+                                <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
+                                <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : "–"}</td>
+                                <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.dns ? "DNS" : r.total}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          );
+        })}
+      </section>
+    );
+  }
+
+
   return (
     <section id="stillinger" className="space-y-4">
       <div className="flex items-center gap-2 text-primary">
