@@ -20,15 +20,19 @@ import { Route as TeamsTeamIdRouteImport } from './routes/teams.$teamId'
 import { Route as LmuTeamsRouteImport } from './routes/lmu.teams'
 import { Route as LmuLigaRouteImport } from './routes/lmu.liga'
 import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
 import { Route as AuthenticatedArkivRouteImport } from './routes/_authenticated.arkiv'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
 import { Route as LigaerLeagueIdIndexRouteImport } from './routes/ligaer.$leagueId.index'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
 import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/public/leaderboard-upload'
 import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated._admin.admin.index'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -101,6 +105,11 @@ const LigaerLeagueIdRoute = LigaerLeagueIdRouteImport.update({
   path: '/ligaer/$leagueId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
@@ -126,6 +135,11 @@ const LigaerLeagueIdIndexRoute = LigaerLeagueIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LigaerLeagueIdRoute,
 } as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LigaerLeagueIdReglerRoute = LigaerLeagueIdReglerRouteImport.update({
   id: '/regler',
   path: '/regler',
@@ -148,6 +162,18 @@ const AuthenticatedAdminAdminIndexRoute =
     id: '/admin/',
     path: '/admin/',
     getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
@@ -259,6 +285,7 @@ export interface FileRoutesByFullPath {
   '/arkiv': typeof AuthenticatedArkivRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
@@ -267,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
@@ -279,6 +307,8 @@ export interface FileRoutesByFullPath {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
   '/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
@@ -296,6 +326,7 @@ export interface FileRoutesByTo {
   '/arkiv': typeof AuthenticatedArkivRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
@@ -303,6 +334,7 @@ export interface FileRoutesByTo {
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdIndexRoute
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
@@ -314,6 +346,8 @@ export interface FileRoutesByTo {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsIndexRoute
@@ -334,6 +368,7 @@ export interface FileRoutesById {
   '/_authenticated/arkiv': typeof AuthenticatedArkivRoute
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRouteWithChildren
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
@@ -342,6 +377,7 @@ export interface FileRoutesById {
   '/_authenticated/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/_authenticated/_admin/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/_authenticated/_admin/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
@@ -354,6 +390,8 @@ export interface FileRoutesById {
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/_admin/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
   '/_authenticated/_admin/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
@@ -373,6 +411,7 @@ export interface FileRouteTypes {
     | '/arkiv'
     | '/mine-protests'
     | '/profil'
+    | '/email/unsubscribe'
     | '/ligaer/$leagueId'
     | '/lmu/liga'
     | '/lmu/teams'
@@ -381,6 +420,7 @@ export interface FileRouteTypes {
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
+    | '/lovable/email/suppression'
     | '/ligaer/$leagueId/'
     | '/admin/afventer'
     | '/admin/brugere'
@@ -393,6 +433,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/admin/'
     | '/admin/protests/$protestId'
     | '/admin/protests/'
@@ -410,6 +452,7 @@ export interface FileRouteTypes {
     | '/arkiv'
     | '/mine-protests'
     | '/profil'
+    | '/email/unsubscribe'
     | '/lmu/liga'
     | '/lmu/teams'
     | '/teams/$teamId'
@@ -417,6 +460,7 @@ export interface FileRouteTypes {
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
+    | '/lovable/email/suppression'
     | '/ligaer/$leagueId'
     | '/admin/afventer'
     | '/admin/brugere'
@@ -428,6 +472,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/admin'
     | '/admin/protests/$protestId'
     | '/admin/protests'
@@ -447,6 +493,7 @@ export interface FileRouteTypes {
     | '/_authenticated/arkiv'
     | '/_authenticated/mine-protests'
     | '/_authenticated/profil'
+    | '/email/unsubscribe'
     | '/ligaer/$leagueId'
     | '/lmu/liga'
     | '/lmu/teams'
@@ -455,6 +502,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
+    | '/lovable/email/suppression'
     | '/ligaer/$leagueId/'
     | '/_authenticated/_admin/admin/afventer'
     | '/_authenticated/_admin/admin/brugere'
@@ -467,6 +515,8 @@ export interface FileRouteTypes {
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/_admin/admin/protests/$protestId'
     | '/_authenticated/_admin/admin/protests/'
@@ -483,17 +533,21 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
   LmuLigaRoute: typeof LmuLigaRoute
   LmuTeamsRoute: typeof LmuTeamsRoute
   TeamsTeamIdRoute: typeof TeamsTeamIdRoute
   TeamsIndexRoute: typeof TeamsIndexRoute
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -575,6 +629,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LigaerLeagueIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/profil': {
       id: '/_authenticated/profil'
       path: '/profil'
@@ -610,6 +671,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LigaerLeagueIdIndexRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
     }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ligaer/$leagueId/regler': {
       id: '/ligaer/$leagueId/regler'
       path: '/regler'
@@ -637,6 +705,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -878,28 +960,22 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
   LmuLigaRoute: LmuLigaRoute,
   LmuTeamsRoute: LmuTeamsRoute,
   TeamsTeamIdRoute: TeamsTeamIdRoute,
   TeamsIndexRoute: TeamsIndexRoute,
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
