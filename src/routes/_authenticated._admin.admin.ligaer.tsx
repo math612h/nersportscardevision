@@ -267,6 +267,7 @@ function AdminLeagues() {
     setIsOffseason(false);
     setApprovedOnly(false);
     setBriefingRequired(true);
+    setSeparateDivisionStandings(false);
     setConfigs([emptyConfig()]);
     setBannerFile(null);
     setEventSettings({});
