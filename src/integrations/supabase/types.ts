@@ -445,6 +445,7 @@ export type Database = {
           is_offseason: boolean
           name: string
           points_system: Json
+          separate_division_standings: boolean
           signup_open_notified_at: string | null
           signup_opens_at: string | null
         }
@@ -463,6 +464,7 @@ export type Database = {
           is_offseason?: boolean
           name: string
           points_system?: Json
+          separate_division_standings?: boolean
           signup_open_notified_at?: string | null
           signup_opens_at?: string | null
         }
@@ -481,6 +483,7 @@ export type Database = {
           is_offseason?: boolean
           name?: string
           points_system?: Json
+          separate_division_standings?: boolean
           signup_open_notified_at?: string | null
           signup_opens_at?: string | null
         }
