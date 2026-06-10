@@ -281,6 +281,11 @@ function LeagueDetail() {
                           <Calendar className="h-3 w-3" /> {format(new Date(d.race_date), "dd MMM yyyy HH:mm")}
                         </Badge>
                       )}
+                      {(d.settings as any)?.event_settings?.race_minutes != null && (
+                        <Badge variant="outline" className="gap-1">
+                          <Timer className="h-3 w-3" /> {(d.settings as any).event_settings.race_minutes} min
+                        </Badge>
+                      )}
                       {d.race_date && !completed && <RaceCountdown raceDate={d.race_date} />}
                       <Badge variant="outline">{d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
                     </div>
