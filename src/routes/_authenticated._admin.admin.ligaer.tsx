@@ -208,6 +208,8 @@ function AdminLeagues() {
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [isOffseason, setIsOffseason] = useState(false);
+  const [approvedOnly, setApprovedOnly] = useState(false);
+  const [briefingRequired, setBriefingRequired] = useState(true);
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
@@ -245,6 +247,8 @@ function AdminLeagues() {
       driver_category: first.driver_category,
       class_configs: configs as any,
       is_offseason: isOffseason,
+      approved_only: approvedOnly,
+      briefing_required: briefingRequired,
       banner_url: bannerPath,
       event_settings: eventSettings as any,
       points_system: pointsSystem as any,
@@ -259,6 +263,8 @@ function AdminLeagues() {
     setName("");
     setDesc("");
     setIsOffseason(false);
+    setApprovedOnly(false);
+    setBriefingRequired(true);
     setConfigs([emptyConfig()]);
     setBannerFile(null);
     setEventSettings({});
