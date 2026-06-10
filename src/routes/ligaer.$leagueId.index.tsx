@@ -919,11 +919,13 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const cap = selected?.max_drivers ?? null;
   const isApproved = !!profile?.approved;
   const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
+  const blockedByApprovedOnly = approvedOnly && !isApproved;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return toast.error("Du skal være logget ind.");
     if (!signupOpen) return toast.error("Tilmelding er ikke åbnet endnu.");
+    if (blockedByApprovedOnly) return toast.error("Denne liga er kun åben for godkendte profiler.");
     if (!selected) return toast.error("Vælg en klasse.");
     if (carNumber == null) return toast.error("Vælg et kørenummer.");
     if (!carModel) return toast.error("Vælg din bil.");
@@ -964,8 +966,8 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2" disabled={alreadySignedUp || !signupOpen}>
-          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
+        <Button size="sm" className="gap-2" disabled={alreadySignedUp || !signupOpen || blockedByApprovedOnly} title={blockedByApprovedOnly ? "Kun godkendte profiler kan tilmelde sig denne liga" : undefined}>
+          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : blockedByApprovedOnly ? "Kun godkendte" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
