@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Flag } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,8 +62,15 @@ function LoginPage() {
       },
     });
     setLoading(false);
-    if (error) toast.error(error.message);
-    else toast.success("Konto oprettet – du er logget ind.");
+    if (error) { toast.error(error.message); return; }
+    toast.success("Konto oprettet – du er logget ind.");
+    // Send welcome email (non-blocking)
+    sendTransactionalEmail({
+      templateName: "welcome",
+      recipientEmail: mail,
+      idempotencyKey: `welcome-${mail}`,
+      templateData: { displayName: name },
+    });
   };
 
   const onGoogle = async () => {
