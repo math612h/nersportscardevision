@@ -149,16 +149,17 @@ async function verifyDeviceToken(token) {
   return body; // { user, token_name }
 }
 
-async function uploadParsedResultsViaToken({ token, filePath }) {
-  const xml = fs.readFileSync(filePath, "utf8");
+async function uploadParsedResultsViaToken({ token, filePath, parsed }) {
+  const hasParsedPayload = parsed && Array.isArray(parsed.drivers);
+  const body = hasParsedPayload ? JSON.stringify({ parsed }) : fs.readFileSync(filePath, "utf8");
   const res = await fetch(`${APP_URL}/api/public/leaderboard-upload`, {
     method: "POST",
-    headers: { "x-device-token": token, "Content-Type": "application/xml" },
-    body: xml,
+    headers: { "x-device-token": token, "Content-Type": hasParsedPayload ? "application/json" : "application/xml" },
+    body,
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error || `Upload fejlede (HTTP ${res.status})`);
-  return { uploaded: body.inserted ?? 0, skipped: body.skipped ?? 0, note: body.note };
+  return { uploaded: body.inserted ?? 0, skipped: body.skipped ?? 0, duplicates: body.duplicates ?? 0, note: body.note };
 }
 
 module.exports = {
