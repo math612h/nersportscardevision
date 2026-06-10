@@ -89,19 +89,25 @@ function findResultsFolder(customFolder) {
 }
 
 function listXmlFiles(folder) {
+  let entries;
   try {
-    return fs
-      .readdirSync(folder)
-      .filter((f) => f.toLowerCase().endsWith(".xml"))
-      .map((f) => ({
-        path: path.join(folder, f),
-        name: f,
-        mtime: fs.statSync(path.join(folder, f)).mtimeMs,
-      }))
-      .sort((a, b) => a.mtime - b.mtime);
-  } catch {
-    return [];
+    entries = fs.readdirSync(folder);
+  } catch (err) {
+    const e = new Error(`Kunne ikke læse mappen "${folder}" (${err.code || "ukendt fejl"}): ${err.message}`);
+    e.code = err.code;
+    throw e;
   }
+  const xmls = entries.filter((f) => f.toLowerCase().endsWith(".xml"));
+  const out = [];
+  for (const f of xmls) {
+    const full = path.join(folder, f);
+    try {
+      out.push({ path: full, name: f, mtime: fs.statSync(full).mtimeMs });
+    } catch {
+      out.push({ path: full, name: f, mtime: 0 });
+    }
+  }
+  return out.sort((a, b) => a.mtime - b.mtime);
 }
 
 function parseFile(filePath) {
@@ -154,7 +160,8 @@ class LmuWatcher {
       return;
     }
 
-    const files = listXmlFiles(this.folder);
+    let files;
+    try { files = listXmlFiles(this.folder); } catch (err) { console.warn("[lmu-watcher] readdir failed:", err.message); return; }
     for (const f of files) {
       const key = f.name;
       if (this.seen.has(key)) continue;
@@ -175,7 +182,14 @@ class LmuWatcher {
     if (!this.folder) this.folder = findResultsFolder(this.customFolder);
     if (!this.folder) { this.scanRunning = false; return { uploaded: 0, total: 0, processed: 0, skipped: 0, errors: 0 }; }
     try {
-      const files = listXmlFiles(this.folder);
+      let files;
+      try {
+        files = listXmlFiles(this.folder);
+      } catch (err) {
+        const result = { uploaded: 0, total: 0, processed: 0, skipped: 0, errors: 1, note: err.message };
+        if (this.onScanComplete) this.onScanComplete(result, { markFullScan: false });
+        return result;
+      }
       let uploaded = 0;
       let processed = 0;
       let skipped = 0;
