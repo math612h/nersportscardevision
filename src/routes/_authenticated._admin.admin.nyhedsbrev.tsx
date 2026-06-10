@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { Newspaper, Trash2, Loader2, Image as ImageIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Newspaper, Trash2, Loader2, Image as ImageIcon, Pencil } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/nyhedsbrev")({
@@ -25,12 +26,16 @@ type NewsPost = {
   created_at: string;
 };
 
+function toLocalInput(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function defaultExpiresAt() {
   const d = new Date();
   d.setDate(d.getDate() + 7);
-  // format for datetime-local input: YYYY-MM-DDTHH:mm
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return toLocalInput(d.toISOString());
 }
 
 function NyhedsbrevAdmin() {
@@ -227,15 +232,18 @@ function NyhedsbrevAdmin() {
                         {format(new Date(p.expires_at), "dd MMM yyyy HH:mm")}
                       </CardDescription>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteMut.mutate(p)}
-                      disabled={deleteMut.isPending}
-                      aria-label="Slet nyhed"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <EditNewsDialog post={p} />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => deleteMut.mutate(p)}
+                        disabled={deleteMut.isPending}
+                        aria-label="Slet nyhed"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 {(p.body || p.image_path) && (
@@ -262,5 +270,135 @@ function NyhedsbrevAdmin() {
         </div>
       </div>
     </div>
+  );
+}
+
+function EditNewsDialog({ post }: { post: NewsPost }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState(post.title);
+  const [body, setBody] = useState(post.body ?? "");
+  const [expiresAt, setExpiresAt] = useState<string>(toLocalInput(post.expires_at));
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setTitle(post.title);
+      setBody(post.body ?? "");
+      setExpiresAt(toLocalInput(post.expires_at));
+      setImageFile(null);
+      setRemoveImage(false);
+    }
+  }, [open, post]);
+
+  async function onSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) return toast.error("Overskrift mangler");
+    if (!expiresAt) return toast.error("Vælg udløbsdato");
+    const exp = new Date(expiresAt);
+    if (Number.isNaN(exp.getTime())) return toast.error("Ugyldig dato");
+
+    setSaving(true);
+    try {
+      let imagePath: string | null = post.image_path;
+
+      if (removeImage && post.image_path) {
+        await supabase.storage.from("news-images").remove([post.image_path]);
+        imagePath = null;
+      }
+
+      if (imageFile) {
+        // Slet det gamle billede hvis der findes et
+        if (post.image_path && !removeImage) {
+          await supabase.storage.from("news-images").remove([post.image_path]);
+        }
+        const ext = imageFile.name.split(".").pop()?.toLowerCase() ?? "jpg";
+        const newPath = `${user?.id ?? "anon"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const { error: upErr } = await supabase.storage
+          .from("news-images")
+          .upload(newPath, imageFile, { cacheControl: "3600", upsert: false });
+        if (upErr) throw upErr;
+        imagePath = newPath;
+      }
+
+      const { error } = await (supabase as any)
+        .from("news_posts")
+        .update({
+          title: title.trim(),
+          body: body.trim() || null,
+          image_path: imagePath,
+          expires_at: exp.toISOString(),
+        })
+        .eq("id", post.id);
+      if (error) throw error;
+
+      toast.success("Nyhed opdateret");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["admin-news-posts"] });
+      qc.invalidateQueries({ queryKey: ["home-news-posts"] });
+      qc.invalidateQueries({ queryKey: ["admin-news-images"] });
+      qc.invalidateQueries({ queryKey: ["home-news-images"] });
+    } catch (err: any) {
+      toast.error(err.message ?? "Kunne ikke gemme nyhed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Rediger nyhed">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Rediger nyhed</DialogTitle>
+        </DialogHeader>
+        <form className="space-y-4" onSubmit={onSave}>
+          <div className="space-y-2">
+            <Label>Overskrift</Label>
+            <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />
+          </div>
+          <div className="space-y-2">
+            <Label>Tekst</Label>
+            <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} maxLength={5000} />
+          </div>
+          <div className="space-y-2">
+            <Label>Forsvinder den</Label>
+            <Input type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} required />
+          </div>
+          <div className="space-y-2">
+            <Label>Billede</Label>
+            {post.image_path && !removeImage && !imageFile && (
+              <p className="text-xs text-muted-foreground">Nuværende billede er vedhæftet.</p>
+            )}
+            <Input type="file" accept="image/*" onChange={(e) => { setImageFile(e.target.files?.[0] ?? null); setRemoveImage(false); }} />
+            {imageFile && <p className="text-xs text-muted-foreground">Nyt billede: {imageFile.name}</p>}
+            {post.image_path && !imageFile && (
+              <label className="flex cursor-pointer items-center gap-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={removeImage}
+                  onChange={(e) => setRemoveImage(e.target.checked)}
+                />
+                Fjern nuværende billede
+              </label>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
+            <Button type="submit" disabled={saving}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />}
+              Gem
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
