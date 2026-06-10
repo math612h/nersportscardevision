@@ -29,6 +29,7 @@ import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagu
 import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/public/leaderboard-upload'
 import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated._admin.admin.index'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
 import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
@@ -146,6 +147,12 @@ const AuthenticatedAdminAdminIndexRoute =
     path: '/admin/',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LigaerLeagueIdAfdelingDivisionIdRoute =
   LigaerLeagueIdAfdelingDivisionIdRouteImport.update({
     id: '/afdeling/$divisionId',
@@ -257,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
   '/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
@@ -289,6 +297,7 @@ export interface FileRoutesByTo {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsIndexRoute
@@ -326,6 +335,7 @@ export interface FileRoutesById {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/_admin/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
   '/_authenticated/_admin/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
@@ -362,6 +372,7 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
+    | '/lovable/email/queue/process'
     | '/admin/'
     | '/admin/protests/$protestId'
     | '/admin/protests/'
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
+    | '/lovable/email/queue/process'
     | '/admin'
     | '/admin/protests/$protestId'
     | '/admin/protests'
@@ -430,6 +442,7 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
+    | '/lovable/email/queue/process'
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/_admin/admin/protests/$protestId'
     | '/_authenticated/_admin/admin/protests/'
@@ -454,6 +467,7 @@ export interface RootRouteChildren {
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -597,6 +611,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/ligaer/$leagueId/afdeling/$divisionId': {
       id: '/ligaer/$leagueId/afdeling/$divisionId'
@@ -825,7 +846,18 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
