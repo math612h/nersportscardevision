@@ -126,6 +126,7 @@ function updateStatus() {
     user: userInfo,
     lmu: lmuStatus,
     uploadCount,
+    appVersion: app.getVersion(),
     lastError,
     lastScan,
     scanning,
@@ -177,7 +178,7 @@ function startWatcher() {
     onNewResults: async ({ filePath, fileName, parsed }) => {
       try {
         const res = deviceToken
-          ? await uploader.uploadParsedResultsViaToken({ token: deviceToken, filePath, parsed })
+          ? await uploader.uploadParsedResultsViaToken({ token: deviceToken, parsed, lmuName: userInfo?.lmu_name })
           : await uploader.uploadParsedResults({ session, parsed });
         if (res.uploaded > 0) {
           uploadCount += res.uploaded;
@@ -248,6 +249,7 @@ ipcMain.handle("auth:status", () => ({
   user: userInfo,
   lmu: lmuStatus,
   uploadCount,
+  appVersion: app.getVersion(),
   lastError,
   lastScan,
   scanning,
