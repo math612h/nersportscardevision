@@ -530,7 +530,7 @@ type ResultRow = {
   dns?: boolean;
 };
 
-function Standings({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
+function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId: string; configs: ClassConfig[]; separateDivisionStandings: boolean }) {
   const { data: divisions } = useQuery({
     queryKey: ["league-results", leagueId],
     queryFn: async () => {
