@@ -303,6 +303,14 @@ function AdminLeagues() {
                   <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
                   <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
                 </label>
+                <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+                  <Checkbox checked={approvedOnly} onCheckedChange={(v) => setApprovedOnly(v === true)} />
+                  <span className="text-sm">Kun godkendte profiler kan tilmelde sig</span>
+                </label>
+                <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+                  <Checkbox checked={briefingRequired} onCheckedChange={(v) => setBriefingRequired(v === true)} />
+                  <span className="text-sm">Drivers Briefing er obligatorisk (knap vises på afdelinger)</span>
+                </label>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
                 <div className="space-y-1 rounded-md border border-border p-2">
                   <Label>Tilmelding åbner</Label>
