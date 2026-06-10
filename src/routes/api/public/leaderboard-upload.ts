@@ -51,18 +51,28 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
             return Response.json({ error: "LMU-navn mangler på profilen" }, { status: 400, headers: CORS });
           }
 
-          const xml = await request.text();
-          if (!xml || xml.length < 50) {
+          const contentType = request.headers.get("content-type") ?? "";
+          const bodyText = await request.text();
+          if (!bodyText || bodyText.length < 5) {
             return Response.json({ error: "Tom eller ugyldig fil" }, { status: 400, headers: CORS });
           }
-          if (xml.length > 5_000_000) {
+          if (bodyText.length > 5_000_000) {
             return Response.json({ error: "Filen er for stor (max 5 MB)" }, { status: 413, headers: CORS });
           }
 
           let parsed;
           try {
-            parsed = parseLmuRaceFileServer(xml);
+            if (contentType.toLowerCase().includes("application/json")) {
+              const body = JSON.parse(bodyText);
+              parsed = body?.parsed;
+              if (!parsed || typeof parsed.track !== "string" || !Array.isArray(parsed.drivers)) {
+                throw new Error("Ugyldigt companion-payload");
+              }
+            } else {
+              parsed = parseLmuRaceFileServer(bodyText);
+            }
           } catch (e: any) {
+            console.warn("[leaderboard-upload] parse failed:", e?.message ?? e);
             return Response.json({ error: e?.message ?? "Kunne ikke læse filen" }, { status: 400, headers: CORS });
           }
 
