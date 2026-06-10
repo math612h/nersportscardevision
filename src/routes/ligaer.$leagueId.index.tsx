@@ -446,12 +446,19 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="truncate">{e.driver_name}</div>
+                        {(e as any).team_id && teamMap?.[(e as any).team_id] && (
+                          <div className="mt-0.5 sm:hidden">
+                            <Badge variant="outline" className="text-[10px]" title="Team">
+                              {teamMap[(e as any).team_id]}
+                            </Badge>
+                          </div>
+                        )}
                         {(e as any).car_model && (
                           <div className="truncate text-[11px] text-muted-foreground">{(e as any).car_model}</div>
                         )}
                       </div>
                       {(e as any).team_id && teamMap?.[(e as any).team_id] && (
-                        <Badge variant="outline" className="text-[10px] shrink-0" title="Team">
+                        <Badge variant="outline" className="hidden sm:inline-flex text-[10px] shrink-0" title="Team">
                           {teamMap[(e as any).team_id]}
                         </Badge>
                       )}
