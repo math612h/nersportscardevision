@@ -59,39 +59,27 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
     return counts;
   }, [memberData]);
 
-  const allMemberIds = useMemo(
-    () => Array.from(new Set((memberData ?? []).map((m) => m.user_id))),
-    [memberData],
-  );
-
-  const { data: ratingByUser } = useQuery({
-    queryKey: ["teams-member-ratings", allMemberIds.sort().join(",")],
-    enabled: allMemberIds.length > 0,
+  const { data: teamRatingsData } = useQuery({
+    queryKey: ["team-ratings", teamIds.sort().join(",")],
+    enabled: teamIds.length > 0,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
-        .from("user_ratings")
-        .select("user_id,score")
-        .in("user_id", allMemberIds);
+        .from("team_ratings")
+        .select("team_id, score, percentile, confidence")
+        .in("team_id", teamIds);
       if (error) throw error;
-      const m: Record<string, number> = {};
-      for (const r of (data ?? []) as { user_id: string; score: number }[]) m[r.user_id] = Number(r.score);
-      return m;
+      return (data ?? []) as { team_id: string; score: number; percentile: number | null; confidence: number }[];
     },
   });
 
   const teamRatings = useMemo(() => {
     const out: Record<string, number | null> = {};
-    const byTeam: Record<string, number[]> = {};
-    for (const m of memberData ?? []) {
-      const s = ratingByUser?.[m.user_id];
-      if (s != null) (byTeam[m.team_id] ??= []).push(s);
-    }
-    for (const tid of teamIds) {
-      const arr = byTeam[tid] ?? [];
-      out[tid] = arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+    for (const tid of teamIds) out[tid] = null;
+    for (const r of teamRatingsData ?? []) {
+      if (Number(r.confidence) > 0) out[r.team_id] = Math.round(Number(r.score));
     }
     return out;
-  }, [memberData, ratingByUser, teamIds]);
+  }, [teamRatingsData, teamIds]);
 
   const { data: logoMap } = useQuery({
     queryKey: ["team-logos", (teams ?? []).map((t) => t.logo_url).filter(Boolean).join(",")],
@@ -176,7 +164,7 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
                       <Users className="h-3 w-3" /> {count} medlem{count === 1 ? "" : "mer"}
                     </Badge>
                     {rating != null && (
-                      <Badge variant="outline" className="gap-1" title="Teamets gennemsnitlige rating">
+                      <Badge variant="outline" className="gap-1" title="Teamets rating (baseret på teamets resultater)">
                         <Star className="h-3 w-3 text-primary" /> {rating}
                       </Badge>
                     )}
