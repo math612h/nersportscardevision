@@ -46,11 +46,14 @@ function LoginPage() {
     e.preventDefault();
     const name = displayName.trim();
     const lmu = lmuName.trim();
+    const mail = email.trim();
     if (!name) { toast.error("Indtast dit visningsnavn."); return; }
     if (!lmu) { toast.error("Indtast dit LMU-navn præcis som det står i Le Mans Ultimate."); return; }
+    if (!mail) { toast.error("Indtast din email."); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) { toast.error("Indtast en gyldig email-adresse."); return; }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
-      email,
+      email: mail,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/`,
