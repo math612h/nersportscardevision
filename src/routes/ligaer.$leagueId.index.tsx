@@ -308,7 +308,7 @@ function LeagueDetail() {
         </div>
       </section>
 
-      <Standings leagueId={leagueId} configs={configs} />
+      <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={!!(league as any)?.separate_division_standings} />
     </div>
   );
 }
