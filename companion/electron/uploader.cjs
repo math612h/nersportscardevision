@@ -1,6 +1,5 @@
 // Uploads parsed LMU race results to the Supabase leaderboard.
 // Mirrors the logic in src/routes/leaderboard.tsx so the same rules apply.
-const fs = require("fs");
 const { createClient } = require("@supabase/supabase-js");
 const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, APP_URL } = require("./config.cjs");
 const { normalizeCarClass, nameSimilarity } = require("./lmu-parser.cjs");
@@ -149,17 +148,41 @@ async function verifyDeviceToken(token) {
   return body; // { user, token_name }
 }
 
-async function uploadParsedResultsViaToken({ token, filePath, parsed }) {
-  const hasParsedPayload = parsed && Array.isArray(parsed.drivers);
-  const uploadBody = hasParsedPayload ? JSON.stringify({ parsed }) : fs.readFileSync(filePath, "utf8");
-  const res = await fetch(`${APP_URL}/api/public/leaderboard-upload`, {
-    method: "POST",
-    headers: { "x-device-token": token, "Content-Type": hasParsedPayload ? "application/json" : "application/xml" },
-    body: uploadBody,
+async function uploadParsedResultsViaToken({ token, parsed, lmuName }) {
+  if (!parsed || !Array.isArray(parsed.drivers)) throw new Error("Companion kunne ikke læse filen lokalt");
+  const wantedName = String(lmuName || "").trim().toLowerCase();
+  if (!wantedName) return { uploaded: 0, skipped: parsed.drivers.length, reason: "missing_lmu_name", note: "LMU-navn mangler på profilen" };
+
+  let me = parsed.drivers.find((d) => d.name.trim().toLowerCase() === wantedName);
+  if (!me) {
+    let best = 0;
+    for (const d of parsed.drivers) {
+      const s = nameSimilarity(d.name, wantedName);
+      if (s > best) { best = s; if (s >= 0.85) me = d; }
+    }
+  }
+  if (!me) return { uploaded: 0, skipped: parsed.drivers.length, note: "Du var ikke i filen — sprunget over" };
+  if (me.bestLapMs == null) return { uploaded: 0, skipped: parsed.drivers.length, note: "Ingen gyldig bedste omgangstid for dig i filen" };
+
+  const client = makeClient(null);
+  const { data, error } = await client.rpc("upload_leaderboard_time_with_device_token", {
+    _token: token,
+    _driver_name: me.name,
+    _track: parsed.track,
+    _layout: parsed.layout,
+    _car_class: normalizeCarClass(me.carClass),
+    _car_model: me.carModel,
+    _best_lap_ms: me.bestLapMs,
+    _recorded_at: parsed.recordedAt,
   });
-  const responseBody = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(responseBody.error || `Upload fejlede (HTTP ${res.status})`);
-  return { uploaded: responseBody.inserted ?? 0, skipped: responseBody.skipped ?? 0, duplicates: responseBody.duplicates ?? 0, note: responseBody.note };
+  if (error) throw error;
+  if (data && data.ok === false) throw new Error(data.error || "Upload blev afvist af backend");
+  return {
+    uploaded: data?.inserted ?? 0,
+    skipped: (parsed.drivers.length - 1) + (data?.skipped ?? 0),
+    duplicates: data?.duplicates ?? 0,
+    note: data?.note,
+  };
 }
 
 module.exports = {
