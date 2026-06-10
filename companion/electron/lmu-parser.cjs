@@ -70,6 +70,56 @@ function findRaceResultsNode(obj) {
   return null;
 }
 
+function asArray(value) {
+  if (value == null) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function directDrivers(node) {
+  if (!node || typeof node !== "object") return [];
+  return asArray(node.Driver).filter((driver) => driver && typeof driver === "object");
+}
+
+function sessionPriority(key) {
+  const k = String(key || "").toLowerCase();
+  if (k.startsWith("race")) return 0;
+  if (k.startsWith("qualify")) return 1;
+  if (k.startsWith("practice")) return 2;
+  if (k.startsWith("warmup")) return 3;
+  if (k.startsWith("testday")) return 4;
+  if (k.includes("session")) return 5;
+  return 99;
+}
+
+function findSessionNode(rr) {
+  const candidates = [];
+  for (const [key, value] of Object.entries(rr || {})) {
+    for (const node of asArray(value)) {
+      if (!node || typeof node !== "object") continue;
+      const score = sessionPriority(key);
+      if (score < 99 || directDrivers(node).length) candidates.push({ key, node, score });
+    }
+  }
+  const sortSessions = (a, b) => a.score - b.score || String(b.key).localeCompare(String(a.key));
+  const withDrivers = candidates.filter((c) => directDrivers(c.node).length).sort(sortSessions);
+  if (withDrivers[0]) return withDrivers[0].node;
+  return candidates.sort(sortSessions)[0]?.node || null;
+}
+
+function findDriversDeep(node, seen = new Set()) {
+  if (!node || typeof node !== "object" || seen.has(node)) return [];
+  seen.add(node);
+  const drivers = directDrivers(node);
+  if (drivers.length) return drivers;
+  for (const value of Object.values(node)) {
+    for (const child of asArray(value)) {
+      const found = findDriversDeep(child, seen);
+      if (found.length) return found;
+    }
+  }
+  return [];
+}
+
 function parseLmuRaceFile(xml) {
   const doc = parser.parse(xml);
   const rr = findRaceResultsNode(doc);
@@ -80,26 +130,7 @@ function parseLmuRaceFile(xml) {
 
   const layout = parseLayoutFromTrackData(rr.TrackData);
 
-  // Find session node — Race/Qualify/Practice/TestDay/WarmUp, optionally numbered
-  // (e.g. Practice1, Qualify2, Race1). Prefer Race > Qualify > Practice > others.
-  const sessionPriority = (key) => {
-    const k = key.toLowerCase();
-    if (k.startsWith("race")) return 0;
-    if (k.startsWith("qualify")) return 1;
-    if (k.startsWith("practice")) return 2;
-    if (k.startsWith("warmup")) return 3;
-    if (k.startsWith("testday")) return 4;
-    return 99;
-  };
-  const sessionKeys = Object.keys(rr).filter((k) => /^(Race|Qualify|Practice|TestDay|WarmUp)\d*$/i.test(k));
-  sessionKeys.sort((a, b) => sessionPriority(a) - sessionPriority(b) || b.localeCompare(a));
-  let race = null;
-  for (const key of sessionKeys) {
-    let node = rr[key];
-    if (Array.isArray(node)) node = node[node.length - 1];
-    if (node && node.Driver) { race = node; break; }
-    if (node && !race) race = node;
-  }
+  const race = findSessionNode(rr);
   if (!race) throw new Error("Missing session node (Race/Qualify/Practice)");
 
   let recordedAt = null;
@@ -109,9 +140,8 @@ function parseLmuRaceFile(xml) {
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
   }
 
-  let driverEls = race.Driver;
-  if (!driverEls) return { track, layout, recordedAt, drivers: [] };
-  if (!Array.isArray(driverEls)) driverEls = [driverEls];
+  let driverEls = directDrivers(race);
+  if (!driverEls.length) driverEls = findDriversDeep(rr);
 
   const drivers = driverEls.map((el) => {
     const finishStatus = String(el.FinishStatus || "");
@@ -145,6 +175,7 @@ function parseLmuRaceFile(xml) {
     };
   });
 
+  if (drivers.length === 0) throw new Error("Ingen kørere fundet i filen");
   return { track, layout, recordedAt, drivers };
 }
 
