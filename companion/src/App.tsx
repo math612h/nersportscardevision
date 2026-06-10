@@ -22,6 +22,7 @@ type Status = {
   user: { display_name: string; email: string; lmu_name: string | null; approved: boolean } | null;
   lmu: { lmuFound: boolean; folder: string | null };
   uploadCount: number;
+  appVersion?: string;
   lastError: string | null;
   lastScan: { uploaded: number; total: number; processed?: number; skipped?: number; duplicates?: number; errors?: number; note?: string | null; busy?: boolean } | null;
   scanning: boolean;
@@ -145,6 +146,7 @@ function SignedIn({ status }: { status: Status }) {
           </div>
         )}
         <div className="row"><span className="k">Uploadede tider</span><span className="v">{status.uploadCount}</span></div>
+        {status.appVersion && <div className="row"><span className="k">Version</span><span className="v">{status.appVersion}</span></div>}
         <div className="row"><span className="k">Scanner</span><span className={`v ${status.scanning ? "warn" : "ok"}`}>{status.scanning ? "I gang" : "Automatisk"}</span></div>
       </div>
 
