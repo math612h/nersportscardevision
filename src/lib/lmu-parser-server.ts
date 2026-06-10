@@ -31,18 +31,39 @@ function parseTrackFromTrackData(trackData: unknown): string {
   return "";
 }
 
-const parser = new XMLParser({ ignoreAttributes: true, trimValues: true, parseTagValue: false });
+const parser = new XMLParser({
+  ignoreAttributes: false,
+  attributeNamePrefix: "@_",
+  textNodeName: "#text",
+  trimValues: true,
+  parseTagValue: false,
+});
+
+function normKey(key: string): string {
+  return String(key).replace(/^.*:/, "").replace(/^@_/, "").toLowerCase();
+}
+
+function childValue(node: any, ...names: string[]): string {
+  if (node == null) return "";
+  if (typeof node !== "object") return String(node).trim();
+  const wanted = new Set(names.map((name) => name.toLowerCase()));
+  for (const [key, value] of Object.entries(node)) {
+    if (!wanted.has(normKey(key))) continue;
+    const first = Array.isArray(value) ? value[0] : value;
+    if (first == null) return "";
+    if (typeof first === "object") return String((first as Record<string, unknown>)["#text"] ?? "").trim();
+    return String(first).trim();
+  }
+  return "";
+}
 
 function findRaceResultsNode(obj: any): any | null {
   if (!obj || typeof obj !== "object") return null;
-  if (obj.RaceResults) return Array.isArray(obj.RaceResults) ? obj.RaceResults.at(-1) : obj.RaceResults;
-  if (obj.rFactorXML?.RaceResults) {
-    return Array.isArray(obj.rFactorXML.RaceResults) ? obj.rFactorXML.RaceResults.at(-1) : obj.rFactorXML.RaceResults;
-  }
-  for (const value of Object.values(obj)) {
-    if (value && typeof value === "object" && (value as any).RaceResults) {
-      const raceResults = (value as any).RaceResults;
-      return Array.isArray(raceResults) ? raceResults.at(-1) : raceResults;
+  for (const [key, value] of Object.entries(obj)) {
+    if (normKey(key) === "raceresults") return Array.isArray(value) ? value.at(-1) : value;
+    for (const child of asArray(value as any)) {
+      const found = findRaceResultsNode(child);
+      if (found) return found;
     }
   }
   return null;
@@ -55,7 +76,17 @@ function asArray<T>(value: T | T[] | null | undefined): T[] {
 
 function directDrivers(node: any): any[] {
   if (!node || typeof node !== "object") return [];
-  return asArray(node.Driver).filter((driver) => driver && typeof driver === "object");
+  const drivers: any[] = [];
+  for (const [key, value] of Object.entries(node)) {
+    const normalized = normKey(key);
+    if (normalized === "driver") {
+      drivers.push(...asArray(value as any).filter((driver) => driver && typeof driver === "object"));
+    }
+    if (normalized === "drivers") {
+      for (const wrapper of asArray(value as any)) drivers.push(...directDrivers(wrapper));
+    }
+  }
+  return drivers;
 }
 
 function sessionPriority(key: string): number {
@@ -105,15 +136,16 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
   const rr = findRaceResultsNode(obj);
   if (!rr) throw new Error("Filen indeholder ikke RaceResults");
 
-  const track = cleanTrackName(rr.TrackVenue ?? rr.TrackCourse ?? rr.TrackEvent ?? rr.TrackName ?? rr.CircuitName) || parseTrackFromTrackData(rr.TrackData);
+  const trackData = childValue(rr, "TrackData");
+  const track = cleanTrackName(childValue(rr, "TrackVenue", "TrackCourse", "TrackEvent", "TrackName", "CircuitName")) || parseTrackFromTrackData(trackData);
   if (!track) throw new Error("Kunne ikke finde banens navn i filen");
 
-  const layout = parseLayoutFromTrackData(rr.TrackData);
+  const layout = parseLayoutFromTrackData(trackData);
 
   const sessionNode = findSessionNode(rr);
 
   let recordedAt: string | null = null;
-  const ts = sessionNode?.DateTime ?? rr?.DateTime;
+  const ts = childValue(sessionNode, "DateTime") || childValue(rr, "DateTime");
   if (ts != null) {
     const n = Number(ts);
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
@@ -123,21 +155,22 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
   if (driverArr.length === 0) driverArr = findDriversDeep(rr);
 
   const drivers: ParsedDriver[] = driverArr.map((d): ParsedDriver => {
-    const finishStatus = String(d.FinishStatus ?? "");
-    const blt = parseFloat(String(d.BestLapTime ?? ""));
+    const finishStatus = childValue(d, "FinishStatus");
+    const blt = parseFloat(childValue(d, "BestLapTime"));
     let bestLapMs = Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null;
-    if (bestLapMs == null && d.Lap) {
-      const laps = Array.isArray(d.Lap) ? d.Lap : [d.Lap];
+    const lapValue = childValue(d, "Lap");
+    if (bestLapMs == null && lapValue) {
+      const laps = asArray((d.Lap ?? d.lap ?? lapValue) as any);
       const lapSeconds = laps
         .map((lap: unknown) => parseFloat(String(typeof lap === "object" && lap !== null ? (lap as Record<string, unknown>)["#text"] : lap)))
         .filter((n: number) => Number.isFinite(n) && n > 0);
       if (lapSeconds.length) bestLapMs = Math.round(Math.min(...lapSeconds) * 1000);
     }
-    const fin = parseFloat(String(d.FinishTime ?? ""));
-    const carClass = String(d.CarClass ?? "");
-    const manufacturer = String(d.Manufacturer ?? "");
-    const carType = String(d.CarType ?? "");
-    const vehFile = String(d.VehFile ?? "").replace(/\.veh$/i, "");
+    const fin = parseFloat(childValue(d, "FinishTime"));
+    const carClass = childValue(d, "CarClass");
+    const manufacturer = childValue(d, "Manufacturer");
+    const carType = childValue(d, "CarType");
+    const vehFile = childValue(d, "VehFile").replace(/\.veh$/i, "");
     let carModel: string | null = null;
     if (carType) carModel = manufacturer && !carType.toLowerCase().includes(manufacturer.toLowerCase()) ? `${manufacturer} ${carType}` : carType;
     else if (manufacturer) carModel = manufacturer;
