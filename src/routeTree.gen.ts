@@ -38,6 +38,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
 import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
+import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
@@ -203,6 +204,11 @@ const ApiPublicDownloadCompanionRoute =
     path: '/api/public/download/companion',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronLeagueOpenRoute = ApiPublicCronLeagueOpenRouteImport.update({
+  id: '/api/public/cron/league-open',
+  path: '/api/public/cron/league-open',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCompanionVerifyTokenRoute =
   ApiPublicCompanionVerifyTokenRouteImport.update({
     id: '/api/public/companion/verify-token',
@@ -302,6 +308,7 @@ export interface FileRoutesByFullPath {
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -341,6 +348,7 @@ export interface FileRoutesByTo {
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -385,6 +393,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/admin/nyhedsbrev'
     | '/admin/protests'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/league-open'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
@@ -467,6 +477,7 @@ export interface FileRouteTypes {
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/league-open'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
@@ -510,6 +521,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/nyhedsbrev'
     | '/_authenticated/_admin/admin/protests'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/league-open'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
@@ -542,6 +554,7 @@ export interface RootRouteChildren {
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
+  ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -753,6 +766,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/download/companion'
       fullPath: '/api/public/download/companion'
       preLoaderRoute: typeof ApiPublicDownloadCompanionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/league-open': {
+      id: '/api/public/cron/league-open'
+      path: '/api/public/cron/league-open'
+      fullPath: '/api/public/cron/league-open'
+      preLoaderRoute: typeof ApiPublicCronLeagueOpenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/companion/verify-token': {
@@ -969,6 +989,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
+  ApiPublicCronLeagueOpenRoute: ApiPublicCronLeagueOpenRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
