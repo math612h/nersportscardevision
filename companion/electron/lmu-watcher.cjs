@@ -160,7 +160,8 @@ class LmuWatcher {
       return;
     }
 
-    const files = listXmlFiles(this.folder);
+    let files;
+    try { files = listXmlFiles(this.folder); } catch (err) { console.warn("[lmu-watcher] readdir failed:", err.message); return; }
     for (const f of files) {
       const key = f.name;
       if (this.seen.has(key)) continue;
