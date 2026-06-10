@@ -500,6 +500,10 @@ function EditLeagueDialog({ league }: { league: any }) {
             <Checkbox checked={briefingRequired} onCheckedChange={(v) => setBriefingRequired(v === true)} />
             <span className="text-sm">Drivers Briefing er obligatorisk (knap vises på afdelinger)</span>
           </label>
+          <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+            <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
+            <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
+          </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
           <div className="space-y-1 rounded-md border border-border p-2">
             <Label>Tilmelding åbner</Label>
