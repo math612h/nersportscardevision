@@ -389,6 +389,8 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [name, setName] = useState(league.name ?? "");
   const [desc, setDesc] = useState(league.description ?? "");
   const [isOffseason, setIsOffseason] = useState<boolean>(!!league.is_offseason);
+  const [approvedOnly, setApprovedOnly] = useState<boolean>(!!league.approved_only);
+  const [briefingRequired, setBriefingRequired] = useState<boolean>(league.briefing_required !== false);
   const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()];
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
   const [bannerPath, setBannerPath] = useState<string | null>(league.banner_url ?? null);
@@ -413,6 +415,8 @@ function EditLeagueDialog({ league }: { league: any }) {
     setName(league.name ?? "");
     setDesc(league.description ?? "");
     setIsOffseason(!!league.is_offseason);
+    setApprovedOnly(!!league.approved_only);
+    setBriefingRequired(league.briefing_required !== false);
     setCfgs(Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()]);
     setBannerPath(league.banner_url ?? null);
     setBannerFile(null);
@@ -443,6 +447,8 @@ function EditLeagueDialog({ league }: { league: any }) {
         driver_category: first.driver_category,
         class_configs: cfgs as any,
         is_offseason: isOffseason,
+        approved_only: approvedOnly,
+        briefing_required: briefingRequired,
         banner_url: newBanner,
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
@@ -475,6 +481,14 @@ function EditLeagueDialog({ league }: { league: any }) {
           <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
             <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
             <span className="text-sm">Off-season event</span>
+          </label>
+          <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+            <Checkbox checked={approvedOnly} onCheckedChange={(v) => setApprovedOnly(v === true)} />
+            <span className="text-sm">Kun godkendte profiler kan tilmelde sig</span>
+          </label>
+          <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+            <Checkbox checked={briefingRequired} onCheckedChange={(v) => setBriefingRequired(v === true)} />
+            <span className="text-sm">Drivers Briefing er obligatorisk (knap vises på afdelinger)</span>
           </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
           <div className="space-y-1 rounded-md border border-border p-2">
