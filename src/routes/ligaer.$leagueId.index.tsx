@@ -968,6 +968,20 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     setCarNumber(null);
     qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
     qc.invalidateQueries({ queryKey: ["profile", user.id] });
+    // Send signup-confirmation email (non-blocking)
+    if (user.email) {
+      const { data: leagueRow } = await supabase
+        .from("leagues")
+        .select("name")
+        .eq("id", leagueId)
+        .maybeSingle();
+      sendTransactionalEmail({
+        templateName: "league-signup-confirmation",
+        recipientEmail: user.email,
+        idempotencyKey: `league-signup-${leagueId}-${user.id}`,
+        templateData: { leagueName: leagueRow?.name ?? "din liga" },
+      });
+    }
   };
 
 
