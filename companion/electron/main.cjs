@@ -177,7 +177,7 @@ function startWatcher() {
     onNewResults: async ({ filePath, fileName, parsed }) => {
       try {
         const res = deviceToken
-          ? await uploader.uploadParsedResultsViaToken({ token: deviceToken, filePath })
+          ? await uploader.uploadParsedResultsViaToken({ token: deviceToken, filePath, parsed })
           : await uploader.uploadParsedResults({ session, parsed });
         if (res.uploaded > 0) {
           uploadCount += res.uploaded;
