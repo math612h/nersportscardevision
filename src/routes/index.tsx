@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowUpRight, Calendar, Flag, MapPin, Trophy } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowUpRight, Calendar, EyeOff, Flag, MapPin, Trophy } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTrackImageFile } from "@/lib/tracks";
@@ -39,6 +41,8 @@ export const Route = createFileRoute("/")({
 });
 
 function NewsHome() {
+  const { isAdmin } = useAuth();
+  const qc = useQueryClient();
   const { data: divisions, isLoading } = useQuery({
     queryKey: ["home-recent-results"],
     queryFn: async () => {
@@ -51,11 +55,24 @@ function NewsHome() {
       return (data ?? []).filter(
         (d: any) =>
           d.settings?.completed &&
+          !d.settings?.hidden_from_home &&
           Array.isArray(d.settings?.results) &&
           d.settings.results.length > 0,
       );
     },
   });
+
+  const hideLatest = async (d: any) => {
+    if (!confirm(`Skjul "${d.name}" fra forsiden?`)) return;
+    const newSettings = { ...(d.settings ?? {}), hidden_from_home: true };
+    const { error } = await supabase
+      .from("divisions")
+      .update({ settings: newSettings as any })
+      .eq("id", d.id);
+    if (error) return toast.error(error.message);
+    toast.success("Skjult fra forsiden");
+    qc.invalidateQueries({ queryKey: ["home-recent-results"] });
+  };
 
   const latest = divisions?.[0] as any | undefined;
   const otherResults = (divisions ?? []).slice(1, 4) as any[];
