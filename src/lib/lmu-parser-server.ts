@@ -176,7 +176,7 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
     else if (manufacturer) carModel = manufacturer;
     else if (vehFile) carModel = vehFile;
     return {
-      name: String(d.Name ?? ""),
+      name: childValue(d, "Name"),
       carClass,
       carClassNorm: normalizeCarClass(carClass),
       carModel: carModel ? carModel.trim() || null : null,
