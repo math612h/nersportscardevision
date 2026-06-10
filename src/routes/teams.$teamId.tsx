@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
-  ArrowLeft, Camera, Loader2, MessageSquare, Send, Shield, Trash2, UserPlus,
+  ArrowLeft, Camera, Loader2, MessageSquare, Send, Shield, Star, Trash2, UserPlus,
   Users, Check, X, LogOut, Crown, Pencil, Trophy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -127,6 +127,25 @@ function TeamDetailPage() {
     enabled: !!team?.logo_url,
     queryFn: () => signed("team-logos", team!.logo_url!),
   });
+
+  const { data: memberRatings } = useQuery({
+    queryKey: ["team-member-ratings", memberIds.sort().join(",")],
+    enabled: memberIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("user_ratings")
+        .select("user_id,score")
+        .in("user_id", memberIds);
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; score: number }[];
+    },
+  });
+
+  const teamRating = useMemo(() => {
+    if (!memberRatings || memberRatings.length === 0) return null;
+    const sum = memberRatings.reduce((acc, r) => acc + Number(r.score), 0);
+    return Math.round(sum / memberRatings.length);
+  }, [memberRatings]);
 
   const isMember = !!user && (members ?? []).some((m) => m.user_id === user.id);
   const isOwner = !!user && team?.owner_id === user.id;
