@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Shield, Users } from "lucide-react";
+import { Search, Shield, Star, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,22 +40,58 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
   });
 
   const teamIds = (teams ?? []).map((t) => t.id);
-  const { data: memberCounts } = useQuery({
-    queryKey: ["team-member-counts", teamIds.join(",")],
+  const { data: memberData } = useQuery({
+    queryKey: ["team-member-data", teamIds.join(",")],
     enabled: teamIds.length > 0,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("team_members")
-        .select("team_id")
+        .select("team_id, user_id")
         .in("team_id", teamIds);
       if (error) throw error;
-      const counts: Record<string, number> = {};
-      for (const m of (data ?? []) as { team_id: string }[]) {
-        counts[m.team_id] = (counts[m.team_id] ?? 0) + 1;
-      }
-      return counts;
+      return (data ?? []) as { team_id: string; user_id: string }[];
     },
   });
+
+  const memberCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const m of memberData ?? []) counts[m.team_id] = (counts[m.team_id] ?? 0) + 1;
+    return counts;
+  }, [memberData]);
+
+  const allMemberIds = useMemo(
+    () => Array.from(new Set((memberData ?? []).map((m) => m.user_id))),
+    [memberData],
+  );
+
+  const { data: ratingByUser } = useQuery({
+    queryKey: ["teams-member-ratings", allMemberIds.sort().join(",")],
+    enabled: allMemberIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("user_ratings")
+        .select("user_id,score")
+        .in("user_id", allMemberIds);
+      if (error) throw error;
+      const m: Record<string, number> = {};
+      for (const r of (data ?? []) as { user_id: string; score: number }[]) m[r.user_id] = Number(r.score);
+      return m;
+    },
+  });
+
+  const teamRatings = useMemo(() => {
+    const out: Record<string, number | null> = {};
+    const byTeam: Record<string, number[]> = {};
+    for (const m of memberData ?? []) {
+      const s = ratingByUser?.[m.user_id];
+      if (s != null) (byTeam[m.team_id] ??= []).push(s);
+    }
+    for (const tid of teamIds) {
+      const arr = byTeam[tid] ?? [];
+      out[tid] = arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+    }
+    return out;
+  }, [memberData, ratingByUser, teamIds]);
 
   const { data: logoMap } = useQuery({
     queryKey: ["team-logos", (teams ?? []).map((t) => t.logo_url).filter(Boolean).join(",")],
@@ -118,7 +154,8 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
           {filtered.map((t) => {
             const initials = t.name.slice(0, 2).toUpperCase();
             const logo = logoMap?.[t.id];
-            const count = memberCounts?.[t.id] ?? 0;
+            const count = memberCounts[t.id] ?? 0;
+            const rating = teamRatings[t.id];
             return (
               <Link key={t.id} to="/teams/$teamId" params={{ teamId: t.id }}>
                 <Card className="h-full transition hover:border-primary">
@@ -134,10 +171,15 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
                       </CardDescription>
                     </div>
                   </CardHeader>
-                  <CardContent className="flex items-center gap-2 pt-0 text-xs text-muted-foreground">
+                  <CardContent className="flex flex-wrap items-center gap-2 pt-0 text-xs text-muted-foreground">
                     <Badge variant="outline" className="gap-1">
                       <Users className="h-3 w-3" /> {count} medlem{count === 1 ? "" : "mer"}
                     </Badge>
+                    {rating != null && (
+                      <Badge variant="outline" className="gap-1" title="Teamets gennemsnitlige rating">
+                        <Star className="h-3 w-3 text-primary" /> {rating}
+                      </Badge>
+                    )}
                   </CardContent>
                 </Card>
               </Link>

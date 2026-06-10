@@ -216,7 +216,7 @@ function LeagueDetail() {
           <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
             <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
           </Link>
-          {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} />}
+          {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} approvedOnly={!!(league as any)?.approved_only} />}
           {league && <EditEntryDialog leagueId={leagueId} />}
           {league && <LeaveLeagueButton leagueId={leagueId} />}
         </div>
@@ -279,6 +279,11 @@ function LeagueDetail() {
                       {d.race_date && (
                         <Badge variant="outline" className="gap-1">
                           <Calendar className="h-3 w-3" /> {format(new Date(d.race_date), "dd MMM yyyy HH:mm")}
+                        </Badge>
+                      )}
+                      {(d.settings as any)?.event_settings?.race_minutes != null && (
+                        <Badge variant="outline" className="gap-1">
+                          <Timer className="h-3 w-3" /> {(d.settings as any).event_settings.race_minutes} min
                         </Badge>
                       )}
                       {d.race_date && !completed && <RaceCountdown raceDate={d.race_date} />}
@@ -441,12 +446,19 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="truncate">{e.driver_name}</div>
+                        {(e as any).team_id && teamMap?.[(e as any).team_id] && (
+                          <div className="mt-0.5 sm:hidden">
+                            <Badge variant="outline" className="text-[10px]" title="Team">
+                              {teamMap[(e as any).team_id]}
+                            </Badge>
+                          </div>
+                        )}
                         {(e as any).car_model && (
                           <div className="truncate text-[11px] text-muted-foreground">{(e as any).car_model}</div>
                         )}
                       </div>
                       {(e as any).team_id && teamMap?.[(e as any).team_id] && (
-                        <Badge variant="outline" className="text-[10px] shrink-0" title="Team">
+                        <Badge variant="outline" className="hidden sm:inline-flex text-[10px] shrink-0" title="Team">
                           {teamMap[(e as any).team_id]}
                         </Badge>
                       )}
@@ -822,7 +834,7 @@ function TeamStandings({
 }
 
 
-function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; configs: ClassConfig[]; signupOpensAt: string | null }) {
+function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leagueId: string; configs: ClassConfig[]; signupOpensAt: string | null; approvedOnly: boolean }) {
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
@@ -919,11 +931,13 @@ function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; 
   const cap = selected?.max_drivers ?? null;
   const isApproved = !!profile?.approved;
   const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
+  const blockedByApprovedOnly = approvedOnly && !isApproved;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return toast.error("Du skal være logget ind.");
     if (!signupOpen) return toast.error("Tilmelding er ikke åbnet endnu.");
+    if (blockedByApprovedOnly) return toast.error("Denne liga er kun åben for godkendte profiler.");
     if (!selected) return toast.error("Vælg en klasse.");
     if (carNumber == null) return toast.error("Vælg et kørenummer.");
     if (!carModel) return toast.error("Vælg din bil.");
@@ -964,8 +978,8 @@ function SignupDialog({ leagueId, configs, signupOpensAt }: { leagueId: string; 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2" disabled={alreadySignedUp || !signupOpen}>
-          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
+        <Button size="sm" className="gap-2" disabled={alreadySignedUp || !signupOpen || blockedByApprovedOnly} title={blockedByApprovedOnly ? "Kun godkendte profiler kan tilmelde sig denne liga" : undefined}>
+          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : blockedByApprovedOnly ? "Kun godkendte" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">

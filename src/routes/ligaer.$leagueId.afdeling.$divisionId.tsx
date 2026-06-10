@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2, Timer } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -244,13 +244,16 @@ function DivisionDetail() {
         <div className="flex flex-wrap gap-2">
           {div?.track && <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" />{div.track}{div.layout ? ` · ${div.layout}` : ""}</Badge>}
           {div?.race_date && <Badge variant="outline" className="gap-1"><Calendar className="h-3 w-3" />{format(new Date(div.race_date), "dd MMM yyyy HH:mm")}</Badge>}
+          {(div?.settings as any)?.event_settings?.race_minutes != null && (
+            <Badge variant="outline" className="gap-1"><Timer className="h-3 w-3" /> {(div!.settings as any).event_settings.race_minutes} min</Badge>
+          )}
           {(div?.settings as any)?.temperature != null && (
             <Badge variant="outline" className="gap-1">{(div!.settings as any).temperature}°C</Badge>
           )}
         </div>
       </header>
 
-      {user && (
+      {user && (league as any)?.briefing_required !== false && (
         <ClientOnly fallback={null}>
           <Suspense fallback={null}>
             <DriversBriefing
