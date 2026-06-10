@@ -151,15 +151,15 @@ async function verifyDeviceToken(token) {
 
 async function uploadParsedResultsViaToken({ token, filePath, parsed }) {
   const hasParsedPayload = parsed && Array.isArray(parsed.drivers);
-  const body = hasParsedPayload ? JSON.stringify({ parsed }) : fs.readFileSync(filePath, "utf8");
+  const uploadBody = hasParsedPayload ? JSON.stringify({ parsed }) : fs.readFileSync(filePath, "utf8");
   const res = await fetch(`${APP_URL}/api/public/leaderboard-upload`, {
     method: "POST",
     headers: { "x-device-token": token, "Content-Type": hasParsedPayload ? "application/json" : "application/xml" },
-    body,
+    body: uploadBody,
   });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error || `Upload fejlede (HTTP ${res.status})`);
-  return { uploaded: body.inserted ?? 0, skipped: body.skipped ?? 0, duplicates: body.duplicates ?? 0, note: body.note };
+  const responseBody = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(responseBody.error || `Upload fejlede (HTTP ${res.status})`);
+  return { uploaded: responseBody.inserted ?? 0, skipped: responseBody.skipped ?? 0, duplicates: responseBody.duplicates ?? 0, note: responseBody.note };
 }
 
 module.exports = {
