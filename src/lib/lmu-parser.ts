@@ -51,6 +51,42 @@ function parseLayoutFromTrackData(trackData: string | null | undefined): string 
   return layout || null;
 }
 
+function sessionPriority(tag: string): number {
+  const k = tag.toLowerCase();
+  if (k.startsWith("race")) return 0;
+  if (k.startsWith("qualify")) return 1;
+  if (k.startsWith("practice")) return 2;
+  if (k.startsWith("warmup")) return 3;
+  if (k.startsWith("testday")) return 4;
+  if (k.includes("session")) return 5;
+  return 99;
+}
+
+function directDriverElements(node: Element | null): Element[] {
+  if (!node) return [];
+  return Array.from(node.children).filter((child) => child.tagName.toLowerCase() === "driver");
+}
+
+function findSessionElement(raceResults: Element): Element | null {
+  const sessionCandidates = Array.from(raceResults.children).filter((child) => {
+    const score = sessionPriority(child.tagName);
+    return score < 99 || directDriverElements(child).length > 0;
+  });
+  const sortSessions = (a: Element, b: Element) => sessionPriority(a.tagName) - sessionPriority(b.tagName) || b.tagName.localeCompare(a.tagName);
+  sessionCandidates.sort(sortSessions);
+  return sessionCandidates.find((child) => directDriverElements(child).length > 0) ?? sessionCandidates[0] ?? null;
+}
+
+function findDriverElementsDeep(root: Element): Element[] {
+  const direct = directDriverElements(root);
+  if (direct.length) return direct;
+  for (const child of Array.from(root.children)) {
+    const found = findDriverElementsDeep(child);
+    if (found.length) return found;
+  }
+  return [];
+}
+
 export function parseLmuRaceFile(xml: string): ParsedRace {
   const doc = new DOMParser().parseFromString(xml, "application/xml");
   if (doc.querySelector("parsererror")) {
@@ -75,25 +111,9 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
   }
 
-  const sessionPriority = (tag: string): number => {
-    const k = tag.toLowerCase();
-    if (k.startsWith("race")) return 0;
-    if (k.startsWith("qualify")) return 1;
-    if (k.startsWith("practice")) return 2;
-    if (k.startsWith("warmup")) return 3;
-    if (k.startsWith("testday")) return 4;
-    return 99;
-  };
-  const sessionCandidates = Array.from(raceResults.children).filter((c) =>
-    /^(Race|Qualify|Practice|TestDay|WarmUp)\d*$/i.test(c.tagName),
-  );
-  sessionCandidates.sort((a, b) => sessionPriority(a.tagName) - sessionPriority(b.tagName));
-  let sessionNode: Element | null = null;
-  for (const c of sessionCandidates) {
-    if (c.querySelector(":scope > Driver")) { sessionNode = c; break; }
-    if (!sessionNode) sessionNode = c;
-  }
-  const driverEls = sessionNode ? Array.from(sessionNode.querySelectorAll(":scope > Driver")) : [];
+  const sessionNode = findSessionElement(raceResults);
+  let driverEls = directDriverElements(sessionNode);
+  if (driverEls.length === 0) driverEls = findDriverElementsDeep(raceResults);
   const drivers: ParsedDriver[] = driverEls.map((el) => {
     const get = (t: string) => el.querySelector(`:scope > ${t}`)?.textContent?.trim() ?? "";
     const finishStatus = get("FinishStatus");
