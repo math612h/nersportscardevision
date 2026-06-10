@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, Calendar, EyeOff, Flag, MapPin, Trophy } from "lucide-react";
+import { ArrowUpRight, Calendar, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -112,6 +112,15 @@ function NewsHome() {
             <Link to="/lmu/teams">
               <ArrowUpRight className="h-4 w-4" /> Teams
             </Link>
+          </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <a
+              href="https://discord.gg/Vz4JvSk4dm"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <MessageCircle className="h-4 w-4" /> Discord
+            </a>
           </Button>
         </div>
       </header>
