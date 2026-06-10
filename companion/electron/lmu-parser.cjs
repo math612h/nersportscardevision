@@ -51,20 +51,38 @@ function parseTrackFromTrackData(trackData) {
 }
 
 const parser = new XMLParser({
-  ignoreAttributes: true,
+  ignoreAttributes: false,
+  attributeNamePrefix: "@_",
+  textNodeName: "#text",
   trimValues: true,
   parseTagValue: false,
 });
 
+function normKey(key) {
+  return String(key || "").replace(/^.*:/, "").replace(/^@_/, "").toLowerCase();
+}
+
+function childValue(node, ...names) {
+  if (node == null) return "";
+  if (typeof node !== "object") return String(node).trim();
+  const wanted = new Set(names.map((name) => String(name).toLowerCase()));
+  for (const [key, value] of Object.entries(node)) {
+    if (!wanted.has(normKey(key))) continue;
+    const first = Array.isArray(value) ? value[0] : value;
+    if (first == null) return "";
+    if (typeof first === "object") return String(first["#text"] ?? "").trim();
+    return String(first).trim();
+  }
+  return "";
+}
+
 function findRaceResultsNode(obj) {
   if (!obj || typeof obj !== "object") return null;
-  if (obj.RaceResults) return Array.isArray(obj.RaceResults) ? obj.RaceResults.at(-1) : obj.RaceResults;
-  if (obj.rFactorXML?.RaceResults) {
-    return Array.isArray(obj.rFactorXML.RaceResults) ? obj.rFactorXML.RaceResults.at(-1) : obj.rFactorXML.RaceResults;
-  }
-  for (const value of Object.values(obj)) {
-    if (value && typeof value === "object" && value.RaceResults) {
-      return Array.isArray(value.RaceResults) ? value.RaceResults.at(-1) : value.RaceResults;
+  for (const [key, value] of Object.entries(obj)) {
+    if (normKey(key) === "raceresults") return Array.isArray(value) ? value.at(-1) : value;
+    for (const child of asArray(value)) {
+      const found = findRaceResultsNode(child);
+      if (found) return found;
     }
   }
   return null;
@@ -77,7 +95,17 @@ function asArray(value) {
 
 function directDrivers(node) {
   if (!node || typeof node !== "object") return [];
-  return asArray(node.Driver).filter((driver) => driver && typeof driver === "object");
+  const drivers = [];
+  for (const [key, value] of Object.entries(node)) {
+    const normalized = normKey(key);
+    if (normalized === "driver") {
+      drivers.push(...asArray(value).filter((driver) => driver && typeof driver === "object"));
+    }
+    if (normalized === "drivers") {
+      for (const wrapper of asArray(value)) drivers.push(...directDrivers(wrapper));
+    }
+  }
+  return drivers;
 }
 
 function sessionPriority(key) {
@@ -125,16 +153,17 @@ function parseLmuRaceFile(xml) {
   const rr = findRaceResultsNode(doc);
   if (!rr) throw new Error("Not an LMU race result file (missing RaceResults)");
 
-  const track = cleanTrackName(rr.TrackVenue || rr.TrackCourse || rr.TrackEvent || rr.TrackName || rr.CircuitName) || parseTrackFromTrackData(rr.TrackData);
+  const trackData = childValue(rr, "TrackData");
+  const track = cleanTrackName(childValue(rr, "TrackVenue", "TrackCourse", "TrackEvent", "TrackName", "CircuitName")) || parseTrackFromTrackData(trackData);
   if (!track) throw new Error("Missing TrackVenue");
 
-  const layout = parseLayoutFromTrackData(rr.TrackData);
+  const layout = parseLayoutFromTrackData(trackData);
 
   const race = findSessionNode(rr);
   if (!race) throw new Error("Missing session node (Race/Qualify/Practice)");
 
   let recordedAt = null;
-  const ts = race.DateTime || rr.DateTime;
+  const ts = childValue(race, "DateTime") || childValue(rr, "DateTime");
   if (ts) {
     const n = Number(ts);
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
@@ -144,19 +173,20 @@ function parseLmuRaceFile(xml) {
   if (!driverEls.length) driverEls = findDriversDeep(rr);
 
   const drivers = driverEls.map((el) => {
-    const finishStatus = String(el.FinishStatus || "");
-    const blt = parseFloat(el.BestLapTime);
+    const finishStatus = childValue(el, "FinishStatus");
+    const blt = parseFloat(childValue(el, "BestLapTime"));
     let bestLapMs = Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null;
-    if (bestLapMs == null && el.Lap) {
-      const laps = Array.isArray(el.Lap) ? el.Lap : [el.Lap];
+    const lapValue = childValue(el, "Lap");
+    if (bestLapMs == null && lapValue) {
+      const laps = asArray(el.Lap ?? el.lap ?? lapValue);
       const lapSeconds = laps.map((lap) => parseFloat(typeof lap === "object" ? lap["#text"] : lap)).filter((n) => Number.isFinite(n) && n > 0);
       if (lapSeconds.length) bestLapMs = Math.round(Math.min(...lapSeconds) * 1000);
     }
-    const fin = parseFloat(el.FinishTime);
-    const carClass = String(el.CarClass || "");
-    const manufacturer = String(el.Manufacturer || "");
-    const carType = String(el.CarType || "");
-    const vehFile = String(el.VehFile || "").replace(/\.veh$/i, "");
+    const fin = parseFloat(childValue(el, "FinishTime"));
+    const carClass = childValue(el, "CarClass");
+    const manufacturer = childValue(el, "Manufacturer");
+    const carType = childValue(el, "CarType");
+    const vehFile = childValue(el, "VehFile").replace(/\.veh$/i, "");
     let carModel = null;
     if (carType) {
       carModel = manufacturer && !carType.toLowerCase().includes(manufacturer.toLowerCase())
@@ -165,7 +195,7 @@ function parseLmuRaceFile(xml) {
     } else if (manufacturer) carModel = manufacturer;
     else if (vehFile) carModel = vehFile;
     return {
-      name: String(el.Name || "").trim(),
+      name: childValue(el, "Name").trim(),
       carClass,
       carClassNorm: normalizeCarClass(carClass),
       carModel: carModel ? carModel.trim() || null : null,

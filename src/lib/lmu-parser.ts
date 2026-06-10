@@ -64,7 +64,26 @@ function sessionPriority(tag: string): number {
 
 function directDriverElements(node: Element | null): Element[] {
   if (!node) return [];
-  return Array.from(node.children).filter((child) => child.tagName.toLowerCase() === "driver");
+  return Array.from(node.children).flatMap((child) => {
+    const tag = child.tagName.replace(/^.*:/, "").toLowerCase();
+    if (tag === "driver") return [child];
+    if (tag === "drivers") return directDriverElements(child);
+    return [];
+  });
+}
+
+function childValue(node: Element | null, ...names: string[]): string {
+  if (!node) return "";
+  const wanted = new Set(names.map((name) => name.toLowerCase()));
+  for (const attr of Array.from(node.attributes)) {
+    const name = attr.name.replace(/^.*:/, "").toLowerCase();
+    if (wanted.has(name)) return attr.value.trim();
+  }
+  for (const child of Array.from(node.children)) {
+    const tag = child.tagName.replace(/^.*:/, "").toLowerCase();
+    if (wanted.has(tag)) return child.textContent?.trim() ?? "";
+  }
+  return "";
 }
 
 function findSessionElement(raceResults: Element): Element | null {
@@ -93,29 +112,28 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     throw new Error("Filen kunne ikke læses som XML");
   }
 
-  const text = (sel: string) => doc.querySelector(sel)?.textContent?.trim() ?? "";
-
   const raceResults = doc.querySelector("RaceResults");
   if (!raceResults) throw new Error("Filen indeholder ikke RaceResults");
-  const childText = (sel: string) => raceResults.querySelector(`:scope > ${sel}`)?.textContent?.trim() ?? "";
 
-  const track = childText("TrackVenue") || childText("TrackCourse") || text("TrackVenue") || text("TrackCourse");
+  const trackData = childValue(raceResults, "TrackData");
+  const track = childValue(raceResults, "TrackVenue", "TrackCourse", "TrackEvent", "TrackName", "CircuitName");
   if (!track) throw new Error("Kunne ikke finde banens navn i filen");
 
-  const layout = parseLayoutFromTrackData(childText("TrackData") || text("TrackData"));
+  const layout = parseLayoutFromTrackData(trackData || doc.querySelector("TrackData")?.textContent?.trim());
+
+  const sessionNode = findSessionElement(raceResults);
 
   let recordedAt: string | null = null;
-  const ts = raceResults.querySelector(":scope > Race > DateTime")?.textContent?.trim() || childText("DateTime");
+  const ts = childValue(sessionNode, "DateTime") || childValue(raceResults, "DateTime");
   if (ts) {
     const n = Number(ts);
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
   }
 
-  const sessionNode = findSessionElement(raceResults);
   let driverEls = directDriverElements(sessionNode);
   if (driverEls.length === 0) driverEls = findDriverElementsDeep(raceResults);
   const drivers: ParsedDriver[] = driverEls.map((el) => {
-    const get = (t: string) => el.querySelector(`:scope > ${t}`)?.textContent?.trim() ?? "";
+    const get = (t: string) => childValue(el, t);
     const finishStatus = get("FinishStatus");
     const blt = parseFloat(get("BestLapTime"));
     const fin = parseFloat(get("FinishTime"));
