@@ -458,6 +458,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         is_offseason: isOffseason,
         approved_only: approvedOnly,
         briefing_required: briefingRequired,
+        separate_division_standings: separateDivisionStandings,
         banner_url: newBanner,
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
