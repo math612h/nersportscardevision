@@ -164,7 +164,7 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
                       <Users className="h-3 w-3" /> {count} medlem{count === 1 ? "" : "mer"}
                     </Badge>
                     {rating != null && (
-                      <Badge variant="outline" className="gap-1" title="Teamets gennemsnitlige rating">
+                      <Badge variant="outline" className="gap-1" title="Teamets rating (baseret på teamets resultater)">
                         <Star className="h-3 w-3 text-primary" /> {rating}
                       </Badge>
                     )}
