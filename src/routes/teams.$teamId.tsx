@@ -173,6 +173,11 @@ function TeamDetailPage() {
               <Badge variant="outline" className="gap-1">
                 <Users className="h-3 w-3" /> {(members ?? []).length} medlem{(members ?? []).length === 1 ? "" : "mer"}
               </Badge>
+              {teamRating != null && (
+                <Badge variant="outline" className="gap-1" title="Gennemsnit af medlemmernes rating">
+                  <Star className="h-3 w-3 text-primary" /> Team-rating {teamRating}
+                </Badge>
+              )}
             </div>
             {team.bio && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{team.bio}</p>}
             <div className="flex flex-wrap gap-2 pt-2">
