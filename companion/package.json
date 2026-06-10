@@ -1,6 +1,6 @@
 {
   "name": "lmu-danmark-tracker",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Leaderboard tracker LMU — uploader automatisk dine LMU omgangstider til LMU Danmark leaderboardet",
   "main": "electron/main.cjs",
   "author": "LMU Danmark",
