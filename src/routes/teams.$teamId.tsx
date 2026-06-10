@@ -173,7 +173,7 @@ function TeamDetailPage() {
                 <Users className="h-3 w-3" /> {(members ?? []).length} medlem{(members ?? []).length === 1 ? "" : "mer"}
               </Badge>
               {teamRating != null && (
-                <Badge variant="outline" className="gap-1" title="Gennemsnit af medlemmernes rating">
+                <Badge variant="outline" className="gap-1" title="Teamets rating (baseret på teamets resultater)">
                   <Star className="h-3 w-3 text-primary" /> Team-rating {teamRating}
                 </Badge>
               )}
