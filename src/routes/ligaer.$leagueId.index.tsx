@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { leaveLeague } from "@/lib/leagues.functions";
@@ -967,6 +968,20 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     setCarNumber(null);
     qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
     qc.invalidateQueries({ queryKey: ["profile", user.id] });
+    // Send signup-confirmation email (non-blocking)
+    if (user.email) {
+      const { data: leagueRow } = await supabase
+        .from("leagues")
+        .select("name")
+        .eq("id", leagueId)
+        .maybeSingle();
+      sendTransactionalEmail({
+        templateName: "league-signup-confirmation",
+        recipientEmail: user.email,
+        idempotencyKey: `league-signup-${leagueId}-${user.id}`,
+        templateData: { leagueName: leagueRow?.name ?? "din liga" },
+      });
+    }
   };
 
 
