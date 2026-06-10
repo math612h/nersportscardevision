@@ -210,6 +210,7 @@ function AdminLeagues() {
   const [isOffseason, setIsOffseason] = useState(false);
   const [approvedOnly, setApprovedOnly] = useState(false);
   const [briefingRequired, setBriefingRequired] = useState(true);
+  const [separateDivisionStandings, setSeparateDivisionStandings] = useState(false);
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
@@ -249,6 +250,7 @@ function AdminLeagues() {
       is_offseason: isOffseason,
       approved_only: approvedOnly,
       briefing_required: briefingRequired,
+      separate_division_standings: separateDivisionStandings,
       banner_url: bannerPath,
       event_settings: eventSettings as any,
       points_system: pointsSystem as any,
@@ -265,6 +267,7 @@ function AdminLeagues() {
     setIsOffseason(false);
     setApprovedOnly(false);
     setBriefingRequired(true);
+    setSeparateDivisionStandings(false);
     setConfigs([emptyConfig()]);
     setBannerFile(null);
     setEventSettings({});
@@ -310,6 +313,10 @@ function AdminLeagues() {
                 <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
                   <Checkbox checked={briefingRequired} onCheckedChange={(v) => setBriefingRequired(v === true)} />
                   <span className="text-sm">Drivers Briefing er obligatorisk (knap vises på afdelinger)</span>
+                </label>
+                <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+                  <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
+                  <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
                 </label>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
                 <div className="space-y-1 rounded-md border border-border p-2">
@@ -391,6 +398,7 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [isOffseason, setIsOffseason] = useState<boolean>(!!league.is_offseason);
   const [approvedOnly, setApprovedOnly] = useState<boolean>(!!league.approved_only);
   const [briefingRequired, setBriefingRequired] = useState<boolean>(league.briefing_required !== false);
+  const [separateDivisionStandings, setSeparateDivisionStandings] = useState<boolean>(!!league.separate_division_standings);
   const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()];
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
   const [bannerPath, setBannerPath] = useState<string | null>(league.banner_url ?? null);
@@ -417,6 +425,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setIsOffseason(!!league.is_offseason);
     setApprovedOnly(!!league.approved_only);
     setBriefingRequired(league.briefing_required !== false);
+    setSeparateDivisionStandings(!!league.separate_division_standings);
     setCfgs(Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()]);
     setBannerPath(league.banner_url ?? null);
     setBannerFile(null);
@@ -449,6 +458,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         is_offseason: isOffseason,
         approved_only: approvedOnly,
         briefing_required: briefingRequired,
+        separate_division_standings: separateDivisionStandings,
         banner_url: newBanner,
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
@@ -489,6 +499,10 @@ function EditLeagueDialog({ league }: { league: any }) {
           <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
             <Checkbox checked={briefingRequired} onCheckedChange={(v) => setBriefingRequired(v === true)} />
             <span className="text-sm">Drivers Briefing er obligatorisk (knap vises på afdelinger)</span>
+          </label>
+          <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+            <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
+            <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
           </label>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
           <div className="space-y-1 rounded-md border border-border p-2">

@@ -1,0 +1,1 @@
+ALTER TABLE public.leagues ADD COLUMN IF NOT EXISTS separate_division_standings boolean NOT NULL DEFAULT false;
