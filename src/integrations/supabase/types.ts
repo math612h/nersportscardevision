@@ -893,6 +893,41 @@ export type Database = {
           },
         ]
       }
+      team_ratings: {
+        Row: {
+          components: Json
+          confidence: number
+          percentile: number | null
+          score: number
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          components?: Json
+          confidence?: number
+          percentile?: number | null
+          score?: number
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          components?: Json
+          confidence?: number
+          percentile?: number | null
+          score?: number
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_ratings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: true
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       teams: {
         Row: {
           bio: string | null
@@ -1137,6 +1172,7 @@ export type Database = {
         Args: { _car_class: string; _league_id: string; _user_id: string }
         Returns: Json
       }
+      compute_team_score: { Args: { _team_id: string }; Returns: Json }
       compute_user_class_score: {
         Args: { _car_class: string; _user_id: string }
         Returns: Json
@@ -1153,10 +1189,13 @@ export type Database = {
         }[]
       }
       recompute_all_elo: { Args: never; Returns: undefined }
+      recompute_all_team_ratings: { Args: never; Returns: undefined }
       refresh_class_percentiles: {
         Args: { _car_class: string }
         Returns: undefined
       }
+      refresh_team_percentiles: { Args: never; Returns: undefined }
+      refresh_team_rating: { Args: { _team_id: string }; Returns: undefined }
       refresh_user_class_rating: {
         Args: { _car_class: string; _user_id: string }
         Returns: undefined
