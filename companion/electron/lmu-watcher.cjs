@@ -193,6 +193,7 @@ class LmuWatcher {
       let uploaded = 0;
       let processed = 0;
       let skipped = 0;
+      let duplicates = 0;
       let errors = 0;
       let lastNote = null;
       for (const f of files) {
@@ -203,6 +204,7 @@ class LmuWatcher {
           if (res && !res.error) processed += 1;
           if (res && res.uploaded) uploaded += res.uploaded;
           if (res && res.skipped) skipped += res.skipped;
+          if (res && res.duplicates) duplicates += res.duplicates;
           if (res && (res.note || res.reason)) lastNote = res.note || res.reason;
           if (res && !res.error) { this.seen.add(f.name); if (this.onSeenChanged) this.onSeenChanged(this.seen); }
         } catch (err) {
@@ -211,7 +213,7 @@ class LmuWatcher {
           lastNote = err.message;
         }
       }
-      const result = { uploaded, total: files.length, processed, skipped, errors, note: lastNote };
+      const result = { uploaded, total: files.length, processed, skipped, duplicates, errors, note: lastNote };
       if (this.onScanComplete) this.onScanComplete(result, { markFullScan });
       return result;
     } finally {

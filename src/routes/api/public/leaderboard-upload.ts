@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { parseLmuRaceFileServer } from "@/lib/lmu-parser-server";
-import { normalizeCarClass, nameSimilarity } from "@/lib/lmu-parser";
+import { normalizeCarClass, nameSimilarity, type ParsedRace } from "@/lib/lmu-parser";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -51,18 +51,29 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
             return Response.json({ error: "LMU-navn mangler på profilen" }, { status: 400, headers: CORS });
           }
 
-          const xml = await request.text();
-          if (!xml || xml.length < 50) {
+          const contentType = request.headers.get("content-type") ?? "";
+          const bodyText = await request.text();
+          if (!bodyText || bodyText.length < 5) {
             return Response.json({ error: "Tom eller ugyldig fil" }, { status: 400, headers: CORS });
           }
-          if (xml.length > 5_000_000) {
+          if (bodyText.length > 5_000_000) {
             return Response.json({ error: "Filen er for stor (max 5 MB)" }, { status: 413, headers: CORS });
           }
 
-          let parsed;
+          let parsed: ParsedRace;
           try {
-            parsed = parseLmuRaceFileServer(xml);
+            if (contentType.toLowerCase().includes("application/json")) {
+              const body = JSON.parse(bodyText);
+              const payload = body?.parsed;
+              if (!payload || typeof payload.track !== "string" || !Array.isArray(payload.drivers)) {
+                throw new Error("Ugyldigt companion-payload");
+              }
+              parsed = payload as ParsedRace;
+            } else {
+              parsed = parseLmuRaceFileServer(bodyText);
+            }
           } catch (e: any) {
+            console.warn("[leaderboard-upload] parse failed:", e?.message ?? e);
             return Response.json({ error: e?.message ?? "Kunne ikke læse filen" }, { status: 400, headers: CORS });
           }
 

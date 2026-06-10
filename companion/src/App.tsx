@@ -9,7 +9,7 @@ declare global {
       verifyOtp: (email: string, token: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
       signInWithToken: (token: string) => Promise<{ ok: boolean; error?: string; user?: any }>;
       signOut: () => Promise<{ ok: boolean }>;
-      scanNow: () => Promise<{ uploaded: number; total?: number; processed?: number; skipped?: number; errors?: number; error?: string }>;
+      scanNow: () => Promise<{ uploaded: number; total?: number; processed?: number; skipped?: number; duplicates?: number; errors?: number; error?: string }>;
       pickFolder: () => Promise<{ ok: boolean; folder?: string }>;
       clearFolder: () => Promise<{ ok: boolean }>;
       onStatusUpdate: (cb: (s: Status) => void) => () => void;
@@ -23,7 +23,7 @@ type Status = {
   lmu: { lmuFound: boolean; folder: string | null };
   uploadCount: number;
   lastError: string | null;
-  lastScan: { uploaded: number; total: number; processed?: number; skipped?: number; errors?: number; note?: string | null; busy?: boolean } | null;
+  lastScan: { uploaded: number; total: number; processed?: number; skipped?: number; duplicates?: number; errors?: number; note?: string | null; busy?: boolean } | null;
   scanning: boolean;
   customFolder?: string | null;
 };
@@ -150,7 +150,7 @@ function SignedIn({ status }: { status: Status }) {
 
       {status.lastScan && (
         <p className="hint" style={{ margin: 0 }}>
-          Sidste scan: {status.lastScan.total} fil{status.lastScan.total === 1 ? "" : "er"} læst, {status.lastScan.uploaded} tid{status.lastScan.uploaded === 1 ? "" : "er"} uploadet{status.lastScan.errors ? `, ${status.lastScan.errors} fejl` : ""}{status.lastScan.note ? ` — ${status.lastScan.note}` : ""}.
+          Sidste scan: {status.lastScan.processed ?? 0}/{status.lastScan.total} fil{status.lastScan.total === 1 ? "" : "er"} behandlet, {status.lastScan.uploaded} ny{status.lastScan.uploaded === 1 ? "" : "e"} tid{status.lastScan.uploaded === 1 ? "" : "er"}{status.lastScan.duplicates ? `, ${status.lastScan.duplicates} dublet${status.lastScan.duplicates === 1 ? "" : "ter"}` : ""}{status.lastScan.skipped ? `, ${status.lastScan.skipped} sprunget over` : ""}{status.lastScan.errors ? `, ${status.lastScan.errors} fejl` : ""}{status.lastScan.note ? ` — ${status.lastScan.note}` : ""}.
         </p>
       )}
 
