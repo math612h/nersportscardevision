@@ -1160,6 +1160,19 @@ export type Database = {
         Returns: undefined
       }
       refresh_user_rating_percentiles: { Args: never; Returns: undefined }
+      upload_leaderboard_time_with_device_token: {
+        Args: {
+          _best_lap_ms: number
+          _car_class: string
+          _car_model: string
+          _driver_name: string
+          _layout: string
+          _recorded_at: string
+          _token: string
+          _track: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "admin" | "racer"
