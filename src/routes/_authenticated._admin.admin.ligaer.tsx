@@ -425,6 +425,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setIsOffseason(!!league.is_offseason);
     setApprovedOnly(!!league.approved_only);
     setBriefingRequired(league.briefing_required !== false);
+    setSeparateDivisionStandings(!!league.separate_division_standings);
     setCfgs(Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()]);
     setBannerPath(league.banner_url ?? null);
     setBannerFile(null);
