@@ -161,7 +161,15 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
 
     let lbInserted = 0;
     if (lbRows.length > 0) {
-      const { error: lbErr } = await supabaseAdmin.from("leaderboard_times").insert(lbRows);
+      // Upsert so re-uploading the same session (or uploading race + quali for the
+      // same event) doesn't violate the (user_id, track, layout, car_class, recorded_at)
+      // unique index. Last write wins per (user, car_class, recorded_at).
+      const { error: lbErr } = await supabaseAdmin
+        .from("leaderboard_times")
+        .upsert(lbRows, {
+          onConflict: "user_id,track,layout,car_class,recorded_at",
+          ignoreDuplicates: false,
+        });
       if (lbErr) throw new Error(lbErr.message);
       lbInserted = lbRows.length;
     }
