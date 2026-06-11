@@ -147,6 +147,8 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     if (carType) carModel = manufacturer && !carType.toLowerCase().includes(manufacturer.toLowerCase()) ? `${manufacturer} ${carType}` : carType;
     else if (manufacturer) carModel = manufacturer;
     else if (vehFile) carModel = vehFile;
+    const pos = parseInt(get("Position"), 10);
+    const laps = parseInt(get("Laps") || get("LapsCompleted"), 10);
     return {
       name: get("Name"),
       carClass,
@@ -155,6 +157,8 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
       bestLapMs: Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null,
       finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
       finished: finishStatus.toLowerCase().startsWith("finished"),
+      position: Number.isFinite(pos) && pos > 0 ? pos : null,
+      laps: Number.isFinite(laps) && laps >= 0 ? laps : null,
     };
   });
 
