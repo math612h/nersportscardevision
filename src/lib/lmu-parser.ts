@@ -5,11 +5,13 @@
 export type ParsedDriver = {
   name: string;
   carClass: string;
-  carClassNorm: string; // normalized display class (Hypercar / LMGT3 / LMP2 / LMP3 / GT-E)
-  carModel: string | null; // specific vehicle, e.g. "Ferrari 499P"
+  carClassNorm: string;
+  carModel: string | null;
   bestLapMs: number | null;
   finishMs: number | null;
   finished: boolean;
+  position: number | null;
+  laps: number | null;
 };
 
 export type ParsedRace = {
@@ -145,6 +147,8 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     if (carType) carModel = manufacturer && !carType.toLowerCase().includes(manufacturer.toLowerCase()) ? `${manufacturer} ${carType}` : carType;
     else if (manufacturer) carModel = manufacturer;
     else if (vehFile) carModel = vehFile;
+    const pos = parseInt(get("Position"), 10);
+    const laps = parseInt(get("Laps") || get("LapsCompleted"), 10);
     return {
       name: get("Name"),
       carClass,
@@ -153,6 +157,8 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
       bestLapMs: Number.isFinite(blt) && blt > 0 ? Math.round(blt * 1000) : null,
       finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
       finished: finishStatus.toLowerCase().startsWith("finished"),
+      position: Number.isFinite(pos) && pos > 0 ? pos : null,
+      laps: Number.isFinite(laps) && laps >= 0 ? laps : null,
     };
   });
 
