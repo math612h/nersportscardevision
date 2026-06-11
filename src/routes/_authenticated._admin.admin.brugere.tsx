@@ -230,3 +230,47 @@ function EditNameDialog({ profile }: { profile: Profile }) {
     </Dialog>
   );
 }
+
+function DeleteConfirmDialog({
+  profile,
+  onConfirm,
+  isPending,
+}: {
+  profile: Profile;
+  onConfirm: () => void;
+  isPending: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Slet bruger">
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Bekræft sletning</DialogTitle>
+          <DialogDescription>
+            Er du sikker på, at du vil slette <strong>{profile.display_name || "(uden navn)"}</strong>?<br />
+            Denne handling kan ikke fortrydes.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              onConfirm();
+              setOpen(false);
+            }}
+            disabled={isPending}
+          >
+            Slet bruger
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
