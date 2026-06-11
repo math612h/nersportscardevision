@@ -9,6 +9,7 @@ const inputSchema = z.object({
   divisionId: z.string().uuid(),
   xml: z.string().min(50).max(5_000_000),
   round: z.number().int().min(1).max(99).optional(),
+  sessionType: z.enum(["race", "qualifying"]).default("race"),
 });
 
 export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
