@@ -246,7 +246,7 @@ function NyhedsbrevAdmin() {
                 </CardHeader>
                 {(p.body || p.image_path) && (
                   <CardContent className="space-y-3">
-                    {p.body && <p className="whitespace-pre-wrap text-sm">{p.body}</p>}
+                    {p.body && <div className="prose-news text-sm" dangerouslySetInnerHTML={{ __html: p.body }} />}
                     {p.image_path && (
                       imageMap?.[p.image_path] ? (
                         <img
