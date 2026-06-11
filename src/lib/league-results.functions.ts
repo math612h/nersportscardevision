@@ -116,11 +116,25 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
 
     const resultRows: any[] = [];
     for (const [carClass, arr] of byClass) {
-      const finished = arr.filter((d) => d.finished && d.finish_ms != null)
-        .sort((a, b) => (a.finish_ms! - b.finish_ms!));
-      const unfinished = arr.filter((d) => !(d.finished && d.finish_ms != null))
-        .sort((a, b) => (a.best_lap_ms ?? Number.MAX_SAFE_INTEGER) - (b.best_lap_ms ?? Number.MAX_SAFE_INTEGER));
-      const ordered = [...finished, ...unfinished];
+      // If XML provides explicit Position for every driver in class, trust it.
+      const allHavePos = arr.every((d) => d.position != null);
+      let ordered: typeof arr;
+      if (allHavePos) {
+        ordered = [...arr].sort((a, b) => (a.position! - b.position!));
+      } else {
+        // Fallback: rank by laps desc, then finish time asc, then best lap asc.
+        const finished = arr.filter((d) => d.finished && d.finish_ms != null)
+          .sort((a, b) =>
+            ((b.laps ?? 0) - (a.laps ?? 0)) ||
+            ((a.finish_ms ?? Number.MAX_SAFE_INTEGER) - (b.finish_ms ?? Number.MAX_SAFE_INTEGER))
+          );
+        const unfinished = arr.filter((d) => !(d.finished && d.finish_ms != null))
+          .sort((a, b) =>
+            ((b.laps ?? 0) - (a.laps ?? 0)) ||
+            ((a.best_lap_ms ?? Number.MAX_SAFE_INTEGER) - (b.best_lap_ms ?? Number.MAX_SAFE_INTEGER))
+          );
+        ordered = [...finished, ...unfinished];
+      }
       ordered.forEach((d, idx) => {
         const position = idx + 1;
         const points = pointsTable[idx] ?? 0;
