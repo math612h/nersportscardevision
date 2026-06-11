@@ -406,7 +406,7 @@ function ReplayFileButton({ divisionId }: { divisionId: string }) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (file.size > 200_000_000) { toast.error("Filen er for stor (max 200 MB)"); return; }
+    if (file.size > 500_000_000) { toast.error("Filen er for stor (max 500 MB)"); return; }
     setBusy(true);
     try {
       const path = `${divisionId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
@@ -450,7 +450,7 @@ function ReplayFileButton({ divisionId }: { divisionId: string }) {
           <Button disabled={busy} onClick={() => fileRef.current?.click()} className="gap-1">
             <Upload className="h-4 w-4" /> {busy ? "Uploader…" : "Upload replay fil"}
           </Button>
-          <p className="text-xs text-muted-foreground">Max 200 MB. Andre admins kan hente filen.</p>
+          <p className="text-xs text-muted-foreground">Max 500 MB. Andre admins kan hente filen.</p>
           <div className="space-y-1">
             {files?.length === 0 && <p className="text-sm text-muted-foreground">Ingen filer endnu.</p>}
             {files?.map((f) => (
