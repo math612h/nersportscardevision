@@ -468,7 +468,9 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                           </div>
                         )}
                         {(e as any).car_model && (
-                          <div className="truncate text-[11px] text-muted-foreground">{(e as any).car_model}</div>
+                          <div className="mt-0.5 inline-flex items-center rounded bg-primary/15 px-1.5 py-0.5 text-[11px] font-semibold text-primary ring-1 ring-primary/40 max-w-full truncate">
+                            {(e as any).car_model}
+                          </div>
                         )}
                       </div>
                       {(e as any).team_id && teamMap?.[(e as any).team_id] && (
