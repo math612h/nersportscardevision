@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2, Timer } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2, Timer, Trophy } from "lucide-react";
+import { msToLapStr } from "@/lib/lmu-parser";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -195,6 +196,39 @@ function DivisionDetail() {
     },
   });
 
+  const { data: results } = useQuery({
+    queryKey: ["division-results", divisionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("league_results")
+        .select("id,user_id,car_class,car_model,position,points,best_lap_ms,session_type")
+        .eq("division_id", divisionId)
+        .order("session_type", { ascending: true })
+        .order("car_class", { ascending: true })
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const resultUserIds = Array.from(new Set((results ?? []).map((r) => r.user_id)));
+  const { data: resultNames } = useQuery({
+    queryKey: ["result-driver-names", resultUserIds.sort().join(",")],
+    enabled: resultUserIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name, lmu_name")
+        .in("id", resultUserIds);
+      if (error) throw error;
+      const map = new Map<string, string>();
+      for (const p of data ?? []) map.set(p.id, p.display_name || p.lmu_name || "Ukendt kører");
+      return map;
+    },
+  });
+
+
+
 
   const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
   const reasonByUser = new Map((absenceReasons ?? []).map((a) => [a.user_id, a.reason]));
@@ -345,6 +379,58 @@ function DivisionDetail() {
         )}
         {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
       </div>
+
+      {(results?.length ?? 0) > 0 && (() => {
+        const sessions: { type: "race" | "qualifying"; label: string }[] = [
+          { type: "race", label: "Race resultater" },
+          { type: "qualifying", label: "Kvalifikation" },
+        ];
+        return (
+          <section className="space-y-4">
+            {sessions.map(({ type, label }) => {
+              const rows = (results ?? []).filter((r) => r.session_type === type);
+              if (rows.length === 0) return null;
+              const byClass = new Map<string, typeof rows>();
+              for (const r of rows) {
+                if (!byClass.has(r.car_class)) byClass.set(r.car_class, [] as any);
+                byClass.get(r.car_class)!.push(r);
+              }
+              return (
+                <div key={type} className="space-y-3">
+                  <div className="flex items-center gap-2 text-primary">
+                    <Trophy className="h-4 w-4" />
+                    <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{label}</h2>
+                  </div>
+                  {Array.from(byClass.entries()).map(([cls, list]) => (
+                    <Card key={cls}>
+                      <CardHeader className="pb-2"><CardTitle className="text-sm">{cls}</CardTitle></CardHeader>
+                      <CardContent className="pt-0">
+                        <ul className="divide-y divide-border">
+                          {list.sort((a, b) => (a.position ?? 999) - (b.position ?? 999)).map((r) => (
+                            <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
+                              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                                P{r.position}
+                              </span>
+                              <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? "Ukendt"} className="flex-1 truncate" />
+                              {r.car_model && <span className="hidden sm:inline text-xs text-muted-foreground truncate">{r.car_model}</span>}
+                              {r.best_lap_ms != null && (
+                                <span className="font-mono text-xs tabular-nums text-muted-foreground">{msToLapStr(r.best_lap_ms)}</span>
+                              )}
+                              {type === "race" && (
+                                <span className="font-mono text-xs tabular-nums font-semibold w-10 text-right">{r.points ?? 0}p</span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              );
+            })}
+          </section>
+        );
+      })()}
 
       <section className="space-y-4">
         <div className="flex items-center justify-between gap-2">
