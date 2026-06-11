@@ -382,3 +382,89 @@ function UploadResultButton({ leagueId, divisionId }: { leagueId: string; divisi
     </>
   );
 }
+
+function ReplayFileButton({ divisionId }: { divisionId: string }) {
+  const [open, setOpen] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState(false);
+  const qc = useQueryClient();
+
+  const { data: files, refetch } = useQuery({
+    queryKey: ["division-replays", divisionId, open],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase.storage.from("division-replays").list(divisionId, {
+        sortBy: { column: "created_at", order: "desc" },
+        limit: 100,
+      });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const onUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > 200_000_000) { toast.error("Filen er for stor (max 200 MB)"); return; }
+    setBusy(true);
+    try {
+      const path = `${divisionId}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error } = await supabase.storage.from("division-replays").upload(path, file, { upsert: false });
+      if (error) throw error;
+      toast.success("Replay uploadet");
+      await refetch();
+      qc.invalidateQueries({ queryKey: ["division-replays", divisionId] });
+    } catch (err: any) {
+      toast.error(err?.message ?? "Upload fejlede");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const download = async (name: string) => {
+    const { data, error } = await supabase.storage.from("division-replays").createSignedUrl(`${divisionId}/${name}`, 300);
+    if (error || !data) return toast.error(error?.message ?? "Kunne ikke hente fil");
+    window.open(data.signedUrl, "_blank");
+  };
+
+  const remove = async (name: string) => {
+    if (!confirm("Slet replay?")) return;
+    const { error } = await supabase.storage.from("division-replays").remove([`${divisionId}/${name}`]);
+    if (error) return toast.error(error.message);
+    toast.success("Slettet");
+    refetch();
+  };
+
+  const displayName = (name: string) => name.replace(/^\d+-/, "");
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" title="Replay fil"><Film className="h-4 w-4" /> Replay</Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Replay filer</DialogTitle></DialogHeader>
+        <div className="space-y-3">
+          <input ref={fileRef} type="file" className="hidden" onChange={onUpload} />
+          <Button disabled={busy} onClick={() => fileRef.current?.click()} className="gap-1">
+            <Upload className="h-4 w-4" /> {busy ? "Uploader…" : "Upload replay fil"}
+          </Button>
+          <p className="text-xs text-muted-foreground">Max 200 MB. Andre admins kan hente filen.</p>
+          <div className="space-y-1">
+            {files?.length === 0 && <p className="text-sm text-muted-foreground">Ingen filer endnu.</p>}
+            {files?.map((f) => (
+              <div key={f.name} className="flex items-center justify-between gap-2 rounded border border-border p-2 text-sm">
+                <span className="truncate">{displayName(f.name)}</span>
+                <div className="flex gap-1 shrink-0">
+                  <Button variant="ghost" size="sm" onClick={() => download(f.name)}><Download className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="sm" onClick={() => remove(f.name)}><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
