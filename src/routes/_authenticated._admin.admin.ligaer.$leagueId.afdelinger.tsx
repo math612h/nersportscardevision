@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef } from "react";
-import { ArrowLeft, Plus, Trash2, Pencil, Check, Upload } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Check, Upload, Film, Download } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { uploadLeagueRaceResult } from "@/lib/league-results.functions";
