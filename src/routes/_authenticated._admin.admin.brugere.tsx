@@ -170,6 +170,11 @@ function AdminUsersPage() {
                       )}
                     </Button>
                     <EditNameDialog profile={p} />
+                    <DeleteConfirmDialog
+                      profile={p}
+                      onConfirm={() => deleteMut.mutate({ userId: p.id })}
+                      isPending={deleteMut.isPending}
+                    />
                   </div>
                 </CardHeader>
               </Card>
