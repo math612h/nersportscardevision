@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Pencil, Shield, ShieldOff, ArrowLeft, ThumbsUp, Check } from "lucide-react";
+import { Users, Pencil, Shield, ShieldOff, ArrowLeft, ThumbsUp, Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,13 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { toggleUserRole } from "@/lib/users.functions";
+import { toggleUserRole, deleteUser } from "@/lib/users.functions";
 import { setProfileApproval } from "@/lib/leagues.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/brugere")({
