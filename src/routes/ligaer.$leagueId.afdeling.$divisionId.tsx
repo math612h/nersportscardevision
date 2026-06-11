@@ -195,6 +195,39 @@ function DivisionDetail() {
     },
   });
 
+  const { data: results } = useQuery({
+    queryKey: ["division-results", divisionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("league_results")
+        .select("id,user_id,car_class,car_model,position,points,best_lap_ms,session_type")
+        .eq("division_id", divisionId)
+        .order("session_type", { ascending: true })
+        .order("car_class", { ascending: true })
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const resultUserIds = Array.from(new Set((results ?? []).map((r) => r.user_id)));
+  const { data: resultNames } = useQuery({
+    queryKey: ["result-driver-names", resultUserIds.sort().join(",")],
+    enabled: resultUserIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name, lmu_name")
+        .in("id", resultUserIds);
+      if (error) throw error;
+      const map = new Map<string, string>();
+      for (const p of data ?? []) map.set(p.id, p.display_name || p.lmu_name || "Ukendt kører");
+      return map;
+    },
+  });
+
+
+
 
   const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
   const reasonByUser = new Map((absenceReasons ?? []).map((a) => [a.user_id, a.reason]));
