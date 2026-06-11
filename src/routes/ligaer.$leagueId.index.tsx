@@ -159,6 +159,19 @@ function LeagueDetail() {
     },
   });
 
+  const { data: leagueSignupCount } = useQuery({
+    queryKey: ["league-signup-count", leagueId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("entries")
+        .select("id", { count: "exact", head: true })
+        .eq("league_id", leagueId)
+        .eq("waitlist", false);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
 
   const trackFiles = useMemo(() => {
