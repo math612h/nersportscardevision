@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Pencil, Shield, ShieldOff, ArrowLeft, ThumbsUp, Check } from "lucide-react";
+import { Users, Pencil, Shield, ShieldOff, ArrowLeft, ThumbsUp, Check, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,13 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { toggleUserRole } from "@/lib/users.functions";
+import { toggleUserRole, deleteUser } from "@/lib/users.functions";
 import { setProfileApproval } from "@/lib/leagues.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/brugere")({
@@ -33,6 +34,7 @@ function AdminUsersPage() {
   const qc = useQueryClient();
   const toggleRole = useServerFn(toggleUserRole);
   const approveFn = useServerFn(setProfileApproval);
+  const deleteUserFn = useServerFn(deleteUser);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -76,6 +78,17 @@ function AdminUsersPage() {
     },
     onSuccess: (_, { approved }) => {
       toast.success(approved ? "Profil godkendt" : "Godkendelse fjernet");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      await deleteUserFn({ data: { userId } });
+    },
+    onSuccess: () => {
+      toast.success("Bruger slettet");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (e: Error) => toast.error(e.message),
@@ -157,6 +170,11 @@ function AdminUsersPage() {
                       )}
                     </Button>
                     <EditNameDialog profile={p} />
+                    <DeleteConfirmDialog
+                      profile={p}
+                      onConfirm={() => deleteMut.mutate({ userId: p.id })}
+                      isPending={deleteMut.isPending}
+                    />
                   </div>
                 </CardHeader>
               </Card>
@@ -207,6 +225,50 @@ function EditNameDialog({ profile }: { profile: Profile }) {
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
           <Button onClick={() => mut.mutate()} disabled={mut.isPending}>Gem</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DeleteConfirmDialog({
+  profile,
+  onConfirm,
+  isPending,
+}: {
+  profile: Profile;
+  onConfirm: () => void;
+  isPending: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" aria-label="Slet bruger">
+          <Trash2 className="h-4 w-4 text-destructive" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Bekræft sletning</DialogTitle>
+          <DialogDescription>
+            Er du sikker på, at du vil slette <strong>{profile.display_name || "(uden navn)"}</strong>?<br />
+            Denne handling kan ikke fortrydes.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
+          <Button
+            variant="destructive"
+            onClick={() => {
+              onConfirm();
+              setOpen(false);
+            }}
+            disabled={isPending}
+          >
+            Slet bruger
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
