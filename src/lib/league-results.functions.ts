@@ -125,22 +125,24 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
           car_model: d.car_model,
           best_lap_ms: d.best_lap_ms,
           position,
-          points,
+          points: data.sessionType === "qualifying" ? 0 : points,
+          session_type: data.sessionType,
         });
       });
     }
 
-    // Replace any existing results for this division (idempotent re-upload)
+    // Replace existing results for this division+session_type (idempotent re-upload)
     const { error: delErr } = await supabaseAdmin
       .from("league_results")
       .delete()
-      .eq("division_id", data.divisionId);
+      .eq("division_id", data.divisionId)
+      .eq("session_type", data.sessionType);
     if (delErr) throw new Error(delErr.message);
 
     const { error: insErr } = await supabaseAdmin.from("league_results").insert(resultRows);
     if (insErr) throw new Error(insErr.message);
 
-    // Also push into leaderboard_times with source='league'
+    // Push laps to leaderboard_times (both race + quali laps count as valid hot laps)
     const lbRows = matched
       .filter((d) => d.best_lap_ms != null)
       .map((d) => ({
@@ -164,9 +166,11 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       lbInserted = lbRows.length;
     }
 
-    // Mark division as completed
-    const newSettings = { ...(division.settings as any ?? {}), completed: true };
-    await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
+    // Mark division as completed when race file uploaded
+    if (data.sessionType === "race") {
+      const newSettings = { ...(division.settings as any ?? {}), completed: true };
+      await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
+    }
 
     return {
       inserted: resultRows.length,
