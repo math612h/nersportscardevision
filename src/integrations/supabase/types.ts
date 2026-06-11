@@ -372,6 +372,7 @@ export type Database = {
           points: number | null
           position: number | null
           round: number | null
+          session_type: string
           track: string
           updated_at: string
           user_id: string
@@ -390,6 +391,7 @@ export type Database = {
           points?: number | null
           position?: number | null
           round?: number | null
+          session_type?: string
           track: string
           updated_at?: string
           user_id: string
@@ -408,6 +410,7 @@ export type Database = {
           points?: number | null
           position?: number | null
           round?: number | null
+          session_type?: string
           track?: string
           updated_at?: string
           user_id?: string

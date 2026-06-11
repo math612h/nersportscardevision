@@ -342,35 +342,41 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
 }
 
 function UploadResultButton({ leagueId, divisionId }: { leagueId: string; divisionId: string }) {
-  const fileRef = useRef<HTMLInputElement | null>(null);
-  const [busy, setBusy] = useState(false);
+  const raceRef = useRef<HTMLInputElement | null>(null);
+  const qualiRef = useRef<HTMLInputElement | null>(null);
+  const [busy, setBusy] = useState<null | "race" | "qualifying">(null);
   const upload = useServerFn(uploadLeagueRaceResult);
 
-  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onPick = (sessionType: "race" | "qualifying") => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
     if (file.size > 5_000_000) { toast.error("Filen er for stor (max 5 MB)"); return; }
-    setBusy(true);
+    setBusy(sessionType);
     try {
       const xml = await file.text();
-      const res = await upload({ data: { leagueId, divisionId, xml } });
-      toast.success(`Liga-resultat gemt: ${res.inserted} placeringer, ${res.leaderboard_inserted} tider`);
+      const res = await upload({ data: { leagueId, divisionId, xml, sessionType } });
+      const label = sessionType === "qualifying" ? "Quali" : "Race";
+      toast.success(`${label}-resultat gemt: ${res.inserted} placeringer, ${res.leaderboard_inserted} tider`);
       if (res.unmatched?.length) {
         toast.warning(`Ikke matchet: ${res.unmatched.slice(0, 3).join(", ")}${res.unmatched.length > 3 ? "…" : ""}`);
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Upload fejlede");
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
   return (
     <>
-      <input ref={fileRef} type="file" accept=".xml,application/xml,text/xml" className="hidden" onChange={onPick} />
-      <Button variant="ghost" size="sm" disabled={busy} onClick={() => fileRef.current?.click()} title="Upload liga-resultat (XML)">
-        <Upload className="h-4 w-4" />
+      <input ref={raceRef} type="file" accept=".xml,application/xml,text/xml" className="hidden" onChange={onPick("race")} />
+      <input ref={qualiRef} type="file" accept=".xml,application/xml,text/xml" className="hidden" onChange={onPick("qualifying")} />
+      <Button variant="ghost" size="sm" disabled={busy !== null} onClick={() => qualiRef.current?.click()} title="Upload quali XML">
+        <Upload className="h-4 w-4" /> Quali
+      </Button>
+      <Button variant="ghost" size="sm" disabled={busy !== null} onClick={() => raceRef.current?.click()} title="Upload race XML">
+        <Upload className="h-4 w-4" /> Race
       </Button>
     </>
   );
