@@ -5,11 +5,13 @@
 export type ParsedDriver = {
   name: string;
   carClass: string;
-  carClassNorm: string; // normalized display class (Hypercar / LMGT3 / LMP2 / LMP3 / GT-E)
-  carModel: string | null; // specific vehicle, e.g. "Ferrari 499P"
+  carClassNorm: string;
+  carModel: string | null;
   bestLapMs: number | null;
   finishMs: number | null;
   finished: boolean;
+  position: number | null;
+  laps: number | null;
 };
 
 export type ParsedRace = {
