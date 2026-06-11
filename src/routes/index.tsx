@@ -326,7 +326,10 @@ function NewsPostsSection() {
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Nyhed</p>
             <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{post.title}</h2>
             {post.body && (
-              <p className="whitespace-pre-wrap text-sm text-foreground/90">{post.body}</p>
+              <div
+                className="prose-news text-sm text-foreground/90"
+                dangerouslySetInnerHTML={{ __html: post.body }}
+              />
             )}
           </div>
           {post.image_path && imageMap?.[post.image_path] && (
