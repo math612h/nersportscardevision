@@ -34,6 +34,7 @@ function AdminUsersPage() {
   const qc = useQueryClient();
   const toggleRole = useServerFn(toggleUserRole);
   const approveFn = useServerFn(setProfileApproval);
+  const deleteUserFn = useServerFn(deleteUser);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-users"],
@@ -77,6 +78,17 @@ function AdminUsersPage() {
     },
     onSuccess: (_, { approved }) => {
       toast.success(approved ? "Profil godkendt" : "Godkendelse fjernet");
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: async ({ userId }: { userId: string }) => {
+      await deleteUserFn({ data: { userId } });
+    },
+    onSuccess: () => {
+      toast.success("Bruger slettet");
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (e: Error) => toast.error(e.message),
