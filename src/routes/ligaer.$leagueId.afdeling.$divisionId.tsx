@@ -363,6 +363,15 @@ function DivisionDetail() {
 
 
       <div className="flex flex-wrap gap-2">
+        {(results?.length ?? 0) > 0 && (
+          <Button
+            variant="secondary"
+            className="gap-1"
+            onClick={() => document.getElementById("resultater")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          >
+            <Trophy className="h-4 w-4" /> Se resultater
+          </Button>
+        )}
         {!user && (
           <Button onClick={() => navigate({ to: "/login" })}>Log ind</Button>
         )}
