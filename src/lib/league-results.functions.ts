@@ -83,7 +83,7 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
           if (s >= 0.85 && s > best) { best = s; matchId = p.id; }
         }
       }
-      if (!matchId) { unmatched.push(d.name); continue; }
+      if (!matchId || !entryUserIds.has(matchId)) { unmatched.push(d.name); continue; }
       matched.push({
         user_id: matchId,
         driver_name: d.name,
