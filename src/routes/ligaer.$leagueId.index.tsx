@@ -1104,8 +1104,8 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2" disabled={alreadySignedUp || !signupOpen || blockedByApprovedOnly} title={blockedByApprovedOnly ? "Kun godkendte profiler kan tilmelde sig denne liga" : undefined}>
-          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : blockedByApprovedOnly ? "Kun godkendte" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
+        <Button size="lg" className="gap-2 px-6 text-base font-semibold shadow-lg shadow-primary/30 ring-2 ring-primary/40 hover:shadow-primary/50 hover:scale-[1.02] transition" disabled={alreadySignedUp || !signupOpen || blockedByApprovedOnly} title={blockedByApprovedOnly ? "Kun godkendte profiler kan tilmelde sig denne liga" : undefined}>
+          <UserPlus className="h-5 w-5" /> {alreadySignedUp ? "Du er tilmeldt" : blockedByApprovedOnly ? "Kun godkendte" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
