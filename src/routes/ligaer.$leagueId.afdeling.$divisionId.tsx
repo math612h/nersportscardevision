@@ -395,7 +395,8 @@ function DivisionDetail() {
           { type: "qualifying", label: "Kvalifikation" },
         ];
         return (
-          <section className="space-y-4">
+          <section id="resultater" className="space-y-4 scroll-mt-24">
+
             {sessions.map(({ type, label }) => {
               const rows = (results ?? []).filter((r) => r.session_type === type);
               if (rows.length === 0) return null;
