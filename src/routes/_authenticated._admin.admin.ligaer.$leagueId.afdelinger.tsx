@@ -84,6 +84,7 @@ function AdminDivisions() {
                   </CardTitle>
                   <div className="flex gap-1">
                     <UploadResultButton leagueId={leagueId} divisionId={d.id} />
+                    <ReplayFileButton divisionId={d.id} />
                     <EditDivisionDialog division={d} onDone={() => qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] })} />
                     <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet afdeling?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </div>
