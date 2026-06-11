@@ -67,6 +67,8 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       best_lap_ms: number | null;
       finish_ms: number | null;
       finished: boolean;
+      position: number | null;
+      laps: number | null;
     };
 
     const matched: Matched[] = [];
@@ -92,6 +94,8 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
         best_lap_ms: d.bestLapMs,
         finish_ms: d.finishMs,
         finished: d.finished,
+        position: d.position,
+        laps: d.laps,
       });
     }
 
