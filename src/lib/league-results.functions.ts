@@ -28,15 +28,21 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       throw new Error("Kun admins kan uploade liga-resultater.");
     }
 
-    // Load league + division
-    const [{ data: league, error: lErr }, { data: division, error: dErr }] = await Promise.all([
+    // Load league + division + entries (only registered league participants count)
+    const [{ data: league, error: lErr }, { data: division, error: dErr }, { data: entries, error: eErr }] = await Promise.all([
       supabaseAdmin.from("leagues").select("id,points_system").eq("id", data.leagueId).maybeSingle(),
       supabaseAdmin.from("divisions").select("id,league_id,track,layout,settings").eq("id", data.divisionId).maybeSingle(),
+      supabaseAdmin.from("entries").select("user_id,car_class,waitlist").eq("league_id", data.leagueId),
     ]);
     if (lErr) throw new Error(lErr.message);
     if (dErr) throw new Error(dErr.message);
+    if (eErr) throw new Error(eErr.message);
     if (!league) throw new Error("Liga findes ikke.");
     if (!division || division.league_id !== data.leagueId) throw new Error("Afdeling tilhører ikke ligaen.");
+
+    const entryUserIds = new Set(
+      (entries ?? []).filter((e: any) => !e.waitlist).map((e: any) => e.user_id as string)
+    );
 
     // Parse XML
     let parsed;
