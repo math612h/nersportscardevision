@@ -14,14 +14,15 @@ type Props = {
 type Tier = { label: string; cls: string };
 
 function tierFor(percentile: number | null | undefined): Tier {
-  // Tæller fra toppen: top 10% → guld (elite), top 25% → guld, top 50% → gul, ellers orange
+  // Tæller fra toppen: top 10% → blå, top 25% → guld, top 50% → grøn, top 75% → gul, ellers orange
   const p = percentile ?? null;
   if (p == null) {
     return { label: "Ingen tier endnu", cls: "border-muted-foreground/40 text-muted-foreground" };
   }
-  if (p >= 90) return { label: "Top 10% · Guld", cls: "border-amber-400/70 text-amber-600 dark:text-amber-300 bg-amber-400/10" };
-  if (p >= 75) return { label: "Top 25% · Guld", cls: "border-amber-500/60 text-amber-700 dark:text-amber-400 bg-amber-500/5" };
-  if (p >= 50) return { label: "Top 50% · Gul", cls: "border-yellow-500/60 text-yellow-700 dark:text-yellow-400 bg-yellow-500/5" };
+  if (p >= 90) return { label: "Top 10% · Blå", cls: "border-blue-400/70 text-blue-600 dark:text-blue-300 bg-blue-400/10" };
+  if (p >= 75) return { label: "Top 25% · Guld", cls: "border-amber-400/70 text-amber-600 dark:text-amber-300 bg-amber-400/10" };
+  if (p >= 50) return { label: "Top 50% · Grøn", cls: "border-emerald-500/60 text-emerald-700 dark:text-emerald-400 bg-emerald-500/5" };
+  if (p >= 25) return { label: "Top 75% · Gul", cls: "border-yellow-500/60 text-yellow-700 dark:text-yellow-400 bg-yellow-500/5" };
   return { label: "Orange", cls: "border-orange-500/60 text-orange-700 dark:text-orange-400 bg-orange-500/5" };
 }
 
