@@ -142,37 +142,10 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
     const { error: insErr } = await supabaseAdmin.from("league_results").insert(resultRows);
     if (insErr) throw new Error(insErr.message);
 
-    // Push laps to leaderboard_times (both race + quali laps count as valid hot laps)
-    const lbRows = matched
-      .filter((d) => d.best_lap_ms != null)
-      .map((d) => ({
-        user_id: d.user_id,
-        driver_name: d.driver_name,
-        track: parsed.track,
-        layout: parsed.layout,
-        car_class: d.car_class,
-        car_model: d.car_model,
-        best_lap_ms: d.best_lap_ms as number,
-        source: "league" as const,
-        uploaded_by: userId,
-        division_id: data.divisionId,
-        recorded_at: parsed.recordedAt,
-      }));
+    // Leaderboard upload removed for league results to avoid unique constraint
+    // conflicts when re-uploading or uploading both race + quali for an event.
+    const lbInserted = 0;
 
-    let lbInserted = 0;
-    if (lbRows.length > 0) {
-      // Upsert so re-uploading the same session (or uploading race + quali for the
-      // same event) doesn't violate the (user_id, track, layout, car_class, recorded_at)
-      // unique index. Last write wins per (user, car_class, recorded_at).
-      const { error: lbErr } = await supabaseAdmin
-        .from("leaderboard_times")
-        .upsert(lbRows, {
-          onConflict: "user_id,track,layout,car_class,recorded_at",
-          ignoreDuplicates: false,
-        });
-      if (lbErr) throw new Error(lbErr.message);
-      lbInserted = lbRows.length;
-    }
 
     // Mark division as completed when race file uploaded
     if (data.sessionType === "race") {
