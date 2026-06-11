@@ -14,15 +14,15 @@ type Props = {
 type Tier = { label: string; cls: string };
 
 function tierFor(percentile: number | null | undefined): Tier {
-  // Tæller fra toppen: top 5% → blå, top 25% → guld, top 50% → sølv, ellers bronze
+  // Tæller fra toppen: top 10% → guld (elite), top 25% → guld, top 50% → gul, ellers orange
   const p = percentile ?? null;
   if (p == null) {
     return { label: "Ingen tier endnu", cls: "border-muted-foreground/40 text-muted-foreground" };
   }
-  if (p >= 95) return { label: "Top 5% · Blå", cls: "border-sky-500/60 text-sky-700 dark:text-sky-400 bg-sky-500/5" };
+  if (p >= 90) return { label: "Top 10% · Guld", cls: "border-amber-400/70 text-amber-600 dark:text-amber-300 bg-amber-400/10" };
   if (p >= 75) return { label: "Top 25% · Guld", cls: "border-amber-500/60 text-amber-700 dark:text-amber-400 bg-amber-500/5" };
-  if (p >= 50) return { label: "Top 50% · Sølv", cls: "border-slate-400/60 text-slate-700 dark:text-slate-300 bg-slate-400/5" };
-  return { label: "Bronze", cls: "border-orange-700/60 text-orange-800 dark:text-orange-400 bg-orange-700/5" };
+  if (p >= 50) return { label: "Top 50% · Gul", cls: "border-yellow-500/60 text-yellow-700 dark:text-yellow-400 bg-yellow-500/5" };
+  return { label: "Orange", cls: "border-orange-500/60 text-orange-700 dark:text-orange-400 bg-orange-500/5" };
 }
 
 export function RatingBadge({ score, percentile, confidence, carClass, size = "sm", showLabel = false }: Props) {
