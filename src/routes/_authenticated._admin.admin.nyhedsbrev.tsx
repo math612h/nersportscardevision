@@ -170,13 +170,11 @@ function NyhedsbrevAdmin() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="news-body">Tekst</Label>
-              <Textarea
-                id="news-body"
+              <RichTextEditor
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={setBody}
                 placeholder="Skriv nyhedsteksten her…"
-                rows={5}
-                maxLength={5000}
+                minHeight={140}
               />
             </div>
             <div className="space-y-2">
