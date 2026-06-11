@@ -301,7 +301,7 @@ function LeagueDetail() {
                         </Badge>
                       )}
                       {d.race_date && !completed && <RaceCountdown raceDate={d.race_date} />}
-                      <Badge variant="outline">{d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
+                      <Badge variant="outline">{leagueSignupCount ?? d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
                     </div>
                     {slots.length > 0 && (
                       <div className="flex flex-wrap items-center gap-1.5">
