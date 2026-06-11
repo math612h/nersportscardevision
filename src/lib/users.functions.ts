@@ -37,3 +37,33 @@ export const toggleUserRole = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+export const deleteUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) =>
+    z.object({ userId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId: callerId } = context;
+
+    // Verify caller is admin
+    const { data: roleCheck, error: roleErr } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerId)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (roleErr) throw roleErr;
+    if (!roleCheck) throw new Error("Unauthorized: only admins can delete users");
+
+    // Prevent self-deletion
+    if (data.userId === callerId) {
+      throw new Error("Du kan ikke slette din egen konto");
+    }
+
+    // Delete from Supabase Auth (cascades to profiles if FK is set up)
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (authError) throw authError;
+
+    return { ok: true };
+  });
