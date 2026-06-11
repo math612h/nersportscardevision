@@ -1474,3 +1474,157 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
     </Dialog>
   );
 }
+
+type RaceResultRow = {
+  id: string;
+  division_id: string | null;
+  car_class: string;
+  car_model: string | null;
+  best_lap_ms: number | null;
+  position: number | null;
+  session_type: string;
+  user_id: string;
+};
+
+function msToLap(ms: number | null) {
+  if (ms == null) return "—";
+  const m = Math.floor(ms / 60000);
+  const s = ((ms % 60000) / 1000).toFixed(3).padStart(6, "0");
+  return m > 0 ? `${m}:${s}` : s;
+}
+
+function RaceDataResults({ leagueId }: { leagueId: string }) {
+  const [view, setView] = useState<"race" | "qualifying">("race");
+
+  const { data: rows } = useQuery({
+    queryKey: ["league-results-xml", leagueId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("league_results")
+        .select("id,division_id,car_class,car_model,best_lap_ms,position,session_type,user_id")
+        .eq("league_id", leagueId)
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as RaceResultRow[];
+    },
+  });
+
+  const { data: divisions } = useQuery({
+    queryKey: ["league-divisions-lite", leagueId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("divisions")
+        .select("id,name,race_date")
+        .eq("league_id", leagueId)
+        .order("race_date", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const userIds = useMemo(() => Array.from(new Set((rows ?? []).map((r) => r.user_id))), [rows]);
+  const { data: profiles } = useQuery({
+    queryKey: ["profiles-names", userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("id,display_name,lmu_name").in("id", userIds);
+      if (error) throw error;
+      const m: Record<string, string> = {};
+      for (const p of (data ?? []) as any[]) m[p.id] = p.display_name ?? p.lmu_name ?? "Kører";
+      return m;
+    },
+  });
+
+  const filtered = (rows ?? []).filter((r) => r.session_type === view);
+  if (!rows || rows.length === 0) return null;
+
+  const byDiv = new Map<string, RaceResultRow[]>();
+  for (const r of filtered) {
+    const k = r.division_id ?? "_";
+    if (!byDiv.has(k)) byDiv.set(k, []);
+    byDiv.get(k)!.push(r);
+  }
+  const divName = (id: string | null) => (divisions ?? []).find((d: any) => d.id === id)?.name ?? "Afdeling";
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2 text-primary">
+          <Trophy className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Resultatfiler</h2>
+        </div>
+        <div className="inline-flex rounded-md border border-border p-0.5">
+          <button
+            type="button"
+            onClick={() => setView("race")}
+            className={`px-3 py-1 text-xs font-medium rounded ${view === "race" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Race results
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("qualifying")}
+            className={`px-3 py-1 text-xs font-medium rounded ${view === "qualifying" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Quali results
+          </button>
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <Card>
+          <CardContent className="py-6 text-center text-sm text-muted-foreground">
+            Ingen {view === "race" ? "race" : "quali"}-fil uploadet endnu.
+          </CardContent>
+        </Card>
+      ) : (
+        Array.from(byDiv.entries()).map(([divId, items]) => {
+          const byClass = new Map<string, RaceResultRow[]>();
+          for (const r of items) {
+            if (!byClass.has(r.car_class)) byClass.set(r.car_class, []);
+            byClass.get(r.car_class)!.push(r);
+          }
+          return (
+            <div key={divId} className="space-y-3">
+              <div className="text-sm font-semibold">{divName(divId === "_" ? null : divId)}</div>
+              {Array.from(byClass.entries()).map(([cls, list]) => (
+                <Card key={cls}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <span>{cls}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0 overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-left text-xs text-muted-foreground">
+                          <th className="py-1 pr-2 w-8">#</th>
+                          <th className="py-1 pr-2">Kører</th>
+                          <th className="py-1 pr-2">Bil</th>
+                          <th className="py-1 pl-2 w-24 text-right">Bedste omg.</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {list
+                          .slice()
+                          .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
+                          .map((r) => (
+                            <tr key={r.id} className="border-t border-border">
+                              <td className="py-1.5 pr-2 font-semibold tabular-nums">{r.position ?? "–"}</td>
+                              <td className="py-1.5 pr-2 truncate">{profiles?.[r.user_id] ?? "Kører"}</td>
+                              <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{r.car_model ?? "–"}</td>
+                              <td className="py-1.5 pl-2 text-right font-mono tabular-nums">{msToLap(r.best_lap_ms)}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          );
+        })
+      )}
+    </section>
+  );
+}
