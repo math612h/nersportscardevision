@@ -364,7 +364,7 @@ function EditNewsDialog({ post }: { post: NewsPost }) {
           </div>
           <div className="space-y-2">
             <Label>Tekst</Label>
-            <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} maxLength={5000} />
+            <RichTextEditor value={body} onChange={setBody} minHeight={140} />
           </div>
           <div className="space-y-2">
             <Label>Forsvinder den</Label>
