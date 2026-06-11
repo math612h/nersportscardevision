@@ -159,6 +159,19 @@ function LeagueDetail() {
     },
   });
 
+  const { data: leagueSignupCount } = useQuery({
+    queryKey: ["league-signup-count", leagueId],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("entries")
+        .select("id", { count: "exact", head: true })
+        .eq("league_id", leagueId)
+        .eq("waitlist", false);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
 
   const trackFiles = useMemo(() => {
@@ -288,7 +301,7 @@ function LeagueDetail() {
                         </Badge>
                       )}
                       {d.race_date && !completed && <RaceCountdown raceDate={d.race_date} />}
-                      <Badge variant="outline">{d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
+                      <Badge variant="outline">{leagueSignupCount ?? d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
                     </div>
                     {slots.length > 0 && (
                       <div className="flex flex-wrap items-center gap-1.5">
@@ -455,7 +468,9 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
                           </div>
                         )}
                         {(e as any).car_model && (
-                          <div className="truncate text-[11px] text-muted-foreground">{(e as any).car_model}</div>
+                          <div className="mt-0.5 inline-flex items-center rounded bg-primary/15 px-1.5 py-0.5 text-[11px] font-semibold text-primary ring-1 ring-primary/40 max-w-full truncate">
+                            {(e as any).car_model}
+                          </div>
                         )}
                       </div>
                       {(e as any).team_id && teamMap?.[(e as any).team_id] && (
@@ -1091,8 +1106,8 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2" disabled={alreadySignedUp || !signupOpen || blockedByApprovedOnly} title={blockedByApprovedOnly ? "Kun godkendte profiler kan tilmelde sig denne liga" : undefined}>
-          <UserPlus className="h-4 w-4" /> {alreadySignedUp ? "Du er tilmeldt" : blockedByApprovedOnly ? "Kun godkendte" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
+        <Button size="lg" className="gap-2 px-6 text-base font-semibold shadow-lg shadow-primary/30 ring-2 ring-primary/40 hover:shadow-primary/50 hover:scale-[1.02] transition" disabled={alreadySignedUp || !signupOpen || blockedByApprovedOnly} title={blockedByApprovedOnly ? "Kun godkendte profiler kan tilmelde sig denne liga" : undefined}>
+          <UserPlus className="h-5 w-5" /> {alreadySignedUp ? "Du er tilmeldt" : blockedByApprovedOnly ? "Kun godkendte" : signupOpen ? "Tilmeld dig" : "Tilmelding lukket"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">

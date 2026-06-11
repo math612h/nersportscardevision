@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/RichTextEditor";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -170,13 +170,11 @@ function NyhedsbrevAdmin() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="news-body">Tekst</Label>
-              <Textarea
-                id="news-body"
+              <RichTextEditor
                 value={body}
-                onChange={(e) => setBody(e.target.value)}
+                onChange={setBody}
                 placeholder="Skriv nyhedsteksten her…"
-                rows={5}
-                maxLength={5000}
+                minHeight={140}
               />
             </div>
             <div className="space-y-2">
@@ -248,7 +246,7 @@ function NyhedsbrevAdmin() {
                 </CardHeader>
                 {(p.body || p.image_path) && (
                   <CardContent className="space-y-3">
-                    {p.body && <p className="whitespace-pre-wrap text-sm">{p.body}</p>}
+                    {p.body && <div className="prose-news text-sm" dangerouslySetInnerHTML={{ __html: p.body }} />}
                     {p.image_path && (
                       imageMap?.[p.image_path] ? (
                         <img
@@ -366,7 +364,7 @@ function EditNewsDialog({ post }: { post: NewsPost }) {
           </div>
           <div className="space-y-2">
             <Label>Tekst</Label>
-            <Textarea value={body} onChange={(e) => setBody(e.target.value)} rows={5} maxLength={5000} />
+            <RichTextEditor value={body} onChange={setBody} minHeight={140} />
           </div>
           <div className="space-y-2">
             <Label>Forsvinder den</Label>
