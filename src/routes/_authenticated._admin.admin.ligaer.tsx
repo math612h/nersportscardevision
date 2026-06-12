@@ -465,6 +465,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
+        discord_role_id: discordRoleId.trim() || null,
       } as any)
       .eq("id", league.id);
     setSaving(false);
