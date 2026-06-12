@@ -346,7 +346,6 @@ function MyTeamsCard({ userId }: { userId: string | null }) {
 
 // ---------- Device tokens for the desktop companion app ----------
 import { useMutation } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { Copy, KeyRound, Plus, Trash2, Monitor } from "lucide-react";
 import {
   Dialog,
