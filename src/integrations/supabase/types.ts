@@ -442,6 +442,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          discord_role_id: string | null
           driver_category: string | null
           event_settings: Json
           id: string
@@ -461,6 +462,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          discord_role_id?: string | null
           driver_category?: string | null
           event_settings?: Json
           id?: string
@@ -480,6 +482,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          discord_role_id?: string | null
           driver_category?: string | null
           event_settings?: Json
           id?: string
@@ -625,6 +628,8 @@ export type Database = {
         Row: {
           age: number | null
           created_at: string
+          discord_linked_at: string | null
+          discord_user_id: string | null
           discord_username: string | null
           updated_at: string
           user_id: string
@@ -632,6 +637,8 @@ export type Database = {
         Insert: {
           age?: number | null
           created_at?: string
+          discord_linked_at?: string | null
+          discord_user_id?: string | null
           discord_username?: string | null
           updated_at?: string
           user_id: string
@@ -639,6 +646,8 @@ export type Database = {
         Update: {
           age?: number | null
           created_at?: string
+          discord_linked_at?: string | null
+          discord_user_id?: string | null
           discord_username?: string | null
           updated_at?: string
           user_id?: string

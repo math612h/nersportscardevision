@@ -38,6 +38,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
 import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
+import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/public/discord.callback'
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
@@ -204,6 +205,12 @@ const ApiPublicDownloadCompanionRoute =
     path: '/api/public/download/companion',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicDiscordCallbackRoute =
+  ApiPublicDiscordCallbackRouteImport.update({
+    id: '/api/public/discord/callback',
+    path: '/api/public/discord/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLeagueOpenRoute = ApiPublicCronLeagueOpenRouteImport.update({
   id: '/api/public/cron/league-open',
   path: '/api/public/cron/league-open',
@@ -309,6 +316,7 @@ export interface FileRoutesByFullPath {
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
+  '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -349,6 +357,7 @@ export interface FileRoutesByTo {
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
+  '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -394,6 +403,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
+  '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -438,6 +448,7 @@ export interface FileRouteTypes {
     | '/admin/protests'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/league-open'
+    | '/api/public/discord/callback'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
@@ -478,6 +489,7 @@ export interface FileRouteTypes {
     | '/admin/nyhedsbrev'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/league-open'
+    | '/api/public/discord/callback'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
@@ -522,6 +534,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/protests'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/league-open'
+    | '/api/public/discord/callback'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
@@ -555,6 +568,7 @@ export interface RootRouteChildren {
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
   ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
+  ApiPublicDiscordCallbackRoute: typeof ApiPublicDiscordCallbackRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -766,6 +780,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/download/companion'
       fullPath: '/api/public/download/companion'
       preLoaderRoute: typeof ApiPublicDownloadCompanionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/discord/callback': {
+      id: '/api/public/discord/callback'
+      path: '/api/public/discord/callback'
+      fullPath: '/api/public/discord/callback'
+      preLoaderRoute: typeof ApiPublicDiscordCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/league-open': {
@@ -990,6 +1011,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
   ApiPublicCronLeagueOpenRoute: ApiPublicCronLeagueOpenRoute,
+  ApiPublicDiscordCallbackRoute: ApiPublicDiscordCallbackRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
@@ -1000,13 +1022,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -1,49 +1,36 @@
-## Mål
-
-1. **Én samlet rating pr. bruger pr. bilklasse** (ELO-agtigt på tværs af alle ligaer på platformen) — ikke længere pr. liga.
-2. **Farve på rating-badge** bestemmes af brugerens percentil i den klasse:
-   - Top 5% → **Blå**
-   - Top 25% → **Guld**
-   - Top 50% → **Sølv**
-   - Resten → **Bronze**
-3. **På entry-listen** vises kun den klasse-rating der matcher det entry brugeren er tilmeldt (er du i LMGT3, vises din LMGT3-rating).
-4. **Arkivet flyttes til Leaderboard-siden** som en "Personal bedst"-knap/tab, så enhver bruger kan få indblik i sine PB'er der.
-
----
-
-## Plan
+## Discord-integration
 
 ### 1. Database
-Ny tabel `user_class_ratings (user_id, car_class, score, percentile, confidence, components, updated_at)` med unique `(user_id, car_class)`.
+- Tilføj `discord_user_id` (text) + `discord_username` (text, snapshot) + `discord_linked_at` (timestamptz) på `profiles_private`.
+- Tilføj `discord_role_id` (text, nullable) på `leagues`.
 
-Nye/ændrede funktioner:
-- `compute_user_class_score(_user_id, _car_class)` — samme 20/80 leaderboard/results-formel som i dag, men aggregerer på tværs af **alle** ligaer.
-- `refresh_user_class_rating(_user_id, _car_class)` — opdaterer score + udregner percentil ift. alle brugere i klassen.
-- `refresh_class_percentiles(_car_class)` — recompute percentiles for hele klassen (kaldes efter writes).
-- Triggers på `leaderboard_times`, `league_results`, `entries` refaktoreres til at kalde class-versionen.
+### 2. "Forbind Discord" flow
+- **Server fn** `startDiscordLink` (auth): genererer signed state (HMAC over `userId:nonce:exp` med `DISCORD_CLIENT_SECRET` som key), returnerer Discord OAuth URL med scope `identify`, redirect `https://lmudanmark.dk/api/public/discord/callback`.
+- **Server route** `src/routes/api/public/discord.callback.ts` (GET): verificerer state, exchanger `code` mod token, henter `/users/@me`, gemmer `discord_user_id` på `profiles_private` via `supabaseAdmin`, redirecter til `/profil?discord=ok`.
+- **UI**: knap "Forbind Discord" på profil-siden + visning af tilknyttet brugernavn + "Frakobl"-knap (server fn).
 
-Den gamle `user_league_ratings` beholdes midlertidigt så `allowed_categories_for_signup` ikke knækker — opdateres til at læse fra `user_class_ratings` i samme migration.
+### 3. Rolle-tildeling ved liga-tilmelding
+- **Server fn** `assignDiscordRoleForEntry(entryId)` (auth):
+  - Henter `entry → league.discord_role_id` + user's `discord_user_id`.
+  - Kalder Discord API: `PUT /guilds/{guildId}/members/{discordUserId}/roles/{roleId}` med `Authorization: Bot <DISCORD_BOT_TOKEN>`.
+  - Logger fejl pænt (bruger ikke på server, ikke medlem, osv.) men blokerer ikke tilmelding.
+- Kaldes fra eksisterende liga-tilmeldings-flow efter succesfuld entry-insert.
+- Tilsvarende `removeDiscordRoleForEntry` ved afmelding.
 
-### 2. RatingBadge
-- Tilføj `percentile` prop.
-- Ny farveskala: `>=95 → blå`, `>=75 → guld`, `>=50 → sølv`, ellers `bronze`.
-- Bevarer score-tal + tooltip; tilføjer percentil i tooltip.
+### 4. Admin: vælg rolle per liga
+- I liga-redigering: nyt felt "Discord rolle-ID" (text input) med hjælpetekst om hvordan man finder det.
 
-### 3. Visning
-- **Entry-listen** (`ligaer.$leagueId.index.tsx`): slå rating op pr. (user_id, car_class) ud fra entryens egen `car_class`.
-- **Profil** (egen + `/profil/$userId`): vis liste af ratings pr. klasse brugeren har data i.
-- **Brugere-listen**: vis hver brugers højeste klasse-rating (eller alle, kompakt).
+### Tekniske detaljer
+- State HMAC: `hmac_sha256(DISCORD_CLIENT_SECRET, "${userId}:${nonce}:${exp}")`, base64url. Verificer expiry < 10 min.
+- Discord API base: `https://discord.com/api/v10`.
+- Bot skal være medlem af serveren og have "Manage Roles" + rolle højere end mål-rollen i listen.
+- Alle Discord-kald sker server-side via `createServerFn` / server route — token lækker aldrig.
 
-### 4. Leaderboard ↔ Arkiv
-- Tilføj knap/tab "Personal bedst" på `/leaderboard`, som åbner samme indhold som `/arkiv` (best tider + udviklingsgraf + liga-historik) for den indloggede bruger.
-- Eksisterende `/arkiv` route bevares og linker bare derhen, så ingen links knækker.
-
----
-
-## Teknisk
-
-- Migration kører `refresh_user_class_rating` for alle eksisterende `(user_id, car_class)` kombinationer + initial percentil-beregning.
-- Percentil opbevares i tabellen (ikke beregnet on-the-fly) for hurtig listevisning.
-- `getMyArchive` genbruges som-er på leaderboard-siden via en ny tab.
-
-Sig til hvis du vil have det udført.
+### Filer der oprettes/ændres
+- Migration: `profiles_private` + `leagues` kolonner
+- `src/lib/discord.functions.ts` — server fns
+- `src/lib/discord.server.ts` — Discord API helpers + HMAC
+- `src/routes/api/public/discord.callback.ts` — OAuth callback
+- Profil-side: tilføj "Forbind Discord"-sektion
+- Liga admin-side: tilføj `discord_role_id` felt
+- Liga-tilmeldings-handler: kald `assignDiscordRoleForEntry` efter insert

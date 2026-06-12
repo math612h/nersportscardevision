@@ -417,6 +417,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
   const [signupOpensAt, setSignupOpensAt] = useState<string>(toLocalInput(league.signup_opens_at));
+  const [discordRoleId, setDiscordRoleId] = useState<string>(league.discord_role_id ?? "");
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
@@ -432,6 +433,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setEventSettings((league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings);
     setPointsSystem((league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem);
     setSignupOpensAt(toLocalInput(league.signup_opens_at));
+    setDiscordRoleId(league.discord_role_id ?? "");
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -463,6 +465,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
+        discord_role_id: discordRoleId.trim() || null,
       } as any)
       .eq("id", league.id);
     setSaving(false);
@@ -509,6 +512,18 @@ function EditLeagueDialog({ league }: { league: any }) {
             <Label>Tilmelding åbner</Label>
             <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
             <p className="text-xs text-muted-foreground">Lad være tom for at holde tilmelding lukket. En nedtælling vises på ligasiden indtil tidspunktet.</p>
+          </div>
+          <div className="space-y-1 rounded-md border border-border p-2">
+            <Label>Discord rolle-ID</Label>
+            <Input
+              value={discordRoleId}
+              onChange={(e) => setDiscordRoleId(e.target.value)}
+              placeholder="fx 1234567890123456789"
+              inputMode="numeric"
+            />
+            <p className="text-xs text-muted-foreground">
+              Når en kører tilmelder sig denne liga, får de automatisk denne rolle på Discord (hvis de har forbundet deres Discord-konto). Find rolle-ID'et i Discord ved at højreklikke på rollen i Server Settings → Roles (Developer Mode skal være slået til).
+            </p>
           </div>
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />

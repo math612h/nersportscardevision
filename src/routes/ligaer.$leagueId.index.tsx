@@ -10,6 +10,7 @@ import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { leaveLeague } from "@/lib/leagues.functions";
+import { assignDiscordRoleForEntry, removeDiscordRoleForEntry } from "@/lib/discord.functions";
 import { getAllowedCategories } from "@/lib/rating.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -954,6 +955,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
+  const assignDiscord = useServerFn(assignDiscordRoleForEntry);
   const [open, setOpen] = useState(false);
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
@@ -1096,6 +1098,16 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
         idempotencyKey: `league-signup-${leagueId}-${user.id}`,
         templateData: { leagueName: leagueRow?.name ?? "din liga" },
       });
+    }
+    // Assign Discord role (non-blocking)
+    try {
+      const res = await assignDiscord({ data: { leagueId } });
+      if (res?.ok) toast.success("Discord-rolle tildelt.");
+      else if (res?.reason === "not_linked") {
+        toast.info("Forbind din Discord-konto på din profil for at få rollen automatisk.");
+      }
+    } catch (err) {
+      console.error("Discord role assign error", err);
     }
   };
 
@@ -1325,6 +1337,7 @@ function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
   const leave = useServerFn(leaveLeague);
+  const removeDiscord = useServerFn(removeDiscordRoleForEntry);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -1341,6 +1354,8 @@ function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
       } else {
         toast.success("Du er meldt ud af ligaen.");
       }
+      // Best-effort: fjern Discord-rolle
+      try { await removeDiscord({ data: { leagueId } }); } catch (e) { console.error(e); }
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
     } catch (e: any) {
