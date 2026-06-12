@@ -9,7 +9,7 @@ export const startDiscordLink = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     const { signDiscordState, buildDiscordAuthUrl } = await import("./discord.server");
     const state = await signDiscordState(context.userId);
-    return { url: buildDiscordAuthUrl(state, originFromRequest()) };
+    return { url: buildDiscordAuthUrl(state, CANONICAL_ORIGIN) };
   });
 
 export const unlinkDiscord = createServerFn({ method: "POST" })
