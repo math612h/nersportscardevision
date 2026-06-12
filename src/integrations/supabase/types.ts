@@ -1297,6 +1297,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_find_user_id_by_email: { Args: { _email: string }; Returns: string }
       allowed_categories_for_signup: {
         Args: { _car_class: string; _league_id: string; _user_id: string }
         Returns: Json

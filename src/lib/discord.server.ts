@@ -41,15 +41,20 @@ function timingSafeEqual(a: Uint8Array, b: Uint8Array): boolean {
   return r === 0;
 }
 
-export async function signDiscordState(userId: string): Promise<string> {
+// State payloads:
+//   link:<userId>:<nonce>:<exp>     — known user linking Discord
+//   login::<nonce>:<exp>            — anonymous login/signup via Discord
+export type DiscordStateMode = "link" | "login";
+
+export async function signDiscordState(mode: DiscordStateMode, userId: string | null): Promise<string> {
   const nonce = b64urlEncode(crypto.getRandomValues(new Uint8Array(12)));
   const exp = Date.now() + 10 * 60 * 1000;
-  const payload = `${userId}:${nonce}:${exp}`;
+  const payload = `${mode}:${userId ?? ""}:${nonce}:${exp}`;
   const sig = await hmac(getEnv("DISCORD_CLIENT_SECRET"), payload);
   return b64urlEncode(new TextEncoder().encode(payload)) + "." + b64urlEncode(sig);
 }
 
-export async function verifyDiscordState(token: string): Promise<{ userId: string } | null> {
+export async function verifyDiscordState(token: string): Promise<{ mode: DiscordStateMode; userId: string | null } | null> {
   const [p, s] = token.split(".");
   if (!p || !s) return null;
   let payload: string;
@@ -60,10 +65,12 @@ export async function verifyDiscordState(token: string): Promise<{ userId: strin
   }
   const expected = await hmac(getEnv("DISCORD_CLIENT_SECRET"), payload);
   if (!timingSafeEqual(expected, b64urlDecode(s))) return null;
-  const [userId, , expStr] = payload.split(":");
+  const parts = payload.split(":");
+  if (parts.length < 4) return null;
+  const [mode, userId, , expStr] = parts;
   const exp = Number(expStr);
-  if (!userId || !Number.isFinite(exp) || exp < Date.now()) return null;
-  return { userId };
+  if ((mode !== "link" && mode !== "login") || !Number.isFinite(exp) || exp < Date.now()) return null;
+  return { mode: mode as DiscordStateMode, userId: userId || null };
 }
 
 export function getDiscordRedirectUri(origin: string): string {
@@ -75,7 +82,7 @@ export function buildDiscordAuthUrl(state: string, origin: string): string {
     client_id: getEnv("DISCORD_CLIENT_ID"),
     redirect_uri: getDiscordRedirectUri(origin),
     response_type: "code",
-    scope: "identify",
+    scope: "identify email",
     state,
     prompt: "consent",
   });
@@ -85,6 +92,8 @@ export function buildDiscordAuthUrl(state: string, origin: string): string {
 export async function exchangeDiscordCode(code: string, origin: string): Promise<{
   discord_user_id: string;
   discord_username: string;
+  discord_email: string | null;
+  discord_email_verified: boolean;
 }> {
   const tokenRes = await fetch(`${DISCORD_API}/oauth2/token`, {
     method: "POST",
@@ -110,8 +119,19 @@ export async function exchangeDiscordCode(code: string, origin: string): Promise
     const t = await meRes.text();
     throw new Error(`Kunne ikke hente Discord-bruger: ${meRes.status} ${t}`);
   }
-  const me = (await meRes.json()) as { id: string; username: string; global_name?: string | null };
-  return { discord_user_id: me.id, discord_username: me.global_name || me.username };
+  const me = (await meRes.json()) as {
+    id: string;
+    username: string;
+    global_name?: string | null;
+    email?: string | null;
+    verified?: boolean;
+  };
+  return {
+    discord_user_id: me.id,
+    discord_username: me.global_name || me.username,
+    discord_email: me.email ?? null,
+    discord_email_verified: !!me.verified,
+  };
 }
 
 export async function addGuildRole(discordUserId: string, roleId: string): Promise<{ ok: boolean; status: number; message?: string }> {
