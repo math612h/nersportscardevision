@@ -1,20 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getRequestHost } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-function originFromRequest(): string {
-  const host = getRequestHost();
-  const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
-  return `${proto}://${host}`;
-}
+const CANONICAL_ORIGIN = "https://lmudanmark.dk";
 
 export const startDiscordLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { signDiscordState, buildDiscordAuthUrl } = await import("./discord.server");
     const state = await signDiscordState(context.userId);
-    return { url: buildDiscordAuthUrl(state, originFromRequest()) };
+    return { url: buildDiscordAuthUrl(state, CANONICAL_ORIGIN) };
   });
 
 export const unlinkDiscord = createServerFn({ method: "POST" })
