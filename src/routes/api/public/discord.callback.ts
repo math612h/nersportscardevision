@@ -7,7 +7,7 @@ export const Route = createFileRoute("/api/public/discord/callback")({
         const url = new URL(request.url);
         const code = url.searchParams.get("code");
         const state = url.searchParams.get("state");
-        const origin = url.origin;
+        const origin = "https://lmudanmark.dk";
 
         const redirectTo = (status: "ok" | "error", message?: string) => {
           const target = new URL("/profil", origin);
