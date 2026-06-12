@@ -228,6 +228,100 @@ function ProfilePage() {
   );
 }
 
+function DiscordLinkCard() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const router = useRouter();
+  const start = useServerFn(startDiscordLink);
+  const unlink = useServerFn(unlinkDiscord);
+  const [busy, setBusy] = useState(false);
+
+  const { data: link } = useQuery({
+    queryKey: ["discord-link", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("profiles_private")
+        .select("discord_user_id, discord_username, discord_linked_at")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data as { discord_user_id: string | null; discord_username: string | null; discord_linked_at: string | null } | null;
+    },
+  });
+
+  // Toast on return from OAuth
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sp = new URLSearchParams(window.location.search);
+    const status = sp.get("discord");
+    if (!status) return;
+    if (status === "ok") toast.success("Discord-konto tilknyttet.");
+    else toast.error(`Kunne ikke tilknytte Discord: ${sp.get("discord_msg") ?? "ukendt fejl"}`);
+    sp.delete("discord");
+    sp.delete("discord_msg");
+    const newUrl = window.location.pathname + (sp.toString() ? `?${sp}` : "");
+    window.history.replaceState({}, "", newUrl);
+    qc.invalidateQueries({ queryKey: ["discord-link", user?.id] });
+  }, [qc, user?.id]);
+
+  const onConnect = async () => {
+    setBusy(true);
+    try {
+      const res = await start();
+      window.location.href = res.url;
+    } catch (e: any) {
+      setBusy(false);
+      toast.error(e?.message ?? "Kunne ikke starte Discord-login.");
+    }
+  };
+
+  const onUnlink = async () => {
+    setBusy(true);
+    try {
+      await unlink();
+      toast.success("Discord-konto frakoblet.");
+      qc.invalidateQueries({ queryKey: ["discord-link", user?.id] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke frakoble.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const linked = !!link?.discord_user_id;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Link2 className="h-4 w-4" /> Discord</CardTitle>
+        <CardDescription>
+          Forbind din Discord-konto, så du automatisk får tildelt den rigtige rolle på LMU Danmarks Discord-server, når du tilmelder dig en liga.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {linked ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm">
+              <div className="font-medium">{link?.discord_username ?? "Tilknyttet"}</div>
+              <div className="text-xs text-muted-foreground">Discord-ID: {link?.discord_user_id}</div>
+            </div>
+            <Button variant="outline" size="sm" onClick={onUnlink} disabled={busy} className="gap-2">
+              <Unlink className="h-4 w-4" /> Frakobl
+            </Button>
+          </div>
+        ) : (
+          <Button onClick={onConnect} disabled={busy} className="gap-2">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
+            Forbind Discord
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+
 function MyRatingsCard({ userId }: { userId: string | null }) {
   const { data: rating } = useQuery({
     queryKey: ["my-rating", userId],
