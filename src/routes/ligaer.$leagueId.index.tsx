@@ -955,6 +955,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const { user } = useAuth();
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
+  const assignDiscord = useServerFn(assignDiscordRoleForEntry);
   const [open, setOpen] = useState(false);
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
