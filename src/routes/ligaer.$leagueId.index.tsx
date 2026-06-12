@@ -1099,6 +1099,16 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
         templateData: { leagueName: leagueRow?.name ?? "din liga" },
       });
     }
+    // Assign Discord role (non-blocking)
+    try {
+      const res = await assignDiscord({ data: { leagueId } });
+      if (res?.ok) toast.success("Discord-rolle tildelt.");
+      else if (res?.reason === "not_linked") {
+        toast.info("Forbind din Discord-konto på din profil for at få rollen automatisk.");
+      }
+    } catch (err) {
+      console.error("Discord role assign error", err);
+    }
   };
 
 
