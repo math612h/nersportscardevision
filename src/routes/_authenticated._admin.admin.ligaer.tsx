@@ -417,6 +417,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
   const [signupOpensAt, setSignupOpensAt] = useState<string>(toLocalInput(league.signup_opens_at));
+  const [discordRoleId, setDiscordRoleId] = useState<string>(league.discord_role_id ?? "");
   const [saving, setSaving] = useState(false);
 
   const reset = () => {
