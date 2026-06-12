@@ -220,6 +220,7 @@ function ProfilePage() {
         </CardContent>
       </Card>
 
+      <DiscordLinkCard />
       <MyRatingsCard userId={user?.id ?? null} />
       <MyTeamsCard userId={user?.id ?? null} />
       <DeviceTokensCard />
