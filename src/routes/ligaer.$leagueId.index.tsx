@@ -1337,6 +1337,7 @@ function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
   const leave = useServerFn(leaveLeague);
+  const removeDiscord = useServerFn(removeDiscordRoleForEntry);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -1353,6 +1354,8 @@ function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
       } else {
         toast.success("Du er meldt ud af ligaen.");
       }
+      // Best-effort: fjern Discord-rolle
+      try { await removeDiscord({ data: { leagueId } }); } catch (e) { console.error(e); }
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
     } catch (e: any) {
