@@ -433,6 +433,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setEventSettings((league.event_settings && typeof league.event_settings === "object" ? league.event_settings : {}) as EventSettings);
     setPointsSystem((league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem);
     setSignupOpensAt(toLocalInput(league.signup_opens_at));
+    setDiscordRoleId(league.discord_role_id ?? "");
   };
 
   const submit = async (e: React.FormEvent) => {
