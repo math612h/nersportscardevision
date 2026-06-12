@@ -22,6 +22,7 @@ import { Route as LmuLigaRouteImport } from './routes/lmu.liga'
 import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
 import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
 import { Route as AuthenticatedArkivRouteImport } from './routes/_authenticated.arkiv'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
@@ -38,6 +39,7 @@ import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/em
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
 import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
+import { Route as ApiPublicDiscordLoginRouteImport } from './routes/api/public/discord.login'
 import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/public/discord.callback'
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
@@ -115,6 +117,11 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
 const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
   id: '/profil',
   path: '/profil',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMineProtestsRoute =
@@ -205,6 +212,11 @@ const ApiPublicDownloadCompanionRoute =
     path: '/api/public/download/companion',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicDiscordLoginRoute = ApiPublicDiscordLoginRouteImport.update({
+  id: '/api/public/discord/login',
+  path: '/api/public/discord/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicDiscordCallbackRoute =
   ApiPublicDiscordCallbackRouteImport.update({
     id: '/api/public/discord/callback',
@@ -297,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
@@ -317,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
+  '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -340,6 +354,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
   '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/lmu/liga': typeof LmuLigaRoute
@@ -358,6 +373,7 @@ export interface FileRoutesByTo {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
+  '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -384,6 +400,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/arkiv': typeof AuthenticatedArkivRoute
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
@@ -404,6 +421,7 @@ export interface FileRoutesById {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
+  '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -429,6 +447,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/arkiv'
     | '/mine-protests'
+    | '/onboarding'
     | '/profil'
     | '/email/unsubscribe'
     | '/ligaer/$leagueId'
@@ -449,6 +468,7 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/cron/league-open'
     | '/api/public/discord/callback'
+    | '/api/public/discord/login'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
@@ -472,6 +492,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/arkiv'
     | '/mine-protests'
+    | '/onboarding'
     | '/profil'
     | '/email/unsubscribe'
     | '/lmu/liga'
@@ -490,6 +511,7 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/cron/league-open'
     | '/api/public/discord/callback'
+    | '/api/public/discord/login'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
@@ -515,6 +537,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin'
     | '/_authenticated/arkiv'
     | '/_authenticated/mine-protests'
+    | '/_authenticated/onboarding'
     | '/_authenticated/profil'
     | '/email/unsubscribe'
     | '/ligaer/$leagueId'
@@ -535,6 +558,7 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/cron/league-open'
     | '/api/public/discord/callback'
+    | '/api/public/discord/login'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
@@ -569,6 +593,7 @@ export interface RootRouteChildren {
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
   ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
   ApiPublicDiscordCallbackRoute: typeof ApiPublicDiscordCallbackRoute
+  ApiPublicDiscordLoginRoute: typeof ApiPublicDiscordLoginRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -668,6 +693,13 @@ declare module '@tanstack/react-router' {
       path: '/profil'
       fullPath: '/profil'
       preLoaderRoute: typeof AuthenticatedProfilRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/mine-protests': {
@@ -780,6 +812,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/download/companion'
       fullPath: '/api/public/download/companion'
       preLoaderRoute: typeof ApiPublicDownloadCompanionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/discord/login': {
+      id: '/api/public/discord/login'
+      path: '/api/public/discord/login'
+      fullPath: '/api/public/discord/login'
+      preLoaderRoute: typeof ApiPublicDiscordLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/discord/callback': {
@@ -964,6 +1003,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedArkivRoute: typeof AuthenticatedArkivRoute
   AuthenticatedMineProtestsRoute: typeof AuthenticatedMineProtestsRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRouteWithChildren
 }
 
@@ -971,6 +1011,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedArkivRoute: AuthenticatedArkivRoute,
   AuthenticatedMineProtestsRoute: AuthenticatedMineProtestsRoute,
+  AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRouteWithChildren,
 }
 
@@ -1012,6 +1053,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
   ApiPublicCronLeagueOpenRoute: ApiPublicCronLeagueOpenRoute,
   ApiPublicDiscordCallbackRoute: ApiPublicDiscordCallbackRoute,
+  ApiPublicDiscordLoginRoute: ApiPublicDiscordLoginRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,

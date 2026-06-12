@@ -8,7 +8,7 @@ export const startDiscordLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { signDiscordState, buildDiscordAuthUrl } = await import("./discord.server");
-    const state = await signDiscordState(context.userId);
+    const state = await signDiscordState("link", context.userId);
     return { url: buildDiscordAuthUrl(state, CANONICAL_ORIGIN) };
   });
 
