@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Camera, Loader2, CheckCircle2, Shield } from "lucide-react";
+import { Camera, Loader2, CheckCircle2, Shield, Link2, Unlink } from "lucide-react";
 import { CreateTeamDialog } from "@/components/CreateTeamDialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RatingBadge } from "@/components/RatingBadge";
+import { startDiscordLink, unlinkDiscord } from "@/lib/discord.functions";
 
 export const Route = createFileRoute("/_authenticated/profil")({
   head: () => ({ meta: [{ title: "Min profil – LMU Danmark" }] }),
