@@ -449,6 +449,7 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [approvedOnly, setApprovedOnly] = useState<boolean>(!!league.approved_only);
   const [briefingRequired, setBriefingRequired] = useState<boolean>(league.briefing_required !== false);
   const [separateDivisionStandings, setSeparateDivisionStandings] = useState<boolean>(!!league.separate_division_standings);
+  const [protestTickets, setProtestTickets] = useState<number>(typeof league.protest_tickets_per_season === "number" ? league.protest_tickets_per_season : 3);
   const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()];
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
   const [bannerPath, setBannerPath] = useState<string | null>(league.banner_url ?? null);
