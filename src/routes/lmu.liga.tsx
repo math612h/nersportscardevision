@@ -317,6 +317,11 @@ function LeagueCard({
   offseason,
   upcoming,
   past,
+  isAdmin,
+  canMoveUp,
+  canMoveDown,
+  onMove,
+  reordering,
 }: {
   l: any;
   bannerUrl: string | null;
@@ -324,6 +329,11 @@ function LeagueCard({
   offseason?: boolean;
   upcoming?: boolean;
   past?: boolean;
+  isAdmin?: boolean;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  onMove?: (dir: "up" | "down") => void;
+  reordering?: boolean;
 }) {
   const Icon = offseason ? Sparkles : Flag;
   const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
@@ -342,56 +352,82 @@ function LeagueCard({
   const freeSlots = Math.max(0, totalSlots - takenSlots);
 
   return (
-    <Link
-      to="/ligaer/$leagueId"
-      params={{ leagueId: l.id }}
-      aria-label={`Åbn ${l.name}`}
-      className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
-    >
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-        {bannerUrl ? (
-          <img
-            src={bannerUrl}
-            alt={`Banner for ${l.name}`}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
-        <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
-          <ArrowUpRight className="h-3.5 w-3.5" />
+    <div className="relative">
+      <Link
+        to="/ligaer/$leagueId"
+        params={{ leagueId: l.id }}
+        aria-label={`Åbn ${l.name}`}
+        className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
+      >
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+          {bannerUrl ? (
+            <img
+              src={bannerUrl}
+              alt={`Banner for ${l.name}`}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
+          <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </div>
+          {upcoming && (
+            <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
+              <CardCountdown opensAt={l.signup_opens_at ?? null} />
+            </Badge>
+          )}
+          {past && (
+            <Badge variant="secondary" className="absolute left-3 top-3">Afsluttet</Badge>
+          )}
         </div>
-        {upcoming && (
-          <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
-            <CardCountdown opensAt={l.signup_opens_at ?? null} />
-          </Badge>
-        )}
-        {past && (
-          <Badge variant="secondary" className="absolute left-3 top-3">Afsluttet</Badge>
-        )}
-      </div>
 
-      <div className="flex items-center gap-3 px-4 pb-4 pt-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary" aria-hidden="true">
-          <Icon className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold tracking-tight">{l.name}</h3>
-          <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
-            <Users className="h-3 w-3" />
-            {hasCap ? (
-              <span>
-                <span className="font-semibold text-foreground">{freeSlots}</span> ledige slots på gridden
-              </span>
-            ) : (
-              <span>Ingen pladsbegrænsning</span>
-            )}
-          </p>
+        <div className="flex items-center gap-3 px-4 pb-4 pt-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary" aria-hidden="true">
+            <Icon className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-base font-semibold tracking-tight">{l.name}</h3>
+            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+              <Users className="h-3 w-3" />
+              {hasCap ? (
+                <span>
+                  <span className="font-semibold text-foreground">{freeSlots}</span> ledige slots på gridden
+                </span>
+              ) : (
+                <span>Ingen pladsbegrænsning</span>
+              )}
+            </p>
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      {isAdmin && onMove && (
+        <div className="absolute left-2 bottom-2 z-10 flex gap-1 rounded-md bg-background/85 p-1 backdrop-blur border border-border shadow-sm">
+          <button
+            type="button"
+            aria-label="Flyt op"
+            title="Flyt op"
+            disabled={!canMoveUp || reordering}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMove("up"); }}
+            className="inline-flex h-8 w-8 items-center justify-center rounded text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Flyt ned"
+            title="Flyt ned"
+            disabled={!canMoveDown || reordering}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMove("down"); }}
+            className="inline-flex h-8 w-8 items-center justify-center rounded text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ArrowDown className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
