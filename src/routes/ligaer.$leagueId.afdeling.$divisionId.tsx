@@ -1,12 +1,15 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2, Timer, Trophy } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2, Timer, Trophy, Clock } from "lucide-react";
 import { msToLapStr } from "@/lib/lmu-parser";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
+import { da } from "date-fns/locale";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { triggerReserveOfferForAbsence, cancelReserveOffersForAbsence, respondReserveOffer } from "@/lib/division-reserves.functions";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_NUMERIC_FIELDS } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DriverLink } from "@/components/DriverLink";
@@ -227,34 +230,92 @@ function DivisionDetail() {
     },
   });
 
+  // Division-level entries (reserves who accepted for THIS division only)
+  const { data: reserveEntries } = useQuery({
+    queryKey: ["division-reserves", divisionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,created_at")
+        .eq("division_id", divisionId);
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string; user_id: string; driver_name: string;
+        car_class: string; driver_category: string; car_number: number | null; created_at: string;
+      }>;
+    },
+  });
 
-
+  // My pending reserve offer for this division
+  const { data: myOffer } = useQuery({
+    queryKey: ["my-reserve-offer", divisionId, user?.id ?? "anon"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("division_reserve_offers")
+        .select("id,car_class,driver_category,expires_at,status,absentee_user_id")
+        .eq("division_id", divisionId)
+        .eq("offered_user_id", user!.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
   const reasonByUser = new Map((absenceReasons ?? []).map((a) => [a.user_id, a.reason]));
   const myAbsence = user ? absenceByUser.get(user.id) : undefined;
   const mySignup = (signups ?? []).find((e) => e.user_id === user?.id);
+  const reserveUserIds = new Set((reserveEntries ?? []).map((r) => r.user_id));
 
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
   const keys = configs.length
     ? configs.map((c) => `${c.car_class} · ${c.driver_category}`)
     : Array.from(new Set((signups ?? []).map((e) => `${e.car_class} · ${e.driver_category}`)));
 
-  const grouped: Record<string, typeof signups> = {};
+  const grouped: Record<string, any[]> = {};
   for (const k of keys) grouped[k] = [];
+  // League-level entries first
   for (const e of signups ?? []) {
     const k = `${e.car_class} · ${e.driver_category}`;
-    (grouped[k] ??= [] as any).push(e);
+    (grouped[k] ??= []).push({ ...e, _kind: "league" });
   }
+  // Reserve entries appended in their class/cat group
+  for (const r of reserveEntries ?? []) {
+    const k = `${r.car_class} · ${r.driver_category}`;
+    (grouped[k] ??= []).push({ ...r, waitlist: false, _kind: "reserve" });
+  }
+
+  const triggerReserve = useServerFn(triggerReserveOfferForAbsence);
+  const cancelReserve = useServerFn(cancelReserveOffersForAbsence);
+  const respondOffer = useServerFn(respondReserveOffer);
 
   const removeAbsence = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("division_absences").delete().eq("id", id);
       if (error) throw error;
+      try { await cancelReserve({ data: { divisionId } }); } catch (e) { console.error(e); }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
+      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
       toast.success("Markeret som deltager igen");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const offerResponse = useMutation({
+    mutationFn: async (vars: { accept: boolean }) => {
+      if (!myOffer) throw new Error("Intet aktivt tilbud");
+      return await respondOffer({ data: { offerId: myOffer.id, accept: vars.accept } });
+    },
+    onSuccess: (_res, vars) => {
+      toast.success(vars.accept ? "Du er på griddet til denne afdeling" : "Tilbud afslået");
+      qc.invalidateQueries({ queryKey: ["my-reserve-offer", divisionId] });
+      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -361,6 +422,34 @@ function DivisionDetail() {
         );
       })()}
 
+
+      {user && myOffer && (
+        <Card className="border-amber-500/60 bg-amber-500/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4 text-amber-600" /> Reserveplads tilbudt
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <p>
+              Du er tilbudt en reserveplads til denne afdeling i {myOffer.car_class} · {myOffer.driver_category}.
+              Pladsen gælder <strong>kun denne ene afdeling</strong> — bagefter er du tilbage på ventelisten med din nuværende plads i køen.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Udløber {formatDistanceToNow(new Date(myOffer.expires_at), { addSuffix: true, locale: da })}.
+              Hvis du afslår eller ikke svarer, går tilbuddet videre til den næste på ventelisten.
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" disabled={offerResponse.isPending} onClick={() => offerResponse.mutate({ accept: true })}>
+                <UserCheck className="h-4 w-4 mr-1" /> Accepter
+              </Button>
+              <Button size="sm" variant="outline" disabled={offerResponse.isPending} onClick={() => offerResponse.mutate({ accept: false })}>
+                Afslå
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-wrap gap-2">
         {(results?.length ?? 0) > 0 && (
@@ -484,6 +573,11 @@ function DivisionDetail() {
                             </Badge>
                           )}
                           {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
+                          {e._kind === "reserve" && (
+                            <Badge variant="secondary" className="gap-1 text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" title="Reserve — kører kun denne afdeling">
+                              Reserve
+                            </Badge>
+                          )}
                           {ab && (
                             <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
                               <UserX className="h-3 w-3" /> Deltager ikke
@@ -524,6 +618,7 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const trigger = useServerFn(triggerReserveOfferForAbsence);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -534,10 +629,17 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
     });
     if (error) toast.error(error.message);
     else {
-      toast.success("Markeret som ikke-deltagende");
+      toast.success("Markeret som ikke-deltagende — leder efter reserve");
       setOpen(false);
       setReason("");
       qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
+      try {
+        const res = await trigger({ data: { divisionId } });
+        if (res.ok) toast.success("En reserve er blevet tilbudt pladsen");
+      } catch (err) {
+        console.error("trigger reserve failed", err);
+      }
+      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
     }
   };
 

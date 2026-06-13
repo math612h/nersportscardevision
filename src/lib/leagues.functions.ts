@@ -2,6 +2,33 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const SITE = "https://lmudanmark.dk";
+
+async function notifyAndDM(
+  admin: any,
+  userId: string,
+  title: string,
+  body: string,
+  link: string,
+) {
+  await admin.from("notifications").insert({ user_id: userId, title, body, link });
+  try {
+    const { data: priv } = await admin
+      .from("profiles_private")
+      .select("discord_user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const discordId = (priv as { discord_user_id?: string | null } | null)?.discord_user_id ?? null;
+    if (discordId) {
+      const { sendDiscordDM } = await import("./discord.server");
+      const res = await sendDiscordDM(discordId, `**${title}**\n\n${body}\n\n${SITE}${link}`);
+      if (!res.ok) console.error("League DM failed", userId, res);
+    }
+  } catch (e) {
+    console.error("League DM error", e);
+  }
+}
+
 export const setProfileApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
@@ -75,12 +102,13 @@ export const setProfileApproval = createServerFn({ method: "POST" })
         if (cap == null || gridCount < cap) {
           await supabaseAdmin.from("entries").update({ waitlist: false }).eq("id", entry.id);
           promoted.push(league?.name ?? "ligaen");
-          await supabaseAdmin.from("notifications").insert({
-            user_id: data.targetUserId,
-            title: `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
-            body: `Du er nu godkendt og er rykket op på griddet i ${entry.car_class} · ${entry.driver_category}.`,
-            link: `/ligaer/${entry.league_id}`,
-          });
+          await notifyAndDM(
+            supabaseAdmin,
+            data.targetUserId,
+            `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
+            `Du er nu godkendt og er rykket op på griddet i ${entry.car_class} · ${entry.driver_category} for resten af sæsonen.`,
+            `/ligaer/${entry.league_id}`,
+          );
         }
       }
 
@@ -123,12 +151,13 @@ export const setProfileApproval = createServerFn({ method: "POST" })
             await supabaseAdmin.from("entries").update({ waitlist: false }).eq("id", nextUp.id);
             const { data: league } = await supabaseAdmin
               .from("leagues").select("name").eq("id", leagueId).maybeSingle();
-            await supabaseAdmin.from("notifications").insert({
-              user_id: nextUp.user_id,
-              title: `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
-              body: `En plads er blevet ledig i ${entry.car_class} · ${entry.driver_category}. Du er nu på griddet.`,
-              link: `/ligaer/${entry.league_id}`,
-            });
+            await notifyAndDM(
+              supabaseAdmin,
+              nextUp.user_id,
+              `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
+              `En plads er blevet ledig i ${entry.car_class} · ${entry.driver_category}. Du er nu på griddet for resten af sæsonen.`,
+              `/ligaer/${entry.league_id}`,
+            );
           }
         }
       }
@@ -207,12 +236,13 @@ export const leaveLeague = createServerFn({ method: "POST" })
             .eq("id", nextUp.id);
           if (upErr) throw new Error(upErr.message);
 
-          await supabaseAdmin.from("notifications").insert({
-            user_id: nextUp.user_id,
-            title: `Du er rykket op fra ventelisten i ${leagueName}`,
-            body: `En plads er blevet ledig i ${myEntry.car_class} · ${myEntry.driver_category}. Du er nu på griddet og kan deltage i løbet.`,
-            link: `/ligaer/${data.leagueId}`,
-          });
+          await notifyAndDM(
+            supabaseAdmin,
+            nextUp.user_id,
+            `Du er rykket op fra ventelisten i ${leagueName}`,
+            `En plads er blevet ledig i ${myEntry.car_class} · ${myEntry.driver_category}. Du er nu på griddet for resten af sæsonen og kan deltage i løbene.`,
+            `/ligaer/${data.leagueId}`,
+          );
 
           promotedDriver = nextUp.driver_name;
         }

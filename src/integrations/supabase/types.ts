@@ -112,6 +112,56 @@ export type Database = {
         }
         Relationships: []
       }
+      division_reserve_offers: {
+        Row: {
+          absentee_user_id: string
+          car_class: string
+          created_at: string
+          division_id: string
+          driver_category: string
+          expires_at: string
+          id: string
+          offered_user_id: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["reserve_offer_status"]
+          updated_at: string
+        }
+        Insert: {
+          absentee_user_id: string
+          car_class: string
+          created_at?: string
+          division_id: string
+          driver_category: string
+          expires_at: string
+          id?: string
+          offered_user_id: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["reserve_offer_status"]
+          updated_at?: string
+        }
+        Update: {
+          absentee_user_id?: string
+          car_class?: string
+          created_at?: string
+          division_id?: string
+          driver_category?: string
+          expires_at?: string
+          id?: string
+          offered_user_id?: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["reserve_offer_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "division_reserve_offers_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       divisions: {
         Row: {
           car_class: string | null
@@ -1389,6 +1439,12 @@ export type Database = {
     Enums: {
       app_role: "admin" | "racer"
       protest_status: "open" | "ruled"
+      reserve_offer_status:
+        | "pending"
+        | "accepted"
+        | "declined"
+        | "expired"
+        | "superseded"
       team_member_role: "owner" | "member"
       team_request_status: "pending" | "accepted" | "rejected"
       verdict_outcome:
@@ -1527,6 +1583,13 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "racer"],
       protest_status: ["open", "ruled"],
+      reserve_offer_status: [
+        "pending",
+        "accepted",
+        "declined",
+        "expired",
+        "superseded",
+      ],
       team_member_role: ["owner", "member"],
       team_request_status: ["pending", "accepted", "rejected"],
       verdict_outcome: [
