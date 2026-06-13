@@ -34,11 +34,11 @@ async function postDiscordAnnouncement(args: {
   classConfigs: Array<{ car_class?: string; driver_category?: string; max_drivers?: number }> | null
   divisions: Array<{ name: string | null; track: string | null; layout: string | null; race_date: string | null }>
   bannerUrl: string | null
-}): Promise<void> {
+}): Promise<boolean> {
   const botToken = process.env.DISCORD_BOT_TOKEN
   if (!botToken) {
     console.warn('DISCORD_BOT_TOKEN not set — skipping Discord announcement')
-    return
+    return false
   }
 
   const classLines = (args.classConfigs ?? [])
@@ -87,25 +87,45 @@ async function postDiscordAnnouncement(args: {
 
   const content = parts.join('\n').slice(0, 1900)
 
-  const res = await fetch(
-    `https://discord.com/api/v10/channels/${DISCORD_ANNOUNCE_CHANNEL_ID}/messages`,
-    {
-      method: 'POST',
-      headers: {
-        Authorization: `Bot ${botToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        content,
-        allowed_mentions: { parse: [], roles: [DISCORD_MEMBERS_ROLE_ID] },
-        ...(args.bannerUrl ? { embeds: [{ image: { url: args.bannerUrl }, color: 0xe11d2a }] } : {}),
-      }),
-    },
-  )
-  if (!res.ok) {
-    const text = await res.text().catch(() => '')
-    console.error('Discord announcement failed', res.status, text)
+  const url = `https://discord.com/api/v10/channels/${DISCORD_ANNOUNCE_CHANNEL_ID}/messages`
+  const headers = {
+    Authorization: `Bot ${botToken}`,
+    'Content-Type': 'application/json',
   }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      content,
+      allowed_mentions: { parse: [], roles: [DISCORD_MEMBERS_ROLE_ID] },
+      ...(args.bannerUrl ? { embeds: [{ image: { url: args.bannerUrl }, color: 0xe11d2a }] } : {}),
+    }),
+  })
+  if (res.ok) return true
+
+  const text = await res.text().catch(() => '')
+  console.error('Discord announcement failed', res.status, text)
+
+  if (res.status === 403) {
+    const fallbackContent = content.replace(`<@&${DISCORD_MEMBERS_ROLE_ID}>\n\n`, '')
+    const fallback = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        content: fallbackContent,
+        allowed_mentions: { parse: [] },
+      }),
+    })
+    if (fallback.ok) {
+      console.warn('Discord announcement sent without role mention/embed due to missing permissions')
+      return true
+    }
+    const fallbackText = await fallback.text().catch(() => '')
+    console.error('Discord announcement fallback failed', fallback.status, fallbackText)
+  }
+
+  return false
 }
 
 export const Route = createFileRoute('/api/public/cron/league-open')({
@@ -129,11 +149,11 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
         const nowIso = new Date().toISOString()
         const { data: leagues, error: leaguesErr } = await supabase
           .from('leagues')
-          .select('id, name, signup_opens_at, signup_open_notified_at, class_configs, banner_url')
+          .select('id, name, signup_opens_at, signup_open_notified_at, discord_signup_open_notified_at, class_configs, banner_url')
           .lte('signup_opens_at', nowIso)
-          .is('signup_open_notified_at', null)
           .not('signup_opens_at', 'is', null)
           .eq('published', true)
+          .or('signup_open_notified_at.is.null,discord_signup_open_notified_at.is.null')
 
         if (leaguesErr) {
           console.error('Failed to read leagues', leaguesErr)
@@ -170,12 +190,14 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
         }
 
         let totalEnqueued = 0
+        let totalDiscordSent = 0
         for (const league of leagues) {
           const leagueUrl = `${SITE_URL}/ligaer/${league.id}`
           const subject = `Tilmeldingen til ${league.name} er åben`
 
           // Discord announcement (fire-and-forget; failures must not block emails)
-          try {
+          const shouldSendDiscord = !(league as any).discord_signup_open_notified_at
+          if (shouldSendDiscord) try {
             const { data: divs } = await supabase
               .from('divisions')
               .select('name, track, layout, race_date')
@@ -193,16 +215,25 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
                 bannerUrl = signed?.signedUrl ?? null
               }
             }
-            await postDiscordAnnouncement({
+            const discordSent = await postDiscordAnnouncement({
               leagueName: league.name as string,
               leagueUrl,
               classConfigs: (league as any).class_configs ?? null,
               divisions: (divs ?? []) as any,
               bannerUrl,
             })
+            if (discordSent) {
+              totalDiscordSent++
+              await supabase
+                .from('leagues')
+                .update({ discord_signup_open_notified_at: new Date().toISOString() } as any)
+                .eq('id', league.id)
+            }
           } catch (e) {
             console.error('Discord announcement error', e)
           }
+
+          if (league.signup_open_notified_at) continue
 
           for (const p of profiles ?? []) {
             const email = userEmails.get(p.id as string)
@@ -290,7 +321,7 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
             .eq('id', league.id)
         }
 
-        return Response.json({ leagues: leagues.length, enqueued: totalEnqueued })
+        return Response.json({ leagues: leagues.length, discordSent: totalDiscordSent, enqueued: totalEnqueued })
       },
     },
   },

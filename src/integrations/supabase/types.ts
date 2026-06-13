@@ -443,6 +443,7 @@ export type Database = {
           created_by: string | null
           description: string | null
           discord_role_id: string | null
+          discord_signup_open_notified_at: string | null
           driver_category: string | null
           event_settings: Json
           id: string
@@ -464,6 +465,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           discord_role_id?: string | null
+          discord_signup_open_notified_at?: string | null
           driver_category?: string | null
           event_settings?: Json
           id?: string
@@ -485,6 +487,7 @@ export type Database = {
           created_by?: string | null
           description?: string | null
           discord_role_id?: string | null
+          discord_signup_open_notified_at?: string | null
           driver_category?: string | null
           event_settings?: Json
           id?: string
