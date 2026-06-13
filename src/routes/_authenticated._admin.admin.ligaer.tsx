@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus, Archive, ArchiveRestore, Send } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus, Archive, ArchiveRestore, Send, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -228,10 +228,23 @@ function AdminLeagues() {
         .from("leagues")
         .select("*")
         .eq("published", !showArchive)
+        .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
+  });
+
+  const reorder = useMutation({
+    mutationFn: async ({ id, newOrder }: { id: string; newOrder: number }) => {
+      const { error } = await supabase.from("leagues").update({ sort_order: newOrder } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["leagues-admin"] });
+      qc.invalidateQueries({ queryKey: ["leagues"] });
+    },
+    onError: (e: any) => toast.error(e.message),
   });
 
   const create = async (e: React.FormEvent, publish: boolean) => {
