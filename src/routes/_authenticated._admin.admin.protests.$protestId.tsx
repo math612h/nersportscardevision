@@ -66,6 +66,18 @@ function AdminProtestDetail() {
     },
   });
 
+  const { data: entries } = useQuery({
+    enabled: !!p?.division_id,
+    queryKey: ["protest-entries", p?.division_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("entries")
+        .select("user_id, car_class, driver_category, car_number")
+        .eq("division_id", p!.division_id);
+      return data ?? [];
+    },
+  });
+
   const [outcome, setOutcome] = useState<string>("");
   const [reason, setReason] = useState("");
   const [seconds, setSeconds] = useState("");
@@ -318,16 +330,25 @@ function AdminProtestDetail() {
                   <p className="text-xs text-muted-foreground">Ingen tilgængelige.</p>
                 )}
                 <div className="space-y-1.5 rounded-md border border-border p-3">
-                  {targets.map((t) => (
-                    <label key={t.user_id} className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={penalized.includes(t.user_id)}
-                        onCheckedChange={() => togglePenalized(t.user_id)}
-                      />
-                      <span>{t.driver_name}</span>
-                      {t.isSubmitter && <Badge variant="outline" className="text-[10px]">Klager</Badge>}
-                    </label>
-                  ))}
+                  {targets.map((t) => {
+                    const e = (entries ?? []).find((x: any) => x.user_id === t.user_id) as any;
+                    const meta = e
+                      ? [e.driver_category, e.car_class, e.car_number != null ? `#${e.car_number}` : null]
+                          .filter(Boolean)
+                          .join(" · ")
+                      : null;
+                    return (
+                      <label key={t.user_id} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={penalized.includes(t.user_id)}
+                          onCheckedChange={() => togglePenalized(t.user_id)}
+                        />
+                        <span>{t.driver_name}</span>
+                        {meta && <span className="text-xs text-muted-foreground">{meta}</span>}
+                        {t.isSubmitter && <Badge variant="outline" className="text-[10px]">Klager</Badge>}
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
             );
