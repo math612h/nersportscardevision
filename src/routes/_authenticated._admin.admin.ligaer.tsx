@@ -257,6 +257,7 @@ function AdminLeagues() {
       approved_only: approvedOnly,
       briefing_required: briefingRequired,
       separate_division_standings: separateDivisionStandings,
+      protest_tickets_per_season: Math.max(0, Math.floor(protestTickets || 0)),
       banner_url: bannerPath,
       event_settings: eventSettings as any,
       points_system: pointsSystem as any,
