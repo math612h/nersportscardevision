@@ -23,6 +23,26 @@ const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
 const LB_DESC =
   "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle LMU Danmark-løb i Le Mans Ultimate. Upload din race-fil og kom på listen.";
 const LB_URL = "https://danishenduranceseries.dk/leaderboard";
+const PAGE_SIZE = 1000;
+
+const displayTrackName = (track: string) =>
+  track === "Circuit de la Sarthe" ? "Le Mans (Circuit de la Sarthe)" : track;
+
+async function fetchLeaderboardRows(cols: string) {
+  const allRows: any[] = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const to = from + PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from("leaderboard_times")
+      .select(cols)
+      .order("best_lap_ms", { ascending: true })
+      .range(from, to);
+    if (error) throw error;
+    allRows.push(...(data ?? []));
+    if ((data?.length ?? 0) < PAGE_SIZE) break;
+  }
+  return allRows;
+}
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -81,13 +101,8 @@ function LeaderboardPage() {
       const cols = user
         ? "id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at"
         : "id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at";
-      const { data, error } = await supabase
-        .from("leaderboard_times")
-        .select(cols)
-        .order("best_lap_ms", { ascending: true })
-        .limit(10000);
-      if (error) throw error;
-      return ((data ?? []) as any[]).map((r) => ({ user_id: null, ...r })) as Row[];
+      const data = await fetchLeaderboardRows(cols);
+      return data.map((r) => ({ user_id: null, ...r })) as Row[];
     },
   });
 
@@ -389,7 +404,7 @@ function LeaderboardPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>Alle baner</SelectItem>
-                {tracks.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                {tracks.map((t) => <SelectItem key={t} value={t}>{displayTrackName(t)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -448,7 +463,7 @@ function LeaderboardPage() {
                       </td>
                       <td className="px-3 py-2"><Badge variant="secondary" className="text-[10px]">{r.car_class}</Badge></td>
                       <td className="px-3 py-2 text-muted-foreground">{r.car_model ?? "–"}</td>
-                      <td className="px-3 py-2"><span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />{r.track}</span></td>
+                      <td className="px-3 py-2"><span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />{displayTrackName(r.track)}</span></td>
                       <td className="px-3 py-2 hidden sm:table-cell text-muted-foreground">{r.layout ?? "–"}</td>
                       <td className="px-3 py-2 text-right font-mono tabular-nums">
                         <span className="inline-flex items-center gap-1"><Timer className="h-3 w-3 text-primary" />{msToLapStr(r.best_lap_ms)}</span>
