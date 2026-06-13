@@ -171,6 +171,23 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
           const leagueUrl = `${SITE_URL}/ligaer/${league.id}`
           const subject = `Tilmeldingen til ${league.name} er åben`
 
+          // Discord announcement (fire-and-forget; failures must not block emails)
+          try {
+            const { data: divs } = await supabase
+              .from('divisions')
+              .select('name, track, layout, race_date')
+              .eq('league_id', league.id as string)
+              .order('race_date', { ascending: true })
+            await postDiscordAnnouncement({
+              leagueName: league.name as string,
+              leagueUrl,
+              classConfigs: (league as any).class_configs ?? null,
+              divisions: (divs ?? []) as any,
+            })
+          } catch (e) {
+            console.error('Discord announcement error', e)
+          }
+
           for (const p of profiles ?? []) {
             const email = userEmails.get(p.id as string)
             if (!email) continue
