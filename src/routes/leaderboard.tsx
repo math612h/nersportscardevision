@@ -85,7 +85,7 @@ function LeaderboardPage() {
         .from("leaderboard_times")
         .select(cols)
         .order("best_lap_ms", { ascending: true })
-        .limit(1000);
+        .limit(10000);
       if (error) throw error;
       return ((data ?? []) as any[]).map((r) => ({ user_id: null, ...r })) as Row[];
     },
