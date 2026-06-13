@@ -32,6 +32,9 @@ export const Route = createFileRoute("/lmu/liga")({
 
 function ParticipantDashboard() {
   const [tab, setTab] = useState<"active" | "upcoming" | "past">("active");
+  const { isAdmin } = useAuth();
+  const qc = useQueryClient();
+
 
   const { data: leagues, isLoading } = useQuery({
     queryKey: ["leagues"],
@@ -109,6 +112,21 @@ function ParticipantDashboard() {
   const active = (leagues ?? []).filter((l: any) => classify(l) === "active");
   const past = (leagues ?? []).filter((l: any) => classify(l) === "past");
 
+  const reorder = useMutation({
+    mutationFn: async ({ list, id, dir }: { list: any[]; id: string; dir: "up" | "down" }) => {
+      await reorderLeaguesSwap(list, id, dir);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["leagues"] });
+      qc.invalidateQueries({ queryKey: ["leagues-admin"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const makeMoveHandler = (list: any[]) => (id: string, dir: "up" | "down") =>
+    reorder.mutate({ list, id, dir });
+
+
   return (
     <div className="space-y-10">
       <header className="space-y-1">
@@ -170,7 +188,7 @@ function ParticipantDashboard() {
 
           {tab === "active" && active.length > 0 && (
             <CardGrid>
-              {active.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} />)}
+              {active.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < active.length - 1} onMove={(dir) => makeMoveHandler(active)(l.id, dir)} reordering={reorder.isPending} />)}
             </CardGrid>
           )}
           {tab === "active" && active.length === 0 && (
@@ -181,7 +199,7 @@ function ParticipantDashboard() {
 
           {tab === "upcoming" && upcoming.length > 0 && (
             <CardGrid>
-              {upcoming.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming />)}
+              {upcoming.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < upcoming.length - 1} onMove={(dir) => makeMoveHandler(upcoming)(l.id, dir)} reordering={reorder.isPending} />)}
             </CardGrid>
           )}
           {tab === "upcoming" && upcoming.length === 0 && (
@@ -192,7 +210,7 @@ function ParticipantDashboard() {
 
           {tab === "past" && past.length > 0 && (
             <CardGrid>
-              {past.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past />)}
+              {past.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < past.length - 1} onMove={(dir) => makeMoveHandler(past)(l.id, dir)} reordering={reorder.isPending} />)}
             </CardGrid>
           )}
           {tab === "past" && past.length === 0 && (
