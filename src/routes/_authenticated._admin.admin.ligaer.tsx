@@ -218,17 +218,22 @@ function AdminLeagues() {
   const [signupOpensAt, setSignupOpensAt] = useState<string>("");
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
 
   const { data: leagues } = useQuery({
-    queryKey: ["leagues-admin"],
+    queryKey: ["leagues-admin", showArchive],
     queryFn: async () => {
-      const { data, error } = await supabase.from("leagues").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("*")
+        .eq("published", !showArchive)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
-  const create = async (e: React.FormEvent) => {
+  const create = async (e: React.FormEvent, publish: boolean) => {
     e.preventDefault();
     const err = validateConfigs(configs);
     if (err) return toast.error(err);
@@ -255,11 +260,12 @@ function AdminLeagues() {
       event_settings: eventSettings as any,
       points_system: pointsSystem as any,
       signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
+      published: publish,
       created_by: user?.id,
     } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
-    toast.success(isOffseason ? "Off-season event oprettet" : "Liga oprettet");
+    toast.success(publish ? (isOffseason ? "Off-season event publiceret" : "Liga publiceret") : "Gemt i arkivet");
     setCreatedLeague(true);
     setOpen(false);
     setName("");
@@ -276,6 +282,7 @@ function AdminLeagues() {
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
+
 
   const del = useMutation({
     mutationFn: async (id: string) => {
