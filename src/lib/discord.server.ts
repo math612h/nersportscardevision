@@ -165,6 +165,18 @@ export async function removeGuildRole(discordUserId: string, roleId: string): Pr
   return { ok: false, status: res.status, message: text };
 }
 
+export async function isUserInGuild(discordUserId: string): Promise<{ inGuild: boolean; status: number; message?: string }> {
+  const guildId = getEnv("DISCORD_GUILD_ID");
+  const res = await fetch(
+    `${DISCORD_API}/guilds/${guildId}/members/${discordUserId}`,
+    { headers: { Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}` } },
+  );
+  if (res.status === 200) return { inGuild: true, status: 200 };
+  if (res.status === 404) return { inGuild: false, status: 404 };
+  const text = await res.text().catch(() => "");
+  return { inGuild: false, status: res.status, message: text };
+}
+
 export async function sendDiscordDM(discordUserId: string, content: string): Promise<{ ok: boolean; status: number; message?: string }> {
   const botToken = getEnv("DISCORD_BOT_TOKEN");
   // 1) Open a DM channel with the user

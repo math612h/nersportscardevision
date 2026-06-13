@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { leaveLeague } from "@/lib/leagues.functions";
 import { assignDiscordRoleForEntry, removeDiscordRoleForEntry } from "@/lib/discord.functions";
+import { checkDiscordGuildMembership } from "@/lib/discord-guild.functions";
 import { getAllowedCategories } from "@/lib/rating.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -956,6 +957,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
   const assignDiscord = useServerFn(assignDiscordRoleForEntry);
+  const checkGuild = useServerFn(checkDiscordGuildMembership);
   const [open, setOpen] = useState(false);
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
@@ -1061,6 +1063,19 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     if (!carModel) return toast.error("Vælg din bil.");
     if (!driverName) return toast.error("Dit kørernavn mangler på profilen.");
     if (!effectiveLmu) return toast.error("Indtast dit LMU-navn præcis som det står i spillet.");
+
+    // Discord guild membership gate
+    try {
+      const guild = await checkGuild();
+      if (!guild.ok) {
+        if (guild.reason === "not_linked") {
+          return toast.error("Du skal forbinde din Discord-konto på din profil før du kan tilmelde dig.");
+        }
+        return toast.error("Du skal være medlem af LMU Danmark-discorden for at tilmelde dig en liga.");
+      }
+    } catch (err) {
+      return toast.error(err instanceof Error ? err.message : "Kunne ikke verificere Discord-medlemskab.");
+    }
 
     // Persist LMU name on profile if user just provided it
     if (!existingLmu && lmuInput.trim()) {
