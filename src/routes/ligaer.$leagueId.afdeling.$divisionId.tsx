@@ -420,6 +420,9 @@ function DivisionDetail() {
               Du er tilbudt en reserveplads til denne afdeling i {myOffer.car_class} · {myOffer.driver_category}.
               Pladsen gælder <strong>kun denne ene afdeling</strong> — bagefter er du tilbage på ventelisten med din nuværende plads i køen.
             </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+              Du har til og med {format(new Date(myOffer.expires_at), "dd MMM HH:mm", { locale: da })} til at besvare tilbuddet.
+            </p>
             <p className="text-xs text-muted-foreground">
               Udløber {formatDistanceToNow(new Date(myOffer.expires_at), { addSuffix: true, locale: da })}.
               Hvis du afslår eller ikke svarer, går tilbuddet videre til den næste på ventelisten.
