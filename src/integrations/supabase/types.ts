@@ -455,6 +455,7 @@ export type Database = {
           separate_division_standings: boolean
           signup_open_notified_at: string | null
           signup_opens_at: string | null
+          sort_order: number
         }
         Insert: {
           approved_only?: boolean
@@ -478,6 +479,7 @@ export type Database = {
           separate_division_standings?: boolean
           signup_open_notified_at?: string | null
           signup_opens_at?: string | null
+          sort_order?: number
         }
         Update: {
           approved_only?: boolean
@@ -501,6 +503,7 @@ export type Database = {
           separate_division_standings?: boolean
           signup_open_notified_at?: string | null
           signup_opens_at?: string | null
+          sort_order?: number
         }
         Relationships: []
       }
