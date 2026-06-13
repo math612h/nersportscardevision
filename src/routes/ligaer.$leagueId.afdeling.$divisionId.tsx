@@ -573,6 +573,11 @@ function DivisionDetail() {
                             </Badge>
                           )}
                           {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
+                          {e._kind === "reserve" && (
+                            <Badge variant="secondary" className="gap-1 text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" title="Reserve — kører kun denne afdeling">
+                              Reserve
+                            </Badge>
+                          )}
                           {ab && (
                             <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
                               <UserX className="h-3 w-3" /> Deltager ikke
