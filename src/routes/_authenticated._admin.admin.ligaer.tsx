@@ -276,6 +276,7 @@ function AdminLeagues() {
     setApprovedOnly(false);
     setBriefingRequired(true);
     setSeparateDivisionStandings(false);
+    setProtestTickets(3);
     setConfigs([emptyConfig()]);
     setBannerFile(null);
     setEventSettings({});
