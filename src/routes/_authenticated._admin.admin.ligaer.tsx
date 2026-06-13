@@ -506,6 +506,10 @@ function EditLeagueDialog({ league }: { league: any }) {
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
+        signup_open_notified_at:
+          signupOpensAt && new Date(signupOpensAt).toISOString() !== (league.signup_opens_at ?? null)
+            ? null
+            : (league as any).signup_open_notified_at ?? null,
         discord_role_id: discordRoleId.trim() || null,
         published: publish,
       } as any)
