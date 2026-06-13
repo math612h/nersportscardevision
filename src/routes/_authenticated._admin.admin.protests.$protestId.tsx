@@ -66,6 +66,18 @@ function AdminProtestDetail() {
     },
   });
 
+  const { data: entries } = useQuery({
+    enabled: !!p?.division_id,
+    queryKey: ["protest-entries", p?.division_id],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("entries")
+        .select("user_id, car_class, driver_category, car_number")
+        .eq("division_id", p!.division_id);
+      return data ?? [];
+    },
+  });
+
   const [outcome, setOutcome] = useState<string>("");
   const [reason, setReason] = useState("");
   const [seconds, setSeconds] = useState("");
