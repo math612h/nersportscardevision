@@ -344,7 +344,13 @@ function AdminLeagues() {
                   <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
                   <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
                 </label>
+                <div className="space-y-1 rounded-md border border-border p-2">
+                  <Label>Protest-billetter pr. deltager</Label>
+                  <Input type="number" min={0} max={50} value={protestTickets} onChange={(e) => setProtestTickets(Number(e.target.value))} />
+                  <p className="text-xs text-muted-foreground">Antal protester en deltager har til rådighed i hele sæsonen. Får man medhold, koster det ingen billet — ellers koster en protest 1 billet.</p>
+                </div>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
+
                 <div className="space-y-1 rounded-md border border-border p-2">
                   <Label>Tilmelding åbner</Label>
                   <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
