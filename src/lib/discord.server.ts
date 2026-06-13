@@ -164,3 +164,35 @@ export async function removeGuildRole(discordUserId: string, roleId: string): Pr
   const text = await res.text().catch(() => "");
   return { ok: false, status: res.status, message: text };
 }
+
+export async function sendDiscordDM(discordUserId: string, content: string): Promise<{ ok: boolean; status: number; message?: string }> {
+  const botToken = getEnv("DISCORD_BOT_TOKEN");
+  // 1) Open a DM channel with the user
+  const dmRes = await fetch(`${DISCORD_API}/users/@me/channels`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bot ${botToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ recipient_id: discordUserId }),
+  });
+  if (!dmRes.ok) {
+    const text = await dmRes.text().catch(() => "");
+    return { ok: false, status: dmRes.status, message: `DM-kanal kunne ikke åbnes: ${text}` };
+  }
+  const dm = (await dmRes.json()) as { id: string };
+
+  // 2) Post the message
+  const msgRes = await fetch(`${DISCORD_API}/channels/${dm.id}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bot ${botToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ content: content.slice(0, 1900), allowed_mentions: { parse: [] } }),
+  });
+  if (msgRes.status === 200 || msgRes.status === 201) return { ok: true, status: msgRes.status };
+  const text = await msgRes.text().catch(() => "");
+  return { ok: false, status: msgRes.status, message: text };
+}
+
