@@ -471,9 +471,7 @@ function DivisionDetail() {
           <AbsenceDialog divisionId={divisionId} userId={user.id} />
         )}
         {user && myAbsence && (
-          <Button variant="outline" className="gap-1" onClick={() => removeAbsence.mutate(myAbsence.id)}>
-            <UserCheck className="h-4 w-4" /> Jeg deltager alligevel
-          </Button>
+          <Badge variant="outline" className="gap-1"><UserX className="h-3 w-3" /> Markeret som ikke-deltagende</Badge>
         )}
         {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
