@@ -149,11 +149,11 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
         const nowIso = new Date().toISOString()
         const { data: leagues, error: leaguesErr } = await supabase
           .from('leagues')
-          .select('id, name, signup_opens_at, signup_open_notified_at, class_configs, banner_url')
+          .select('id, name, signup_opens_at, signup_open_notified_at, discord_signup_open_notified_at, class_configs, banner_url')
           .lte('signup_opens_at', nowIso)
-          .is('signup_open_notified_at', null)
           .not('signup_opens_at', 'is', null)
           .eq('published', true)
+          .or('signup_open_notified_at.is.null,discord_signup_open_notified_at.is.null')
 
         if (leaguesErr) {
           console.error('Failed to read leagues', leaguesErr)
@@ -190,12 +190,14 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
         }
 
         let totalEnqueued = 0
+        let totalDiscordSent = 0
         for (const league of leagues) {
           const leagueUrl = `${SITE_URL}/ligaer/${league.id}`
           const subject = `Tilmeldingen til ${league.name} er åben`
 
           // Discord announcement (fire-and-forget; failures must not block emails)
-          try {
+          const shouldSendDiscord = !(league as any).discord_signup_open_notified_at
+          if (shouldSendDiscord) try {
             const { data: divs } = await supabase
               .from('divisions')
               .select('name, track, layout, race_date')
@@ -213,16 +215,25 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
                 bannerUrl = signed?.signedUrl ?? null
               }
             }
-            await postDiscordAnnouncement({
+            const discordSent = await postDiscordAnnouncement({
               leagueName: league.name as string,
               leagueUrl,
               classConfigs: (league as any).class_configs ?? null,
               divisions: (divs ?? []) as any,
               bannerUrl,
             })
+            if (discordSent) {
+              totalDiscordSent++
+              await supabase
+                .from('leagues')
+                .update({ discord_signup_open_notified_at: new Date().toISOString() } as any)
+                .eq('id', league.id)
+            }
           } catch (e) {
             console.error('Discord announcement error', e)
           }
+
+          if (league.signup_open_notified_at) continue
 
           for (const p of profiles ?? []) {
             const email = userEmails.get(p.id as string)
@@ -310,7 +321,7 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
             .eq('id', league.id)
         }
 
-        return Response.json({ leagues: leagues.length, enqueued: totalEnqueued })
+        return Response.json({ leagues: leagues.length, discordSent: totalDiscordSent, enqueued: totalEnqueued })
       },
     },
   },
