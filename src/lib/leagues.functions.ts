@@ -236,12 +236,13 @@ export const leaveLeague = createServerFn({ method: "POST" })
             .eq("id", nextUp.id);
           if (upErr) throw new Error(upErr.message);
 
-          await supabaseAdmin.from("notifications").insert({
-            user_id: nextUp.user_id,
-            title: `Du er rykket op fra ventelisten i ${leagueName}`,
-            body: `En plads er blevet ledig i ${myEntry.car_class} · ${myEntry.driver_category}. Du er nu på griddet og kan deltage i løbet.`,
-            link: `/ligaer/${data.leagueId}`,
-          });
+          await notifyAndDM(
+            supabaseAdmin,
+            nextUp.user_id,
+            `Du er rykket op fra ventelisten i ${leagueName}`,
+            `En plads er blevet ledig i ${myEntry.car_class} · ${myEntry.driver_category}. Du er nu på griddet for resten af sæsonen og kan deltage i løbene.`,
+            `/ligaer/${data.leagueId}`,
+          );
 
           promotedDriver = nextUp.driver_name;
         }
