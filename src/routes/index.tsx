@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, Calendar, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, Trophy } from "lucide-react";
+import { ArrowUpRight, Calendar, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,8 +41,23 @@ export const Route = createFileRoute("/")({
 });
 
 function NewsHome() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const qc = useQueryClient();
+
+  const { data: pendingIncidents = 0 } = useQuery({
+    queryKey: ["home-pending-incidents", user?.id],
+    enabled: !!user,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("protest_involved")
+        .select("id, response, protests!inner(status)")
+        .eq("user_id", user!.id)
+        .is("response", null);
+      if (error) throw error;
+      return (data ?? []).filter((r: any) => r.protests?.status !== "ruled").length;
+    },
+  });
   const { data: divisions, isLoading } = useQuery({
     queryKey: ["home-recent-results"],
     queryFn: async () => {
@@ -113,6 +128,18 @@ function NewsHome() {
               <ArrowUpRight className="h-4 w-4" /> Teams
             </Link>
           </Button>
+          {user && (
+            <Button asChild variant="outline" className="relative gap-2">
+              <Link to="/mine-protests">
+                <MessageSquareWarning className="h-4 w-4" /> Incidents
+                {pendingIncidents > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground">
+                    {pendingIncidents}
+                  </span>
+                )}
+              </Link>
+            </Button>
+          )}
           <Button asChild variant="outline" className="gap-2">
             <a
               href="https://discord.gg/Vz4JvSk4dm"
