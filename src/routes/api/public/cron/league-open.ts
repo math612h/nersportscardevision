@@ -15,7 +15,7 @@ function generateToken(): string {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-const DISCORD_ANNOUNCE_CHANNEL_ID = '1515091902750396629'
+const DISCORD_ANNOUNCE_CHANNEL_ID = '1514985014255943881'
 const DISCORD_MEMBERS_ROLE_ID = '1336326061654278186'
 
 function formatDanishDate(iso: string | null | undefined): string {
