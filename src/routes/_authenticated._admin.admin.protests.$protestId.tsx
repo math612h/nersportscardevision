@@ -45,7 +45,7 @@ function AdminProtestDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("protests")
-        .select("*, divisions(id, name, settings, leagues(name)), protest_involved(*)")
+        .select("*, divisions(id, name, settings, league_id, leagues(id, name)), protest_involved(*)")
         .eq("id", protestId)
         .single();
       if (error) throw error;
@@ -66,14 +66,15 @@ function AdminProtestDetail() {
     },
   });
 
+  const leagueId = (p as any)?.divisions?.league_id ?? null;
   const { data: entries } = useQuery({
-    enabled: !!p?.division_id,
-    queryKey: ["protest-entries", p?.division_id],
+    enabled: !!leagueId,
+    queryKey: ["protest-entries", leagueId],
     queryFn: async () => {
       const { data } = await supabase
         .from("entries")
         .select("user_id, car_class, driver_category, car_number")
-        .eq("division_id", p!.division_id);
+        .eq("league_id", leagueId);
       return data ?? [];
     },
   });
@@ -331,21 +332,33 @@ function AdminProtestDetail() {
                 )}
                 <div className="space-y-1.5 rounded-md border border-border p-3">
                   {targets.map((t) => {
-                    const e = (entries ?? []).find((x: any) => x.user_id === t.user_id) as any;
-                    const meta = e
-                      ? [e.driver_category, e.car_class, e.car_number != null ? `#${e.car_number}` : null]
-                          .filter(Boolean)
-                          .join(" · ")
-                      : null;
+                    const userEntries = (entries ?? []).filter((x: any) => x.user_id === t.user_id);
                     return (
-                      <label key={t.user_id} className="flex items-center gap-2 text-sm">
+                      <label key={t.user_id} className="flex items-start gap-2 text-sm">
                         <Checkbox
+                          className="mt-0.5"
                           checked={penalized.includes(t.user_id)}
                           onCheckedChange={() => togglePenalized(t.user_id)}
                         />
-                        <span>{t.driver_name}</span>
-                        {meta && <span className="text-xs text-muted-foreground">{meta}</span>}
-                        {t.isSubmitter && <Badge variant="outline" className="text-[10px]">Klager</Badge>}
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span>{t.driver_name}</span>
+                          {userEntries.map((e: any, idx: number) => {
+                            const meta = [
+                              e.driver_category,
+                              e.car_class,
+                              e.car_number != null ? `#${e.car_number}` : null,
+                            ]
+                              .filter(Boolean)
+                              .join(" · ");
+                            if (!meta) return null;
+                            return (
+                              <Badge key={idx} variant="outline" className="text-[10px] font-normal">
+                                {meta}
+                              </Badge>
+                            );
+                          })}
+                          {t.isSubmitter && <Badge variant="outline" className="text-[10px]">Klager</Badge>}
+                        </div>
                       </label>
                     );
                   })}
