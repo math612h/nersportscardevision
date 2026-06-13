@@ -618,6 +618,7 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const trigger = useServerFn(triggerReserveOfferForAbsence);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -628,10 +629,17 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
     });
     if (error) toast.error(error.message);
     else {
-      toast.success("Markeret som ikke-deltagende");
+      toast.success("Markeret som ikke-deltagende — leder efter reserve");
       setOpen(false);
       setReason("");
       qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
+      try {
+        const res = await trigger({ data: { divisionId } });
+        if (res.ok) toast.success("En reserve er blevet tilbudt pladsen");
+      } catch (err) {
+        console.error("trigger reserve failed", err);
+      }
+      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
     }
   };
 
