@@ -128,6 +128,18 @@ function NewsHome() {
               <ArrowUpRight className="h-4 w-4" /> Teams
             </Link>
           </Button>
+          {user && (
+            <Button asChild variant="outline" className="relative gap-2">
+              <Link to="/mine-protests">
+                <MessageSquareWarning className="h-4 w-4" /> Incidents
+                {pendingIncidents > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground">
+                    {pendingIncidents}
+                  </span>
+                )}
+              </Link>
+            </Button>
+          )}
           <Button asChild variant="outline" className="gap-2">
             <a
               href="https://discord.gg/Vz4JvSk4dm"
