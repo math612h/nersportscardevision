@@ -333,12 +333,14 @@ function NewsPostsSection() {
             )}
           </div>
           {post.image_path && imageMap?.[post.image_path] && (
-            <img
-              src={imageMap[post.image_path]}
-              alt={post.title}
-              className="w-full object-cover"
-              loading="lazy"
-            />
+            <div className="relative max-h-64 w-full overflow-hidden">
+              <img
+                src={imageMap[post.image_path]}
+                alt={post.title}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </div>
           )}
         </article>
       ))}
