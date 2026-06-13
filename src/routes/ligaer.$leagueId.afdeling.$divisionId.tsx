@@ -570,7 +570,7 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
 
 type EntryLite = { id: string; user_id: string; driver_name: string };
 
-function ProtestDialog({ divisionId, entries, currentUserId }: { divisionId: string; entries: EntryLite[]; currentUserId: string }) {
+function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPerSeason }: { leagueId: string; divisionId: string; entries: EntryLite[]; currentUserId: string; ticketsPerSeason: number }) {
   const [open, setOpen] = useState(false);
   const [lap, setLap] = useState("");
   const [corner, setCorner] = useState("");
