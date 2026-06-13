@@ -211,6 +211,7 @@ function AdminLeagues() {
   const [approvedOnly, setApprovedOnly] = useState(false);
   const [briefingRequired, setBriefingRequired] = useState(true);
   const [separateDivisionStandings, setSeparateDivisionStandings] = useState(false);
+  const [protestTickets, setProtestTickets] = useState<number>(3);
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
