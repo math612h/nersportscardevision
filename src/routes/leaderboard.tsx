@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 
 import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2, Monitor, User as UserIcon } from "lucide-react";
@@ -16,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
+import { getLeaderboardRows } from "@/lib/leaderboard.functions";
 const COMPANION_DOWNLOAD_URL =
   "https://github.com/math612h/nersportscardevision/releases/latest/download/LMU-Danmark-Tracker-Setup.exe";
 
@@ -23,26 +25,9 @@ const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
 const LB_DESC =
   "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle LMU Danmark-løb i Le Mans Ultimate. Upload din race-fil og kom på listen.";
 const LB_URL = "https://danishenduranceseries.dk/leaderboard";
-const PAGE_SIZE = 1000;
 
 const displayTrackName = (track: string) =>
   track === "Circuit de la Sarthe" ? "Le Mans (Circuit de la Sarthe)" : track;
-
-async function fetchLeaderboardRows(cols: string) {
-  const allRows: any[] = [];
-  for (let from = 0; ; from += PAGE_SIZE) {
-    const to = from + PAGE_SIZE - 1;
-    const { data, error } = await (supabase as any)
-      .from("leaderboard_times_public")
-      .select(cols)
-      .order("best_lap_ms", { ascending: true })
-      .range(from, to);
-    if (error) throw error;
-    allRows.push(...(data ?? []));
-    if ((data?.length ?? 0) < PAGE_SIZE) break;
-  }
-  return allRows;
-}
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -81,7 +66,7 @@ type Row = {
   car_class: string;
   car_model: string | null;
   best_lap_ms: number;
-  source: "admin" | "user";
+  source: "admin" | "user" | "league";
   recorded_at: string | null;
   created_at: string;
 };
@@ -94,12 +79,12 @@ function LeaderboardPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const folderRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const fetchLeaderboard = useServerFn(getLeaderboardRows);
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      const cols = "id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at";
-      const data = await fetchLeaderboardRows(cols);
+      const data = await fetchLeaderboard();
       return data.map((r) => ({ user_id: null, ...r })) as Row[];
     },
   });
