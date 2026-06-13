@@ -581,7 +581,7 @@ function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPe
   // Tally how many tickets the user has used in this league.
   // A ticket is "spent" when a protest the user submitted has been ruled with
   // outcome 'no_penalty' (i.e. ikke medhold).
-  const { data: usedTickets = 0, refetch: refetchTickets } = useQuery({
+  const { data: usedTickets = 0 } = useQuery({
     enabled: !!currentUserId && !!leagueId,
     queryKey: ["protest-tickets-used", leagueId, currentUserId],
     queryFn: async () => {
