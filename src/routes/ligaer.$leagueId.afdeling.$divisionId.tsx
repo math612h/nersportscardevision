@@ -578,6 +578,33 @@ function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPe
   const [desc, setDesc] = useState("");
   const [video, setVideo] = useState("");
 
+  // Tally how many tickets the user has used in this league.
+  // A ticket is "spent" when a protest the user submitted has been ruled with
+  // outcome 'no_penalty' (i.e. ikke medhold).
+  const { data: usedTickets = 0, refetch: refetchTickets } = useQuery({
+    enabled: !!currentUserId && !!leagueId,
+    queryKey: ["protest-tickets-used", leagueId, currentUserId],
+    queryFn: async () => {
+      const { data: divs } = await supabase
+        .from("divisions")
+        .select("id")
+        .eq("league_id", leagueId);
+      const divIds = (divs ?? []).map((d) => d.id);
+      if (divIds.length === 0) return 0;
+      const { count } = await supabase
+        .from("protests")
+        .select("id", { count: "exact", head: true })
+        .eq("submitted_by", currentUserId)
+        .eq("status", "ruled")
+        .eq("verdict_outcome", "no_penalty")
+        .in("division_id", divIds);
+      return count ?? 0;
+    },
+  });
+  const ticketsRemaining = Math.max(0, ticketsPerSeason - usedTickets);
+  const outOfTickets = ticketsRemaining <= 0;
+
+
   const eligible = entries.filter((e) => e.user_id !== currentUserId);
 
   const updateDriver = (idx: number, val: string) => {
