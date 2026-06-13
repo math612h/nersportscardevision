@@ -196,12 +196,17 @@ function AdminProtestDetail() {
         .eq("id", protestId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Afgørelse sendt");
       qc.invalidateQueries({ queryKey: ["admin-protest", protestId] });
       qc.invalidateQueries({ queryKey: ["protests-admin"] });
       qc.invalidateQueries({ queryKey: ["league-results"] });
       qc.invalidateQueries({ queryKey: ["divisions-admin"] });
+      try {
+        await notifyRuling({ data: { protestId } });
+      } catch (e: any) {
+        toast.error(`Kunne ikke sende beskeder: ${e.message ?? e}`);
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
