@@ -12,13 +12,20 @@ export const ADMIN_MESSAGE_TEMPLATES = {
       "Gå til din profil og opdater dit visningsnavn — så godkender vi dig hurtigst muligt.",
     link: "/profil",
   },
+  profile_approved: {
+    title: "Din profil er godkendt",
+    body:
+      "Hej! Din profil på LMU Danmark er nu godkendt. Du kan nu tilmelde dig ligaer og deltage i kamskaberne. " +
+      "Gå til liga-oversigten og find en liga der passer til dig.",
+    link: "/ligaer",
+  },
 } as const;
 
 export type AdminMessageTemplate = keyof typeof ADMIN_MESSAGE_TEMPLATES;
 
 const schema = z.object({
   targetUserId: z.string().uuid(),
-  template: z.enum(["wrong_name"]),
+  template: z.enum(["wrong_name", "profile_approved"]),
 });
 
 export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
