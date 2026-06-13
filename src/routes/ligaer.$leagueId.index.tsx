@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { leaveLeague } from "@/lib/leagues.functions";
 import { assignDiscordRoleForEntry, removeDiscordRoleForEntry } from "@/lib/discord.functions";
+import { checkDiscordGuildMembership } from "@/lib/discord-guild.functions";
 import { getAllowedCategories } from "@/lib/rating.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
