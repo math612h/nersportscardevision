@@ -478,6 +478,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setApprovedOnly(!!league.approved_only);
     setBriefingRequired(league.briefing_required !== false);
     setSeparateDivisionStandings(!!league.separate_division_standings);
+    setProtestTickets(typeof league.protest_tickets_per_season === "number" ? league.protest_tickets_per_season : 3);
     setCfgs(Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()]);
     setBannerPath(league.banner_url ?? null);
     setBannerFile(null);
