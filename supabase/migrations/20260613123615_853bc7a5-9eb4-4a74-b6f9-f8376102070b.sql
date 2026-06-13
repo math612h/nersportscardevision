@@ -1,0 +1,1 @@
+ALTER TABLE public.leagues ADD COLUMN IF NOT EXISTS protest_tickets_per_season integer NOT NULL DEFAULT 3 CHECK (protest_tickets_per_season >= 0);
