@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { triggerReserveOfferForAbsence, cancelReserveOffersForAbsence, respondReserveOffer } from "@/lib/division-reserves.functions";
+import { triggerReserveOfferForAbsence, respondReserveOffer } from "@/lib/division-reserves.functions";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_NUMERIC_FIELDS } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DriverLink } from "@/components/DriverLink";
