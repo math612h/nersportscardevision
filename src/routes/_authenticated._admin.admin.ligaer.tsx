@@ -477,7 +477,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setDiscordRoleId(league.discord_role_id ?? "");
   };
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent | React.MouseEvent, publish: boolean) => {
     e.preventDefault();
     const err = validateConfigs(cfgs);
     if (err) return toast.error(err);
@@ -507,11 +507,12 @@ function EditLeagueDialog({ league }: { league: any }) {
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
         discord_role_id: discordRoleId.trim() || null,
+        published: publish,
       } as any)
       .eq("id", league.id);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Liga opdateret");
+    toast.success(publish ? (league.published ? "Liga opdateret" : "Liga publiceret") : "Gemt i arkivet");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
@@ -520,6 +521,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     qc.invalidateQueries({ queryKey: ["league-admin", league.id] });
     qc.invalidateQueries({ queryKey: ["divisions", league.id] });
   };
+
 
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) reset(); }}>
