@@ -102,12 +102,13 @@ export const setProfileApproval = createServerFn({ method: "POST" })
         if (cap == null || gridCount < cap) {
           await supabaseAdmin.from("entries").update({ waitlist: false }).eq("id", entry.id);
           promoted.push(league?.name ?? "ligaen");
-          await supabaseAdmin.from("notifications").insert({
-            user_id: data.targetUserId,
-            title: `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
-            body: `Du er nu godkendt og er rykket op på griddet i ${entry.car_class} · ${entry.driver_category}.`,
-            link: `/ligaer/${entry.league_id}`,
-          });
+          await notifyAndDM(
+            supabaseAdmin,
+            data.targetUserId,
+            `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
+            `Du er nu godkendt og er rykket op på griddet i ${entry.car_class} · ${entry.driver_category} for resten af sæsonen.`,
+            `/ligaer/${entry.league_id}`,
+          );
         }
       }
 
