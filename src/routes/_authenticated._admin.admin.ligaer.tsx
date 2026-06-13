@@ -571,7 +571,14 @@ function EditLeagueDialog({ league }: { league: any }) {
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
-          <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button type="button" variant="secondary" disabled={saving} onClick={(e) => submit(e, false)} className="gap-1">
+              <Archive className="h-4 w-4" /> {saving ? "Gemmer…" : "Arkiver"}
+            </Button>
+            <Button type="button" disabled={saving} onClick={(e) => submit(e, true)} className="gap-1">
+              <Send className="h-4 w-4" /> {saving ? "Gemmer…" : "Publicer"}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
