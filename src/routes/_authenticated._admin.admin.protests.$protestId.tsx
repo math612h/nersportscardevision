@@ -38,6 +38,7 @@ function AdminProtestDetail() {
   const { protestId } = useParams({ from: "/_authenticated/_admin/admin/protests/$protestId" });
   const { user } = useAuth();
   const qc = useQueryClient();
+  const notifyRuling = useServerFn(notifyProtestRuling);
 
   const { data: p } = useQuery({
     queryKey: ["admin-protest", protestId],
