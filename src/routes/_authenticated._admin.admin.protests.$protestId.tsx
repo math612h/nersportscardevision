@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyProtestRuling } from "@/lib/protest-ruling-notify.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/protests/$protestId")({
   component: AdminProtestDetail,
@@ -36,6 +38,7 @@ function AdminProtestDetail() {
   const { protestId } = useParams({ from: "/_authenticated/_admin/admin/protests/$protestId" });
   const { user } = useAuth();
   const qc = useQueryClient();
+  const notifyRuling = useServerFn(notifyProtestRuling);
 
   const { data: p } = useQuery({
     queryKey: ["admin-protest", protestId],
@@ -193,12 +196,17 @@ function AdminProtestDetail() {
         .eq("id", protestId);
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Afgørelse sendt");
       qc.invalidateQueries({ queryKey: ["admin-protest", protestId] });
       qc.invalidateQueries({ queryKey: ["protests-admin"] });
       qc.invalidateQueries({ queryKey: ["league-results"] });
       qc.invalidateQueries({ queryKey: ["divisions-admin"] });
+      try {
+        await notifyRuling({ data: { protestId } });
+      } catch (e: any) {
+        toast.error(`Kunne ikke sende beskeder: ${e.message ?? e}`);
+      }
     },
     onError: (e: any) => toast.error(e.message),
   });
