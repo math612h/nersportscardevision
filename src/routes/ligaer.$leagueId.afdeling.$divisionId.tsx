@@ -423,6 +423,34 @@ function DivisionDetail() {
       })()}
 
 
+      {user && myOffer && (
+        <Card className="border-amber-500/60 bg-amber-500/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="h-4 w-4 text-amber-600" /> Reserveplads tilbudt
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <p>
+              Du er tilbudt en reserveplads til denne afdeling i {myOffer.car_class} · {myOffer.driver_category}.
+              Pladsen gælder <strong>kun denne ene afdeling</strong> — bagefter er du tilbage på ventelisten med din nuværende plads i køen.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Udløber {formatDistanceToNow(new Date(myOffer.expires_at), { addSuffix: true, locale: da })}.
+              Hvis du afslår eller ikke svarer, går tilbuddet videre til den næste på ventelisten.
+            </p>
+            <div className="flex gap-2">
+              <Button size="sm" disabled={offerResponse.isPending} onClick={() => offerResponse.mutate({ accept: true })}>
+                <UserCheck className="h-4 w-4 mr-1" /> Accepter
+              </Button>
+              <Button size="sm" variant="outline" disabled={offerResponse.isPending} onClick={() => offerResponse.mutate({ accept: false })}>
+                Afslå
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {(results?.length ?? 0) > 0 && (
           <Button
