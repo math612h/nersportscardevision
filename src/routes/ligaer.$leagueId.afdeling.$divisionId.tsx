@@ -662,7 +662,13 @@ function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPe
       <DialogTrigger asChild><Button variant="outline" className="gap-1"><MessageSquareWarning className="h-4 w-4" /> Indsend protest</Button></DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Indsend protest</DialogTitle></DialogHeader>
+        <div className={`rounded-md border p-3 text-xs ${outOfTickets ? "border-destructive/50 bg-destructive/10 text-destructive" : "border-border bg-muted/40 text-muted-foreground"}`}>
+          <p className="font-medium text-foreground">Du har {ticketsRemaining} af {ticketsPerSeason} protest-billetter tilbage i denne liga.</p>
+          <p className="mt-1">Får du <span className="font-medium text-foreground">medhold</span>, koster det <span className="font-medium text-foreground">ingen billet</span>. Får du <span className="font-medium text-foreground">ikke medhold</span>, koster det <span className="font-medium text-foreground">1 billet</span>.</p>
+          {outOfTickets && <p className="mt-1 font-medium">Du kan ikke indsende flere protests i denne liga.</p>}
+        </div>
         <form onSubmit={submit} className="space-y-3">
+
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Omgang</Label><Input type="number" min={1} value={lap} onChange={(e) => setLap(e.target.value)} /></div>
             <div><Label>Sving</Label><Input maxLength={50} value={corner} onChange={(e) => setCorner(e.target.value)} placeholder="fx T7" /></div>
