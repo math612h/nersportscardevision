@@ -1,36 +1,55 @@
-## Discord-integration
+# Ligaarkiv (kladder)
 
-### 1. Database
-- Tilføj `discord_user_id` (text) + `discord_username` (text, snapshot) + `discord_linked_at` (timestamptz) på `profiles_private`.
-- Tilføj `discord_role_id` (text, nullable) på `leagues`.
+Ligaer skal kunne være "kladder" — synlige for admins, men skjulte for offentligheden — indtil de bliver publiceret.
 
-### 2. "Forbind Discord" flow
-- **Server fn** `startDiscordLink` (auth): genererer signed state (HMAC over `userId:nonce:exp` med `DISCORD_CLIENT_SECRET` som key), returnerer Discord OAuth URL med scope `identify`, redirect `https://lmudanmark.dk/api/public/discord/callback`.
-- **Server route** `src/routes/api/public/discord.callback.ts` (GET): verificerer state, exchanger `code` mod token, henter `/users/@me`, gemmer `discord_user_id` på `profiles_private` via `supabaseAdmin`, redirecter til `/profil?discord=ok`.
-- **UI**: knap "Forbind Discord" på profil-siden + visning af tilknyttet brugernavn + "Frakobl"-knap (server fn).
+## 1. Database
+Tilføj kolonne på `leagues`:
+- `published BOOLEAN NOT NULL DEFAULT true`
 
-### 3. Rolle-tildeling ved liga-tilmelding
-- **Server fn** `assignDiscordRoleForEntry(entryId)` (auth):
-  - Henter `entry → league.discord_role_id` + user's `discord_user_id`.
-  - Kalder Discord API: `PUT /guilds/{guildId}/members/{discordUserId}/roles/{roleId}` med `Authorization: Bot <DISCORD_BOT_TOKEN>`.
-  - Logger fejl pænt (bruger ikke på server, ikke medlem, osv.) men blokerer ikke tilmelding.
-- Kaldes fra eksisterende liga-tilmeldings-flow efter succesfuld entry-insert.
-- Tilsvarende `removeDiscordRoleForEntry` ved afmelding.
+Alle eksisterende ligaer markeres som `true` (uændret opførsel). Nyoprettede via "Arkiver" gemmes som `false`.
 
-### 4. Admin: vælg rolle per liga
-- I liga-redigering: nyt felt "Discord rolle-ID" (text input) med hjælpetekst om hvordan man finder det.
+## 2. Admin: Kontrolpanel → Ligaer
 
-### Tekniske detaljer
-- State HMAC: `hmac_sha256(DISCORD_CLIENT_SECRET, "${userId}:${nonce}:${exp}")`, base64url. Verificer expiry < 10 min.
-- Discord API base: `https://discord.com/api/v10`.
-- Bot skal være medlem af serveren og have "Manage Roles" + rolle højere end mål-rollen i listen.
-- Alle Discord-kald sker server-side via `createServerFn` / server route — token lækker aldrig.
+I `src/routes/_authenticated._admin.admin.ligaer.tsx`:
+- Listen viser kun publicerede ligaer som standard.
+- Ny knap øverst: **"Arkiv"** (toggler visningen til arkiverede / ikke‑publicerede ligaer). Når arkiv er aktivt, viser overskriften "Ligaer (arkiv)" og knappen skifter til "Aktive ligaer".
+- På hvert kort i arkivet: badge "Kladde" + ekstra knap "Publicer" (sætter `published = true`).
+- På hvert kort blandt aktive: lille "Arkiver"-handling (sætter `published = false`).
 
-### Filer der oprettes/ændres
-- Migration: `profiles_private` + `leagues` kolonner
-- `src/lib/discord.functions.ts` — server fns
-- `src/lib/discord.server.ts` — Discord API helpers + HMAC
-- `src/routes/api/public/discord.callback.ts` — OAuth callback
-- Profil-side: tilføj "Forbind Discord"-sektion
-- Liga admin-side: tilføj `discord_role_id` felt
-- Liga-tilmeldings-handler: kald `assignDiscordRoleForEntry` efter insert
+## 3. Opret/rediger‑dialogerne
+
+I stedet for én "Opret"/"Gem"-knap har dialogen nu to knapper i footeren:
+- **"Arkiver"** (secondary) — gemmer/opretter med `published = false`.
+- **"Publicer"** (primary) — gemmer/opretter med `published = true`.
+
+Gælder både "Ny liga"-dialogen og "Rediger liga"-dialogen (`EditLeagueDialog`). I redigeringsdialogen vises den aktuelle status som badge i toppen.
+
+## 4. Skjul kladder for offentligheden
+
+Tilføj `.eq("published", true)` til:
+- `src/routes/lmu.liga.tsx` (liga-oversigten)
+- `src/routes/sitemap[.]xml.ts`
+- `src/routes/ligaer.$leagueId.index.tsx` (single league — vis 404 hvis ikke publiceret og brugeren ikke er admin)
+- `src/routes/ligaer.$leagueId.regler.tsx`
+- `src/routes/ligaer.$leagueId.afdeling.$divisionId.tsx`
+- `src/routes/api/public/cron/league-open.ts` (kør ikke Discord-åbningsbesked for kladder)
+- `src/lib/discord.functions.ts` queries der bruges til offentlige opslag
+
+Admin-stier (`/admin/ligaer/...`) og admin queries forbliver upåvirkede — admin kan stadig redigere kladder.
+
+## 5. Detaljer
+- Eksisterende `del`-mutation forbliver (sletter helt). "Arkiver" er ikke det samme som "slet".
+- Når en kladde publiceres første gang og har `signup_opens_at` i fortiden, lader vi cron'en håndtere Discord-beskeden som normalt (resettes ikke automatisk).
+- RLS: eksisterende admin-policy dækker allerede læsning/skrivning af alle rækker; vi tilføjer en betingelse til offentlig SELECT-policy så `anon`/`authenticated` kun kan se `published = true`.
+
+## Teknisk
+
+```sql
+ALTER TABLE public.leagues
+  ADD COLUMN published BOOLEAN NOT NULL DEFAULT true;
+
+-- Eksisterende offentlige SELECT-policy opdateres til at kræve published = true
+-- (admin-policy uændret, så admins ser alle).
+```
+
+I React: én delt `submit(publish: boolean)` funktion i hver dialog, kaldt fra to knapper.
