@@ -45,6 +45,7 @@ function OnboardingPage() {
   const [displayName, setDisplayName] = useState("");
   const [lmuName, setLmuName] = useState("");
   const [email, setEmail] = useState("");
+  const [acceptsDanish, setAcceptsDanish] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
