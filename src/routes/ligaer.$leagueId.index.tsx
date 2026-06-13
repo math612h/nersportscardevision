@@ -1064,6 +1064,19 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     if (!driverName) return toast.error("Dit kørernavn mangler på profilen.");
     if (!effectiveLmu) return toast.error("Indtast dit LMU-navn præcis som det står i spillet.");
 
+    // Discord guild membership gate
+    try {
+      const guild = await checkGuild();
+      if (!guild.ok) {
+        if (guild.reason === "not_linked") {
+          return toast.error("Du skal forbinde din Discord-konto på din profil før du kan tilmelde dig.");
+        }
+        return toast.error("Du skal være medlem af LMU Danmark-discorden for at tilmelde dig en liga.");
+      }
+    } catch (err) {
+      return toast.error(err instanceof Error ? err.message : "Kunne ikke verificere Discord-medlemskab.");
+    }
+
     // Persist LMU name on profile if user just provided it
     if (!existingLmu && lmuInput.trim()) {
       const { error: pErr } = await supabase.from("profiles").update({ lmu_name: lmuInput.trim() }).eq("id", user.id);
