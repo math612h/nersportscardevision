@@ -293,19 +293,35 @@ function AdminLeagues() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const togglePublish = useMutation({
+    mutationFn: async ({ id, publish }: { id: string; publish: boolean }) => {
+      const { error } = await supabase.from("leagues").update({ published: publish } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.publish ? "Liga publiceret" : "Liga arkiveret");
+      qc.invalidateQueries({ queryKey: ["leagues-admin"] });
+      qc.invalidateQueries({ queryKey: ["leagues"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   if (!isLeagueList) return <Outlet />;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Ligaer</h1>
+        <h1 className="text-2xl font-bold">{showArchive ? "Ligaer (arkiv)" : "Ligaer"}</h1>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" className="gap-1"><Link to="/admin"><ArrowLeft className="h-4 w-4" /> Kontrolpanel</Link></Button>
+          <Button variant="outline" className="gap-1" onClick={() => setShowArchive((v) => !v)}>
+            {showArchive ? (<><ArchiveRestore className="h-4 w-4" /> Aktive ligaer</>) : (<><Archive className="h-4 w-4" /> Arkiv</>)}
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button className="gap-1"><Plus className="h-4 w-4" /> Ny liga</Button></DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Opret liga eller off-season event</DialogTitle></DialogHeader>
-              <form onSubmit={create} className="space-y-3">
+              <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
                 <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
                 <div><Label>Beskrivelse</Label><Textarea rows={8} className="min-h-[200px]" placeholder="Brug tomme linjer for at adskille afsnit." maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
                 <BannerPicker pathOrUrl={null} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerFile(null)} />
@@ -334,7 +350,14 @@ function AdminLeagues() {
                 <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
-                <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-2">
+                  <Button type="button" variant="secondary" disabled={submitting} onClick={(e) => create(e as any, false)} className="gap-1">
+                    <Archive className="h-4 w-4" /> {submitting ? "Gemmer…" : "Arkiver"}
+                  </Button>
+                  <Button type="button" disabled={submitting} onClick={(e) => create(e as any, true)} className="gap-1">
+                    <Send className="h-4 w-4" /> {submitting ? "Publicerer…" : "Publicer"}
+                  </Button>
+                </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
@@ -343,13 +366,13 @@ function AdminLeagues() {
 
       {createdLeague && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3 text-sm">
-          <span>Ligaen er oprettet.</span>
+          <span>Ligaen er gemt.</span>
           <Button asChild size="sm" variant="outline"><Link to="/admin">Returner til Kontrolpanel</Link></Button>
         </div>
       )}
 
       <div className="space-y-3">
-        {leagues?.length === 0 && <p className="text-muted-foreground">Ingen ligaer endnu.</p>}
+        {leagues?.length === 0 && <p className="text-muted-foreground">{showArchive ? "Arkivet er tomt." : "Ingen ligaer endnu."}</p>}
         {leagues?.map((l: any) => {
           const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
           return (
@@ -360,6 +383,7 @@ function AdminLeagues() {
                     <CardTitle className="flex items-center gap-2">
                       {l.name}
                       {l.is_offseason && <Badge variant="secondary" className="text-[10px]">Off-season</Badge>}
+                      {!l.published && <Badge variant="outline" className="text-[10px]">Kladde</Badge>}
                     </CardTitle>
                     {l.description && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{l.description}</p>}
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -379,6 +403,15 @@ function AdminLeagues() {
                   </div>
                   <div className="flex gap-1">
                     <EditLeagueDialog league={l} />
+                    {l.published ? (
+                      <Button variant="ghost" size="sm" title="Arkiver" onClick={() => { if (confirm("Arkiver liga? Den vil ikke længere være synlig for offentligheden.")) togglePublish.mutate({ id: l.id, publish: false }); }}>
+                        <Archive className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="sm" title="Publicer" onClick={() => togglePublish.mutate({ id: l.id, publish: true })}>
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet liga?")) del.mutate(l.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
@@ -396,6 +429,7 @@ function AdminLeagues() {
     </div>
   );
 }
+
 
 function EditLeagueDialog({ league }: { league: any }) {
   const qc = useQueryClient();
