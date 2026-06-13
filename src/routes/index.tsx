@@ -49,13 +49,24 @@ function NewsHome() {
     enabled: !!user,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("protest_involved")
-        .select("id, response, protests!inner(status)")
-        .eq("user_id", user!.id)
-        .is("response", null);
-      if (error) throw error;
-      return (data ?? []).filter((r: any) => r.protests?.status !== "ruled").length;
+      const [{ data: protests, error: pe }, { data: offers, error: oe }] = await Promise.all([
+        supabase
+          .from("protest_involved")
+          .select("id, response, protests!inner(status)")
+          .eq("user_id", user!.id)
+          .is("response", null),
+        supabase
+          .from("division_reserve_offers")
+          .select("id,expires_at,status")
+          .eq("offered_user_id", user!.id)
+          .eq("status", "pending"),
+      ]);
+      if (pe) throw pe;
+      if (oe) throw oe;
+      const protestCount = (protests ?? []).filter((r: any) => r.protests?.status !== "ruled").length;
+      const now = Date.now();
+      const offerCount = (offers ?? []).filter((o: any) => new Date(o.expires_at).getTime() > now).length;
+      return protestCount + offerCount;
     },
   });
   const { data: divisions, isLoading } = useQuery({
