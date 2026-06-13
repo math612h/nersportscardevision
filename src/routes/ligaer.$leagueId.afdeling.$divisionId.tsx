@@ -230,34 +230,92 @@ function DivisionDetail() {
     },
   });
 
+  // Division-level entries (reserves who accepted for THIS division only)
+  const { data: reserveEntries } = useQuery({
+    queryKey: ["division-reserves", divisionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,created_at")
+        .eq("division_id", divisionId);
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string; user_id: string; driver_name: string;
+        car_class: string; driver_category: string; car_number: number | null; created_at: string;
+      }>;
+    },
+  });
 
-
+  // My pending reserve offer for this division
+  const { data: myOffer } = useQuery({
+    queryKey: ["my-reserve-offer", divisionId, user?.id ?? "anon"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("division_reserve_offers")
+        .select("id,car_class,driver_category,expires_at,status,absentee_user_id")
+        .eq("division_id", divisionId)
+        .eq("offered_user_id", user!.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const absenceByUser = new Map((absences ?? []).map((a) => [a.user_id, a]));
   const reasonByUser = new Map((absenceReasons ?? []).map((a) => [a.user_id, a.reason]));
   const myAbsence = user ? absenceByUser.get(user.id) : undefined;
   const mySignup = (signups ?? []).find((e) => e.user_id === user?.id);
+  const reserveUserIds = new Set((reserveEntries ?? []).map((r) => r.user_id));
 
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
   const keys = configs.length
     ? configs.map((c) => `${c.car_class} · ${c.driver_category}`)
     : Array.from(new Set((signups ?? []).map((e) => `${e.car_class} · ${e.driver_category}`)));
 
-  const grouped: Record<string, typeof signups> = {};
+  const grouped: Record<string, any[]> = {};
   for (const k of keys) grouped[k] = [];
+  // League-level entries first
   for (const e of signups ?? []) {
     const k = `${e.car_class} · ${e.driver_category}`;
-    (grouped[k] ??= [] as any).push(e);
+    (grouped[k] ??= []).push({ ...e, _kind: "league" });
   }
+  // Reserve entries appended in their class/cat group
+  for (const r of reserveEntries ?? []) {
+    const k = `${r.car_class} · ${r.driver_category}`;
+    (grouped[k] ??= []).push({ ...r, waitlist: false, _kind: "reserve" });
+  }
+
+  const triggerReserve = useServerFn(triggerReserveOfferForAbsence);
+  const cancelReserve = useServerFn(cancelReserveOffersForAbsence);
+  const respondOffer = useServerFn(respondReserveOffer);
 
   const removeAbsence = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("division_absences").delete().eq("id", id);
       if (error) throw error;
+      try { await cancelReserve({ data: { divisionId } }); } catch (e) { console.error(e); }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
+      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
       toast.success("Markeret som deltager igen");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const offerResponse = useMutation({
+    mutationFn: async (vars: { accept: boolean }) => {
+      if (!myOffer) throw new Error("Intet aktivt tilbud");
+      return await respondOffer({ data: { offerId: myOffer.id, accept: vars.accept } });
+    },
+    onSuccess: (_res, vars) => {
+      toast.success(vars.accept ? "Du er på griddet til denne afdeling" : "Tilbud afslået");
+      qc.invalidateQueries({ queryKey: ["my-reserve-offer", divisionId] });
+      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
     },
     onError: (e: any) => toast.error(e.message),
   });
