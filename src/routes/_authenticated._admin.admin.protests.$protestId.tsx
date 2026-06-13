@@ -14,6 +14,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyProtestRuling } from "@/lib/protest-ruling-notify.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/protests/$protestId")({
   component: AdminProtestDetail,
