@@ -43,9 +43,11 @@ function PendingApprovalsPage() {
   const approveMut = useMutation({
     mutationFn: async (userId: string) => {
       await approveFn({ data: { targetUserId: userId, approved: true } });
+      // Send approval notification on website + Discord (best-effort)
+      await sendMessageFn({ data: { targetUserId: userId, template: "profile_approved" } });
     },
     onSuccess: () => {
-      toast.success("Profil godkendt");
+      toast.success("Profil godkendt og besked sendt");
       qc.invalidateQueries({ queryKey: ["admin-pending-users"] });
       qc.invalidateQueries({ queryKey: ["admin-users"] });
     },
