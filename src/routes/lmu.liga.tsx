@@ -38,6 +38,7 @@ function ParticipantDashboard() {
       const { data, error } = await supabase
         .from("leagues")
         .select("*, divisions(settings)")
+        .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
