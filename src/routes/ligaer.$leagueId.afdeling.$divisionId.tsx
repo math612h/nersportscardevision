@@ -386,7 +386,7 @@ function DivisionDetail() {
             <UserCheck className="h-4 w-4" /> Jeg deltager alligevel
           </Button>
         )}
-        {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
+        {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
 
       {(results?.length ?? 0) > 0 && (() => {
