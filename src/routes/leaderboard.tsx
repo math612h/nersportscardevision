@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 
 import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2, Monitor, User as UserIcon } from "lucide-react";
@@ -16,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
+import { getLeaderboardRows } from "@/lib/leaderboard.functions";
 const COMPANION_DOWNLOAD_URL =
   "https://github.com/math612h/nersportscardevision/releases/latest/download/LMU-Danmark-Tracker-Setup.exe";
 
@@ -23,6 +25,9 @@ const LB_TITLE = "Leaderboard — hurtigste omgangstider i Le Mans Ultimate";
 const LB_DESC =
   "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle LMU Danmark-løb i Le Mans Ultimate. Upload din race-fil og kom på listen.";
 const LB_URL = "https://danishenduranceseries.dk/leaderboard";
+
+const displayTrackName = (track: string) =>
+  track === "Circuit de la Sarthe" ? "Le Mans (Circuit de la Sarthe)" : track;
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -61,7 +66,7 @@ type Row = {
   car_class: string;
   car_model: string | null;
   best_lap_ms: number;
-  source: "admin" | "user";
+  source: "admin" | "user" | "league";
   recorded_at: string | null;
   created_at: string;
 };
@@ -74,20 +79,13 @@ function LeaderboardPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const folderRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const fetchLeaderboard = useServerFn(getLeaderboardRows);
 
   const { data: rows, isLoading } = useQuery({
-    queryKey: ["leaderboard", user ? "auth" : "anon"],
+    queryKey: ["leaderboard"],
     queryFn: async () => {
-      const cols = user
-        ? "id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at"
-        : "id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at";
-      const { data, error } = await supabase
-        .from("leaderboard_times")
-        .select(cols)
-        .order("best_lap_ms", { ascending: true })
-        .limit(10000);
-      if (error) throw error;
-      return ((data ?? []) as any[]).map((r) => ({ user_id: null, ...r })) as Row[];
+      const data = await fetchLeaderboard();
+      return data.map((r) => ({ user_id: null, ...r })) as Row[];
     },
   });
 
@@ -389,7 +387,7 @@ function LeaderboardPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>Alle baner</SelectItem>
-                {tracks.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                {tracks.map((t) => <SelectItem key={t} value={t}>{displayTrackName(t)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -448,7 +446,7 @@ function LeaderboardPage() {
                       </td>
                       <td className="px-3 py-2"><Badge variant="secondary" className="text-[10px]">{r.car_class}</Badge></td>
                       <td className="px-3 py-2 text-muted-foreground">{r.car_model ?? "–"}</td>
-                      <td className="px-3 py-2"><span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />{r.track}</span></td>
+                      <td className="px-3 py-2"><span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />{displayTrackName(r.track)}</span></td>
                       <td className="px-3 py-2 hidden sm:table-cell text-muted-foreground">{r.layout ?? "–"}</td>
                       <td className="px-3 py-2 text-right font-mono tabular-nums">
                         <span className="inline-flex items-center gap-1"><Timer className="h-3 w-3 text-primary" />{msToLapStr(r.best_lap_ms)}</span>
