@@ -63,9 +63,13 @@ function OnboardingPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!displayName.trim()) return toast.error("Indtast et visningsnavn.");
+    if (!displayName.trim()) return toast.error("Indtast dit fulde navn.");
+    if (!/\S+\s+\S+/.test(displayName.trim())) {
+      return toast.error("Dit visningsnavn skal indeholde både for- og efternavn.");
+    }
     if (!lmuName.trim()) return toast.error("Indtast dit LMU-navn.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return toast.error("Indtast en gyldig email.");
+    if (!acceptsDanish) return toast.error("Bekræft venligst at du kan læse og skrive dansk.");
     setSaving(true);
     try {
       await finish({ data: { display_name: displayName.trim(), lmu_name: lmuName.trim(), email: email.trim() } });
