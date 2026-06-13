@@ -142,6 +142,17 @@ function OnboardingPage() {
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} required disabled={!discordLinked} />
               <p className="mt-1 text-xs text-muted-foreground">Bruges til notifikationer. Forudfyldt fra Discord — du kan ændre den.</p>
             </div>
+            <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
+              <Checkbox
+                checked={acceptsDanish}
+                onCheckedChange={(v) => setAcceptsDanish(v === true)}
+                disabled={!discordLinked}
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen — inkl. drivers briefings, regler og protests — foregår på dansk.
+              </span>
+            </label>
             <div className="flex items-center justify-between gap-2 pt-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => { void signOut(); navigate({ to: "/login" }); }}>
                 Log ud
