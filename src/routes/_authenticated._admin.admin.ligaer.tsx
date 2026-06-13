@@ -395,13 +395,25 @@ function AdminLeagues() {
 
       <div className="space-y-3">
         {leagues?.length === 0 && <p className="text-muted-foreground">{showArchive ? "Arkivet er tomt." : "Ingen ligaer endnu."}</p>}
-        {leagues?.map((l: any) => {
+        {leagues?.map((l: any, idx: number) => {
           const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
+          const canMoveUp = idx > 0;
+          const canMoveDown = idx < (leagues.length - 1);
+          const handleMove = (dir: "up" | "down") => {
+            if (!leagues) return;
+            const otherIdx = dir === "up" ? idx - 1 : idx + 1;
+            const other = leagues[otherIdx];
+            if (!other) return;
+            const currentOrder = l.sort_order ?? 0;
+            const otherOrder = other.sort_order ?? 0;
+            reorder.mutate({ id: l.id, newOrder: otherOrder });
+            reorder.mutate({ id: other.id, newOrder: currentOrder });
+          };
           return (
           <Card key={l.id}>
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
-                  <div>
+                  <div className="flex-1">
                     <CardTitle className="flex items-center gap-2">
                       {l.name}
                       {l.is_offseason && <Badge variant="secondary" className="text-[10px]">Off-season</Badge>}
@@ -422,6 +434,28 @@ function AdminLeagues() {
                             {l.driver_category && <Badge variant="secondary">{l.driver_category}</Badge>}
                           </>)}
                     </div>
+                  </div>
+                  <div className="flex flex-col items-center gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      disabled={!canMoveUp || reorder.isPending}
+                      onClick={() => handleMove("up")}
+                      title="Flyt op"
+                    >
+                      <ArrowUp className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      disabled={!canMoveDown || reorder.isPending}
+                      onClick={() => handleMove("down")}
+                      title="Flyt ned"
+                    >
+                      <ArrowDown className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                   <div className="flex gap-1">
                     <EditLeagueDialog league={l} />
