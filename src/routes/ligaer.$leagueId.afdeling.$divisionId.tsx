@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { triggerReserveOfferForAbsence, cancelReserveOffersForAbsence, respondReserveOffer } from "@/lib/division-reserves.functions";
+import { triggerReserveOfferForAbsence, respondReserveOffer } from "@/lib/division-reserves.functions";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_NUMERIC_FIELDS } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DriverLink } from "@/components/DriverLink";
@@ -289,23 +289,8 @@ function DivisionDetail() {
     (grouped[k] ??= []).push({ ...r, waitlist: false, _kind: "reserve" });
   }
 
-  const triggerReserve = useServerFn(triggerReserveOfferForAbsence);
-  const cancelReserve = useServerFn(cancelReserveOffersForAbsence);
   const respondOffer = useServerFn(respondReserveOffer);
 
-  const removeAbsence = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("division_absences").delete().eq("id", id);
-      if (error) throw error;
-      try { await cancelReserve({ data: { divisionId } }); } catch (e) { console.error(e); }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
-      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
-      toast.success("Markeret som deltager igen");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
 
   const offerResponse = useMutation({
     mutationFn: async (vars: { accept: boolean }) => {
@@ -471,9 +456,7 @@ function DivisionDetail() {
           <AbsenceDialog divisionId={divisionId} userId={user.id} />
         )}
         {user && myAbsence && (
-          <Button variant="outline" className="gap-1" onClick={() => removeAbsence.mutate(myAbsence.id)}>
-            <UserCheck className="h-4 w-4" /> Jeg deltager alligevel
-          </Button>
+          <Badge variant="outline" className="gap-1"><UserX className="h-3 w-3" /> Markeret som ikke-deltagende</Badge>
         )}
         {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
@@ -618,39 +601,50 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const trigger = useServerFn(triggerReserveOfferForAbsence);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!confirmed || submitting) return;
+    setSubmitting(true);
     const { error } = await supabase.from("division_absences").insert({
       division_id: divisionId,
       user_id: userId,
       reason: reason.trim() || null,
     });
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Markeret som ikke-deltagende — leder efter reserve");
-      setOpen(false);
-      setReason("");
-      qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
-      try {
-        const res = await trigger({ data: { divisionId } });
-        if (res.ok) toast.success("En reserve er blevet tilbudt pladsen");
-      } catch (err) {
-        console.error("trigger reserve failed", err);
-      }
-      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
+    if (error) {
+      toast.error(error.message);
+      setSubmitting(false);
+      return;
     }
+    toast.success("Markeret som ikke-deltagende — leder efter reserve");
+    setOpen(false);
+    setReason("");
+    setConfirmed(false);
+    qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
+    try {
+      const res = await trigger({ data: { divisionId } });
+      if (res.ok) toast.success("En reserve er blevet tilbudt pladsen");
+    } catch (err) {
+      console.error("trigger reserve failed", err);
+    }
+    qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
+    setSubmitting(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setConfirmed(false); } }}>
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-1"><UserX className="h-4 w-4" /> Deltager ikke</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Marker som ikke-deltagende</DialogTitle></DialogHeader>
-        <form onSubmit={submit} className="space-y-3">
+        <form onSubmit={submit} className="space-y-4">
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+            <strong>Vigtigt:</strong> Når du bekræfter, kan dette ikke fortrydes. Din plads bliver tilbudt en reserve, og du kan ikke køre denne afdeling. Du beholder din plads på griddet for resten af sæsonen.
+          </div>
           <div>
             <Label>Begrundelse (valgfri)</Label>
             <Textarea
@@ -661,8 +655,20 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
               placeholder="Fx ferie, sygdom, andet løb…"
             />
           </div>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={confirmed}
+              onChange={(e) => setConfirmed(e.target.checked)}
+              className="mt-1"
+            />
+            <span>Jeg forstår at dette ikke kan fortrydes, og at min plads gives videre til en reserve.</span>
+          </label>
           <DialogFooter>
-            <Button type="submit">Bekræft</Button>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Annuller</Button>
+            <Button type="submit" variant="destructive" disabled={!confirmed || submitting}>
+              {submitting ? "Bekræfter…" : "Bekræft udeblivelse"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
