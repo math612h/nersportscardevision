@@ -33,6 +33,7 @@ async function postDiscordAnnouncement(args: {
   leagueUrl: string
   classConfigs: Array<{ car_class?: string; driver_category?: string; max_drivers?: number }> | null
   divisions: Array<{ name: string | null; track: string | null; layout: string | null; race_date: string | null }>
+  bannerUrl: string | null
 }): Promise<void> {
   const botToken = process.env.DISCORD_BOT_TOKEN
   if (!botToken) {
@@ -97,6 +98,7 @@ async function postDiscordAnnouncement(args: {
       body: JSON.stringify({
         content,
         allowed_mentions: { parse: [], roles: [DISCORD_MEMBERS_ROLE_ID] },
+        ...(args.bannerUrl ? { embeds: [{ image: { url: args.bannerUrl }, color: 0xe11d2a }] } : {}),
       }),
     },
   )
@@ -127,7 +129,7 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
         const nowIso = new Date().toISOString()
         const { data: leagues, error: leaguesErr } = await supabase
           .from('leagues')
-          .select('id, name, signup_opens_at, signup_open_notified_at, class_configs')
+          .select('id, name, signup_opens_at, signup_open_notified_at, class_configs, banner_url')
           .lte('signup_opens_at', nowIso)
           .is('signup_open_notified_at', null)
           .not('signup_opens_at', 'is', null)
@@ -178,11 +180,24 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
               .select('name, track, layout, race_date')
               .eq('league_id', league.id as string)
               .order('race_date', { ascending: true })
+            let bannerUrl: string | null = null
+            const bannerPath = (league as any).banner_url as string | null
+            if (bannerPath) {
+              if (bannerPath.startsWith('http')) {
+                bannerUrl = bannerPath
+              } else {
+                const { data: signed } = await supabase.storage
+                  .from('league-banners')
+                  .createSignedUrl(bannerPath, 60 * 60 * 24 * 30)
+                bannerUrl = signed?.signedUrl ?? null
+              }
+            }
             await postDiscordAnnouncement({
               leagueName: league.name as string,
               leagueUrl,
               classConfigs: (league as any).class_configs ?? null,
               divisions: (divs ?? []) as any,
+              bannerUrl,
             })
           } catch (e) {
             console.error('Discord announcement error', e)
