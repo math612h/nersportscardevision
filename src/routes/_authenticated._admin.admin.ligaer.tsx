@@ -211,6 +211,7 @@ function AdminLeagues() {
   const [approvedOnly, setApprovedOnly] = useState(false);
   const [briefingRequired, setBriefingRequired] = useState(true);
   const [separateDivisionStandings, setSeparateDivisionStandings] = useState(false);
+  const [protestTickets, setProtestTickets] = useState<number>(3);
   const [configs, setConfigs] = useState<ClassConfig[]>([emptyConfig()]);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
@@ -256,6 +257,7 @@ function AdminLeagues() {
       approved_only: approvedOnly,
       briefing_required: briefingRequired,
       separate_division_standings: separateDivisionStandings,
+      protest_tickets_per_season: Math.max(0, Math.floor(protestTickets || 0)),
       banner_url: bannerPath,
       event_settings: eventSettings as any,
       points_system: pointsSystem as any,
@@ -274,6 +276,7 @@ function AdminLeagues() {
     setApprovedOnly(false);
     setBriefingRequired(true);
     setSeparateDivisionStandings(false);
+    setProtestTickets(3);
     setConfigs([emptyConfig()]);
     setBannerFile(null);
     setEventSettings({});
@@ -341,7 +344,13 @@ function AdminLeagues() {
                   <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
                   <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
                 </label>
+                <div className="space-y-1 rounded-md border border-border p-2">
+                  <Label>Protest-billetter pr. deltager</Label>
+                  <Input type="number" min={0} max={50} value={protestTickets} onChange={(e) => setProtestTickets(Number(e.target.value))} />
+                  <p className="text-xs text-muted-foreground">Antal protester en deltager har til rådighed i hele sæsonen. Får man medhold, koster det ingen billet — ellers koster en protest 1 billet.</p>
+                </div>
                 <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
+
                 <div className="space-y-1 rounded-md border border-border p-2">
                   <Label>Tilmelding åbner</Label>
                   <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
@@ -440,6 +449,7 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [approvedOnly, setApprovedOnly] = useState<boolean>(!!league.approved_only);
   const [briefingRequired, setBriefingRequired] = useState<boolean>(league.briefing_required !== false);
   const [separateDivisionStandings, setSeparateDivisionStandings] = useState<boolean>(!!league.separate_division_standings);
+  const [protestTickets, setProtestTickets] = useState<number>(typeof league.protest_tickets_per_season === "number" ? league.protest_tickets_per_season : 3);
   const initialCfgs: ClassConfig[] = Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()];
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
   const [bannerPath, setBannerPath] = useState<string | null>(league.banner_url ?? null);
@@ -468,6 +478,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setApprovedOnly(!!league.approved_only);
     setBriefingRequired(league.briefing_required !== false);
     setSeparateDivisionStandings(!!league.separate_division_standings);
+    setProtestTickets(typeof league.protest_tickets_per_season === "number" ? league.protest_tickets_per_season : 3);
     setCfgs(Array.isArray(league.class_configs) && league.class_configs.length > 0 ? league.class_configs : [emptyConfig()]);
     setBannerPath(league.banner_url ?? null);
     setBannerFile(null);
@@ -503,6 +514,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         approved_only: approvedOnly,
         briefing_required: briefingRequired,
         separate_division_standings: separateDivisionStandings,
+        protest_tickets_per_season: Math.max(0, Math.floor(protestTickets || 0)),
         banner_url: newBanner,
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
@@ -553,7 +565,13 @@ function EditLeagueDialog({ league }: { league: any }) {
             <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
             <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
           </label>
+          <div className="space-y-1 rounded-md border border-border p-2">
+            <Label>Protest-billetter pr. deltager</Label>
+            <Input type="number" min={0} max={50} value={protestTickets} onChange={(e) => setProtestTickets(Number(e.target.value))} />
+            <p className="text-xs text-muted-foreground">Antal protester en deltager har til rådighed i hele sæsonen. Får man medhold, koster det ingen billet — ellers koster en protest 1 billet.</p>
+          </div>
           <ClassConfigsEditor configs={cfgs} setConfigs={setCfgs} />
+
           <div className="space-y-1 rounded-md border border-border p-2">
             <Label>Tilmelding åbner</Label>
             <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />

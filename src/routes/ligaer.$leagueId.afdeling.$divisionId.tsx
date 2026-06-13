@@ -386,7 +386,7 @@ function DivisionDetail() {
             <UserCheck className="h-4 w-4" /> Jeg deltager alligevel
           </Button>
         )}
-        {user && <ProtestDialog divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} />}
+        {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
 
       {(results?.length ?? 0) > 0 && (() => {
@@ -570,13 +570,40 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
 
 type EntryLite = { id: string; user_id: string; driver_name: string };
 
-function ProtestDialog({ divisionId, entries, currentUserId }: { divisionId: string; entries: EntryLite[]; currentUserId: string }) {
+function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPerSeason }: { leagueId: string; divisionId: string; entries: EntryLite[]; currentUserId: string; ticketsPerSeason: number }) {
   const [open, setOpen] = useState(false);
   const [lap, setLap] = useState("");
   const [corner, setCorner] = useState("");
   const [involved, setInvolved] = useState<string[]>([""]);
   const [desc, setDesc] = useState("");
   const [video, setVideo] = useState("");
+
+  // Tally how many tickets the user has used in this league.
+  // A ticket is "spent" when a protest the user submitted has been ruled with
+  // outcome 'no_penalty' (i.e. ikke medhold).
+  const { data: usedTickets = 0 } = useQuery({
+    enabled: !!currentUserId && !!leagueId,
+    queryKey: ["protest-tickets-used", leagueId, currentUserId],
+    queryFn: async () => {
+      const { data: divs } = await supabase
+        .from("divisions")
+        .select("id")
+        .eq("league_id", leagueId);
+      const divIds = (divs ?? []).map((d) => d.id);
+      if (divIds.length === 0) return 0;
+      const { count } = await supabase
+        .from("protests")
+        .select("id", { count: "exact", head: true })
+        .eq("submitted_by", currentUserId)
+        .eq("status", "ruled")
+        .eq("verdict_outcome", "no_penalty")
+        .in("division_id", divIds);
+      return count ?? 0;
+    },
+  });
+  const ticketsRemaining = Math.max(0, ticketsPerSeason - usedTickets);
+  const outOfTickets = ticketsRemaining <= 0;
+
 
   const eligible = entries.filter((e) => e.user_id !== currentUserId);
 
@@ -593,7 +620,9 @@ function ProtestDialog({ divisionId, entries, currentUserId }: { divisionId: str
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (outOfTickets) { toast.error("Du har ingen protest-billetter tilbage i denne liga"); return; }
     if (video && !/^https?:\/\//i.test(video)) { toast.error("Video link skal være en gyldig URL"); return; }
+
 
     // Dedupe selected user IDs
     const userIds = Array.from(new Set(involved.filter(Boolean)));
@@ -633,7 +662,13 @@ function ProtestDialog({ divisionId, entries, currentUserId }: { divisionId: str
       <DialogTrigger asChild><Button variant="outline" className="gap-1"><MessageSquareWarning className="h-4 w-4" /> Indsend protest</Button></DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Indsend protest</DialogTitle></DialogHeader>
+        <div className={`rounded-md border p-3 text-xs ${outOfTickets ? "border-destructive/50 bg-destructive/10 text-destructive" : "border-border bg-muted/40 text-muted-foreground"}`}>
+          <p className="font-medium text-foreground">Du har {ticketsRemaining} af {ticketsPerSeason} protest-billetter tilbage i denne liga.</p>
+          <p className="mt-1">Får du <span className="font-medium text-foreground">medhold</span>, koster det <span className="font-medium text-foreground">ingen billet</span>. Får du <span className="font-medium text-foreground">ikke medhold</span>, koster det <span className="font-medium text-foreground">1 billet</span>.</p>
+          {outOfTickets && <p className="mt-1 font-medium">Du kan ikke indsende flere protests i denne liga.</p>}
+        </div>
         <form onSubmit={submit} className="space-y-3">
+
           <div className="grid grid-cols-2 gap-3">
             <div><Label>Omgang</Label><Input type="number" min={1} value={lap} onChange={(e) => setLap(e.target.value)} /></div>
             <div><Label>Sving</Label><Input maxLength={50} value={corner} onChange={(e) => setCorner(e.target.value)} placeholder="fx T7" /></div>
@@ -672,7 +707,7 @@ function ProtestDialog({ divisionId, entries, currentUserId }: { divisionId: str
           </div>
           <div><Label>Beskrivelse</Label><Textarea required maxLength={2000} value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} /></div>
           <div><Label>Video-link (valgfri)</Label><Input type="url" maxLength={500} value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://…" /></div>
-          <DialogFooter><Button type="submit">Send</Button></DialogFooter>
+          <DialogFooter><Button type="submit" disabled={outOfTickets}>Send</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
