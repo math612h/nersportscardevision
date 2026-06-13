@@ -66,14 +66,15 @@ function AdminProtestDetail() {
     },
   });
 
+  const leagueId = (p as any)?.divisions?.league_id ?? null;
   const { data: entries } = useQuery({
-    enabled: !!p?.division_id,
-    queryKey: ["protest-entries", p?.division_id],
+    enabled: !!leagueId,
+    queryKey: ["protest-entries", leagueId],
     queryFn: async () => {
       const { data } = await supabase
         .from("entries")
         .select("user_id, car_class, driver_category, car_number")
-        .eq("division_id", p!.division_id);
+        .eq("league_id", leagueId);
       return data ?? [];
     },
   });
