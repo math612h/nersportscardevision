@@ -1,13 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UserCheck, ThumbsUp } from "lucide-react";
+import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { setProfileApproval } from "@/lib/leagues.functions";
+import { sendAdminTemplateMessage } from "@/lib/admin-messages.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/afventer")({
   component: PendingApprovalsPage,
@@ -18,6 +25,7 @@ type Profile = { id: string; display_name: string | null; created_at: string; lm
 function PendingApprovalsPage() {
   const qc = useQueryClient();
   const approveFn = useServerFn(setProfileApproval);
+  const sendMessageFn = useServerFn(sendAdminTemplateMessage);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-pending-users"],
@@ -40,6 +48,22 @@ function PendingApprovalsPage() {
       toast.success("Profil godkendt");
       qc.invalidateQueries({ queryKey: ["admin-pending-users"] });
       qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const messageMut = useMutation({
+    mutationFn: async (vars: { userId: string; template: "wrong_name" }) => {
+      return await sendMessageFn({ data: { targetUserId: vars.userId, template: vars.template } });
+    },
+    onSuccess: (res) => {
+      if (res?.discord?.ok) {
+        toast.success("Besked sendt på hjemmesiden og Discord");
+      } else if (res?.discord?.reason === "not_linked") {
+        toast.success("Besked sendt på hjemmesiden (Discord ikke tilknyttet)");
+      } else {
+        toast.success("Besked sendt på hjemmesiden (Discord DM fejlede)");
+      }
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -78,14 +102,33 @@ function PendingApprovalsPage() {
                     </span>
                   </div>
                 </div>
-                <Button
-                  size="sm"
-                  className="gap-2"
-                  onClick={() => approveMut.mutate(p.id)}
-                  disabled={approveMut.isPending}
-                >
-                  <ThumbsUp className="h-4 w-4" /> Godkend
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => approveMut.mutate(p.id)}
+                    disabled={approveMut.isPending}
+                  >
+                    <ThumbsUp className="h-4 w-4" /> Godkend
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" aria-label="Flere handlinger" disabled={messageMut.isPending}>
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() =>
+                          messageMut.mutate({ userId: p.id, template: "wrong_name" })
+                        }
+                      >
+                        <MessageSquareWarning className="mr-2 h-4 w-4" />
+                        Fejl navn — bed om for- og efternavn
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </CardHeader>
             </Card>
           ))}

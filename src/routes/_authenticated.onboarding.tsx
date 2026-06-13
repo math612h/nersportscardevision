@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { completeOnboarding } from "@/lib/onboarding.functions";
 
@@ -44,6 +45,7 @@ function OnboardingPage() {
   const [displayName, setDisplayName] = useState("");
   const [lmuName, setLmuName] = useState("");
   const [email, setEmail] = useState("");
+  const [acceptsDanish, setAcceptsDanish] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -61,9 +63,13 @@ function OnboardingPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!displayName.trim()) return toast.error("Indtast et visningsnavn.");
+    if (!displayName.trim()) return toast.error("Indtast dit fulde navn.");
+    if (!/\S+\s+\S+/.test(displayName.trim())) {
+      return toast.error("Dit visningsnavn skal indeholde både for- og efternavn.");
+    }
     if (!lmuName.trim()) return toast.error("Indtast dit LMU-navn.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return toast.error("Indtast en gyldig email.");
+    if (!acceptsDanish) return toast.error("Bekræft venligst at du kan læse og skrive dansk.");
     setSaving(true);
     try {
       await finish({ data: { display_name: displayName.trim(), lmu_name: lmuName.trim(), email: email.trim() } });
@@ -112,8 +118,18 @@ function OnboardingPage() {
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <Label>Visningsnavn</Label>
-              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={80} required disabled={!discordLinked} />
+              <Label>Fulde navn (visningsnavn)</Label>
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                maxLength={80}
+                required
+                disabled={!discordLinked}
+                placeholder="fx Anders Jensen"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Skal være dit <span className="font-medium text-foreground">rigtige for- og efternavn</span> — ingen forkortelser, kælenavne eller initialer. Profiler uden korrekt navn bliver ikke godkendt.
+              </p>
             </div>
             <div>
               <Label>LMU-navn</Label>
@@ -126,6 +142,17 @@ function OnboardingPage() {
               <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} required disabled={!discordLinked} />
               <p className="mt-1 text-xs text-muted-foreground">Bruges til notifikationer. Forudfyldt fra Discord — du kan ændre den.</p>
             </div>
+            <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
+              <Checkbox
+                checked={acceptsDanish}
+                onCheckedChange={(v) => setAcceptsDanish(v === true)}
+                disabled={!discordLinked}
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen — inkl. drivers briefings, regler og protests — foregår på dansk.
+              </span>
+            </label>
             <div className="flex items-center justify-between gap-2 pt-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => { void signOut(); navigate({ to: "/login" }); }}>
                 Log ud
