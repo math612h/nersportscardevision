@@ -127,7 +127,7 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
         const nowIso = new Date().toISOString()
         const { data: leagues, error: leaguesErr } = await supabase
           .from('leagues')
-          .select('id, name, signup_opens_at, signup_open_notified_at')
+          .select('id, name, signup_opens_at, signup_open_notified_at, class_configs')
           .lte('signup_opens_at', nowIso)
           .is('signup_open_notified_at', null)
           .not('signup_opens_at', 'is', null)
