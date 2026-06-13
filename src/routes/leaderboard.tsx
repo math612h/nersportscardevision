@@ -28,12 +28,12 @@ const PAGE_SIZE = 1000;
 const displayTrackName = (track: string) =>
   track === "Circuit de la Sarthe" ? "Le Mans (Circuit de la Sarthe)" : track;
 
-async function fetchLeaderboardRows(table: "leaderboard_times" | "leaderboard_times_public", cols: string) {
+async function fetchLeaderboardRows(cols: string) {
   const allRows: any[] = [];
   for (let from = 0; ; from += PAGE_SIZE) {
     const to = from + PAGE_SIZE - 1;
     const { data, error } = await (supabase as any)
-      .from(table)
+      .from("leaderboard_times_public")
       .select(cols)
       .order("best_lap_ms", { ascending: true })
       .range(from, to);
@@ -96,12 +96,10 @@ function LeaderboardPage() {
   const [uploading, setUploading] = useState(false);
 
   const { data: rows, isLoading } = useQuery({
-    queryKey: ["leaderboard", user ? "auth" : "anon"],
+    queryKey: ["leaderboard"],
     queryFn: async () => {
-      const cols = user
-        ? "id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at"
-        : "id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at";
-      const data = await fetchLeaderboardRows(user ? "leaderboard_times" : "leaderboard_times_public", cols);
+      const cols = "id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at";
+      const data = await fetchLeaderboardRows(cols);
       return data.map((r) => ({ user_id: null, ...r })) as Row[];
     },
   });
