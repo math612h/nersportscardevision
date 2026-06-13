@@ -529,8 +529,8 @@ function EditLeagueDialog({ league }: { league: any }) {
         <Button variant="ghost" size="sm"><Pencil className="h-4 w-4" /></Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Rediger liga</DialogTitle></DialogHeader>
-        <form onSubmit={submit} className="space-y-3">
+        <DialogHeader><DialogTitle className="flex items-center gap-2">Rediger liga {!league.published && <Badge variant="outline" className="text-[10px]">Kladde</Badge>}</DialogTitle></DialogHeader>
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
           <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label>Beskrivelse</Label><Textarea rows={8} className="min-h-[200px]" placeholder="Brug tomme linjer for at adskille afsnit." maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
           <BannerPicker pathOrUrl={bannerPath} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerPath(null)} />
