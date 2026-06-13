@@ -236,9 +236,9 @@ function AdminLeagues() {
   });
 
   const reorder = useMutation({
-    mutationFn: async ({ id, newOrder }: { id: string; newOrder: number }) => {
-      const { error } = await supabase.from("leagues").update({ sort_order: newOrder } as any).eq("id", id);
-      if (error) throw error;
+    mutationFn: async ({ dir, id }: { dir: "up" | "down"; id: string }) => {
+      const { reorderLeaguesSwap } = await import("@/lib/league-order");
+      await reorderLeaguesSwap(leagues ?? [], id, dir);
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["leagues-admin"] });
@@ -401,13 +401,7 @@ function AdminLeagues() {
           const canMoveDown = idx < (leagues.length - 1);
           const handleMove = (dir: "up" | "down") => {
             if (!leagues) return;
-            const otherIdx = dir === "up" ? idx - 1 : idx + 1;
-            const other = leagues[otherIdx];
-            if (!other) return;
-            const currentOrder = l.sort_order ?? 0;
-            const otherOrder = other.sort_order ?? 0;
-            reorder.mutate({ id: l.id, newOrder: otherOrder });
-            reorder.mutate({ id: other.id, newOrder: currentOrder });
+            reorder.mutate({ id: l.id, dir });
           };
           return (
           <Card key={l.id}>
