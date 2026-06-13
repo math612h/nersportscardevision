@@ -15,6 +15,97 @@ function generateToken(): string {
   return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
+const DISCORD_ANNOUNCE_CHANNEL_ID = '1515091902750396629'
+const DISCORD_MEMBERS_ROLE_ID = '1336326061654278186'
+
+function formatDanishDate(iso: string | null | undefined): string {
+  if (!iso) return 'TBA'
+  try {
+    return new Date(iso).toLocaleDateString('da-DK', {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Copenhagen',
+    })
+  } catch { return 'TBA' }
+}
+
+async function postDiscordAnnouncement(args: {
+  leagueName: string
+  leagueUrl: string
+  classConfigs: Array<{ car_class?: string; driver_category?: string; max_drivers?: number }> | null
+  divisions: Array<{ name: string | null; track: string | null; layout: string | null; race_date: string | null }>
+}): Promise<void> {
+  const botToken = process.env.DISCORD_BOT_TOKEN
+  if (!botToken) {
+    console.warn('DISCORD_BOT_TOKEN not set — skipping Discord announcement')
+    return
+  }
+
+  const classLines = (args.classConfigs ?? [])
+    .filter((c) => c?.car_class)
+    .map((c) => {
+      const cat = c.driver_category ? ` (${c.driver_category})` : ''
+      const seats = typeof c.max_drivers === 'number' ? ` — **${c.max_drivers} pladser**` : ''
+      return `• ${c.car_class}${cat}${seats}`
+    })
+
+  const calendarLines = args.divisions
+    .slice()
+    .sort((a, b) => {
+      const ax = a.race_date ? new Date(a.race_date).getTime() : Infinity
+      const bx = b.race_date ? new Date(b.race_date).getTime() : Infinity
+      return ax - bx
+    })
+    .map((d, i) => {
+      const round = `R${i + 1}`
+      const track = [d.track, d.layout].filter(Boolean).join(' – ') || d.name || 'TBA'
+      return `• **${round}** — ${track} — 📆 ${formatDanishDate(d.race_date)}`
+    })
+
+  const parts: string[] = []
+  parts.push(`<@&${DISCORD_MEMBERS_ROLE_ID}>`)
+  parts.push('')
+  parts.push('🏁🏁🏁  **TILMELDINGEN ER ÅBEN!**  🏁🏁🏁')
+  parts.push('')
+  parts.push(`🏆 **${args.leagueName}**`)
+  parts.push('')
+  parts.push('Så er det nu! Sæt dig klar i pit-lane og snup din plads inden den er væk. 🔥')
+  parts.push('')
+  if (classLines.length) {
+    parts.push('🏎️ **Klasser & pladser**')
+    parts.push(...classLines)
+    parts.push('')
+  }
+  if (calendarLines.length) {
+    parts.push('📅 **Sæsonkalender**')
+    parts.push(...calendarLines)
+    parts.push('')
+  }
+  parts.push(`👉 **Tilmeld dig her:** ${args.leagueUrl}`)
+  parts.push('')
+  parts.push('Held og lykke derude — vi ses på banen! 🏎️💨')
+
+  const content = parts.join('\n').slice(0, 1900)
+
+  const res = await fetch(
+    `https://discord.com/api/v10/channels/${DISCORD_ANNOUNCE_CHANNEL_ID}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${botToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        content,
+        allowed_mentions: { parse: [], roles: [DISCORD_MEMBERS_ROLE_ID] },
+      }),
+    },
+  )
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    console.error('Discord announcement failed', res.status, text)
+  }
+}
+
 export const Route = createFileRoute('/api/public/cron/league-open')({
   server: {
     handlers: {
