@@ -2,6 +2,33 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+const SITE = "https://lmudanmark.dk";
+
+async function notifyAndDM(
+  admin: any,
+  userId: string,
+  title: string,
+  body: string,
+  link: string,
+) {
+  await admin.from("notifications").insert({ user_id: userId, title, body, link });
+  try {
+    const { data: priv } = await admin
+      .from("profiles_private")
+      .select("discord_user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    const discordId = (priv as { discord_user_id?: string | null } | null)?.discord_user_id ?? null;
+    if (discordId) {
+      const { sendDiscordDM } = await import("./discord.server");
+      const res = await sendDiscordDM(discordId, `**${title}**\n\n${body}\n\n${SITE}${link}`);
+      if (!res.ok) console.error("League DM failed", userId, res);
+    }
+  } catch (e) {
+    console.error("League DM error", e);
+  }
+}
+
 export const setProfileApproval = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
