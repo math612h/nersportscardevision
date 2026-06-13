@@ -1271,16 +1271,8 @@ function QuickNav() {
           <span className="truncate text-xs font-medium">{item.label}</span>
         </button>
       ))}
-      <Link
-        to="/mine-protests"
-        className="group flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-left transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
-      >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-          <Gavel className="h-4 w-4" />
-        </span>
-        <span className="truncate text-xs font-medium">Protester</span>
-      </Link>
     </div>
+
   );
 }
 
