@@ -196,3 +196,18 @@ export async function sendDiscordDM(discordUserId: string, content: string): Pro
   return { ok: false, status: msgRes.status, message: text };
 }
 
+export async function sendDiscordChannelMessage(channelId: string, content: string): Promise<{ ok: boolean; status: number; message?: string }> {
+  const botToken = getEnv("DISCORD_BOT_TOKEN");
+  const msgRes = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bot ${botToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ content: content.slice(0, 1900), allowed_mentions: { parse: [] } }),
+  });
+  if (msgRes.status === 200 || msgRes.status === 201) return { ok: true, status: msgRes.status };
+  const text = await msgRes.text().catch(() => "");
+  return { ok: false, status: msgRes.status, message: text };
+}
+
