@@ -41,8 +41,23 @@ export const Route = createFileRoute("/")({
 });
 
 function NewsHome() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const qc = useQueryClient();
+
+  const { data: pendingIncidents = 0 } = useQuery({
+    queryKey: ["home-pending-incidents", user?.id],
+    enabled: !!user,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("protest_involved")
+        .select("id, response, protests!inner(status)")
+        .eq("user_id", user!.id)
+        .is("response", null);
+      if (error) throw error;
+      return (data ?? []).filter((r: any) => r.protests?.status !== "ruled").length;
+    },
+  });
   const { data: divisions, isLoading } = useQuery({
     queryKey: ["home-recent-results"],
     queryFn: async () => {
