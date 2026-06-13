@@ -620,7 +620,9 @@ function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPe
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (outOfTickets) { toast.error("Du har ingen protest-billetter tilbage i denne liga"); return; }
     if (video && !/^https?:\/\//i.test(video)) { toast.error("Video link skal være en gyldig URL"); return; }
+
 
     // Dedupe selected user IDs
     const userIds = Array.from(new Set(involved.filter(Boolean)));
