@@ -290,22 +290,8 @@ function DivisionDetail() {
   }
 
   const triggerReserve = useServerFn(triggerReserveOfferForAbsence);
-  const cancelReserve = useServerFn(cancelReserveOffersForAbsence);
   const respondOffer = useServerFn(respondReserveOffer);
 
-  const removeAbsence = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("division_absences").delete().eq("id", id);
-      if (error) throw error;
-      try { await cancelReserve({ data: { divisionId } }); } catch (e) { console.error(e); }
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
-      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
-      toast.success("Markeret som deltager igen");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
 
   const offerResponse = useMutation({
     mutationFn: async (vars: { accept: boolean }) => {
