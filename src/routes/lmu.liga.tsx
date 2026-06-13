@@ -1,8 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users } from "lucide-react";
+import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowUp, ArrowDown } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { reorderLeaguesSwap } from "@/lib/league-order";
 import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
 import { cn } from "@/lib/utils";
@@ -29,6 +32,9 @@ export const Route = createFileRoute("/lmu/liga")({
 
 function ParticipantDashboard() {
   const [tab, setTab] = useState<"active" | "upcoming" | "past">("active");
+  const { isAdmin } = useAuth();
+  const qc = useQueryClient();
+
 
   const { data: leagues, isLoading } = useQuery({
     queryKey: ["leagues"],
@@ -106,6 +112,21 @@ function ParticipantDashboard() {
   const active = (leagues ?? []).filter((l: any) => classify(l) === "active");
   const past = (leagues ?? []).filter((l: any) => classify(l) === "past");
 
+  const reorder = useMutation({
+    mutationFn: async ({ list, id, dir }: { list: any[]; id: string; dir: "up" | "down" }) => {
+      await reorderLeaguesSwap(list, id, dir);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["leagues"] });
+      qc.invalidateQueries({ queryKey: ["leagues-admin"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
+  const makeMoveHandler = (list: any[]) => (id: string, dir: "up" | "down") =>
+    reorder.mutate({ list, id, dir });
+
+
   return (
     <div className="space-y-10">
       <header className="space-y-1">
@@ -167,7 +188,7 @@ function ParticipantDashboard() {
 
           {tab === "active" && active.length > 0 && (
             <CardGrid>
-              {active.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} />)}
+              {active.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < active.length - 1} onMove={(dir) => makeMoveHandler(active)(l.id, dir)} reordering={reorder.isPending} />)}
             </CardGrid>
           )}
           {tab === "active" && active.length === 0 && (
@@ -178,7 +199,7 @@ function ParticipantDashboard() {
 
           {tab === "upcoming" && upcoming.length > 0 && (
             <CardGrid>
-              {upcoming.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming />)}
+              {upcoming.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < upcoming.length - 1} onMove={(dir) => makeMoveHandler(upcoming)(l.id, dir)} reordering={reorder.isPending} />)}
             </CardGrid>
           )}
           {tab === "upcoming" && upcoming.length === 0 && (
@@ -189,7 +210,7 @@ function ParticipantDashboard() {
 
           {tab === "past" && past.length > 0 && (
             <CardGrid>
-              {past.map((l: any) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past />)}
+              {past.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < past.length - 1} onMove={(dir) => makeMoveHandler(past)(l.id, dir)} reordering={reorder.isPending} />)}
             </CardGrid>
           )}
           {tab === "past" && past.length === 0 && (
@@ -296,6 +317,11 @@ function LeagueCard({
   offseason,
   upcoming,
   past,
+  isAdmin,
+  canMoveUp,
+  canMoveDown,
+  onMove,
+  reordering,
 }: {
   l: any;
   bannerUrl: string | null;
@@ -303,6 +329,11 @@ function LeagueCard({
   offseason?: boolean;
   upcoming?: boolean;
   past?: boolean;
+  isAdmin?: boolean;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  onMove?: (dir: "up" | "down") => void;
+  reordering?: boolean;
 }) {
   const Icon = offseason ? Sparkles : Flag;
   const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
@@ -321,56 +352,82 @@ function LeagueCard({
   const freeSlots = Math.max(0, totalSlots - takenSlots);
 
   return (
-    <Link
-      to="/ligaer/$leagueId"
-      params={{ leagueId: l.id }}
-      aria-label={`Åbn ${l.name}`}
-      className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
-    >
-      <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-        {bannerUrl ? (
-          <img
-            src={bannerUrl}
-            alt={`Banner for ${l.name}`}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
-        <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
-          <ArrowUpRight className="h-3.5 w-3.5" />
+    <div className="relative">
+      <Link
+        to="/ligaer/$leagueId"
+        params={{ leagueId: l.id }}
+        aria-label={`Åbn ${l.name}`}
+        className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
+      >
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+          {bannerUrl ? (
+            <img
+              src={bannerUrl}
+              alt={`Banner for ${l.name}`}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
+          <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
+            <ArrowUpRight className="h-3.5 w-3.5" />
+          </div>
+          {upcoming && (
+            <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
+              <CardCountdown opensAt={l.signup_opens_at ?? null} />
+            </Badge>
+          )}
+          {past && (
+            <Badge variant="secondary" className="absolute left-3 top-3">Afsluttet</Badge>
+          )}
         </div>
-        {upcoming && (
-          <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
-            <CardCountdown opensAt={l.signup_opens_at ?? null} />
-          </Badge>
-        )}
-        {past && (
-          <Badge variant="secondary" className="absolute left-3 top-3">Afsluttet</Badge>
-        )}
-      </div>
 
-      <div className="flex items-center gap-3 px-4 pb-4 pt-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary" aria-hidden="true">
-          <Icon className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-base font-semibold tracking-tight">{l.name}</h3>
-          <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
-            <Users className="h-3 w-3" />
-            {hasCap ? (
-              <span>
-                <span className="font-semibold text-foreground">{freeSlots}</span> ledige slots på gridden
-              </span>
-            ) : (
-              <span>Ingen pladsbegrænsning</span>
-            )}
-          </p>
+        <div className="flex items-center gap-3 px-4 pb-4 pt-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary" aria-hidden="true">
+            <Icon className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-base font-semibold tracking-tight">{l.name}</h3>
+            <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+              <Users className="h-3 w-3" />
+              {hasCap ? (
+                <span>
+                  <span className="font-semibold text-foreground">{freeSlots}</span> ledige slots på gridden
+                </span>
+              ) : (
+                <span>Ingen pladsbegrænsning</span>
+              )}
+            </p>
+          </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+      {isAdmin && onMove && (
+        <div className="absolute left-2 bottom-2 z-10 flex gap-1 rounded-md bg-background/85 p-1 backdrop-blur border border-border shadow-sm">
+          <button
+            type="button"
+            aria-label="Flyt op"
+            title="Flyt op"
+            disabled={!canMoveUp || reordering}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMove("up"); }}
+            className="inline-flex h-8 w-8 items-center justify-center rounded text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Flyt ned"
+            title="Flyt ned"
+            disabled={!canMoveDown || reordering}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onMove("down"); }}
+            className="inline-flex h-8 w-8 items-center justify-center rounded text-foreground hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <ArrowDown className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
