@@ -42,6 +42,7 @@ import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/pub
 import { Route as ApiPublicDiscordLoginRouteImport } from './routes/api/public/discord.login'
 import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/public/discord.callback'
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
+import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
@@ -228,6 +229,12 @@ const ApiPublicCronLeagueOpenRoute = ApiPublicCronLeagueOpenRouteImport.update({
   path: '/api/public/cron/league-open',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicCronExpireReserveOffersRoute =
+  ApiPublicCronExpireReserveOffersRouteImport.update({
+    id: '/api/public/cron/expire-reserve-offers',
+    path: '/api/public/cron/expire-reserve-offers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCompanionVerifyTokenRoute =
   ApiPublicCompanionVerifyTokenRouteImport.update({
     id: '/api/public/companion/verify-token',
@@ -328,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
@@ -371,6 +379,7 @@ export interface FileRoutesByTo {
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
@@ -419,6 +428,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
@@ -466,6 +476,7 @@ export interface FileRouteTypes {
     | '/admin/nyhedsbrev'
     | '/admin/protests'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/discord/callback'
     | '/api/public/discord/login'
@@ -509,6 +520,7 @@ export interface FileRouteTypes {
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/discord/callback'
     | '/api/public/discord/login'
@@ -556,6 +568,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/nyhedsbrev'
     | '/_authenticated/_admin/admin/protests'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/discord/callback'
     | '/api/public/discord/login'
@@ -591,6 +604,7 @@ export interface RootRouteChildren {
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
+  ApiPublicCronExpireReserveOffersRoute: typeof ApiPublicCronExpireReserveOffersRoute
   ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
   ApiPublicDiscordCallbackRoute: typeof ApiPublicDiscordCallbackRoute
   ApiPublicDiscordLoginRoute: typeof ApiPublicDiscordLoginRoute
@@ -835,6 +849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronLeagueOpenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/expire-reserve-offers': {
+      id: '/api/public/cron/expire-reserve-offers'
+      path: '/api/public/cron/expire-reserve-offers'
+      fullPath: '/api/public/cron/expire-reserve-offers'
+      preLoaderRoute: typeof ApiPublicCronExpireReserveOffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/companion/verify-token': {
       id: '/api/public/companion/verify-token'
       path: '/api/public/companion/verify-token'
@@ -1051,6 +1072,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
+  ApiPublicCronExpireReserveOffersRoute: ApiPublicCronExpireReserveOffersRoute,
   ApiPublicCronLeagueOpenRoute: ApiPublicCronLeagueOpenRoute,
   ApiPublicDiscordCallbackRoute: ApiPublicDiscordCallbackRoute,
   ApiPublicDiscordLoginRoute: ApiPublicDiscordLoginRoute,
