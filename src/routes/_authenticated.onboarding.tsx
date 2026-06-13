@@ -118,8 +118,18 @@ function OnboardingPage() {
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <Label>Visningsnavn</Label>
-              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={80} required disabled={!discordLinked} />
+              <Label>Fulde navn (visningsnavn)</Label>
+              <Input
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                maxLength={80}
+                required
+                disabled={!discordLinked}
+                placeholder="fx Anders Jensen"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Skal være dit <span className="font-medium text-foreground">rigtige for- og efternavn</span> — ingen forkortelser, kælenavne eller initialer. Profiler uden korrekt navn bliver ikke godkendt.
+              </p>
             </div>
             <div>
               <Label>LMU-navn</Label>
