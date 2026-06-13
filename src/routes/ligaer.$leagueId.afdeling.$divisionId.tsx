@@ -707,7 +707,7 @@ function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPe
           </div>
           <div><Label>Beskrivelse</Label><Textarea required maxLength={2000} value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} /></div>
           <div><Label>Video-link (valgfri)</Label><Input type="url" maxLength={500} value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://…" /></div>
-          <DialogFooter><Button type="submit">Send</Button></DialogFooter>
+          <DialogFooter><Button type="submit" disabled={outOfTickets}>Send</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
