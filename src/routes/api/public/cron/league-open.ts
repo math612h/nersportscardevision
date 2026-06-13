@@ -33,6 +33,7 @@ async function postDiscordAnnouncement(args: {
   leagueUrl: string
   classConfigs: Array<{ car_class?: string; driver_category?: string; max_drivers?: number }> | null
   divisions: Array<{ name: string | null; track: string | null; layout: string | null; race_date: string | null }>
+  bannerUrl: string | null
 }): Promise<void> {
   const botToken = process.env.DISCORD_BOT_TOKEN
   if (!botToken) {
@@ -97,6 +98,7 @@ async function postDiscordAnnouncement(args: {
       body: JSON.stringify({
         content,
         allowed_mentions: { parse: [], roles: [DISCORD_MEMBERS_ROLE_ID] },
+        ...(args.bannerUrl ? { embeds: [{ image: { url: args.bannerUrl }, color: 0xe11d2a }] } : {}),
       }),
     },
   )
