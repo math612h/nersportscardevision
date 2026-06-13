@@ -490,6 +490,7 @@ function EditLeagueDialog({ league }: { league: any }) {
       return toast.error(err.message);
     }
     const first = cfgs[0];
+    const signupOpenChanged = signupOpensAt && new Date(signupOpensAt).toISOString() !== (league.signup_opens_at ?? null);
     const { error } = await supabase
       .from("leagues")
       .update({
@@ -506,10 +507,8 @@ function EditLeagueDialog({ league }: { league: any }) {
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
-        signup_open_notified_at:
-          signupOpensAt && new Date(signupOpensAt).toISOString() !== (league.signup_opens_at ?? null)
-            ? null
-            : (league as any).signup_open_notified_at ?? null,
+        signup_open_notified_at: signupOpenChanged ? null : (league as any).signup_open_notified_at ?? null,
+        discord_signup_open_notified_at: signupOpenChanged ? null : (league as any).discord_signup_open_notified_at ?? null,
         discord_role_id: discordRoleId.trim() || null,
         published: publish,
       } as any)
