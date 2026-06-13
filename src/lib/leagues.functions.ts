@@ -151,12 +151,13 @@ export const setProfileApproval = createServerFn({ method: "POST" })
             await supabaseAdmin.from("entries").update({ waitlist: false }).eq("id", nextUp.id);
             const { data: league } = await supabaseAdmin
               .from("leagues").select("name").eq("id", leagueId).maybeSingle();
-            await supabaseAdmin.from("notifications").insert({
-              user_id: nextUp.user_id,
-              title: `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
-              body: `En plads er blevet ledig i ${entry.car_class} · ${entry.driver_category}. Du er nu på griddet.`,
-              link: `/ligaer/${entry.league_id}`,
-            });
+            await notifyAndDM(
+              supabaseAdmin,
+              nextUp.user_id,
+              `Du er rykket op fra ventelisten i ${league?.name ?? "ligaen"}`,
+              `En plads er blevet ledig i ${entry.car_class} · ${entry.driver_category}. Du er nu på griddet for resten af sæsonen.`,
+              `/ligaer/${entry.league_id}`,
+            );
           }
         }
       }
