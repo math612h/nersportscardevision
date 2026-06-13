@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus, Archive, ArchiveRestore, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -218,17 +218,22 @@ function AdminLeagues() {
   const [signupOpensAt, setSignupOpensAt] = useState<string>("");
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
 
   const { data: leagues } = useQuery({
-    queryKey: ["leagues-admin"],
+    queryKey: ["leagues-admin", showArchive],
     queryFn: async () => {
-      const { data, error } = await supabase.from("leagues").select("*").order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("*")
+        .eq("published", !showArchive)
+        .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
-  const create = async (e: React.FormEvent) => {
+  const create = async (e: React.FormEvent, publish: boolean) => {
     e.preventDefault();
     const err = validateConfigs(configs);
     if (err) return toast.error(err);
@@ -255,11 +260,12 @@ function AdminLeagues() {
       event_settings: eventSettings as any,
       points_system: pointsSystem as any,
       signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
+      published: publish,
       created_by: user?.id,
     } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
-    toast.success(isOffseason ? "Off-season event oprettet" : "Liga oprettet");
+    toast.success(publish ? (isOffseason ? "Off-season event publiceret" : "Liga publiceret") : "Gemt i arkivet");
     setCreatedLeague(true);
     setOpen(false);
     setName("");
@@ -277,6 +283,7 @@ function AdminLeagues() {
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
 
+
   const del = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("leagues").delete().eq("id", id);
@@ -286,19 +293,35 @@ function AdminLeagues() {
     onError: (e: any) => toast.error(e.message),
   });
 
+  const togglePublish = useMutation({
+    mutationFn: async ({ id, publish }: { id: string; publish: boolean }) => {
+      const { error } = await supabase.from("leagues").update({ published: publish } as any).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      toast.success(vars.publish ? "Liga publiceret" : "Liga arkiveret");
+      qc.invalidateQueries({ queryKey: ["leagues-admin"] });
+      qc.invalidateQueries({ queryKey: ["leagues"] });
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+
   if (!isLeagueList) return <Outlet />;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Ligaer</h1>
+        <h1 className="text-2xl font-bold">{showArchive ? "Ligaer (arkiv)" : "Ligaer"}</h1>
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" className="gap-1"><Link to="/admin"><ArrowLeft className="h-4 w-4" /> Kontrolpanel</Link></Button>
+          <Button variant="outline" className="gap-1" onClick={() => setShowArchive((v) => !v)}>
+            {showArchive ? (<><ArchiveRestore className="h-4 w-4" /> Aktive ligaer</>) : (<><Archive className="h-4 w-4" /> Arkiv</>)}
+          </Button>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild><Button className="gap-1"><Plus className="h-4 w-4" /> Ny liga</Button></DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader><DialogTitle>Opret liga eller off-season event</DialogTitle></DialogHeader>
-              <form onSubmit={create} className="space-y-3">
+              <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
                 <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
                 <div><Label>Beskrivelse</Label><Textarea rows={8} className="min-h-[200px]" placeholder="Brug tomme linjer for at adskille afsnit." maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
                 <BannerPicker pathOrUrl={null} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerFile(null)} />
@@ -327,7 +350,14 @@ function AdminLeagues() {
                 <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
-                <DialogFooter><Button type="submit" disabled={submitting}>{submitting ? "Opretter…" : "Opret"}</Button></DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-2">
+                  <Button type="button" variant="secondary" disabled={submitting} onClick={(e) => create(e as any, false)} className="gap-1">
+                    <Archive className="h-4 w-4" /> {submitting ? "Gemmer…" : "Arkiver"}
+                  </Button>
+                  <Button type="button" disabled={submitting} onClick={(e) => create(e as any, true)} className="gap-1">
+                    <Send className="h-4 w-4" /> {submitting ? "Publicerer…" : "Publicer"}
+                  </Button>
+                </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
@@ -336,13 +366,13 @@ function AdminLeagues() {
 
       {createdLeague && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-card p-3 text-sm">
-          <span>Ligaen er oprettet.</span>
+          <span>Ligaen er gemt.</span>
           <Button asChild size="sm" variant="outline"><Link to="/admin">Returner til Kontrolpanel</Link></Button>
         </div>
       )}
 
       <div className="space-y-3">
-        {leagues?.length === 0 && <p className="text-muted-foreground">Ingen ligaer endnu.</p>}
+        {leagues?.length === 0 && <p className="text-muted-foreground">{showArchive ? "Arkivet er tomt." : "Ingen ligaer endnu."}</p>}
         {leagues?.map((l: any) => {
           const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
           return (
@@ -353,6 +383,7 @@ function AdminLeagues() {
                     <CardTitle className="flex items-center gap-2">
                       {l.name}
                       {l.is_offseason && <Badge variant="secondary" className="text-[10px]">Off-season</Badge>}
+                      {!l.published && <Badge variant="outline" className="text-[10px]">Kladde</Badge>}
                     </CardTitle>
                     {l.description && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{l.description}</p>}
                     <div className="mt-2 flex flex-wrap gap-2">
@@ -372,6 +403,15 @@ function AdminLeagues() {
                   </div>
                   <div className="flex gap-1">
                     <EditLeagueDialog league={l} />
+                    {l.published ? (
+                      <Button variant="ghost" size="sm" title="Arkiver" onClick={() => { if (confirm("Arkiver liga? Den vil ikke længere være synlig for offentligheden.")) togglePublish.mutate({ id: l.id, publish: false }); }}>
+                        <Archive className="h-4 w-4" />
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="sm" title="Publicer" onClick={() => togglePublish.mutate({ id: l.id, publish: true })}>
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet liga?")) del.mutate(l.id); }}><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
@@ -389,6 +429,7 @@ function AdminLeagues() {
     </div>
   );
 }
+
 
 function EditLeagueDialog({ league }: { league: any }) {
   const qc = useQueryClient();
@@ -436,7 +477,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setDiscordRoleId(league.discord_role_id ?? "");
   };
 
-  const submit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent | React.MouseEvent, publish: boolean) => {
     e.preventDefault();
     const err = validateConfigs(cfgs);
     if (err) return toast.error(err);
@@ -466,11 +507,12 @@ function EditLeagueDialog({ league }: { league: any }) {
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
         discord_role_id: discordRoleId.trim() || null,
+        published: publish,
       } as any)
       .eq("id", league.id);
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Liga opdateret");
+    toast.success(publish ? (league.published ? "Liga opdateret" : "Liga publiceret") : "Gemt i arkivet");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
@@ -480,14 +522,15 @@ function EditLeagueDialog({ league }: { league: any }) {
     qc.invalidateQueries({ queryKey: ["divisions", league.id] });
   };
 
+
   return (
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o) reset(); }}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm"><Pencil className="h-4 w-4" /></Button>
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Rediger liga</DialogTitle></DialogHeader>
-        <form onSubmit={submit} className="space-y-3">
+        <DialogHeader><DialogTitle className="flex items-center gap-2">Rediger liga {!league.published && <Badge variant="outline" className="text-[10px]">Kladde</Badge>}</DialogTitle></DialogHeader>
+        <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
           <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div><Label>Beskrivelse</Label><Textarea rows={8} className="min-h-[200px]" placeholder="Brug tomme linjer for at adskille afsnit." maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
           <BannerPicker pathOrUrl={bannerPath} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerPath(null)} />
@@ -528,7 +571,14 @@ function EditLeagueDialog({ league }: { league: any }) {
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
-          <DialogFooter><Button type="submit" disabled={saving}>{saving ? "Gemmer…" : "Gem"}</Button></DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button type="button" variant="secondary" disabled={saving} onClick={(e) => submit(e, false)} className="gap-1">
+              <Archive className="h-4 w-4" /> {saving ? "Gemmer…" : "Arkiver"}
+            </Button>
+            <Button type="button" disabled={saving} onClick={(e) => submit(e, true)} className="gap-1">
+              <Send className="h-4 w-4" /> {saving ? "Gemmer…" : "Publicer"}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

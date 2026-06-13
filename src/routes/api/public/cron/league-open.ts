@@ -133,6 +133,7 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
           .lte('signup_opens_at', nowIso)
           .is('signup_open_notified_at', null)
           .not('signup_opens_at', 'is', null)
+          .eq('published', true)
 
         if (leaguesErr) {
           console.error('Failed to read leagues', leaguesErr)
