@@ -289,7 +289,6 @@ function DivisionDetail() {
     (grouped[k] ??= []).push({ ...r, waitlist: false, _kind: "reserve" });
   }
 
-  const triggerReserve = useServerFn(triggerReserveOfferForAbsence);
   const respondOffer = useServerFn(respondReserveOffer);
 
 
