@@ -653,6 +653,13 @@ function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPe
     const { error: invErr } = await supabase.from("protest_involved").insert(rows);
     if (invErr) { toast.error(`Protest oprettet, men kørere kunne ikke kobles: ${invErr.message}`); return; }
 
+    try {
+      const { notifyProtestInvolved } = await import("@/lib/protest-notify.functions");
+      await notifyProtestInvolved({ data: { protestId: created.id } });
+    } catch (e) {
+      console.error("notifyProtestInvolved failed", e);
+    }
+
     toast.success("Protest indsendt – indklagede har fået besked");
     setOpen(false); reset();
   };
