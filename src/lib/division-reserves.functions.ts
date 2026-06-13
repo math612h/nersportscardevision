@@ -30,7 +30,11 @@ async function notifyAndDM(
 }
 
 /**
- * Find the next eligible waitlister and create a pending reserve offer (24h).
+ * Find the next eligible waitlister and create a pending reserve offer.
+ * Expiry depends on time until race:
+ *   - < 5 hours to race: 1 hour
+ *   - < 48 hours to race: 8 hours
+ *   - otherwise: 24 hours
  * Internal helper — also called by respondReserveOffer (on decline) and the cron.
  */
 async function offerNextReserveImpl(
@@ -49,6 +53,22 @@ async function offerNextReserveImpl(
   // Don't offer if race already in past
   if (div.race_date && new Date(div.race_date) < new Date()) {
     return { ok: false, reason: "race_in_past" };
+  }
+
+  // Determine response window based on time until race
+  let hoursToRespond = 24;
+  let timeLabel = "24 timer";
+  if (div.race_date) {
+    const raceTime = new Date(div.race_date).getTime();
+    const now = Date.now();
+    const hoursUntilRace = (raceTime - now) / (1000 * 60 * 60);
+    if (hoursUntilRace < 5) {
+      hoursToRespond = 1;
+      timeLabel = "1 time";
+    } else if (hoursUntilRace < 48) {
+      hoursToRespond = 8;
+      timeLabel = "8 timer";
+    }
   }
 
   // Candidates: waitlist entries in same class/category on this league
@@ -94,7 +114,7 @@ async function offerNextReserveImpl(
   );
   if (!nextUp) return { ok: false, reason: "no_eligible_candidate" };
 
-  const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const expires = new Date(Date.now() + hoursToRespond * 60 * 60 * 1000).toISOString();
   const { data: offer, error: offerErr } = await admin
     .from("division_reserve_offers")
     .insert({
@@ -119,9 +139,9 @@ async function offerNextReserveImpl(
     admin,
     nextUp.user_id,
     `Reserveplads tilbudt — ${afd}`,
-    `Du er tilbudt en reserveplads til afdelingen "${afd}" i ${ligaNavn} (${carClass} · ${driverCategory}). ` +
-      `Accepter eller afslå inden 24 timer — ellers går tilbuddet videre til den næste på ventelisten. ` +
-      `Bemærk: pladsen gælder kun denne ene afdeling. Bagefter er du tilbage på ventelisten med din nuværende plads i køen.`,
+    `Du er tilbudt en reserveplads til afdelingen "${afd}" i ${ligaNavn} (${carClass} \u00b7 ${driverCategory}). ` +
+      `Du har ${timeLabel} til at acceptere eller afsl\u00e5 tilbuddet \u2014 ellers g\u00e5r det videre til den n\u00e6ste p\u00e5 ventelisten. ` +
+      `Bem\u00e6rk: pladsen g\u00e6lder kun denne ene afdeling. Bagefter er du tilbage p\u00e5 ventelisten med din nuv\u00e6rende plads i k\u00f8en.`,
     `/ligaer/${div.league_id}/afdeling/${divisionId}`,
   );
 
