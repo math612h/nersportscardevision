@@ -309,6 +309,15 @@ function DivisionDetail() {
   const absentCount = absences?.length ?? 0;
   const participantCount = totalSignups - absentCount;
 
+  if (!user) {
+    return (
+      <GuestLock
+        title="Afdelingen kræver login"
+        message="Du skal være logget ind for at se afdelingens entryliste, resultater og briefing."
+      />
+    );
+  }
+
   return (
     <div className="space-y-8">
       <Link to="/ligaer/$leagueId" params={{ leagueId }} className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
