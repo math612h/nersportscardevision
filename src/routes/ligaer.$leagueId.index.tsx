@@ -1078,7 +1078,6 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const filteredConfigs = configs;
 
   const selected = configs[Number(cfgIdx)];
-  const selectedAllowedInfo: undefined = undefined;
 
   const { taken, available } = useMemo(() => {
     if (!selected) return { taken: [] as number[], available: [] as number[] };
