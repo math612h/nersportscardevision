@@ -25,6 +25,7 @@ type ProfileRow = {
   display_name: string | null;
   lmu_name: string | null;
   avatar_url: string | null;
+  discord_avatar_url: string | null;
   approved: boolean;
 };
 
