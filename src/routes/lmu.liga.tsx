@@ -155,72 +155,33 @@ function ParticipantDashboard() {
       )}
 
       {!isLoading && leagues && leagues.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setTab("active")}
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
-                tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Flag className="h-3.5 w-3.5" /> Aktive
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("upcoming")}
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
-                tab === "upcoming" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Sparkles className="h-3.5 w-3.5" /> Kommende
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("past")}
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
-                tab === "past" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Trophy className="h-3.5 w-3.5" /> Tidligere
-            </button>
-          </div>
-
-          {tab === "active" && active.length > 0 && (
-            <CardGrid>
-              {active.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < active.length - 1} onMove={(dir) => makeMoveHandler(active)(l.id, dir)} reordering={reorder.isPending} />)}
-            </CardGrid>
-          )}
-          {tab === "active" && active.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              Ingen aktive ligaer i øjeblikket.
-            </div>
-          )}
-
-          {tab === "upcoming" && upcoming.length > 0 && (
-            <CardGrid>
-              {upcoming.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < upcoming.length - 1} onMove={(dir) => makeMoveHandler(upcoming)(l.id, dir)} reordering={reorder.isPending} />)}
-            </CardGrid>
-          )}
-          {tab === "upcoming" && upcoming.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              Ingen kommende ligaer i øjeblikket.
-            </div>
-          )}
-
-          {tab === "past" && past.length > 0 && (
-            <CardGrid>
-              {past.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < past.length - 1} onMove={(dir) => makeMoveHandler(past)(l.id, dir)} reordering={reorder.isPending} />)}
-            </CardGrid>
-          )}
-          {tab === "past" && past.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              Ingen tidligere ligaer endnu.
-            </div>
-          )}
+        <div className="space-y-6">
+          {(() => {
+            const all = [...active, ...upcoming, ...past];
+            return (
+              <CardGrid>
+                {all.map((l: any, i: number) => {
+                  const kind = classify(l);
+                  return (
+                    <LeagueCard
+                      key={l.id}
+                      l={l}
+                      bannerUrl={resolveBanner(l)}
+                      entries={entriesByLeague?.[l.id] ?? []}
+                      offseason={!!l.is_offseason}
+                      upcoming={kind === "upcoming"}
+                      past={kind === "past"}
+                      isAdmin={isAdmin}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < all.length - 1}
+                      onMove={(dir) => makeMoveHandler(all)(l.id, dir)}
+                      reordering={reorder.isPending}
+                    />
+                  );
+                })}
+              </CardGrid>
+            );
+          })()}
         </div>
       )}
     </div>
