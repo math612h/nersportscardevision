@@ -287,29 +287,6 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     },
   });
 
-  const startServer = async () => {
-    const now = new Date().toISOString();
-    const { error } = await supabase
-      .from("divisions")
-      .update({ server_started_at: now } as any)
-      .eq("id", division.id);
-    if (error) return toast.error(error.message);
-    setServerStartedAt(now);
-    toast.success("Server markeret som startet");
-    onDone();
-  };
-
-  const stopServer = async () => {
-    const { error } = await supabase
-      .from("divisions")
-      .update({ server_started_at: null } as any)
-      .eq("id", division.id);
-    if (error) return toast.error(error.message);
-    setServerStartedAt(null);
-    toast.success("Server markeret som stoppet");
-    onDone();
-  };
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newSettings = {
