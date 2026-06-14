@@ -43,5 +43,36 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
 
+    // If admin had previously asked the user to fix their name, notify the admin channel
+    try {
+      const { data: notifs } = await supabaseAdmin
+        .from("notifications")
+        .select("id")
+        .eq("user_id", context.userId)
+        .eq("title", "Opdater dit navn for at blive godkendt");
+      if (notifs && notifs.length > 0) {
+        const { data: priv2 } = await supabaseAdmin
+          .from("profiles_private")
+          .select("discord_username")
+          .eq("user_id", context.userId)
+          .maybeSingle();
+        const discordName = (priv2 as { discord_username?: string | null } | null)?.discord_username ?? "(intet Discord-navn)";
+        const content =
+          `**Bruger har opdateret sine oplysninger**\n` +
+          `Discord: ${discordName}\n` +
+          `LMU: ${data.lmu_name}\n` +
+          `Navn: ${data.display_name}`;
+        const { sendDiscordChannelMessage } = await import("./discord.server");
+        await sendDiscordChannelMessage("1515719754797678744", content);
+        await supabaseAdmin
+          .from("notifications")
+          .delete()
+          .eq("user_id", context.userId)
+          .eq("title", "Opdater dit navn for at blive godkendt");
+      }
+    } catch (e) {
+      console.error("admin name-update notify failed", e);
+    }
+
     return { ok: true };
   });
