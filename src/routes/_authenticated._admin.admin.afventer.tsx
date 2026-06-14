@@ -128,6 +128,12 @@ function PendingApprovalsPage() {
                     <span className="text-xs text-muted-foreground">
                       Tilmeldt {new Date(p.created_at).toLocaleDateString("da-DK")}
                     </span>
+                    {wrongNameStatus?.[p.id] && (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">
+                        <MessageSquareWarning className="h-3 w-3" />
+                        Navne-besked sendt {formatRelativeDk(wrongNameStatus[p.id])}
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -152,7 +158,7 @@ function PendingApprovalsPage() {
                         }
                       >
                         <MessageSquareWarning className="mr-2 h-4 w-4" />
-                        Fejl navn — bed om for- og efternavn
+                        {wrongNameStatus?.[p.id] ? "Send navne-besked igen" : "Fejl navn — bed om for- og efternavn"}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
