@@ -959,11 +959,13 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const { data: signups } = useLeagueSignups(leagueId);
   const assignDiscord = useServerFn(assignDiscordRoleForEntry);
   const checkGuild = useServerFn(checkDiscordGuildMembership);
+  const ackFn = useServerFn(acknowledgeLeagueRules);
   const [open, setOpen] = useState(false);
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
   const [teamId, setTeamId] = useState<string>("");
   const [carModel, setCarModel] = useState<string>("");
+  const [ackChecked, setAckChecked] = useState(false);
   const { data: myTeams } = useMyTeams(user?.id);
 
   const { data: profile } = useQuery({
