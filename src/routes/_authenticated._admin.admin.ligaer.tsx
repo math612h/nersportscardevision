@@ -1,10 +1,13 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus, Archive, ArchiveRestore, Send, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus, Archive, ArchiveRestore, Send, ArrowUp, ArrowDown, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { sendLeagueAnnouncement } from "@/lib/league-announce.functions";
+
 import {
   CAR_CLASSES,
   DRIVER_CATEGORIES,
@@ -542,7 +545,6 @@ function EditLeagueDialog({ league }: { league: any }) {
       return toast.error(err.message);
     }
     const first = cfgs[0];
-    const signupOpenChanged = signupOpensAt && new Date(signupOpensAt).toISOString() !== (league.signup_opens_at ?? null);
     const { error } = await supabase
       .from("leagues")
       .update({
@@ -560,12 +562,11 @@ function EditLeagueDialog({ league }: { league: any }) {
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
-        signup_open_notified_at: signupOpenChanged ? null : (league as any).signup_open_notified_at ?? null,
-        discord_signup_open_notified_at: signupOpenChanged ? null : (league as any).discord_signup_open_notified_at ?? null,
         discord_role_id: discordRoleId.trim() || null,
         published: publish,
       } as any)
       .eq("id", league.id);
+
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(publish ? (league.published ? "Liga opdateret" : "Liga publiceret") : "Gemt i arkivet");
