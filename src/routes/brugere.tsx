@@ -42,7 +42,7 @@ function UsersPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, display_name, lmu_name, avatar_url, approved")
+        .select("id, display_name, lmu_name, avatar_url, discord_avatar_url, approved")
         .order("display_name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
@@ -50,17 +50,22 @@ function UsersPage() {
   });
 
   const { data: avatars } = useQuery({
-    queryKey: ["all-profile-avatars", (profiles ?? []).map((p) => p.avatar_url).filter(Boolean).join(",")],
-    enabled: !!profiles?.some((p) => p.avatar_url),
+    queryKey: [
+      "all-profile-avatars",
+      (profiles ?? []).map((p) => `${p.id}:${p.discord_avatar_url ?? ""}:${p.avatar_url ?? ""}`).join(","),
+    ],
+    enabled: !!profiles?.some((p) => p.discord_avatar_url || p.avatar_url),
     queryFn: async () => {
       const map: Record<string, string> = {};
       await Promise.all(
-        (profiles ?? [])
-          .filter((p) => p.avatar_url)
-          .map(async (p) => {
-            const u = await signed(p.avatar_url!);
+        (profiles ?? []).map(async (p) => {
+          if (p.discord_avatar_url) {
+            map[p.id] = p.discord_avatar_url;
+          } else if (p.avatar_url) {
+            const u = await signed(p.avatar_url);
             if (u) map[p.id] = u;
-          }),
+          }
+        }),
       );
       return map;
     },
