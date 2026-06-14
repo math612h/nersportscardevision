@@ -39,11 +39,18 @@ export const notifyAdminNameUpdated = createServerFn({ method: "POST" })
       `LMU: ${lmuName}\n` +
       `Navn: ${displayName}`;
 
+    let sendResult: { ok: boolean; status: number; message?: string } = { ok: false, status: 0 };
     try {
       const { sendDiscordChannelMessage } = await import("./discord.server");
-      await sendDiscordChannelMessage(ADMIN_CHANNEL_ID, content);
+      sendResult = await sendDiscordChannelMessage(ADMIN_CHANNEL_ID, content);
+      console.log("[notifyAdminNameUpdated] discord send", sendResult);
     } catch (e) {
-      console.error("Failed to post admin name-update message", e);
+      console.error("[notifyAdminNameUpdated] discord threw", e);
+      return { ok: false, notified: false, error: String(e) };
+    }
+
+    if (!sendResult.ok) {
+      return { ok: false, notified: false, status: sendResult.status, error: sendResult.message ?? null };
     }
 
     // Remove the wrong_name notifications so this only fires once per request
@@ -55,3 +62,4 @@ export const notifyAdminNameUpdated = createServerFn({ method: "POST" })
 
     return { ok: true, notified: true };
   });
+
