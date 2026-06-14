@@ -115,6 +115,13 @@ export const Route = createFileRoute("/api/public/discord/callback")({
             if (linkErr) return redirectToLogin(linkErr.message);
           }
 
+          if (discord_avatar_url && targetUserId) {
+            await supabaseAdmin
+              .from("profiles")
+              .update({ discord_avatar_url })
+              .eq("id", targetUserId);
+          }
+
           // Generate a magic link to actually sign the user in (creates a real session).
           // We need the email currently on the auth user.
           const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
