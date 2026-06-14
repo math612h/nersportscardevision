@@ -342,7 +342,7 @@ function AdminProtestDetail() {
                           onCheckedChange={() => togglePenalized(t.user_id)}
                         />
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <span>{t.driver_name}</span>
+                          <UserAvatar userId={t.user_id} name={t.driver_name} size="sm" />
                           {userEntries.map((e: any, idx: number) => {
                             const meta = [
                               e.driver_category,
