@@ -1,63 +1,81 @@
-## Mål
+# Plan
 
-1. Sende Discord-DM (ikke kun website-notifikation) når en kører rykkes op fra ventelisten — teksten skal sige om det gælder hele ligaen eller én enkelt afdeling.
-2. Når en kører melder afbud til en afdeling: kør automatisk et reserve-tilbud-flow til ventelisten i samme klasse/kategori. Reserven får 24 timer til at acceptere; ellers går tilbuddet videre til den næste. Den afløsende reserve kører kun den ene afdeling — bagefter er de tilbage på ventelisten med deres oprindelige plads i køen. Den fraværende køres tidligere points i ligaen bevares automatisk (vi sletter aldrig `league_results`).
+## 1. "Besked om navn er sendt"-indikator
 
-## Del 1 — Discord-DM ved oprykning
+**Hvor:** Admin-flader hvor `sendAdminTemplateMessage` med template `wrong_name` kan trigges (typisk `_authenticated._admin.admin.afventer.tsx` og evt. brugerlisten).
 
-Udvid `setProfileApproval` (`src/lib/leagues.functions.ts`) og `leaveLeague` så de eksisterende oprykningsnotifikationer også sender Discord-DM via `sendDiscordDM` (best-effort, samme mønster som `admin-messages.functions.ts`). Teksten siger eksplicit "Du er rykket op på griddet i **{liga}** ({klasse} · {kategori}) for resten af sæsonen". Det nye reserve-flow bruger en separat tekst: "for afdelingen **{afdeling}**".
+- Ny tabel `admin_message_log` (user_id, template, sent_by, sent_at) — eller genbrug `notifications.created_at` med filter på title.
+  - Vælger: ny lille tabel `admin_message_log` — renere og uafhængig af notification-titel.
+- `sendAdminTemplateMessage` skriver en række hver gang.
+- Server-fn `getAdminMessageStatus({userIds, template})` returnerer seneste sent_at pr. bruger.
+- UI: knappen viser "Sendt {relativ tid} – send igen" når der findes en log-række; ellers normal tekst.
 
-## Del 2 — Reserve-flow for én afdeling
+## 2. Fjern auto-kategori-begrænsning + krav om 10 leaderboard-tider
 
-### Datamodel
+- Fjern brug af `allowed_categories_for_signup` i tilmeldings-UI: vis alle kategorier i klassen igen.
+  - Behold DB-funktionen (ikke-destruktivt) — den kaldes bare ikke længere.
+- Tilføj guard i tilmeldings-flow + i `entries` INSERT-policy/trigger:
+  - Tæl `leaderboard_times` for `user_id` (alle klasser eller samme klasse?). **Vælger: samme `car_class`** — det er det, der er relevant for splittet og ratingen.
+  - Hvis < 10 → fejl: "Du skal have mindst 10 registrerede tider i [klasse] før du kan tilmelde dig."
+- Trigger på `entries` BEFORE INSERT der validerer dette server-side, så hverken UI eller admin-bypass kan omgå det utilsigtet (admin-tilføj kan dog skippe via `SECURITY DEFINER` server-fn).
 
-Ny tabel `public.division_reserve_offers`:
+## 3. "Opdel feltet i Pro & Am"-knap
 
-- `division_id` (fk) — afdelingen pladsen gælder
-- `absentee_user_id` (fk auth.users) — hvem pladsen er ledig efter
-- `offered_user_id` (fk auth.users) — reserven der får tilbuddet
-- `car_class`, `driver_category` (text) — låst klasse/kategori for tilbuddet
-- `status` enum: `pending | accepted | declined | expired | superseded`
-- `expires_at` timestamptz (created_at + 24t)
-- `responded_at` timestamptz nullable
-- unik på (division_id, offered_user_id) — samme reserve spørges aldrig to gange for samme afdeling, uanset hvor mange der melder afbud
+**Hvor:** Liga-redigering (admin), pr. klasse-config der har kun én `driver_category`.
 
-RLS: kun reserven (offered_user_id) + admin kan læse/opdatere sin egen række. Service role bruges fra serverfunktioner.
+**Algoritme (server-fn `splitClassIntoProAm`):**
+1. Hent alle ikke-waitlist entries for (league_id, car_class).
+2. For hver kører: `score = 0.7 * elo_normalized + 0.3 * leaderboard_normalized`
+   - ELO: `user_ratings.score` (default 1500 hvis mangler), normaliseret til 0-100 via percent_rank inden for feltet.
+   - Leaderboard: brugerens bedste lap i klassen vs feltets median (samme formel som `compute_user_class_score` men kun inden for feltets kørere), 0-100.
+3. Sortér kørere efter score desc.
+4. Find optimalt split-indeks `k` (1 ≤ k ≤ n-1):
+   - `balance_score = 1 - |k - n/2| / (n/2)` (1 når lige store, 0 ved kant)
+   - `gap_score`: størrelsen af gap mellem score[k-1] og score[k] normaliseret mod max gap i feltet (0-1)
+   - `total = 0.35 * balance_score + 0.65 * gap_score`
+   - Vælg k med højeste total.
+5. Top k → "Pro", resten → "Am".
+6. Opdater:
+   - `leagues.class_configs`: erstat den ene config med to (Pro + Am), genbrug `number_from/to` (fx split intervallet i to halvdele) eller behold samme interval for begge — **vælger: behold samme interval**, admin kan justere bagefter.
+   - `entries.driver_category` opdateres til "Pro"/"Am" for hver kører.
+7. Direkte opdeling (ingen preview) — toast viser fx "12 i Pro, 13 i Am".
 
-### Server-funktioner (`src/lib/division-reserves.functions.ts`)
+**Knap-betingelse:** Vis kun når klassen har præcis én `driver_category` og mindst 2 entries.
 
-- `offerNextReserve({ divisionId, absenteeUserId, carClass, driverCategory })` (intern, kører fra absence-trigger og fra cron/respond-flowet): finder ældste approved waitlister på ligaen i samme klasse/kategori som:
-  - ikke allerede har en entry for **denne afdeling**
-  - ikke står i `division_reserve_offers` for (division_id, user_id) — uanset status
-  - er ≠ alle aktuelt fraværende
-  Indsætter `pending` række (24t udløb), sender website-notifikation + Discord-DM med accept/decline link til `/incidents`-lignende side eller direkte til afdelingen. Hvis ingen kandidater: ingen handling.
-- `respondReserveOffer({ offerId, accept: boolean })` (kalles af reserven):
-  - hvis `accept`: marker offer `accepted`. Indsæt en **division-level entry** (`division_id` sat, `waitlist=false`, samme klasse/kategori, reservens eget `driver_name`/`car_number`). Reservens liga-entry (waitlist) røres ikke. Send bekræftelse-notifikation + DM til både reserve og absentee.
-  - hvis `!accept`: marker `declined`, kald `offerNextReserve` med samme parametre.
-- `expireStaleReserveOffers()` — kører periodisk (pg_cron via eksisterende `/api/public/cron/...` mønster, hver 10. min): markerer `pending` rækker hvor `expires_at < now()` som `expired` og kalder `offerNextReserve` for hver.
+## 4. "Tilføj bruger til liga"-knap
 
-### Trigger fra afbud
+**Hvor:** Admin liga-side (entries-view eller liga-oversigt).
 
-I `src/routes/ligaer.$leagueId.afdeling.$divisionId.tsx`: efter en `division_absences` insert lykkes, kald `offerNextReserve` (best-effort try/catch). Hvis brugeren fjerner sit afbud igen og reserven ikke har accepteret endnu: marker eventuelle `pending` offers for (division_id, absenteeUserId) som `superseded` og slet automatisk reservens division-entry hvis offer var `accepted` (med notifikation til reserven).
+- Dialog: søg bruger (`profiles.display_name` ilike), vælg liga (allerede kendt fra context), vælg klasse-config (samme dropdown som `EntryDialog`), vælg bilnummer (samme grid som `MoveEntryDialog`).
+- Server-fn `adminAddEntry` (kræver admin via `has_role`): bypasser 10-tider-check, indsætter direkte i `entries`.
 
-### UI
+## 5. ELO på tværs af kategorier inden for samme bilklasse
 
-- **Afdelingsside (`ligaer.$leagueId.afdeling.$divisionId.tsx`)**: når brugeren har et `pending` offer for afdelingen, vis et banner øverst med "Du er tilbudt en reserveplads — accepter inden {tid}" + accept/afslå knapper. På grid-listen vis fraværende kørere som "Udebliver" (allerede dækket) og evt. "Erstattet af {reserve}" når en accepteret reserve findes.
-- **Forsiden (`src/routes/index.tsx`)**: udvid den eksisterende `useQuery("home-pending-incidents")` til også at tælle `pending` reserve-offers for brugeren, så Incidents-knappen viser badge — eller tilføj separat "Reserveplads tilbudt"-knap. (Vi udvider den eksisterende badge for at holde det enkelt.)
+- Opdater `recompute_all_elo()`:
+  - Skift `GROUP BY league_id, round, car_class` til `GROUP BY league_id, round, car_class` (uændret — bilklasse er allerede grupperingsnøglen).
+  - **Verificér** at den nuværende inner-loop ikke filtrerer på `driver_category`. Den nuværende funktion gør det allerede ikke — alle med samme `car_class` indgår. **Konklusion:** Funktionen er sandsynligvis allerede korrekt; jeg verificerer ved at læse den og bekræfter. Hvis det viser sig at trigger/entry-query filtrerer kategori et sted, fjerner jeg det.
+- Kør `recompute_all_elo()` én gang efter migration for at sikre konsistens.
 
-### Points-bevaring
+## Tekniske detaljer
 
-`league_results` er bundet til `user_id` direkte og rives aldrig ned ved entry-ændringer. Reserven får sine egne resultater på sin egen `user_id`. Når absenteen senere får sin plads tilbage på griddet, indeholder stillingen automatisk deres tidligere races. **Ingen kodeændring nødvendig** — bare verificer at stillings-beregningen (`src/lib/league-results.functions.ts`) summerer pr. `user_id` og ikke pr. `entry_id`.
+**Nye filer:**
+- `src/lib/admin-messages-log.functions.ts` — `getAdminMessageStatus`
+- `src/lib/league-split.functions.ts` — `splitClassIntoProAm`
+- `src/lib/league-admin-entries.functions.ts` — `adminAddEntry`, `searchUsers`
 
-## Teknisk
+**Migrationer:**
+1. `admin_message_log` tabel (+ GRANTs + RLS: admin read, service_role all)
+2. Trigger på `entries` BEFORE INSERT for 10-tider-krav (med bypass for admin via `SECURITY DEFINER` server-fn der ikke kalder triggeren? — bedre: tjek i triggeren om `current_setting('request.jwt.claims', true)` indeholder admin-rolle, og spring over). Alternativ: kald `set_config('app.bypass_entry_limit','on',true)` i admin-server-fn.
+3. Kør `recompute_all_elo()` (efter at have læst og evt. justeret funktionen).
 
-- Migration: ny tabel + RLS + GRANTs + opdatering af typer (afventer migration-godkendelse).
-- Cron-route: `src/routes/api/public/cron/expire-reserve-offers.ts` (samme mønster som `cron/league-open.ts`). Konfigurer pg_cron til at kalde den hver 10. min — instruktion gives efter migrationen.
-- Discord-DM: genbrug `sendDiscordDM` fra `src/lib/discord.server.ts`. Helper i den nye `.functions.ts` der slår `discord_user_id` op via `profiles_private`.
-- Alle nye server-fns bruger `requireSupabaseAuth`. `supabaseAdmin` importeres inde i handler-bodies.
+**UI ændringer:**
+- `src/routes/_authenticated._admin.admin.afventer.tsx` (eller hvor wrong_name sendes fra) — vis status.
+- Tilmeldings-flow: fjern `allowed_categories_for_signup`-kald.
+- Admin liga entries-side: ny "Opdel"-knap + ny "Tilføj bruger"-knap.
 
-## Out of scope
-
-- Manuel admin-override (admin kan stadig redigere entries direkte via admin-UI).
-- Per-afdeling bilnumre — reserven beholder sit eget.
-- Notifikation til absentee hvis ingen reserve siger ja (kan tilføjes senere).
+## Rækkefølge
+1. Migration 1 (admin_message_log) → skriv server-fn + UI for status
+2. Migration 2 (10-tider trigger) → fjern auto-kategori i tilmelding
+3. Server-fn + UI for split-knap
+4. Server-fn + UI for tilføj-bruger
+5. Læs `recompute_all_elo`, juster hvis nødvendigt, kør recompute
