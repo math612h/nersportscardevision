@@ -40,14 +40,6 @@ function Rules() {
   const { leagueName } = Route.useLoaderData();
   const { user, loading: authLoading } = useAuth();
 
-  if (!authLoading && !user) {
-    return (
-      <GuestLock
-        title="Regelsæt kræver login"
-        message="Du skal være logget ind for at læse regelsættet for ligaen."
-      />
-    );
-  }
 
   const { data: rules } = useQuery({
     queryKey: ["rules", leagueId],
