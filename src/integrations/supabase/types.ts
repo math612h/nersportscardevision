@@ -96,18 +96,21 @@ export type Database = {
           division_id: string
           lobby_code: string | null
           lobby_password: string | null
+          server_name: string | null
           updated_at: string
         }
         Insert: {
           division_id: string
           lobby_code?: string | null
           lobby_password?: string | null
+          server_name?: string | null
           updated_at?: string
         }
         Update: {
           division_id?: string
           lobby_code?: string | null
           lobby_password?: string | null
+          server_name?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -173,6 +176,7 @@ export type Database = {
           league_id: string
           name: string
           race_date: string | null
+          server_started_at: string | null
           settings: Json
           track: string | null
         }
@@ -186,6 +190,7 @@ export type Database = {
           league_id: string
           name: string
           race_date?: string | null
+          server_started_at?: string | null
           settings?: Json
           track?: string | null
         }
@@ -199,6 +204,7 @@ export type Database = {
           league_id?: string
           name?: string
           race_date?: string | null
+          server_started_at?: string | null
           settings?: Json
           track?: string | null
         }
