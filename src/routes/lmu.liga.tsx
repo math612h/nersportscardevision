@@ -406,7 +406,7 @@ function LeagueCard({
         </div>
       </Link>
       {isAdmin && onMove && (
-        <div className="absolute left-2 bottom-2 z-10 flex gap-1 rounded-md bg-background/85 p-1 backdrop-blur border border-border shadow-sm">
+        <div className="absolute right-2 bottom-2 z-10 flex gap-1 rounded-md bg-background/85 p-1 backdrop-blur border border-border shadow-sm">
           <button
             type="button"
             aria-label="Flyt op"
