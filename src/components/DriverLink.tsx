@@ -1,24 +1,31 @@
-import { Link } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export function DriverLink({
   userId,
   name,
   className,
+  size = "sm",
+  showAvatar = true,
 }: {
   userId?: string | null;
   name: string;
   className?: string;
+  size?: "xs" | "sm" | "md" | "lg" | "xl";
+  showAvatar?: boolean;
 }) {
-  if (!userId) return <span className={className}>{name}</span>;
+  if (!showAvatar) {
+    if (!userId) return <span className={className}>{name}</span>;
+    return (
+      <UserAvatar userId={userId} name={name} size={size} linkClassName={className} />
+    );
+  }
   return (
-    <Link
-      to="/profil/$userId"
-      params={{ userId }}
-      className={cn("hover:underline hover:text-primary transition-colors", className)}
-    >
-      {name}
-    </Link>
+    <UserAvatar
+      userId={userId ?? null}
+      name={name}
+      size={size}
+      linkClassName={className}
+    />
   );
 }
 
