@@ -137,6 +137,9 @@ function RaceCountdown({ raceDate }: { raceDate: string }) {
 
 function LeagueDetail() {
   const { leagueId } = useParams({ from: "/ligaer/$leagueId/" });
+  const { user } = useAuth();
+  const isGuest = !user;
+
 
   const { data: league } = useQuery({
     queryKey: ["league", leagueId],
