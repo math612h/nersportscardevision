@@ -29,7 +29,7 @@ function PublicProfile() {
       const [{ data, error }, { data: priv }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, display_name, lmu_name, bio, achievements, avatar_url, approved")
+          .select("id, display_name, lmu_name, bio, achievements, avatar_url, discord_avatar_url, approved")
           .eq("id", userId)
           .maybeSingle(),
         supabase.rpc("get_profile_private", { _user_id: userId }).maybeSingle(),
@@ -41,9 +41,9 @@ function PublicProfile() {
   });
 
   const { data: avatarUrl } = useQuery({
-    queryKey: ["avatar-url", profile?.avatar_url],
-    enabled: !!profile?.avatar_url,
-    queryFn: () => signedAvatarUrl(profile!.avatar_url),
+    queryKey: ["avatar-url", profile?.discord_avatar_url, profile?.avatar_url],
+    enabled: !!profile && (!!profile.discord_avatar_url || !!profile.avatar_url),
+    queryFn: () => profile?.discord_avatar_url ?? signedAvatarUrl(profile!.avatar_url),
   });
 
   const { data: rating } = useQuery({
