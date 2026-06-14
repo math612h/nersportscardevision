@@ -63,14 +63,6 @@ function TeamDetailPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
 
-  if (!authLoading && !user) {
-    return (
-      <GuestLock
-        title="Teams kræver login"
-        message="Log ind for at se teamets medlemmer, bio og resultater."
-      />
-    );
-  }
 
   const { data: team, isLoading } = useQuery({
     queryKey: ["team", teamId],
