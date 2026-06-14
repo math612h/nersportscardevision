@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/discord/callback")({
           const verified = await verifyDiscordState(state);
           if (!verified) return redirectToLogin("Ugyldig eller udløbet state");
 
-          const { discord_user_id, discord_username, discord_email } = await exchangeDiscordCode(code, origin);
+          const { discord_user_id, discord_username, discord_email, discord_avatar_url } = await exchangeDiscordCode(code, origin);
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
           // -------- LINK MODE (existing signed-in user) --------
@@ -55,6 +55,12 @@ export const Route = createFileRoute("/api/public/discord/callback")({
                 { onConflict: "user_id" },
               );
             if (error) return redirectToProfile("error", error.message);
+            if (discord_avatar_url) {
+              await supabaseAdmin
+                .from("profiles")
+                .update({ discord_avatar_url })
+                .eq("id", verified.userId);
+            }
             return redirectToProfile("ok");
           }
 
@@ -107,6 +113,13 @@ export const Route = createFileRoute("/api/public/discord/callback")({
                 { onConflict: "user_id" },
               );
             if (linkErr) return redirectToLogin(linkErr.message);
+          }
+
+          if (discord_avatar_url && targetUserId) {
+            await supabaseAdmin
+              .from("profiles")
+              .update({ discord_avatar_url })
+              .eq("id", targetUserId);
           }
 
           // Generate a magic link to actually sign the user in (creates a real session).

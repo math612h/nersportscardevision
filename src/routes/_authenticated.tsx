@@ -1,8 +1,9 @@
 import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { refreshMyDiscordAvatar } from "@/lib/discord-avatar.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   component: Gate,
@@ -12,6 +13,7 @@ function Gate() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   const { data: status, isLoading: statusLoading } = useQuery({
     queryKey: ["onboarding-status", user?.id],
@@ -30,6 +32,20 @@ function Gate() {
       return { discordLinked, complete: discordLinked && !!lmu && !!name && hasRealEmail };
     },
   });
+
+  // Once per session, refresh own Discord avatar so brugerens billede vises
+  // konsistent overalt.
+  useEffect(() => {
+    if (!user || !status?.discordLinked) return;
+    const key = `discord-avatar-refreshed:${user.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    refreshMyDiscordAvatar()
+      .then((res) => {
+        if (res?.ok) queryClient.invalidateQueries({ queryKey: ["user-brief"] });
+      })
+      .catch(() => {});
+  }, [user, status?.discordLinked, queryClient]);
 
   useEffect(() => {
     if (loading) return;

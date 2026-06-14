@@ -16,6 +16,7 @@ import { getAllowedCategories } from "@/lib/rating.functions";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/RatingBadge";
+import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -500,7 +501,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
                 #{e.car_number}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="truncate">{e.driver_name}</div>
+                <div className="truncate"><UserAvatar userId={e.user_id} name={e.driver_name} size="sm" /></div>
                 {e.team_id && teamMap?.[e.team_id] && (
                   <div className="mt-0.5 sm:hidden">
                     <Badge variant="outline" className="text-[10px]" title="Team">
@@ -555,7 +556,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
                     {idx + 1}
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
-                  <span className="flex-1 truncate">{e.driver_name}</span>
+                  <span className="flex-1 truncate"><UserAvatar userId={e.user_id} name={e.driver_name} size="xs" /></span>
                   {ratingMap?.[e.user_id] && (
                     <RatingBadge
                       score={ratingMap[e.user_id].score}
@@ -612,16 +613,23 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("car_class,driver_category,car_number,team_id")
+        .select("user_id,car_class,driver_category,car_number,team_id")
         .eq("league_id", leagueId);
       if (error) throw error;
-      return (data ?? []) as { car_class: string; driver_category: string; car_number: number | null; team_id: string | null }[];
+      return (data ?? []) as { user_id: string; car_class: string; driver_category: string; car_number: number | null; team_id: string | null }[];
     },
   });
   const entryTeamMap = useMemo(() => {
     const m: Record<string, string | null> = {};
     for (const e of leagueEntries ?? []) {
       if (e.car_number != null) m[`${e.car_class}|${e.driver_category}|${e.car_number}`] = e.team_id;
+    }
+    return m;
+  }, [leagueEntries]);
+  const entryUserMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const e of leagueEntries ?? []) {
+      if (e.car_number != null) m[`${e.car_class}|${e.driver_category}|${e.car_number}`] = e.user_id;
     }
     return m;
   }, [leagueEntries]);
@@ -765,7 +773,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                             return (
                               <tr key={r.car_number} className="border-t border-border">
                                 <td className="py-1.5 pr-2 font-semibold tabular-nums">{r.dns ? "–" : i + 1}</td>
-                                <td className="py-1.5 pr-2 truncate">{r.driver_name}</td>
+                                <td className="py-1.5 pr-2 truncate"><UserAvatar userId={entryUserMap[`${cls}|${cat}|${r.car_number}`] ?? null} name={r.driver_name} size="sm" /></td>
                                 <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{teamName || "–"}</td>
                                 <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
                                 <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
@@ -843,7 +851,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                     return (
                     <tr key={r.car_number} className="border-t border-border">
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
-                      <td className="py-1.5 pr-2 truncate">{r.driver_name}</td>
+                      <td className="py-1.5 pr-2 truncate"><UserAvatar userId={entryUserMap[`${r.car_class}|${r.driver_category}|${r.car_number}`] ?? null} name={r.driver_name} size="sm" /></td>
                       <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{teamName || "–"}</td>
                       <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
                       {completed.map((d: any) => {

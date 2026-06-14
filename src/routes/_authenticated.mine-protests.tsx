@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export const Route = createFileRoute("/_authenticated/mine-protests")({
   component: MyProtests,
@@ -144,7 +145,7 @@ function SubmittedCard({ protest }: { protest: any }) {
           <ul className="space-y-2">
             {involved.map((r: any) => (
               <li key={r.id} className="rounded border border-border p-2">
-                <p className="text-xs font-medium">{r.driver_name}</p>
+                <p className="text-xs font-medium"><UserAvatar userId={r.user_id} name={r.driver_name} size="xs" /></p>
                 {r.response
                   ? <p className="mt-1 whitespace-pre-wrap">{r.response}</p>
                   : <p className="mt-1 text-xs italic text-muted-foreground">Har endnu ikke svaret</p>}

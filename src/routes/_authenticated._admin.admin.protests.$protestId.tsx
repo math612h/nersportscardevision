@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { notifyProtestRuling } from "@/lib/protest-ruling-notify.functions";
+import { UserAvatar } from "@/components/UserAvatar";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/protests/$protestId")({
   component: AdminProtestDetail,
@@ -269,7 +270,7 @@ function AdminProtestDetail() {
         {involved.map((r: any) => (
           <Card key={r.id}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">{r.driver_name}</CardTitle>
+              <CardTitle className="text-sm"><UserAvatar userId={r.user_id} name={r.driver_name} size="sm" /></CardTitle>
               {r.responded_at && <CardDescription>Svarede {format(new Date(r.responded_at), "dd MMM yyyy HH:mm")}</CardDescription>}
             </CardHeader>
             <CardContent className="pt-0 text-sm">
@@ -341,7 +342,7 @@ function AdminProtestDetail() {
                           onCheckedChange={() => togglePenalized(t.user_id)}
                         />
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                          <span>{t.driver_name}</span>
+                          <UserAvatar userId={t.user_id} name={t.driver_name} size="sm" />
                           {userEntries.map((e: any, idx: number) => {
                             const meta = [
                               e.driver_category,
