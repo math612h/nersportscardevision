@@ -251,9 +251,11 @@ function CardGrid({ children }: { children: React.ReactNode }) {
 }
 
 function LeaderboardTeaser() {
+  const { user } = useAuth();
   type TeaserRow = { id: string; driver_name: string; track: string; layout: string | null; car_class: string; best_lap_ms: number };
   const { data: rows } = useQuery({
     queryKey: ["leaderboard-teaser"],
+    enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leaderboard_times")
@@ -275,6 +277,32 @@ function LeaderboardTeaser() {
     return Array.from(map.values()).sort((a, b) => a.best_lap_ms - b.best_lap_ms).slice(0, 5);
   })();
 
+  // Placeholder rows used to make the blur preview show structure for guests.
+  const previewRows: TeaserRow[] = user
+    ? best
+    : Array.from({ length: 5 }).map((_, i) => ({
+        id: `guest-${i}`,
+        driver_name: "—————————",
+        track: "—————",
+        layout: null,
+        car_class: "LMGT3",
+        best_lap_ms: 90000 + i * 250,
+      }));
+
+  const listMarkup = (
+    <ul className="divide-y divide-border">
+      {previewRows.map((r, i) => (
+        <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+          <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-xs font-semibold tabular-nums">{i + 1}</span>
+          <span className="flex-1 truncate font-medium">{r.driver_name}</span>
+          <Badge variant="outline" className={`hidden sm:inline-flex text-[10px] ${classColor(r.car_class).badge}`}>{r.car_class}</Badge>
+          <span className="hidden md:inline-flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{r.track}{r.layout ? ` · ${r.layout}` : ""}</span>
+          <span className="inline-flex items-center gap-1 font-mono tabular-nums text-sm"><Timer className="h-3 w-3 text-primary" />{msToLapStr(r.best_lap_ms)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -282,32 +310,32 @@ function LeaderboardTeaser() {
           <Trophy className="h-4 w-4" />
           <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Leaderboard</h2>
         </div>
-        <Link to="/leaderboard" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-          Se alle tider <ArrowUpRight className="h-3 w-3" />
-        </Link>
-      </div>
-      <Link
-        to="/leaderboard"
-        className="block overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
-      >
-        {best.length === 0 ? (
-          <div className="px-4 py-5 text-center text-sm text-muted-foreground">
-            Ingen tider endnu — upload en race-fil for at komme på leaderboardet.
-          </div>
-        ) : (
-          <ul className="divide-y divide-border">
-            {best.map((r, i) => (
-              <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-xs font-semibold tabular-nums">{i + 1}</span>
-                <span className="flex-1 truncate font-medium">{r.driver_name}</span>
-                <Badge variant="outline" className={`hidden sm:inline-flex text-[10px] ${classColor(r.car_class).badge}`}>{r.car_class}</Badge>
-                <span className="hidden md:inline-flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{r.track}{r.layout ? ` · ${r.layout}` : ""}</span>
-                <span className="inline-flex items-center gap-1 font-mono tabular-nums text-sm"><Timer className="h-3 w-3 text-primary" />{msToLapStr(r.best_lap_ms)}</span>
-              </li>
-            ))}
-          </ul>
+        {user && (
+          <Link to="/leaderboard" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+            Se alle tider <ArrowUpRight className="h-3 w-3" />
+          </Link>
         )}
-      </Link>
+      </div>
+      {user ? (
+        <Link
+          to="/leaderboard"
+          className="block overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
+        >
+          {best.length === 0 ? (
+            <div className="px-4 py-5 text-center text-sm text-muted-foreground">
+              Ingen tider endnu — upload en race-fil for at komme på leaderboardet.
+            </div>
+          ) : (
+            listMarkup
+          )}
+        </Link>
+      ) : (
+        <GuestBlur active label="Log ind for at se tider">
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            {listMarkup}
+          </div>
+        </GuestBlur>
+      )}
     </section>
   );
 }
