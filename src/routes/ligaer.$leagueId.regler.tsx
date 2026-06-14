@@ -61,6 +61,15 @@ function Rules() {
     return acc;
   }, {});
 
+  if (!authLoading && !user) {
+    return (
+      <GuestLock
+        title="Regelsæt kræver login"
+        message="Du skal være logget ind for at læse regelsættet for ligaen."
+      />
+    );
+  }
+
   return (
     <div className="space-y-4">
       <Link to="/ligaer/$leagueId" params={{ leagueId }} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
