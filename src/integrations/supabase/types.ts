@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_message_log: {
+        Row: {
+          id: string
+          sent_at: string
+          sent_by: string | null
+          template: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          sent_at?: string
+          sent_by?: string | null
+          template: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          sent_at?: string
+          sent_by?: string | null
+          template?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       briefing_raised_hands: {
         Row: {
           division_id: string

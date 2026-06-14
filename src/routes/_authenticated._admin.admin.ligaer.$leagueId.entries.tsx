@@ -1,12 +1,14 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, Trash2, ArrowLeftRight, CheckCircle2, Clock } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ArrowLeftRight, CheckCircle2, Clock, Split, UserPlus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { setProfileApproval } from "@/lib/leagues.functions";
+import { splitClassIntoProAm } from "@/lib/league-split.functions";
+import { searchUsersForAdmin, adminAddEntryToLeague } from "@/lib/league-admin-entries.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/entries")({
   component: AdminEntries,
@@ -97,18 +100,28 @@ function AdminEntries() {
   return (
     <div className="space-y-4">
       <Link to="/admin/ligaer" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ArrowLeft className="h-3 w-3" /> Ligaer</Link>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-bold">Entries</h1>
-        <EntryDialog leagueId={leagueId} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
+        <div className="flex gap-2 flex-wrap">
+          <AdminAddUserDialog leagueId={leagueId} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
+          <EntryDialog leagueId={leagueId} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
+        </div>
       </div>
       {Object.keys(grouped).length === 0 && <p className="text-muted-foreground">Ingen tilmeldinger endnu.</p>}
       {Object.entries(grouped).map(([div, classes]) => (
         <Card key={div}>
           <CardHeader><CardTitle className="text-base">{div}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {Object.entries(classes).map(([cls, cats]) => (
+            {Object.entries(classes).map(([cls, cats]) => {
+              const catKeys = Object.keys(cats);
+              const totalInClass = catKeys.reduce((sum, k) => sum + cats[k].length, 0);
+              const canSplit = catKeys.length === 1 && totalInClass >= 2 && div === "Liga-tilmelding";
+              return (
               <div key={cls}>
-                <p className="text-sm font-medium">{cls}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">{cls} <span className="text-xs text-muted-foreground">({totalInClass})</span></p>
+                  {canSplit && <SplitClassButton leagueId={leagueId} carClass={cls} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />}
+                </div>
                 {Object.entries(cats).map(([cat, list]) => (
                   <div key={cat} className="ml-2">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">{cat}</p>
@@ -151,7 +164,8 @@ function AdminEntries() {
                   </div>
                 ))}
               </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       ))}
@@ -360,6 +374,201 @@ function MoveEntryDialog({ entry, leagueId, allEntries, onDone }: { entry: Entry
           )}
           <DialogFooter><Button type="submit" disabled={carNumber == null}>Gem</Button></DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SplitClassButton({ leagueId, carClass, onDone }: { leagueId: string; carClass: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const splitFn = useServerFn(splitClassIntoProAm);
+  const mut = useMutation({
+    mutationFn: async () => splitFn({ data: { leagueId, carClass } }),
+    onSuccess: (res) => {
+      toast.success(`Opdelt: ${res.proCount} i Pro, ${res.amCount} i Am`);
+      setOpen(false);
+      onDone();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
+          <Split className="h-3.5 w-3.5" /> Opdel i Pro & Am
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Opdel {carClass} i Pro & Am?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Alle tilmeldte i {carClass} fordeles automatisk i Pro og Am baseret på ELO-rating (70%) og leaderboard-tider (30%).
+            Algoritmen prioriterer ens niveau frem for lige store grupper, så størrelserne kan variere.
+            Du kan flytte enkelte kørere bagefter via "Flyt"-knappen.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={mut.isPending}>Annullér</AlertDialogCancel>
+          <AlertDialogAction onClick={(ev) => { ev.preventDefault(); mut.mutate(); }} disabled={mut.isPending}>
+            {mut.isPending ? "Opdeler…" : "Opdel nu"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [selectedUser, setSelectedUser] = useState<{ id: string; display_name: string | null } | null>(null);
+  const [carClass, setCarClass] = useState<string>(CAR_CLASSES[0]);
+  const [category, setCategory] = useState<string>(DRIVER_CATEGORIES[0]);
+  const [carNumber, setCarNumber] = useState<number | "">("");
+
+  const searchFn = useServerFn(searchUsersForAdmin);
+  const addFn = useServerFn(adminAddEntryToLeague);
+
+  const { data: results, isFetching } = useQuery({
+    queryKey: ["admin-user-search", query],
+    enabled: open && query.trim().length >= 2,
+    queryFn: async () => searchFn({ data: { q: query.trim() } }),
+  });
+
+  const { data: league } = useQuery({
+    queryKey: ["league-cfg-admin-add", leagueId, open],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("leagues").select("name, class_configs").eq("id", leagueId).single();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const configs: Array<{ car_class: string; driver_category: string; number_from: number; number_to: number }> =
+    Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
+
+  const selectedCfg = configs.find((c) => c.car_class === carClass && c.driver_category === category);
+
+  const addMut = useMutation({
+    mutationFn: async () => {
+      if (!selectedUser) throw new Error("Vælg en bruger.");
+      if (!carNumber) throw new Error("Vælg et kørenummer.");
+      return addFn({
+        data: {
+          leagueId,
+          targetUserId: selectedUser.id,
+          carClass,
+          driverCategory: category,
+          carNumber: Number(carNumber),
+          teamId: null,
+          carModel: null,
+        },
+      });
+    },
+    onSuccess: () => {
+      toast.success(`${selectedUser?.display_name ?? "Brugeren"} er tilføjet til ligaen`);
+      setOpen(false);
+      setSelectedUser(null);
+      setQuery("");
+      setCarNumber("");
+      onDone();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const pickCfg = (key: string) => {
+    const c = configs[Number(key)];
+    if (!c) return;
+    setCarClass(c.car_class);
+    setCategory(c.driver_category);
+    setCarNumber("");
+  };
+  const cfgIdx = configs.findIndex((c) => c.car_class === carClass && c.driver_category === category);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" className="gap-1">
+          <UserPlus className="h-4 w-4" /> Tilføj bruger til liga
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Tilføj bruger til {(league as any)?.name ?? "liga"}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label>Søg bruger</Label>
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => { setQuery(e.target.value); setSelectedUser(null); }}
+                placeholder="Navn eller LMU-navn (mindst 2 tegn)"
+                className="pl-8"
+              />
+            </div>
+            {query.trim().length >= 2 && !selectedUser && (
+              <div className="mt-1 max-h-40 overflow-y-auto rounded border border-border">
+                {isFetching && <p className="p-2 text-xs text-muted-foreground">Søger…</p>}
+                {!isFetching && (results ?? []).length === 0 && (
+                  <p className="p-2 text-xs text-muted-foreground">Ingen brugere fundet.</p>
+                )}
+                {(results ?? []).map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => { setSelectedUser({ id: u.id, display_name: u.display_name }); setQuery(u.display_name ?? ""); }}
+                    className="block w-full px-2 py-1.5 text-left text-sm hover:bg-accent"
+                  >
+                    <span className="font-medium">{u.display_name ?? "(uden navn)"}</span>
+                    {u.lmu_name && <span className="ml-2 text-xs text-muted-foreground">LMU: {u.lmu_name}</span>}
+                    {!u.approved && <Badge variant="outline" className="ml-2 text-[10px]">Ikke godkendt</Badge>}
+                  </button>
+                ))}
+              </div>
+            )}
+            {selectedUser && (
+              <p className="mt-1 text-xs text-emerald-600 dark:text-emerald-400">
+                Valgt: {selectedUser.display_name ?? selectedUser.id}
+              </p>
+            )}
+          </div>
+
+          {configs.length > 0 ? (
+            <div>
+              <Label>Klasse · kategori</Label>
+              <Select value={cfgIdx >= 0 ? String(cfgIdx) : ""} onValueChange={pickCfg}>
+                <SelectTrigger><SelectValue placeholder="Vælg klasse" /></SelectTrigger>
+                <SelectContent>
+                  {configs.map((c, i) => (
+                    <SelectItem key={i} value={String(i)}>{c.car_class} · {c.driver_category} (#{c.number_from}-{c.number_to})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Ligaen har ingen klasse-konfiguration.</p>
+          )}
+
+          {selectedCfg && (
+            <div>
+              <Label>Kørenummer (#{selectedCfg.number_from}-{selectedCfg.number_to})</Label>
+              <Input
+                type="number"
+                min={selectedCfg.number_from}
+                max={selectedCfg.number_to}
+                value={carNumber}
+                onChange={(e) => setCarNumber(e.target.value === "" ? "" : Number(e.target.value))}
+              />
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <Button onClick={() => addMut.mutate()} disabled={!selectedUser || !carNumber || addMut.isPending}>
+            {addMut.isPending ? "Tilføjer…" : "Tilføj"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
