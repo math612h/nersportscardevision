@@ -130,6 +130,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   const [flPoints, setFlPoints] = useState<number>(1);
   const [lobbyCode, setLobbyCode] = useState("");
   const [lobbyPassword, setLobbyPassword] = useState("");
+  const [serverName, setServerName] = useState("");
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
 
   const [trackIdxStr, layout] = trackLayout.split("::");
@@ -152,19 +153,20 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
       },
     }).select("id").single();
     if (error) return toast.error(error.message);
-    if (inserted && (lobbyCode.trim() || lobbyPassword.trim())) {
+    if (inserted && (lobbyCode.trim() || lobbyPassword.trim() || serverName.trim())) {
       const { error: lErr } = await supabase.from("division_lobbies").insert({
         division_id: inserted.id,
         lobby_code: lobbyCode.trim() || null,
         lobby_password: lobbyPassword.trim() || null,
-      });
+        server_name: serverName.trim() || null,
+      } as any);
       if (lErr) return toast.error(`Afdeling oprettet, men lobby fejlede: ${lErr.message}`);
     }
     toast.success("Afdeling oprettet");
     setOpen(false); setName(""); setRaceDate("");
     setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny"));
     setTemperature(22); setFlPoints(1);
-    setLobbyCode(""); setLobbyPassword("");
+    setLobbyCode(""); setLobbyPassword(""); setServerName("");
     setEventSettings({});
     onDone();
   };
@@ -212,6 +214,10 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
               <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
             </div>
           </div>
+          <div>
+            <Label>Server navn</Label>
+            <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
+          </div>
           <p className="-mt-2 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
           <div className="space-y-2">
             <Label>Vejr (5 slots)</Label>
@@ -256,6 +262,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [lobbyCode, setLobbyCode] = useState<string>("");
   const [lobbyPassword, setLobbyPassword] = useState<string>("");
+  const [serverName, setServerName] = useState<string>("");
+  const [serverStartedAt, setServerStartedAt] = useState<string | null>(
+    (division as any).server_started_at ?? null,
+  );
   const [eventSettings, setEventSettings] = useState<EventSettings>(
     (division.settings?.event_settings && typeof division.settings.event_settings === "object" ? division.settings.event_settings : {}) as EventSettings,
   );
@@ -266,15 +276,39 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
-        .select("lobby_code,lobby_password")
+        .select("lobby_code,lobby_password,server_name")
         .eq("division_id", division.id)
         .maybeSingle();
       if (error) throw error;
       setLobbyCode(String(data?.lobby_code ?? ""));
       setLobbyPassword(String(data?.lobby_password ?? ""));
+      setServerName(String((data as any)?.server_name ?? ""));
       return data ?? null;
     },
   });
+
+  const startServer = async () => {
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from("divisions")
+      .update({ server_started_at: now } as any)
+      .eq("id", division.id);
+    if (error) return toast.error(error.message);
+    setServerStartedAt(now);
+    toast.success("Server markeret som startet");
+    onDone();
+  };
+
+  const stopServer = async () => {
+    const { error } = await supabase
+      .from("divisions")
+      .update({ server_started_at: null } as any)
+      .eq("id", division.id);
+    if (error) return toast.error(error.message);
+    setServerStartedAt(null);
+    toast.success("Server markeret som stoppet");
+    onDone();
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -293,9 +327,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
 
     const code = lobbyCode.trim() || null;
     const pw = lobbyPassword.trim() || null;
+    const sn = serverName.trim() || null;
     const { error: lErr } = await supabase
       .from("division_lobbies")
-      .upsert({ division_id: division.id, lobby_code: code, lobby_password: pw, updated_at: new Date().toISOString() }, { onConflict: "division_id" });
+      .upsert({ division_id: division.id, lobby_code: code, lobby_password: pw, server_name: sn, updated_at: new Date().toISOString() } as any, { onConflict: "division_id" });
     if (lErr) return toast.error(`Lobby kunne ikke gemmes: ${lErr.message}`);
 
     toast.success("Opdateret");
@@ -329,7 +364,28 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
               <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
             </div>
           </div>
+          <div>
+            <Label>Server navn</Label>
+            <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
+          </div>
           <p className="-mt-1 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
+          <div className="rounded border border-border p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm">
+                <div className="font-medium">Server status</div>
+                <div className="text-xs text-muted-foreground">
+                  {serverStartedAt
+                    ? `Startet ${format(new Date(serverStartedAt), "dd MMM HH:mm")} — grøn kant vises i 4 timer`
+                    : "Server er ikke markeret som startet"}
+                </div>
+              </div>
+              {serverStartedAt ? (
+                <Button type="button" variant="outline" size="sm" onClick={stopServer}>Stop server</Button>
+              ) : (
+                <Button type="button" variant="default" size="sm" onClick={startServer}>Start server</Button>
+              )}
+            </div>
+          </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
             Marker som afsluttet

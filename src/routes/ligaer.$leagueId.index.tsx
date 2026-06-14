@@ -265,6 +265,8 @@ function LeagueDetail() {
             const completed = !!d.settings?.completed;
             const imgFile = getTrackImageFile(d.track);
             const imgUrl = imgFile ? imageMap?.[imgFile] : null;
+            const startedAt = d.server_started_at ? new Date(d.server_started_at).getTime() : 0;
+            const isActive = !completed && startedAt > 0 && Date.now() - startedAt < 4 * 60 * 60 * 1000;
             return (
               <Link
                 key={d.id}
@@ -272,7 +274,7 @@ function LeagueDetail() {
                 params={{ leagueId, divisionId: d.id }}
                 className="group block h-full"
               >
-                <Card className="flex h-full flex-col overflow-hidden border-border transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]">
+                <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : "border-border hover:border-primary"}`}>
                   <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
                     {imgUrl ? (
                       <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
@@ -285,6 +287,11 @@ function LeagueDetail() {
                     </div>
                     {completed && (
                       <Badge variant="secondary" className="absolute left-3 top-3 text-[10px]">Afsluttet</Badge>
+                    )}
+                    {isActive && (
+                      <Badge className="absolute left-3 top-3 gap-1 bg-green-500 text-white text-[10px] hover:bg-green-500">
+                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> LIVE
+                      </Badge>
                     )}
                   </div>
                   <CardHeader className="pb-2">

@@ -191,11 +191,11 @@ function DivisionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
-        .select("lobby_code,lobby_password")
+        .select("lobby_code,lobby_password,server_name")
         .eq("division_id", divisionId)
         .maybeSingle();
       if (error) throw error;
-      return (data ?? null) as { lobby_code: string | null; lobby_password: string | null } | null;
+      return (data ?? null) as { lobby_code: string | null; lobby_password: string | null; server_name: string | null } | null;
     },
   });
 
@@ -371,7 +371,7 @@ function DivisionDetail() {
       <EventSettingsCard settings={((div?.settings as any)?.event_settings ?? {}) as EventSettings} />
 
       {(() => {
-        const hasLobby = !!(lobby?.lobby_code || lobby?.lobby_password);
+        const hasLobby = !!(lobby?.lobby_code || lobby?.lobby_password || lobby?.server_name);
         if (!user || !mySignup) return null;
         if (!isApproved) {
           return (
@@ -390,6 +390,12 @@ function DivisionDetail() {
               <CardTitle className="text-base flex items-center gap-2"><KeyRound className="h-4 w-4 text-primary" /> Lobby info</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
+              {lobby?.server_name && (
+                <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Server navn</span>
+                  <span className="font-mono font-semibold">{lobby.server_name}</span>
+                </div>
+              )}
               {lobby?.lobby_code && (
                 <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
                   <span className="text-xs uppercase tracking-wide text-muted-foreground">Lobby code</span>
