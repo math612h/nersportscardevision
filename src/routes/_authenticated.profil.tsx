@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RatingBadge } from "@/components/RatingBadge";
 import { startDiscordLink, unlinkDiscord } from "@/lib/discord.functions";
+import { notifyAdminNameUpdated } from "@/lib/admin-name-notify.functions";
 
 export const Route = createFileRoute("/_authenticated/profil")({
   head: () => ({ meta: [{ title: "Min profil – LMU Danmark" }] }),
