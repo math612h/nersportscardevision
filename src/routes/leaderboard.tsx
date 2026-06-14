@@ -18,6 +18,8 @@ import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nam
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
 import { getLeaderboardRows } from "@/lib/leaderboard.functions";
+import { classColor } from "@/lib/lmu-cars";
+
 const COMPANION_DOWNLOAD_URL =
   "https://github.com/math612h/nersportscardevision/releases/latest/download/LMU-Danmark-Tracker-Setup.exe";
 
