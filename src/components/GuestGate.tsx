@@ -57,8 +57,6 @@ export function GuestBlur({
       <div
         aria-hidden="true"
         className="pointer-events-none select-none blur-md saturate-50 opacity-60"
-        // tabIndex prevention for inner focusables
-        inert={"" as unknown as boolean}
       >
         {children}
       </div>
