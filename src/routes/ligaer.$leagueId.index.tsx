@@ -1228,9 +1228,12 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
               {!isApproved
                 ? "Din profil er endnu ikke godkendt. Du tilmeldes ventelisten og rykker automatisk op på griddet, når en admin godkender dig."
+                : !hasAcked
+                ? "Du mangler at bekræfte at du har læst og forstået reglementet. Du tilmeldes ventelisten – gå ind på 'Se regelsæt' og kryds af, så rykker du op på griddet."
                 : `Klassen er fyldt (${gridCount}/${cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.`}
             </p>
           )}
+
           {selected && (
             <div className="space-y-2">
               <Label>Kørenummer</Label>
