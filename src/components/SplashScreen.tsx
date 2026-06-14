@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import logo from "@/assets/lmu-logo.png";
+import logoAsset from "@/assets/lmu-logo.png.asset.json";
+
+const logo = logoAsset.url;
 
 const SESSION_KEY = "lmu_splash_shown";
 
