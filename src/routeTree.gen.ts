@@ -22,12 +22,12 @@ import { Route as LmuTeamsRouteImport } from './routes/lmu.teams'
 import { Route as LmuLigaRouteImport } from './routes/lmu.liga'
 import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated.profil'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
 import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
 import { Route as AuthenticatedArkivRouteImport } from './routes/_authenticated.arkiv'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
 import { Route as LigaerLeagueIdIndexRouteImport } from './routes/ligaer.$leagueId.index'
+import { Route as AuthenticatedProfilIndexRouteImport } from './routes/_authenticated.profil.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
 import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/public/leaderboard-upload'
@@ -121,11 +121,6 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
-  id: '/profil',
-  path: '/profil',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
@@ -151,6 +146,12 @@ const LigaerLeagueIdIndexRoute = LigaerLeagueIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => LigaerLeagueIdRoute,
 } as any)
+const AuthenticatedProfilIndexRoute =
+  AuthenticatedProfilIndexRouteImport.update({
+    id: '/profil/',
+    path: '/profil/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -169,9 +170,9 @@ const ApiPublicLeaderboardUploadRoute =
   } as any)
 const AuthenticatedProfilUserIdRoute =
   AuthenticatedProfilUserIdRouteImport.update({
-    id: '/$userId',
-    path: '/$userId',
-    getParentRoute: () => AuthenticatedProfilRoute,
+    id: '/profil/$userId',
+    path: '/profil/$userId',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedAdminAdminIndexRoute =
   AuthenticatedAdminAdminIndexRouteImport.update({
@@ -324,7 +325,6 @@ export interface FileRoutesByFullPath {
   '/arkiv': typeof AuthenticatedArkivRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
-  '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/lmu/liga': typeof LmuLigaRoute
@@ -335,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/profil/': typeof AuthenticatedProfilIndexRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
@@ -371,7 +372,6 @@ export interface FileRoutesByTo {
   '/arkiv': typeof AuthenticatedArkivRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
-  '/profil': typeof AuthenticatedProfilRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
@@ -381,6 +381,7 @@ export interface FileRoutesByTo {
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/profil': typeof AuthenticatedProfilIndexRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdIndexRoute
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
@@ -419,7 +420,6 @@ export interface FileRoutesById {
   '/_authenticated/arkiv': typeof AuthenticatedArkivRoute
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
-  '/_authenticated/profil': typeof AuthenticatedProfilRouteWithChildren
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/lmu/liga': typeof LmuLigaRoute
@@ -430,6 +430,7 @@ export interface FileRoutesById {
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/_authenticated/profil/': typeof AuthenticatedProfilIndexRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/_authenticated/_admin/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/_authenticated/_admin/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
@@ -468,7 +469,6 @@ export interface FileRouteTypes {
     | '/arkiv'
     | '/mine-protests'
     | '/onboarding'
-    | '/profil'
     | '/email/unsubscribe'
     | '/ligaer/$leagueId'
     | '/lmu/liga'
@@ -479,6 +479,7 @@ export interface FileRouteTypes {
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
     | '/lovable/email/suppression'
+    | '/profil/'
     | '/ligaer/$leagueId/'
     | '/admin/afventer'
     | '/admin/brugere'
@@ -515,7 +516,6 @@ export interface FileRouteTypes {
     | '/arkiv'
     | '/mine-protests'
     | '/onboarding'
-    | '/profil'
     | '/email/unsubscribe'
     | '/lmu/liga'
     | '/lmu/teams'
@@ -525,6 +525,7 @@ export interface FileRouteTypes {
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
     | '/lovable/email/suppression'
+    | '/profil'
     | '/ligaer/$leagueId'
     | '/admin/afventer'
     | '/admin/brugere'
@@ -562,7 +563,6 @@ export interface FileRouteTypes {
     | '/_authenticated/arkiv'
     | '/_authenticated/mine-protests'
     | '/_authenticated/onboarding'
-    | '/_authenticated/profil'
     | '/email/unsubscribe'
     | '/ligaer/$leagueId'
     | '/lmu/liga'
@@ -573,6 +573,7 @@ export interface FileRouteTypes {
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
     | '/lovable/email/suppression'
+    | '/_authenticated/profil/'
     | '/ligaer/$leagueId/'
     | '/_authenticated/_admin/admin/afventer'
     | '/_authenticated/_admin/admin/brugere'
@@ -722,13 +723,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/profil': {
-      id: '/_authenticated/profil'
-      path: '/profil'
-      fullPath: '/profil'
-      preLoaderRoute: typeof AuthenticatedProfilRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
@@ -764,6 +758,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LigaerLeagueIdIndexRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
     }
+    '/_authenticated/profil/': {
+      id: '/_authenticated/profil/'
+      path: '/profil'
+      fullPath: '/profil/'
+      preLoaderRoute: typeof AuthenticatedProfilIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
       path: '/lovable/email/suppression'
@@ -787,10 +788,10 @@ declare module '@tanstack/react-router' {
     }
     '/_authenticated/profil/$userId': {
       id: '/_authenticated/profil/$userId'
-      path: '/$userId'
+      path: '/profil/$userId'
       fullPath: '/profil/$userId'
       preLoaderRoute: typeof AuthenticatedProfilUserIdRouteImport
-      parentRoute: typeof AuthenticatedProfilRoute
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_admin/admin/': {
       id: '/_authenticated/_admin/admin/'
@@ -1029,23 +1030,13 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
-interface AuthenticatedProfilRouteChildren {
-  AuthenticatedProfilUserIdRoute: typeof AuthenticatedProfilUserIdRoute
-}
-
-const AuthenticatedProfilRouteChildren: AuthenticatedProfilRouteChildren = {
-  AuthenticatedProfilUserIdRoute: AuthenticatedProfilUserIdRoute,
-}
-
-const AuthenticatedProfilRouteWithChildren =
-  AuthenticatedProfilRoute._addFileChildren(AuthenticatedProfilRouteChildren)
-
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedArkivRoute: typeof AuthenticatedArkivRoute
   AuthenticatedMineProtestsRoute: typeof AuthenticatedMineProtestsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
-  AuthenticatedProfilRoute: typeof AuthenticatedProfilRouteWithChildren
+  AuthenticatedProfilUserIdRoute: typeof AuthenticatedProfilUserIdRoute
+  AuthenticatedProfilIndexRoute: typeof AuthenticatedProfilIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -1053,7 +1044,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedArkivRoute: AuthenticatedArkivRoute,
   AuthenticatedMineProtestsRoute: AuthenticatedMineProtestsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
-  AuthenticatedProfilRoute: AuthenticatedProfilRouteWithChildren,
+  AuthenticatedProfilUserIdRoute: AuthenticatedProfilUserIdRoute,
+  AuthenticatedProfilIndexRoute: AuthenticatedProfilIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

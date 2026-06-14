@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowUp, ArrowDown } from "lucide-react";
+import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowUp, ArrowDown, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -34,7 +34,6 @@ export const Route = createFileRoute("/lmu/liga")({
 });
 
 function ParticipantDashboard() {
-  const [tab, setTab] = useState<"active" | "upcoming" | "past">("active");
   const { isAdmin } = useAuth();
   const qc = useQueryClient();
 
@@ -156,72 +155,33 @@ function ParticipantDashboard() {
       )}
 
       {!isLoading && leagues && leagues.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setTab("active")}
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
-                tab === "active" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Flag className="h-3.5 w-3.5" /> Aktive
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("upcoming")}
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
-                tab === "upcoming" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Sparkles className="h-3.5 w-3.5" /> Kommende
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab("past")}
-              className={cn(
-                "flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition",
-                tab === "past" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
-              )}
-            >
-              <Trophy className="h-3.5 w-3.5" /> Tidligere
-            </button>
-          </div>
-
-          {tab === "active" && active.length > 0 && (
-            <CardGrid>
-              {active.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < active.length - 1} onMove={(dir) => makeMoveHandler(active)(l.id, dir)} reordering={reorder.isPending} />)}
-            </CardGrid>
-          )}
-          {tab === "active" && active.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              Ingen aktive ligaer i øjeblikket.
-            </div>
-          )}
-
-          {tab === "upcoming" && upcoming.length > 0 && (
-            <CardGrid>
-              {upcoming.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} upcoming isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < upcoming.length - 1} onMove={(dir) => makeMoveHandler(upcoming)(l.id, dir)} reordering={reorder.isPending} />)}
-            </CardGrid>
-          )}
-          {tab === "upcoming" && upcoming.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              Ingen kommende ligaer i øjeblikket.
-            </div>
-          )}
-
-          {tab === "past" && past.length > 0 && (
-            <CardGrid>
-              {past.map((l: any, i: number) => <LeagueCard key={l.id} l={l} bannerUrl={resolveBanner(l)} entries={entriesByLeague?.[l.id] ?? []} offseason={!!l.is_offseason} past isAdmin={isAdmin} canMoveUp={i > 0} canMoveDown={i < past.length - 1} onMove={(dir) => makeMoveHandler(past)(l.id, dir)} reordering={reorder.isPending} />)}
-            </CardGrid>
-          )}
-          {tab === "past" && past.length === 0 && (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-              Ingen tidligere ligaer endnu.
-            </div>
-          )}
+        <div className="space-y-6">
+          {(() => {
+            const all = [...active, ...upcoming, ...past];
+            return (
+              <CardGrid>
+                {all.map((l: any, i: number) => {
+                  const kind = classify(l);
+                  return (
+                    <LeagueCard
+                      key={l.id}
+                      l={l}
+                      bannerUrl={resolveBanner(l)}
+                      entries={entriesByLeague?.[l.id] ?? []}
+                      offseason={!!l.is_offseason}
+                      upcoming={kind === "upcoming"}
+                      past={kind === "past"}
+                      isAdmin={isAdmin}
+                      canMoveUp={i > 0}
+                      canMoveDown={i < all.length - 1}
+                      onMove={(dir) => makeMoveHandler(all)(l.id, dir)}
+                      reordering={reorder.isPending}
+                    />
+                  );
+                })}
+              </CardGrid>
+            );
+          })()}
         </div>
       )}
     </div>
@@ -407,9 +367,14 @@ function LeagueCard({
             <ArrowUpRight className="h-3.5 w-3.5" />
           </div>
           {upcoming && (
-            <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
-              <CardCountdown opensAt={l.signup_opens_at ?? null} />
-            </Badge>
+            <>
+              <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
+                <CardCountdown opensAt={l.signup_opens_at ?? null} />
+              </Badge>
+              <div className="absolute right-3 bottom-3 flex items-center gap-1 rounded-full bg-background/85 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur">
+                <Lock className="h-3 w-3" /> Tilmelding lukket
+              </div>
+            </>
           )}
           {past && (
             <Badge variant="secondary" className="absolute left-3 top-3">Afsluttet</Badge>

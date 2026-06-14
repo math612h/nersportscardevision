@@ -18,7 +18,7 @@ import { RatingBadge } from "@/components/RatingBadge";
 import { startDiscordLink, unlinkDiscord } from "@/lib/discord.functions";
 import { notifyAdminNameUpdated } from "@/lib/admin-name-notify.functions";
 
-export const Route = createFileRoute("/_authenticated/profil")({
+export const Route = createFileRoute("/_authenticated/profil/")({
   head: () => ({ meta: [{ title: "Min profil – LMU Danmark" }] }),
   component: ProfilePage,
 });
