@@ -179,13 +179,8 @@ function ProfilePage() {
               {avatarUrl ? <AvatarImage src={avatarUrl} alt="Profilbillede" /> : null}
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div>
-              <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickFile} />
-              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-                {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
-                Skift billede
-              </Button>
-              <p className="mt-1 text-xs text-muted-foreground">JPG/PNG, maks 5 MB.</p>
+            <div className="text-xs text-muted-foreground">
+              Dit profilbillede hentes automatisk fra Discord. Skift billedet i Discord for at opdatere det her.
             </div>
           </div>
 
