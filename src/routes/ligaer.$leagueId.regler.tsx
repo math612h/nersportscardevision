@@ -1,8 +1,13 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Checkbox } from "@/components/ui/checkbox";
+import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
 
 export const Route = createFileRoute("/ligaer/$leagueId/regler")({
   component: Rules,
@@ -32,6 +37,74 @@ export const Route = createFileRoute("/ligaer/$leagueId/regler")({
     };
   },
 });
+
+function AckPanel({ leagueId }: { leagueId: string }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const ackFn = useServerFn(acknowledgeLeagueRules);
+
+  const { data: ack } = useQuery({
+    queryKey: ["rules-ack", leagueId, user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("league_rules_acknowledgements")
+        .select("acknowledged_at")
+        .eq("league_id", leagueId)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  if (!user) return null;
+  const acked = !!ack;
+
+  const onToggle = async (val: boolean) => {
+    if (!val || acked) return;
+    try {
+      const res = await ackFn({ data: { leagueId } });
+      qc.invalidateQueries({ queryKey: ["rules-ack", leagueId, user.id] });
+      qc.invalidateQueries({ queryKey: ["my-entry", leagueId, user.id] });
+      qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
+      if (res.promoted) {
+        toast.success("Tak! Du er nu rykket op på griddet.");
+      } else {
+        toast.success("Tak – din bekræftelse er gemt.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke gemme din bekræftelse.");
+    }
+  };
+
+  return (
+    <div
+      className={`flex items-start gap-3 rounded-md border p-3 ${
+        acked ? "border-primary/40 bg-primary/5" : "border-dashed border-border bg-muted/40"
+      }`}
+    >
+      <Checkbox
+        id="rules-ack"
+        checked={acked}
+        disabled={acked}
+        onCheckedChange={(v) => onToggle(!!v)}
+        className="mt-0.5"
+      />
+      <label htmlFor="rules-ack" className="flex-1 cursor-pointer text-sm">
+        <span className="flex items-center gap-1.5 font-medium">
+          Jeg har læst og forstået reglementet
+          {acked && <CheckCircle2 className="h-4 w-4 text-primary" />}
+        </span>
+        <span className="mt-0.5 block text-xs text-muted-foreground">
+          {acked
+            ? "Tak – du opfylder kravet for at stå på griddet (sammen med godkendt profil)."
+            : "Du skal bekræfte dette for at kunne stå på griddet i denne liga. Uden bekræftelse forbliver du på ventelisten."}
+        </span>
+      </label>
+    </div>
+  );
+}
 
 function Rules() {
   const { leagueId } = useParams({ from: "/ligaer/$leagueId/regler" });
@@ -65,6 +138,7 @@ function Rules() {
       <h1 className="text-2xl font-bold">
         Regelsæt {leagueName ? `– ${leagueName}` : ""}
       </h1>
+      <AckPanel leagueId={leagueId} />
       {rules?.length === 0 && <p className="text-muted-foreground">Ingen regler oprettet endnu.</p>}
       <div className="space-y-6">
         {Object.entries(grouped).map(([main, list]) => (

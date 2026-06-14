@@ -76,9 +76,19 @@ export const setProfileApproval = createServerFn({ method: "POST" })
     const demoted: string[] = [];
 
     if (data.approved && myEntries) {
-      // Try to promote this user's waitlist entries if capacity allows
+      // Fetch rule acknowledgements for this user across their leagues
+      const myLeagueIds = Array.from(new Set(myEntries.map((e) => e.league_id).filter(Boolean) as string[]));
+      const { data: acks } = await supabaseAdmin
+        .from("league_rules_acknowledgements")
+        .select("league_id")
+        .eq("user_id", data.targetUserId)
+        .in("league_id", myLeagueIds.length ? myLeagueIds : ["00000000-0000-0000-0000-000000000000"]);
+      const ackedLeagues = new Set((acks ?? []).map((a: { league_id: string }) => a.league_id));
+
+      // Try to promote this user's waitlist entries if capacity allows AND rules acknowledged
       for (const entry of myEntries.filter((e) => e.waitlist && e.league_id)) {
         const leagueId = entry.league_id as string;
+        if (!ackedLeagues.has(leagueId)) continue; // must read rules first
         // Get league cap for this class/category
         const { data: league } = await supabaseAdmin
           .from("leagues")
@@ -89,6 +99,7 @@ export const setProfileApproval = createServerFn({ method: "POST" })
           Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
         const cfg = configs.find((c) => c.car_class === entry.car_class && c.driver_category === entry.driver_category);
         const cap = cfg?.max_drivers ?? null;
+
 
         const { data: siblings } = await supabaseAdmin
           .from("entries")
@@ -146,7 +157,14 @@ export const setProfileApproval = createServerFn({ method: "POST" })
             .select("id,approved")
             .in("id", userIds);
           const approvedSet = new Set((profs ?? []).filter((p) => p.approved).map((p) => p.id));
-          const nextUp = waitlisters.find((w) => approvedSet.has(w.user_id));
+          const { data: acks } = await supabaseAdmin
+            .from("league_rules_acknowledgements")
+            .select("user_id")
+            .eq("league_id", leagueId)
+            .in("user_id", userIds);
+          const ackedSet = new Set((acks ?? []).map((a: { user_id: string }) => a.user_id));
+          const nextUp = waitlisters.find((w) => approvedSet.has(w.user_id) && ackedSet.has(w.user_id));
+
           if (nextUp) {
             await supabaseAdmin.from("entries").update({ waitlist: false }).eq("id", nextUp.id);
             const { data: league } = await supabaseAdmin
@@ -227,7 +245,14 @@ export const leaveLeague = createServerFn({ method: "POST" })
           .select("id,approved")
           .in("id", userIds);
         const approvedSet = new Set((profs ?? []).filter((p) => p.approved).map((p) => p.id));
-        const nextUp = waitlisters.find((w) => approvedSet.has(w.user_id));
+        const { data: acks } = await supabaseAdmin
+          .from("league_rules_acknowledgements")
+          .select("user_id")
+          .eq("league_id", data.leagueId)
+          .in("user_id", userIds);
+        const ackedSet = new Set((acks ?? []).map((a: { user_id: string }) => a.user_id));
+        const nextUp = waitlisters.find((w) => approvedSet.has(w.user_id) && ackedSet.has(w.user_id));
+
 
         if (nextUp) {
           const { error: upErr } = await supabaseAdmin

@@ -229,13 +229,12 @@ function LeagueDetail() {
         <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
 
         <div className="flex flex-wrap gap-2 pt-1">
-          <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
-            <Button variant="outline" size="sm" className="gap-2"><BookOpen className="h-4 w-4" /> Se regelsæt</Button>
-          </Link>
+          <RulesButton leagueId={leagueId} />
           {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} approvedOnly={!!(league as any)?.approved_only} />}
           {league && <EditEntryDialog leagueId={leagueId} />}
           {league && <LeaveLeagueButton leagueId={leagueId} />}
         </div>
+
       </header>
 
       <QuickNav />
@@ -1050,7 +1049,10 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   ).length;
   const cap = selected?.max_drivers ?? null;
   const isApproved = !!profile?.approved;
-  const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
+  const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);
+  const hasAcked = !!rulesAck;
+  const goesToWaitlist = !isApproved || !hasAcked || (cap != null && gridCount >= cap);
+
   const blockedByApprovedOnly = approvedOnly && !isApproved;
 
   const submit = async (e: React.FormEvent) => {
@@ -1226,9 +1228,12 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
               {!isApproved
                 ? "Din profil er endnu ikke godkendt. Du tilmeldes ventelisten og rykker automatisk op på griddet, når en admin godkender dig."
+                : !hasAcked
+                ? "Du mangler at bekræfte at du har læst og forstået reglementet. Du tilmeldes ventelisten – gå ind på 'Se regelsæt' og kryds af, så rykker du op på griddet."
                 : `Klassen er fyldt (${gridCount}/${cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.`}
             </p>
           )}
+
           {selected && (
             <div className="space-y-2">
               <Label>Kørenummer</Label>
@@ -1338,6 +1343,64 @@ function DriverAidsView({ settings }: { settings: EventSettings }) {
 function league_name(_id: string) {
   return "ligaen";
 }
+
+function useMyEntry(leagueId: string, userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["my-entry", leagueId, userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("id,waitlist")
+        .eq("league_id", leagueId)
+        .is("division_id", null)
+        .eq("user_id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+function useMyRulesAck(leagueId: string, userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["rules-ack", leagueId, userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("league_rules_acknowledgements")
+        .select("acknowledged_at")
+        .eq("league_id", leagueId)
+        .eq("user_id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+function RulesButton({ leagueId }: { leagueId: string }) {
+  const { user } = useAuth();
+  const { data: myEntry } = useMyEntry(leagueId, user?.id);
+  const { data: ack } = useMyRulesAck(leagueId, user?.id);
+  const showBadge = !!myEntry && !ack;
+  return (
+    <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
+      <Button variant="outline" size="sm" className="relative gap-2">
+        <BookOpen className="h-4 w-4" /> Se regelsæt
+        {showBadge && (
+          <span
+            aria-label="Reglement skal bekræftes"
+            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow ring-2 ring-background"
+          >
+            1
+          </span>
+        )}
+      </Button>
+    </Link>
+  );
+}
+
 
 function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
   const { user } = useAuth();

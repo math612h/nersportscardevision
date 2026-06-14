@@ -482,6 +482,32 @@ export type Database = {
           },
         ]
       }
+      league_rules_acknowledgements: {
+        Row: {
+          acknowledged_at: string
+          league_id: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string
+          league_id: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string
+          league_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_rules_acknowledgements_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leagues: {
         Row: {
           approved_only: boolean
