@@ -463,6 +463,123 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
   );
 }
 
+function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }: {
+  cls: string;
+  cat: string;
+  cfg: ClassConfig | undefined;
+  list: Array<{ id: string; user_id: string; driver_name: string; car_class: string; driver_category: string; car_number: number | null; waitlist: boolean; created_at: string; team_id?: string | null; car_model?: string | null }>;
+  teamMap?: Record<string, string>;
+  ratingMap?: Record<string, { score: number; percentile: number }>;
+  approvedMap?: Set<string>;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const grid = list.filter((e) => !e.waitlist).sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0));
+  const wait = list.filter((e) => e.waitlist).sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+  const col = classColor(cls);
+  const LIMIT = 5;
+  const visibleGrid = expanded ? grid : grid.slice(0, LIMIT);
+  const hiddenCount = grid.length - visibleGrid.length;
+
+  return (
+    <Card className={`border-l-4 ${col.border}`}>
+      <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <span className={`h-2.5 w-2.5 rounded-full ${col.dot}`} />
+          <span className={col.text}>{cls}</span>
+          <Badge variant="outline" className="text-[10px]">{cat}</Badge>
+        </CardTitle>
+        <span className="text-xs text-muted-foreground">
+          {grid.length}{cfg?.max_drivers ? `/${cfg.max_drivers}` : ""} på grid{wait.length > 0 ? ` · ${wait.length} på venteliste` : ""}
+        </span>
+      </CardHeader>
+      <CardContent className="pt-0 space-y-3">
+        <ul className="divide-y divide-border">
+          {visibleGrid.map((e) => (
+            <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                #{e.car_number}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="truncate">{e.driver_name}</div>
+                {e.team_id && teamMap?.[e.team_id] && (
+                  <div className="mt-0.5 sm:hidden">
+                    <Badge variant="outline" className="text-[10px]" title="Team">
+                      {teamMap[e.team_id]}
+                    </Badge>
+                  </div>
+                )}
+                {e.car_model && (
+                  <div className="mt-0.5 inline-flex items-center rounded bg-primary/15 px-1.5 py-0.5 text-[11px] font-semibold text-primary ring-1 ring-primary/40 max-w-full truncate">
+                    {e.car_model}
+                  </div>
+                )}
+              </div>
+              {e.team_id && teamMap?.[e.team_id] && (
+                <Badge variant="outline" className="hidden sm:inline-flex text-[10px] shrink-0" title="Team">
+                  {teamMap[e.team_id]}
+                </Badge>
+              )}
+              {ratingMap?.[e.user_id] && (
+                <RatingBadge
+                  score={ratingMap[e.user_id].score}
+                  percentile={ratingMap[e.user_id].percentile}
+                  confidence={1}
+                  size="xs"
+                />
+              )}
+              {approvedMap?.has(e.user_id) && (
+                <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
+                  <CheckCircle2 className="h-3 w-3" />Godkendt
+                </Badge>
+              )}
+            </li>
+          ))}
+        </ul>
+        {grid.length > LIMIT && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs"
+            onClick={() => setExpanded((v) => !v)}
+          >
+            {expanded ? "Skjul" : `Se hele entryliste (${hiddenCount} mere)`}
+          </Button>
+        )}
+        {wait.length > 0 && (
+          <div className="rounded-md border border-dashed border-border p-2">
+            <p className="mb-1 text-xs font-semibold text-muted-foreground">Venteliste</p>
+            <ul className="divide-y divide-border">
+              {wait.map((e, idx) => (
+                <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                  <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-muted px-1.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                    {idx + 1}
+                  </span>
+                  <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
+                  <span className="flex-1 truncate">{e.driver_name}</span>
+                  {ratingMap?.[e.user_id] && (
+                    <RatingBadge
+                      score={ratingMap[e.user_id].score}
+                      percentile={ratingMap[e.user_id].percentile}
+                      confidence={1}
+                      size="xs"
+                    />
+                  )}
+                  {approvedMap?.has(e.user_id) && (
+                    <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
+                      <CheckCircle2 className="h-3 w-3" />Godkendt
+                    </Badge>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+
 type ResultRow = {
   car_number: number;
   driver_name: string;
