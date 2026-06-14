@@ -556,7 +556,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
                     {idx + 1}
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
-                  <span className="flex-1 truncate">{e.driver_name}</span>
+                  <span className="flex-1 truncate"><UserAvatar userId={e.user_id} name={e.driver_name} size="xs" /></span>
                   {ratingMap?.[e.user_id] && (
                     <RatingBadge
                       score={ratingMap[e.user_id].score}
