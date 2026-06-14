@@ -269,7 +269,7 @@ function AdminProtestDetail() {
         {involved.map((r: any) => (
           <Card key={r.id}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">{r.driver_name}</CardTitle>
+              <CardTitle className="text-sm"><UserAvatar userId={r.user_id} name={r.driver_name} size="sm" /></CardTitle>
               {r.responded_at && <CardDescription>Svarede {format(new Date(r.responded_at), "dd MMM yyyy HH:mm")}</CardDescription>}
             </CardHeader>
             <CardContent className="pt-0 text-sm">
