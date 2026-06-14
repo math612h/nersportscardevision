@@ -100,18 +100,28 @@ function AdminEntries() {
   return (
     <div className="space-y-4">
       <Link to="/admin/ligaer" className="inline-flex items-center gap-1 text-sm text-muted-foreground"><ArrowLeft className="h-3 w-3" /> Ligaer</Link>
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="text-2xl font-bold">Entries</h1>
-        <EntryDialog leagueId={leagueId} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
+        <div className="flex gap-2 flex-wrap">
+          <AdminAddUserDialog leagueId={leagueId} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
+          <EntryDialog leagueId={leagueId} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
+        </div>
       </div>
       {Object.keys(grouped).length === 0 && <p className="text-muted-foreground">Ingen tilmeldinger endnu.</p>}
       {Object.entries(grouped).map(([div, classes]) => (
         <Card key={div}>
           <CardHeader><CardTitle className="text-base">{div}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {Object.entries(classes).map(([cls, cats]) => (
+            {Object.entries(classes).map(([cls, cats]) => {
+              const catKeys = Object.keys(cats);
+              const totalInClass = catKeys.reduce((sum, k) => sum + cats[k].length, 0);
+              const canSplit = catKeys.length === 1 && totalInClass >= 2 && div === "Liga-tilmelding";
+              return (
               <div key={cls}>
-                <p className="text-sm font-medium">{cls}</p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">{cls} <span className="text-xs text-muted-foreground">({totalInClass})</span></p>
+                  {canSplit && <SplitClassButton leagueId={leagueId} carClass={cls} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />}
+                </div>
                 {Object.entries(cats).map(([cat, list]) => (
                   <div key={cat} className="ml-2">
                     <p className="text-xs uppercase tracking-wide text-muted-foreground">{cat}</p>
