@@ -1091,6 +1091,16 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
       if (pErr) return toast.error(`Kunne ikke gemme LMU-navn: ${pErr.message}`);
     }
 
+    // Persist rules acknowledgement if user just ticked the box
+    if (!hasAcked && ackChecked) {
+      try {
+        await ackFn({ data: { leagueId } });
+        qc.invalidateQueries({ queryKey: ["rules-ack", leagueId, user.id] });
+      } catch (err) {
+        return toast.error(err instanceof Error ? err.message : "Kunne ikke gemme reglement-bekræftelse.");
+      }
+    }
+
     const { error } = await supabase.from("entries").insert({
       league_id: leagueId,
       user_id: user.id,
