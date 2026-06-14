@@ -613,16 +613,23 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("car_class,driver_category,car_number,team_id")
+        .select("user_id,car_class,driver_category,car_number,team_id")
         .eq("league_id", leagueId);
       if (error) throw error;
-      return (data ?? []) as { car_class: string; driver_category: string; car_number: number | null; team_id: string | null }[];
+      return (data ?? []) as { user_id: string; car_class: string; driver_category: string; car_number: number | null; team_id: string | null }[];
     },
   });
   const entryTeamMap = useMemo(() => {
     const m: Record<string, string | null> = {};
     for (const e of leagueEntries ?? []) {
       if (e.car_number != null) m[`${e.car_class}|${e.driver_category}|${e.car_number}`] = e.team_id;
+    }
+    return m;
+  }, [leagueEntries]);
+  const entryUserMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const e of leagueEntries ?? []) {
+      if (e.car_number != null) m[`${e.car_class}|${e.driver_category}|${e.car_number}`] = e.user_id;
     }
     return m;
   }, [leagueEntries]);
