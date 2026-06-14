@@ -113,6 +113,11 @@ function ProfilePage() {
     setSaving(false);
     if (privErr) return toast.error(privErr.message);
     toast.success("Profil opdateret.");
+    try {
+      await notifyAdminNameUpdated();
+    } catch (err) {
+      console.error("notifyAdminNameUpdated failed", err);
+    }
     qc.invalidateQueries({ queryKey: ["my-profile", user.id] });
     if (window.history.length > 1) router.history.back();
   };
