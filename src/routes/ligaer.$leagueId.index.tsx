@@ -1243,16 +1243,6 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
                 })}
               </SelectContent>
             </Select>
-            {selectedAllowedInfo && selectedAllowedInfo.reason === "algorithm" && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Algoritmen vurderer at <strong>{selectedAllowedInfo.allowed.join("/")}</strong> passer bedst til dit niveau i {selected?.car_class}.
-              </p>
-            )}
-            {selectedAllowedInfo && selectedAllowedInfo.reason === "insufficient_data" && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Få tilmeldte indtil videre – alle kategorier er åbne.
-              </p>
-            )}
           </div>
           {selected && (CARS_BY_CLASS[selected.car_class]?.length ?? 0) > 0 && (
             <div>
