@@ -144,32 +144,42 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
             const logo = logoMap?.[t.id];
             const count = memberCounts[t.id] ?? 0;
             const rating = teamRatings[t.id];
+            const cardInner = (
+              <Card className="h-full transition hover:border-primary">
+                <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
+                  <Avatar className="h-12 w-12">
+                    {logo ? <AvatarImage src={logo} alt="" /> : null}
+                    <AvatarFallback>{initials}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="truncate text-base">{t.name}</CardTitle>
+                    <CardDescription className="line-clamp-2 text-xs">
+                      {t.bio || "Ingen bio."}
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="flex flex-wrap items-center gap-2 pt-0 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="gap-1">
+                    <Users className="h-3 w-3" /> {count} medlem{count === 1 ? "" : "mer"}
+                  </Badge>
+                  {rating != null && (
+                    <Badge variant="outline" className="gap-1" title="Teamets rating (baseret på teamets resultater)">
+                      <Star className="h-3 w-3 text-primary" /> {rating}
+                    </Badge>
+                  )}
+                </CardContent>
+              </Card>
+            );
+            if (!user) {
+              return (
+                <GuestBlur key={t.id} active label="Log ind">
+                  {cardInner}
+                </GuestBlur>
+              );
+            }
             return (
               <Link key={t.id} to="/teams/$teamId" params={{ teamId: t.id }}>
-                <Card className="h-full transition hover:border-primary">
-                  <CardHeader className="flex flex-row items-start gap-3 space-y-0 pb-2">
-                    <Avatar className="h-12 w-12">
-                      {logo ? <AvatarImage src={logo} alt="" /> : null}
-                      <AvatarFallback>{initials}</AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <CardTitle className="truncate text-base">{t.name}</CardTitle>
-                      <CardDescription className="line-clamp-2 text-xs">
-                        {t.bio || "Ingen bio."}
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex flex-wrap items-center gap-2 pt-0 text-xs text-muted-foreground">
-                    <Badge variant="outline" className="gap-1">
-                      <Users className="h-3 w-3" /> {count} medlem{count === 1 ? "" : "mer"}
-                    </Badge>
-                    {rating != null && (
-                      <Badge variant="outline" className="gap-1" title="Teamets rating (baseret på teamets resultater)">
-                        <Star className="h-3 w-3 text-primary" /> {rating}
-                      </Badge>
-                    )}
-                  </CardContent>
-                </Card>
+                {cardInner}
               </Link>
             );
           })}
