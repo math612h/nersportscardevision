@@ -14,7 +14,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { setProfileApproval } from "@/lib/leagues.functions";
-import { sendAdminTemplateMessage } from "@/lib/admin-messages.functions";
+import { sendAdminTemplateMessage, getAdminMessageStatus } from "@/lib/admin-messages.functions";
+
+function formatRelativeDk(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "lige nu";
+  if (min < 60) return `${min} min siden`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} time${h === 1 ? "" : "r"} siden`;
+  const d = Math.floor(h / 24);
+  if (d < 30) return `${d} dag${d === 1 ? "" : "e"} siden`;
+  return new Date(iso).toLocaleDateString("da-DK");
+}
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/afventer")({
   component: PendingApprovalsPage,
@@ -26,6 +38,7 @@ function PendingApprovalsPage() {
   const qc = useQueryClient();
   const approveFn = useServerFn(setProfileApproval);
   const sendMessageFn = useServerFn(sendAdminTemplateMessage);
+  const fetchStatus = useServerFn(getAdminMessageStatus);
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-pending-users"],
@@ -37,6 +50,18 @@ function PendingApprovalsPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as Profile[];
+    },
+  });
+
+  const userIds = (data ?? []).map((p) => p.id);
+  const { data: wrongNameStatus } = useQuery({
+    queryKey: ["admin-msg-status", "wrong_name", userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const rows = await fetchStatus({ data: { userIds, template: "wrong_name" } });
+      const map: Record<string, string> = {};
+      for (const r of rows) map[r.user_id] = r.sent_at;
+      return map;
     },
   });
 
@@ -66,6 +91,7 @@ function PendingApprovalsPage() {
       } else {
         toast.success("Besked sendt på hjemmesiden (Discord DM fejlede)");
       }
+      qc.invalidateQueries({ queryKey: ["admin-msg-status", "wrong_name"] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
