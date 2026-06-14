@@ -1055,7 +1055,8 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const isApproved = !!profile?.approved;
   const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);
   const hasAcked = !!rulesAck;
-  const goesToWaitlist = !isApproved || !hasAcked || (cap != null && gridCount >= cap);
+  const effectiveAck = hasAcked || ackChecked;
+  const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
 
   const blockedByApprovedOnly = approvedOnly && !isApproved;
 
@@ -1069,6 +1070,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     if (!carModel) return toast.error("Vælg din bil.");
     if (!driverName) return toast.error("Dit kørernavn mangler på profilen.");
     if (!effectiveLmu) return toast.error("Indtast dit LMU-navn præcis som det står i spillet.");
+    if (!effectiveAck) return toast.error("Du skal bekræfte at du har læst og forstået reglementet.");
 
     // Discord guild membership gate
     try {
