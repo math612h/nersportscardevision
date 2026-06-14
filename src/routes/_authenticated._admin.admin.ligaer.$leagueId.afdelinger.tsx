@@ -262,6 +262,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [lobbyCode, setLobbyCode] = useState<string>("");
   const [lobbyPassword, setLobbyPassword] = useState<string>("");
+  const [serverName, setServerName] = useState<string>("");
+  const [serverStartedAt, setServerStartedAt] = useState<string | null>(
+    (division as any).server_started_at ?? null,
+  );
   const [eventSettings, setEventSettings] = useState<EventSettings>(
     (division.settings?.event_settings && typeof division.settings.event_settings === "object" ? division.settings.event_settings : {}) as EventSettings,
   );
@@ -272,15 +276,39 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
-        .select("lobby_code,lobby_password")
+        .select("lobby_code,lobby_password,server_name")
         .eq("division_id", division.id)
         .maybeSingle();
       if (error) throw error;
       setLobbyCode(String(data?.lobby_code ?? ""));
       setLobbyPassword(String(data?.lobby_password ?? ""));
+      setServerName(String((data as any)?.server_name ?? ""));
       return data ?? null;
     },
   });
+
+  const startServer = async () => {
+    const now = new Date().toISOString();
+    const { error } = await supabase
+      .from("divisions")
+      .update({ server_started_at: now } as any)
+      .eq("id", division.id);
+    if (error) return toast.error(error.message);
+    setServerStartedAt(now);
+    toast.success("Server markeret som startet");
+    onDone();
+  };
+
+  const stopServer = async () => {
+    const { error } = await supabase
+      .from("divisions")
+      .update({ server_started_at: null } as any)
+      .eq("id", division.id);
+    if (error) return toast.error(error.message);
+    setServerStartedAt(null);
+    toast.success("Server markeret som stoppet");
+    onDone();
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -299,9 +327,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
 
     const code = lobbyCode.trim() || null;
     const pw = lobbyPassword.trim() || null;
+    const sn = serverName.trim() || null;
     const { error: lErr } = await supabase
       .from("division_lobbies")
-      .upsert({ division_id: division.id, lobby_code: code, lobby_password: pw, updated_at: new Date().toISOString() }, { onConflict: "division_id" });
+      .upsert({ division_id: division.id, lobby_code: code, lobby_password: pw, server_name: sn, updated_at: new Date().toISOString() } as any, { onConflict: "division_id" });
     if (lErr) return toast.error(`Lobby kunne ikke gemmes: ${lErr.message}`);
 
     toast.success("Opdateret");
