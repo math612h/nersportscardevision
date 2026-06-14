@@ -514,6 +514,25 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [signupOpensAt, setSignupOpensAt] = useState<string>(toLocalInput(league.signup_opens_at));
   const [discordRoleId, setDiscordRoleId] = useState<string>(league.discord_role_id ?? "");
   const [saving, setSaving] = useState(false);
+  const [announcing, setAnnouncing] = useState(false);
+  const announceFn = useServerFn(sendLeagueAnnouncement);
+
+  const announce = async () => {
+    setAnnouncing(true);
+    try {
+      const res = await announceFn({ data: { leagueId: league.id } });
+      toast.success(
+        res.kind === "countdown"
+          ? "Annoncering med nedtælling sendt til Discord."
+          : "Annoncering om åben tilmelding sendt til Discord.",
+      );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke sende annoncering.");
+    } finally {
+      setAnnouncing(false);
+    }
+  };
+
 
   const reset = () => {
     setName(league.name ?? "");
