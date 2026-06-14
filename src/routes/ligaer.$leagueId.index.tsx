@@ -276,6 +276,72 @@ function LeagueDetail() {
             const imgUrl = imgFile ? imageMap?.[imgFile] : null;
             const startedAt = d.race_date ? new Date(d.race_date).getTime() : 0;
             const isActive = !completed && startedAt > 0 && Date.now() >= startedAt && Date.now() - startedAt < 4 * 60 * 60 * 1000;
+            const cardInner = (
+              <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : "border-border hover:border-primary"}`}>
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+                  {imgUrl ? (
+                    <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
+                  ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
+                  {!isGuest && (
+                    <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </div>
+                  )}
+                  {completed && (
+                    <Badge variant="secondary" className="absolute left-3 top-3 text-[10px]">Afsluttet</Badge>
+                  )}
+                  {isActive && (
+                    <Badge className="absolute left-3 top-3 gap-1 bg-green-500 text-white text-[10px] hover:bg-green-500">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> LIVE
+                    </Badge>
+                  )}
+                </div>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base">{d.name}</CardTitle>
+                  {d.track && (
+                    <CardDescription className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />{d.track}{d.layout ? ` · ${d.layout}` : ""}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent className="mt-auto space-y-2 pt-0">
+                  <div className="flex flex-wrap gap-2">
+                    {d.race_date && (
+                      <Badge variant="outline" className="gap-1">
+                        <Calendar className="h-3 w-3" /> {format(new Date(d.race_date), "dd MMM yyyy HH:mm")}
+                      </Badge>
+                    )}
+                    {(d.settings as any)?.event_settings?.race_minutes != null && (
+                      <Badge variant="outline" className="gap-1">
+                        <Timer className="h-3 w-3" /> {(d.settings as any).event_settings.race_minutes} min
+                      </Badge>
+                    )}
+                    {d.race_date && !completed && <RaceCountdown raceDate={d.race_date} />}
+                    <Badge variant="outline">{leagueSignupCount ?? d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
+                  </div>
+                  {slots.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {slots.map((key, i) => {
+                        const w = WEATHER_BY_KEY[key];
+                        if (!w) return null;
+                        const Icon = w.icon;
+                        return <Icon key={i} className="h-4 w-4 text-muted-foreground" aria-label={w.label} />;
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+            if (isGuest) {
+              return (
+                <div key={d.id} className="group block h-full opacity-90" aria-disabled="true">
+                  {cardInner}
+                </div>
+              );
+            }
             return (
               <Link
                 key={d.id}
@@ -283,70 +349,20 @@ function LeagueDetail() {
                 params={{ leagueId, divisionId: d.id }}
                 className="group block h-full"
               >
-                <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : "border-border hover:border-primary"}`}>
-                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
-                    {imgUrl ? (
-                      <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
-                    ) : (
-                      <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
-                    <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </div>
-                    {completed && (
-                      <Badge variant="secondary" className="absolute left-3 top-3 text-[10px]">Afsluttet</Badge>
-                    )}
-                    {isActive && (
-                      <Badge className="absolute left-3 top-3 gap-1 bg-green-500 text-white text-[10px] hover:bg-green-500">
-                        <span className="inline-block h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> LIVE
-                      </Badge>
-                    )}
-                  </div>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base">{d.name}</CardTitle>
-                    {d.track && (
-                      <CardDescription className="flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />{d.track}{d.layout ? ` · ${d.layout}` : ""}
-                      </CardDescription>
-                    )}
-                  </CardHeader>
-                  <CardContent className="mt-auto space-y-2 pt-0">
-                    <div className="flex flex-wrap gap-2">
-                      {d.race_date && (
-                        <Badge variant="outline" className="gap-1">
-                          <Calendar className="h-3 w-3" /> {format(new Date(d.race_date), "dd MMM yyyy HH:mm")}
-                        </Badge>
-                      )}
-                      {(d.settings as any)?.event_settings?.race_minutes != null && (
-                        <Badge variant="outline" className="gap-1">
-                          <Timer className="h-3 w-3" /> {(d.settings as any).event_settings.race_minutes} min
-                        </Badge>
-                      )}
-                      {d.race_date && !completed && <RaceCountdown raceDate={d.race_date} />}
-                      <Badge variant="outline">{leagueSignupCount ?? d.entries?.[0]?.count ?? 0} tilmeldt</Badge>
-                    </div>
-                    {slots.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {slots.map((key, i) => {
-                          const w = WEATHER_BY_KEY[key];
-                          if (!w) return null;
-                          const Icon = w.icon;
-                          return <Icon key={i} className="h-4 w-4 text-muted-foreground" aria-label={w.label} />;
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                {cardInner}
               </Link>
             );
           })}
         </div>
       </section>
 
-      <RaceDataResults leagueId={leagueId} />
+      <GuestBlur active={isGuest} label="Log ind for at se resultater">
+        <RaceDataResults leagueId={leagueId} />
+      </GuestBlur>
 
-      <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={!!(league as any)?.separate_division_standings} />
+      <GuestBlur active={isGuest} label="Log ind for at se stillinger">
+        <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={!!(league as any)?.separate_division_standings} />
+      </GuestBlur>
     </div>
   );
 }
