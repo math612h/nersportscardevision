@@ -214,6 +214,10 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
               <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
             </div>
           </div>
+          <div>
+            <Label>Server navn</Label>
+            <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
+          </div>
           <p className="-mt-2 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
           <div className="space-y-2">
             <Label>Vejr (5 slots)</Label>
