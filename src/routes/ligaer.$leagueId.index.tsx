@@ -211,7 +211,7 @@ function LeagueDetail() {
           {league?.description && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{league.description}</p>}
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col items-start gap-2">
           {configs.length > 0
             ? configs.map((c, i) => {
                 const col = classColor(c.car_class);
@@ -230,12 +230,15 @@ function LeagueDetail() {
 
         <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
 
-        <div className="flex flex-wrap gap-2 pt-1">
-          <RulesButton leagueId={leagueId} />
+        <div className="space-y-2 pt-1">
           {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} approvedOnly={!!(league as any)?.approved_only} />}
-          {league && <EditEntryDialog leagueId={leagueId} />}
-          {league && <LeaveLeagueButton leagueId={leagueId} />}
+          <div className="flex flex-wrap gap-2">
+            <RulesButton leagueId={leagueId} />
+            {league && <EditEntryDialog leagueId={leagueId} />}
+            {league && <LeaveLeagueButton leagueId={leagueId} />}
+          </div>
         </div>
+
 
       </header>
 
