@@ -188,20 +188,6 @@ function ParticipantDashboard() {
   );
 }
 
-function Section({ title, icon, description, children }: { title: string; icon: React.ReactNode; description?: string; children: React.ReactNode }) {
-  return (
-    <section className="space-y-4">
-      <div className="space-y-1">
-        <div className="flex items-center gap-2 text-primary">
-          {icon}
-          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{title}</h2>
-        </div>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
-      </div>
-      {children}
-    </section>
-  );
-}
 
 function CardGrid({ children }: { children: React.ReactNode }) {
   return (
