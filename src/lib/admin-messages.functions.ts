@@ -71,5 +71,51 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
       if (!res.ok) console.error("Admin DM failed", res);
     }
 
+    // 3) Log that we sent this template (best-effort, ignore errors)
+    await (supabaseAdmin as any).from("admin_message_log").insert({
+      user_id: data.targetUserId,
+      template: data.template,
+      sent_by: context.userId,
+    });
+
     return { ok: true, discord: discordResult };
+  });
+
+const statusSchema = z.object({
+  userIds: z.array(z.string().uuid()).max(500),
+  template: z.enum(["wrong_name", "profile_approved"]),
+});
+
+export type AdminMessageStatus = {
+  user_id: string;
+  sent_at: string;
+};
+
+export const getAdminMessageStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => statusSchema.parse(input))
+  .handler(async ({ data, context }): Promise<AdminMessageStatus[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+    if (!isAdmin) throw new Error("Kun admins.");
+    if (data.userIds.length === 0) return [];
+
+    const { data: rows, error } = await (supabaseAdmin as any)
+      .from("admin_message_log")
+      .select("user_id, sent_at")
+      .eq("template", data.template)
+      .in("user_id", data.userIds)
+      .order("sent_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    // Reduce to latest per user
+    const latest = new Map<string, string>();
+    for (const r of (rows ?? []) as AdminMessageStatus[]) {
+      if (!latest.has(r.user_id)) latest.set(r.user_id, r.sent_at);
+    }
+    return Array.from(latest, ([user_id, sent_at]) => ({ user_id, sent_at }));
   });
