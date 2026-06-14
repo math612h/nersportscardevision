@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as BrugereRouteImport } from './routes/brugere'
+import { Route as AppGuideRouteImport } from './routes/app-guide'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeamsIndexRouteImport } from './routes/teams.index'
@@ -74,6 +75,11 @@ const LeaderboardRoute = LeaderboardRouteImport.update({
 const BrugereRoute = BrugereRouteImport.update({
   id: '/brugere',
   path: '/brugere',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppGuideRoute = AppGuideRouteImport.update({
+  id: '/app-guide',
+  path: '/app-guide',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -310,6 +316,7 @@ const AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app-guide': typeof AppGuideRoute
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/app-guide': typeof AppGuideRoute
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -402,6 +410,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/app-guide': typeof AppGuideRoute
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
@@ -451,6 +460,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/app-guide'
     | '/brugere'
     | '/leaderboard'
     | '/login'
@@ -497,6 +507,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/app-guide'
     | '/brugere'
     | '/leaderboard'
     | '/login'
@@ -542,6 +553,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/app-guide'
     | '/brugere'
     | '/leaderboard'
     | '/login'
@@ -591,6 +603,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  AppGuideRoute: typeof AppGuideRoute
   BrugereRoute: typeof BrugereRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
@@ -644,6 +657,13 @@ declare module '@tanstack/react-router' {
       path: '/brugere'
       fullPath: '/brugere'
       preLoaderRoute: typeof BrugereRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app-guide': {
+      id: '/app-guide'
+      path: '/app-guide'
+      fullPath: '/app-guide'
+      preLoaderRoute: typeof AppGuideRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1059,6 +1079,7 @@ const LigaerLeagueIdRouteWithChildren = LigaerLeagueIdRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  AppGuideRoute: AppGuideRoute,
   BrugereRoute: BrugereRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
