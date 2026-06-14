@@ -28,6 +28,7 @@ import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, 
 import { CARS_BY_CLASS, classColor } from "@/lib/lmu-cars";
 import { Checkbox } from "@/components/ui/checkbox";
 import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
+import { GuestBlur } from "@/components/GuestGate";
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
   component: LeagueDetail,
