@@ -164,7 +164,8 @@ function AdminEntries() {
                   </div>
                 ))}
               </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       ))}
