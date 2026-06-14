@@ -160,6 +160,11 @@ function NewsHome() {
               <MessageCircle className="h-4 w-4" /> Discord
             </a>
           </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/app-guide">
+              <Smartphone className="h-4 w-4" /> App guide
+            </Link>
+          </Button>
         </div>
       </header>
 
