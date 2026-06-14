@@ -123,10 +123,10 @@ function LeaderboardPage() {
       if (layout !== ALL && (r.layout ?? "") !== layout) return false;
       return true;
     });
-    // Best lap per driver (key by user_id when present, else lowercased name)
+    // Best lap per driver per car class + track (uanset bil-model og layout)
     const bestByDriver = new Map<string, Row>();
     for (const r of list) {
-      const key = `${r.car_class}|${r.track}|${r.layout ?? ""}|${r.user_id ?? `name:${r.driver_name.toLowerCase()}`}`;
+      const key = `${r.car_class}|${r.track}|${r.user_id ?? `name:${r.driver_name.toLowerCase()}`}`;
       const cur = bestByDriver.get(key);
       if (!cur || r.best_lap_ms < cur.best_lap_ms) bestByDriver.set(key, r);
     }
