@@ -2,6 +2,8 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { GuestLock } from "@/components/GuestGate";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/ligaer/$leagueId/regler")({
@@ -36,6 +38,8 @@ export const Route = createFileRoute("/ligaer/$leagueId/regler")({
 function Rules() {
   const { leagueId } = useParams({ from: "/ligaer/$leagueId/regler" });
   const { leagueName } = Route.useLoaderData();
+  const { user, loading: authLoading } = useAuth();
+
 
   const { data: rules } = useQuery({
     queryKey: ["rules", leagueId],
@@ -56,6 +60,15 @@ function Rules() {
     (acc[main] ??= []).push(r);
     return acc;
   }, {});
+
+  if (!authLoading && !user) {
+    return (
+      <GuestLock
+        title="Regelsæt kræver login"
+        message="Du skal være logget ind for at læse regelsættet for ligaen."
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

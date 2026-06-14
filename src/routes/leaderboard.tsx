@@ -19,6 +19,7 @@ import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
 import { getLeaderboardRows } from "@/lib/leaderboard.functions";
 import { classColor } from "@/lib/lmu-cars";
+import { GuestLock } from "@/components/GuestGate";
 
 const COMPANION_DOWNLOAD_URL =
   "https://github.com/math612h/nersportscardevision/releases/latest/download/LMU-Danmark-Tracker-Setup.exe";
@@ -76,12 +77,14 @@ type Row = {
 const ALL = "__all__";
 
 function LeaderboardPage() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const qc = useQueryClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const folderRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const fetchLeaderboard = useServerFn(getLeaderboardRows);
+
+
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["leaderboard"],
@@ -261,6 +264,15 @@ function LeaderboardPage() {
     toast.success("Tid slettet.");
     qc.invalidateQueries({ queryKey: ["leaderboard"] });
   };
+
+  if (!authLoading && !user) {
+    return (
+      <GuestLock
+        title="Leaderboardet kræver login"
+        message="Du skal være logget ind som medlem for at se hurtigste omgangstider."
+      />
+    );
+  }
 
   return (
     <div className="space-y-8">
