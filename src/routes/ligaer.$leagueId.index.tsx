@@ -501,7 +501,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
                 #{e.car_number}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="truncate">{e.driver_name}</div>
+                <div className="truncate"><UserAvatar userId={e.user_id} name={e.driver_name} size="sm" /></div>
                 {e.team_id && teamMap?.[e.team_id] && (
                   <div className="mt-0.5 sm:hidden">
                     <Badge variant="outline" className="text-[10px]" title="Team">
