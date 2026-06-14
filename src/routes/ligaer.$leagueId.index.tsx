@@ -469,7 +469,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
   cfg: ClassConfig | undefined;
   list: Array<{ id: string; user_id: string; driver_name: string; car_class: string; driver_category: string; car_number: number | null; waitlist: boolean; created_at: string; team_id?: string | null; car_model?: string | null }>;
   teamMap?: Record<string, string>;
-  ratingMap?: Record<string, { score: number; percentile: number }>;
+  ratingMap?: Record<string, { score: number; percentile: number | null }>;
   approvedMap?: Set<string>;
 }) {
   const [expanded, setExpanded] = useState(false);
