@@ -33,16 +33,20 @@ function Gate() {
     },
   });
 
-  // Once per session, refresh own Discord avatar so brugerens billede vises
-  // konsistent overalt.
+  // Refresh own Discord avatar højst hvert 10. minut, så ændringer på Discord
+  // automatisk slår igennem på hjemmesiden.
   useEffect(() => {
     if (!user || !status?.discordLinked) return;
-    const key = `discord-avatar-refreshed:${user.id}`;
-    if (sessionStorage.getItem(key)) return;
-    sessionStorage.setItem(key, "1");
+    const key = `discord-avatar-refreshed-at:${user.id}`;
+    const last = Number(localStorage.getItem(key) ?? "0");
+    if (Date.now() - last < 10 * 60 * 1000) return;
+    localStorage.setItem(key, String(Date.now()));
     refreshMyDiscordAvatar()
       .then((res) => {
-        if (res?.ok) queryClient.invalidateQueries({ queryKey: ["user-brief"] });
+        if (res?.ok) {
+          queryClient.invalidateQueries({ queryKey: ["user-brief"] });
+          queryClient.invalidateQueries({ queryKey: ["my-profile", user.id] });
+        }
       })
       .catch(() => {});
   }, [user, status?.discordLinked, queryClient]);

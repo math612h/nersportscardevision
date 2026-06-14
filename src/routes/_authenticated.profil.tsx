@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Camera, Loader2, CheckCircle2, Shield, Link2, Unlink } from "lucide-react";
+import { Loader2, CheckCircle2, Shield, Link2, Unlink } from "lucide-react";
 import { CreateTeamDialog } from "@/components/CreateTeamDialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,7 +33,7 @@ function ProfilePage() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const router = useRouter();
-  const fileRef = useRef<HTMLInputElement>(null);
+  
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ["my-profile", user?.id],
@@ -66,7 +66,7 @@ function ProfilePage() {
   const [achievements, setAchievements] = useState("");
   const [discord, setDiscord] = useState("");
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  
 
   useEffect(() => {
     if (!profile) return;
@@ -124,27 +124,6 @@ function ProfilePage() {
     if (window.history.length > 1) router.history.back();
   };
 
-  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file || !user) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error("Billedet må højst være 5 MB.");
-    if (!file.type.startsWith("image/")) return toast.error("Vælg en billedfil.");
-    setUploading(true);
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, {
-      cacheControl: "3600",
-      upsert: true,
-      contentType: file.type,
-    });
-    if (upErr) { setUploading(false); return toast.error(upErr.message); }
-    const { error: dbErr } = await supabase.from("profiles").update({ avatar_url: path }).eq("id", user.id);
-    setUploading(false);
-    if (dbErr) return toast.error(dbErr.message);
-    toast.success("Profilbillede opdateret.");
-    qc.invalidateQueries({ queryKey: ["my-profile", user.id] });
-  };
 
   if (isLoading) {
     return <div className="mx-auto max-w-2xl px-4 py-10 text-muted-foreground">Indlæser…</div>;
@@ -179,13 +158,8 @@ function ProfilePage() {
               {avatarUrl ? <AvatarImage src={avatarUrl} alt="Profilbillede" /> : null}
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
-            <div>
-              <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPickFile} />
-              <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
-                {uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
-                Skift billede
-              </Button>
-              <p className="mt-1 text-xs text-muted-foreground">JPG/PNG, maks 5 MB.</p>
+            <div className="text-xs text-muted-foreground">
+              Dit profilbillede hentes automatisk fra Discord. Skift billedet i Discord for at opdatere det her.
             </div>
           </div>
 
