@@ -25,6 +25,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_AID_FIELDS, getTrackImageFile } from "@/lib/tracks";
 import { CARS_BY_CLASS, classColor } from "@/lib/lmu-cars";
+import { Checkbox } from "@/components/ui/checkbox";
+import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
   component: LeagueDetail,
