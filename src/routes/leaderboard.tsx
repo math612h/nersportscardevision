@@ -84,14 +84,7 @@ function LeaderboardPage() {
   const [uploading, setUploading] = useState(false);
   const fetchLeaderboard = useServerFn(getLeaderboardRows);
 
-  if (!authLoading && !user) {
-    return (
-      <GuestLock
-        title="Leaderboardet kræver login"
-        message="Du skal være logget ind som medlem for at se hurtigste omgangstider."
-      />
-    );
-  }
+
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["leaderboard"],
