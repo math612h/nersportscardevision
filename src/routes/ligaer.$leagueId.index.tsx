@@ -265,8 +265,8 @@ function LeagueDetail() {
             const completed = !!d.settings?.completed;
             const imgFile = getTrackImageFile(d.track);
             const imgUrl = imgFile ? imageMap?.[imgFile] : null;
-            const startedAt = d.server_started_at ? new Date(d.server_started_at).getTime() : 0;
-            const isActive = !completed && startedAt > 0 && Date.now() - startedAt < 4 * 60 * 60 * 1000;
+            const startedAt = d.race_date ? new Date(d.race_date).getTime() : 0;
+            const isActive = !completed && startedAt > 0 && Date.now() >= startedAt && Date.now() - startedAt < 4 * 60 * 60 * 1000;
             return (
               <Link
                 key={d.id}
