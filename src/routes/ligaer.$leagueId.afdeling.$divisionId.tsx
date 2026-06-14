@@ -191,11 +191,11 @@ function DivisionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
-        .select("lobby_code,lobby_password")
+        .select("lobby_code,lobby_password,server_name")
         .eq("division_id", divisionId)
         .maybeSingle();
       if (error) throw error;
-      return (data ?? null) as { lobby_code: string | null; lobby_password: string | null } | null;
+      return (data ?? null) as { lobby_code: string | null; lobby_password: string | null; server_name: string | null } | null;
     },
   });
 
