@@ -25,7 +25,9 @@ function Gate() {
       const discordLinked = !!(priv as { discord_user_id?: string | null } | null)?.discord_user_id;
       const lmu = (profile as { lmu_name?: string | null } | null)?.lmu_name?.trim() ?? "";
       const name = (profile as { display_name?: string | null } | null)?.display_name?.trim() ?? "";
-      return { discordLinked, complete: discordLinked && !!lmu && !!name };
+      const email = (user?.email ?? "").trim();
+      const hasRealEmail = !!email && !email.endsWith("@no-email.lmudanmark.dk");
+      return { discordLinked, complete: discordLinked && !!lmu && !!name && hasRealEmail };
     },
   });
 
