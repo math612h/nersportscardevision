@@ -114,10 +114,12 @@ function ProfilePage() {
     if (privErr) return toast.error(privErr.message);
     toast.success("Profil opdateret.");
     try {
-      await notifyAdminNameUpdated();
+      const res = await notifyAdminNameUpdated();
+      console.log("notifyAdminNameUpdated result", res);
     } catch (err) {
       console.error("notifyAdminNameUpdated failed", err);
     }
+
     qc.invalidateQueries({ queryKey: ["my-profile", user.id] });
     if (window.history.length > 1) router.history.back();
   };
