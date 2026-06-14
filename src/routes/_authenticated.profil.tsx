@@ -42,7 +42,7 @@ function ProfilePage() {
       const [{ data, error }, { data: priv }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, display_name, lmu_name, bio, achievements, avatar_url, approved")
+          .select("id, display_name, lmu_name, bio, achievements, avatar_url, discord_avatar_url, approved")
           .eq("id", user!.id)
           .maybeSingle(),
         supabase.rpc("get_profile_private", { _user_id: user!.id }).maybeSingle(),
@@ -54,9 +54,9 @@ function ProfilePage() {
   });
 
   const { data: avatarUrl } = useQuery({
-    queryKey: ["avatar-url", profile?.avatar_url],
-    enabled: !!profile?.avatar_url,
-    queryFn: () => signedAvatarUrl(profile!.avatar_url),
+    queryKey: ["avatar-url", profile?.discord_avatar_url, profile?.avatar_url],
+    enabled: !!profile && (!!profile.discord_avatar_url || !!profile.avatar_url),
+    queryFn: () => profile?.discord_avatar_url ?? signedAvatarUrl(profile!.avatar_url),
   });
 
   const [displayName, setDisplayName] = useState("");
