@@ -1049,7 +1049,10 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   ).length;
   const cap = selected?.max_drivers ?? null;
   const isApproved = !!profile?.approved;
-  const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
+  const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);
+  const hasAcked = !!rulesAck;
+  const goesToWaitlist = !isApproved || !hasAcked || (cap != null && gridCount >= cap);
+
   const blockedByApprovedOnly = approvedOnly && !isApproved;
 
   const submit = async (e: React.FormEvent) => {
