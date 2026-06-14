@@ -89,11 +89,27 @@ export function buildDiscordAuthUrl(state: string, origin: string): string {
   return `https://discord.com/oauth2/authorize?${params.toString()}`;
 }
 
+export function buildDiscordAvatarUrl(discordUserId: string, avatarHash: string | null | undefined): string | null {
+  if (!avatarHash) return null;
+  const ext = avatarHash.startsWith("a_") ? "gif" : "png";
+  return `https://cdn.discordapp.com/avatars/${discordUserId}/${avatarHash}.${ext}?size=128`;
+}
+
+export async function fetchDiscordUserAvatar(discordUserId: string): Promise<string | null> {
+  const res = await fetch(`${DISCORD_API}/users/${discordUserId}`, {
+    headers: { Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}` },
+  });
+  if (!res.ok) return null;
+  const u = (await res.json()) as { id: string; avatar?: string | null };
+  return buildDiscordAvatarUrl(u.id, u.avatar ?? null);
+}
+
 export async function exchangeDiscordCode(code: string, origin: string): Promise<{
   discord_user_id: string;
   discord_username: string;
   discord_email: string | null;
   discord_email_verified: boolean;
+  discord_avatar_url: string | null;
 }> {
   const tokenRes = await fetch(`${DISCORD_API}/oauth2/token`, {
     method: "POST",
@@ -125,12 +141,14 @@ export async function exchangeDiscordCode(code: string, origin: string): Promise
     global_name?: string | null;
     email?: string | null;
     verified?: boolean;
+    avatar?: string | null;
   };
   return {
     discord_user_id: me.id,
     discord_username: me.global_name || me.username,
     discord_email: me.email ?? null,
     discord_email_verified: !!me.verified,
+    discord_avatar_url: buildDiscordAvatarUrl(me.id, me.avatar ?? null),
   };
 }
 
