@@ -364,7 +364,28 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
               <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
             </div>
           </div>
+          <div>
+            <Label>Server navn</Label>
+            <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
+          </div>
           <p className="-mt-1 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
+          <div className="rounded border border-border p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm">
+                <div className="font-medium">Server status</div>
+                <div className="text-xs text-muted-foreground">
+                  {serverStartedAt
+                    ? `Startet ${format(new Date(serverStartedAt), "dd MMM HH:mm")} — grøn kant vises i 4 timer`
+                    : "Server er ikke markeret som startet"}
+                </div>
+              </div>
+              {serverStartedAt ? (
+                <Button type="button" variant="outline" size="sm" onClick={stopServer}>Stop server</Button>
+              ) : (
+                <Button type="button" variant="default" size="sm" onClick={startServer}>Start server</Button>
+              )}
+            </div>
+          </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
             Marker som afsluttet
