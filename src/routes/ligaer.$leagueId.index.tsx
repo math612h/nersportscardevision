@@ -234,23 +234,28 @@ function LeagueDetail() {
 
         <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
 
-        <div className="space-y-2 pt-1">
-          {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} approvedOnly={!!(league as any)?.approved_only} />}
-          <div className="flex flex-wrap gap-2">
-            <RulesButton leagueId={leagueId} />
-            {league && <EditEntryDialog leagueId={leagueId} />}
-            {league && <LeaveLeagueButton leagueId={leagueId} />}
+        <GuestBlur active={isGuest} label="Log ind for at tilmelde">
+          <div className="space-y-2 pt-1">
+            {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} approvedOnly={!!(league as any)?.approved_only} />}
+            <div className="flex flex-wrap gap-2">
+              <RulesButton leagueId={leagueId} />
+              {league && <EditEntryDialog leagueId={leagueId} />}
+              {league && <LeaveLeagueButton leagueId={leagueId} />}
+            </div>
           </div>
-        </div>
+        </GuestBlur>
 
 
       </header>
 
       <QuickNav />
 
-      {league && <SignupsList leagueId={leagueId} configs={configs} />}
+      <GuestBlur active={isGuest} label="Log ind for at se entrylisten">
+        {league && <SignupsList leagueId={leagueId} configs={configs} />}
+      </GuestBlur>
 
       <DriverAidsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
+
 
 
 
