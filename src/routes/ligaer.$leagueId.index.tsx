@@ -1338,6 +1338,64 @@ function league_name(_id: string) {
   return "ligaen";
 }
 
+function useMyEntry(leagueId: string, userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["my-entry", leagueId, userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("id,waitlist")
+        .eq("league_id", leagueId)
+        .is("division_id", null)
+        .eq("user_id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+function useMyRulesAck(leagueId: string, userId: string | null | undefined) {
+  return useQuery({
+    queryKey: ["rules-ack", leagueId, userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("league_rules_acknowledgements")
+        .select("acknowledged_at")
+        .eq("league_id", leagueId)
+        .eq("user_id", userId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+function RulesButton({ leagueId }: { leagueId: string }) {
+  const { user } = useAuth();
+  const { data: myEntry } = useMyEntry(leagueId, user?.id);
+  const { data: ack } = useMyRulesAck(leagueId, user?.id);
+  const showBadge = !!myEntry && !ack;
+  return (
+    <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
+      <Button variant="outline" size="sm" className="relative gap-2">
+        <BookOpen className="h-4 w-4" /> Se regelsæt
+        {showBadge && (
+          <span
+            aria-label="Reglement skal bekræftes"
+            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow ring-2 ring-background"
+          >
+            1
+          </span>
+        )}
+      </Button>
+    </Link>
+  );
+}
+
+
 function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
   const { user } = useAuth();
   const qc = useQueryClient();
