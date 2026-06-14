@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { reorderLeaguesSwap } from "@/lib/league-order";
 import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
+import { classColor } from "@/lib/lmu-cars";
+
 import { cn } from "@/lib/utils";
 import type { ClassConfig } from "@/lib/tracks";
 
@@ -298,7 +300,7 @@ function LeaderboardTeaser() {
               <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
                 <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-xs font-semibold tabular-nums">{i + 1}</span>
                 <span className="flex-1 truncate font-medium">{r.driver_name}</span>
-                <Badge variant="secondary" className="hidden sm:inline-flex text-[10px]">{r.car_class}</Badge>
+                <Badge variant="outline" className={`hidden sm:inline-flex text-[10px] ${classColor(r.car_class).badge}`}>{r.car_class}</Badge>
                 <span className="hidden md:inline-flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{r.track}{r.layout ? ` · ${r.layout}` : ""}</span>
                 <span className="inline-flex items-center gap-1 font-mono tabular-nums text-sm"><Timer className="h-3 w-3 text-primary" />{msToLapStr(r.best_lap_ms)}</span>
               </li>

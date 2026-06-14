@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyArchive } from "@/lib/rating.functions";
+import { classColor } from "@/lib/lmu-cars";
+
 
 function fmtLap(ms: number | null | undefined) {
   if (ms == null) return "—";
@@ -50,7 +52,7 @@ function BestTable({ rows }: { rows: BestRow[] }) {
         {rows.map((b, i) => (
           <TableRow key={i}>
             <TableCell className="font-medium">{b.track}{b.layout ? ` (${b.layout})` : ""}</TableCell>
-            <TableCell><Badge variant="secondary" className="text-[10px]">{b.car_class}</Badge></TableCell>
+            <TableCell><Badge variant="outline" className={`text-[10px] ${classColor(b.car_class).badge}`}>{b.car_class}</Badge></TableCell>
             <TableCell className="text-muted-foreground">{b.car_model ?? "—"}</TableCell>
             <TableCell className="text-right font-mono tabular-nums">{fmtLap(b.best_lap_ms)}</TableCell>
             <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">

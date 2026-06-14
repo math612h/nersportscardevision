@@ -1,10 +1,13 @@
 import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus, Archive, ArchiveRestore, Send, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus, Archive, ArchiveRestore, Send, ArrowUp, ArrowDown, Megaphone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { sendLeagueAnnouncement } from "@/lib/league-announce.functions";
+
 import {
   CAR_CLASSES,
   DRIVER_CATEGORIES,
@@ -511,6 +514,25 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [signupOpensAt, setSignupOpensAt] = useState<string>(toLocalInput(league.signup_opens_at));
   const [discordRoleId, setDiscordRoleId] = useState<string>(league.discord_role_id ?? "");
   const [saving, setSaving] = useState(false);
+  const [announcing, setAnnouncing] = useState(false);
+  const announceFn = useServerFn(sendLeagueAnnouncement);
+
+  const announce = async () => {
+    setAnnouncing(true);
+    try {
+      const res = await announceFn({ data: { leagueId: league.id } });
+      toast.success(
+        res.kind === "countdown"
+          ? "Annoncering med nedtælling sendt til Discord."
+          : "Annoncering om åben tilmelding sendt til Discord.",
+      );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke sende annoncering.");
+    } finally {
+      setAnnouncing(false);
+    }
+  };
+
 
   const reset = () => {
     setName(league.name ?? "");
@@ -542,7 +564,6 @@ function EditLeagueDialog({ league }: { league: any }) {
       return toast.error(err.message);
     }
     const first = cfgs[0];
-    const signupOpenChanged = signupOpensAt && new Date(signupOpensAt).toISOString() !== (league.signup_opens_at ?? null);
     const { error } = await supabase
       .from("leagues")
       .update({
@@ -560,12 +581,11 @@ function EditLeagueDialog({ league }: { league: any }) {
         event_settings: eventSettings as any,
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
-        signup_open_notified_at: signupOpenChanged ? null : (league as any).signup_open_notified_at ?? null,
-        discord_signup_open_notified_at: signupOpenChanged ? null : (league as any).discord_signup_open_notified_at ?? null,
         discord_role_id: discordRoleId.trim() || null,
         published: publish,
       } as any)
       .eq("id", league.id);
+
     setSaving(false);
     if (error) return toast.error(error.message);
     toast.success(publish ? (league.published ? "Liga opdateret" : "Liga publiceret") : "Gemt i arkivet");
@@ -633,6 +653,17 @@ function EditLeagueDialog({ league }: { league: any }) {
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
+          <div className="rounded-md border border-border p-2 space-y-2">
+            <div className="flex items-start gap-2">
+              <Megaphone className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+              <div className="text-xs text-muted-foreground">
+                Send en Discord-annoncering nu. Hvis tilmeldingen endnu ikke er åben, sendes et hype-opslag med live-nedtælling. Er tilmeldingen allerede åben, sendes den samme besked som ved auto-åbning.
+              </div>
+            </div>
+            <Button type="button" variant="outline" disabled={announcing} onClick={announce} className="gap-1">
+              <Megaphone className="h-4 w-4" /> {announcing ? "Sender…" : "Send annoncering"}
+            </Button>
+          </div>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button type="button" variant="secondary" disabled={saving} onClick={(e) => submit(e, false)} className="gap-1">
               <Archive className="h-4 w-4" /> {saving ? "Gemmer…" : "Arkiver"}
@@ -641,6 +672,7 @@ function EditLeagueDialog({ league }: { league: any }) {
               <Send className="h-4 w-4" /> {saving ? "Gemmer…" : "Publicer"}
             </Button>
           </DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>
