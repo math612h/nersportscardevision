@@ -851,7 +851,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                     return (
                     <tr key={r.car_number} className="border-t border-border">
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
-                      <td className="py-1.5 pr-2 truncate">{r.driver_name}</td>
+                      <td className="py-1.5 pr-2 truncate"><UserAvatar userId={entryUserMap[`${r.car_class}|${r.driver_category}|${r.car_number}`] ?? null} name={r.driver_name} size="sm" /></td>
                       <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{teamName || "–"}</td>
                       <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
                       {completed.map((d: any) => {
