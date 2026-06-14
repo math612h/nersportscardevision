@@ -25,6 +25,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_AID_FIELDS, getTrackImageFile } from "@/lib/tracks";
 import { CARS_BY_CLASS, classColor } from "@/lib/lmu-cars";
+import { Checkbox } from "@/components/ui/checkbox";
+import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
   component: LeagueDetail,
@@ -957,11 +959,13 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const { data: signups } = useLeagueSignups(leagueId);
   const assignDiscord = useServerFn(assignDiscordRoleForEntry);
   const checkGuild = useServerFn(checkDiscordGuildMembership);
+  const ackFn = useServerFn(acknowledgeLeagueRules);
   const [open, setOpen] = useState(false);
   const [cfgIdx, setCfgIdx] = useState<string>("0");
   const [carNumber, setCarNumber] = useState<number | null>(null);
   const [teamId, setTeamId] = useState<string>("");
   const [carModel, setCarModel] = useState<string>("");
+  const [ackChecked, setAckChecked] = useState(false);
   const { data: myTeams } = useMyTeams(user?.id);
 
   const { data: profile } = useQuery({
@@ -1051,7 +1055,8 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const isApproved = !!profile?.approved;
   const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);
   const hasAcked = !!rulesAck;
-  const goesToWaitlist = !isApproved || !hasAcked || (cap != null && gridCount >= cap);
+  const effectiveAck = hasAcked || ackChecked;
+  const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
 
   const blockedByApprovedOnly = approvedOnly && !isApproved;
 
@@ -1065,6 +1070,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     if (!carModel) return toast.error("Vælg din bil.");
     if (!driverName) return toast.error("Dit kørernavn mangler på profilen.");
     if (!effectiveLmu) return toast.error("Indtast dit LMU-navn præcis som det står i spillet.");
+    if (!effectiveAck) return toast.error("Du skal bekræfte at du har læst og forstået reglementet.");
 
     // Discord guild membership gate
     try {
@@ -1083,6 +1089,16 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     if (!existingLmu && lmuInput.trim()) {
       const { error: pErr } = await supabase.from("profiles").update({ lmu_name: lmuInput.trim() }).eq("id", user.id);
       if (pErr) return toast.error(`Kunne ikke gemme LMU-navn: ${pErr.message}`);
+    }
+
+    // Persist rules acknowledgement if user just ticked the box
+    if (!hasAcked && ackChecked) {
+      try {
+        await ackFn({ data: { leagueId } });
+        qc.invalidateQueries({ queryKey: ["rules-ack", leagueId, user.id] });
+      } catch (err) {
+        return toast.error(err instanceof Error ? err.message : "Kunne ikke gemme reglement-bekræftelse.");
+      }
     }
 
     const { error } = await supabase.from("entries").insert({
@@ -1228,8 +1244,6 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
               {!isApproved
                 ? "Din profil er endnu ikke godkendt. Du tilmeldes ventelisten og rykker automatisk op på griddet, når en admin godkender dig."
-                : !hasAcked
-                ? "Du mangler at bekræfte at du har læst og forstået reglementet. Du tilmeldes ventelisten – gå ind på 'Se regelsæt' og kryds af, så rykker du op på griddet."
                 : `Klassen er fyldt (${gridCount}/${cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.`}
             </p>
           )}
@@ -1257,7 +1271,38 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
               <p className="text-xs text-muted-foreground">{available.length} ledige · {taken.length} optaget</p>
             </div>
           )}
-          <DialogFooter><Button type="submit" disabled={carNumber == null || !carModel}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
+
+          <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-sm font-medium">Reglement</Label>
+              <Link
+                to="/ligaer/$leagueId/regler"
+                params={{ leagueId }}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button type="button" variant="outline" size="sm" className="gap-2">
+                  <BookOpen className="h-4 w-4" /> Åbn reglement
+                </Button>
+              </Link>
+            </div>
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="signup-rules-ack"
+                checked={effectiveAck}
+                disabled={hasAcked}
+                onCheckedChange={(v) => setAckChecked(!!v)}
+                className="mt-0.5"
+              />
+              <label htmlFor="signup-rules-ack" className="cursor-pointer text-xs leading-relaxed">
+                Jeg har læst og forstået reglementet.
+                {hasAcked && <span className="ml-1 text-muted-foreground">(allerede bekræftet)</span>}
+              </label>
+            </div>
+          </div>
+
+          <DialogFooter><Button type="submit" disabled={carNumber == null || !carModel || !effectiveAck}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>
@@ -1380,22 +1425,10 @@ function useMyRulesAck(leagueId: string, userId: string | null | undefined) {
 }
 
 function RulesButton({ leagueId }: { leagueId: string }) {
-  const { user } = useAuth();
-  const { data: myEntry } = useMyEntry(leagueId, user?.id);
-  const { data: ack } = useMyRulesAck(leagueId, user?.id);
-  const showBadge = !!myEntry && !ack;
   return (
     <Link to="/ligaer/$leagueId/regler" params={{ leagueId }}>
-      <Button variant="outline" size="sm" className="relative gap-2">
+      <Button variant="outline" size="sm" className="gap-2">
         <BookOpen className="h-4 w-4" /> Se regelsæt
-        {showBadge && (
-          <span
-            aria-label="Reglement skal bekræftes"
-            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground shadow ring-2 ring-background"
-          >
-            1
-          </span>
-        )}
       </Button>
     </Link>
   );
