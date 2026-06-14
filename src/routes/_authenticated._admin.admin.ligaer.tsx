@@ -653,6 +653,17 @@ function EditLeagueDialog({ league }: { league: any }) {
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
+          <div className="rounded-md border border-border p-2 space-y-2">
+            <div className="flex items-start gap-2">
+              <Megaphone className="h-4 w-4 mt-0.5 text-primary shrink-0" />
+              <div className="text-xs text-muted-foreground">
+                Send en Discord-annoncering nu. Hvis tilmeldingen endnu ikke er åben, sendes et hype-opslag med live-nedtælling. Er tilmeldingen allerede åben, sendes den samme besked som ved auto-åbning.
+              </div>
+            </div>
+            <Button type="button" variant="outline" disabled={announcing} onClick={announce} className="gap-1">
+              <Megaphone className="h-4 w-4" /> {announcing ? "Sender…" : "Send annoncering"}
+            </Button>
+          </div>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button type="button" variant="secondary" disabled={saving} onClick={(e) => submit(e, false)} className="gap-1">
               <Archive className="h-4 w-4" /> {saving ? "Gemmer…" : "Arkiver"}
@@ -661,6 +672,7 @@ function EditLeagueDialog({ league }: { league: any }) {
               <Send className="h-4 w-4" /> {saving ? "Gemmer…" : "Publicer"}
             </Button>
           </DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>
