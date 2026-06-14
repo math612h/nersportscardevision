@@ -1244,8 +1244,6 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
               {!isApproved
                 ? "Din profil er endnu ikke godkendt. Du tilmeldes ventelisten og rykker automatisk op på griddet, når en admin godkender dig."
-                : !hasAcked
-                ? "Du mangler at bekræfte at du har læst og forstået reglementet. Du tilmeldes ventelisten – gå ind på 'Se regelsæt' og kryds af, så rykker du op på griddet."
                 : `Klassen er fyldt (${gridCount}/${cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.`}
             </p>
           )}
@@ -1273,7 +1271,38 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
               <p className="text-xs text-muted-foreground">{available.length} ledige · {taken.length} optaget</p>
             </div>
           )}
-          <DialogFooter><Button type="submit" disabled={carNumber == null || !carModel}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
+
+          <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-sm font-medium">Reglement</Label>
+              <Link
+                to="/ligaer/$leagueId/regler"
+                params={{ leagueId }}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button type="button" variant="outline" size="sm" className="gap-2">
+                  <BookOpen className="h-4 w-4" /> Åbn reglement
+                </Button>
+              </Link>
+            </div>
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="signup-rules-ack"
+                checked={effectiveAck}
+                disabled={hasAcked}
+                onCheckedChange={(v) => setAckChecked(!!v)}
+                className="mt-0.5"
+              />
+              <label htmlFor="signup-rules-ack" className="cursor-pointer text-xs leading-relaxed">
+                Jeg har læst og forstået reglementet.
+                {hasAcked && <span className="ml-1 text-muted-foreground">(allerede bekræftet)</span>}
+              </label>
+            </div>
+          </div>
+
+          <DialogFooter><Button type="submit" disabled={carNumber == null || !carModel || !effectiveAck}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
+
         </form>
       </DialogContent>
     </Dialog>
