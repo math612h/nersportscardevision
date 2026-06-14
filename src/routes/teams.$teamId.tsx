@@ -152,6 +152,14 @@ function TeamDetailPage() {
   const isOwner = !!user && team?.owner_id === user.id;
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Indlæser…</p>;
+  if (!authLoading && !user) {
+    return (
+      <GuestLock
+        title="Teams kræver login"
+        message="Log ind for at se teamets medlemmer, bio og resultater."
+      />
+    );
+  }
   if (!team) return <p className="text-sm text-muted-foreground">Team blev ikke fundet.</p>;
 
   const initials = team.name.slice(0, 2).toUpperCase();
