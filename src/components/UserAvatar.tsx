@@ -94,10 +94,12 @@ export function UserAvatar({
   linkClassName?: string;
   className?: string;
 }) {
+  const { data: brief } = useUserBrief(userId);
+  const resolvedName = brief?.display_name || brief?.lmu_name || name;
   const content = (
     <span className={cn("inline-flex items-center gap-2 min-w-0", className)}>
-      <UserAvatarOnly userId={userId} fallbackName={name} size={size} />
-      {showName ? <span className={cn("truncate", linkClassName)}>{name}</span> : null}
+      <UserAvatarOnly userId={userId} fallbackName={resolvedName} size={size} />
+      {showName ? <span className={cn("truncate", linkClassName)}>{resolvedName}</span> : null}
     </span>
   );
   if (!userId) return content;
@@ -107,8 +109,8 @@ export function UserAvatar({
       params={{ userId }}
       className="inline-flex items-center gap-2 min-w-0 hover:text-primary transition-colors"
     >
-      <UserAvatarOnly userId={userId} fallbackName={name} size={size} />
-      {showName ? <span className={cn("truncate hover:underline", linkClassName)}>{name}</span> : null}
+      <UserAvatarOnly userId={userId} fallbackName={resolvedName} size={size} />
+      {showName ? <span className={cn("truncate hover:underline", linkClassName)}>{resolvedName}</span> : null}
     </Link>
   );
 }
