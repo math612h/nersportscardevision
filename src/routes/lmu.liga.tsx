@@ -34,7 +34,6 @@ export const Route = createFileRoute("/lmu/liga")({
 });
 
 function ParticipantDashboard() {
-  const [tab, setTab] = useState<"active" | "upcoming" | "past">("active");
   const { isAdmin } = useAuth();
   const qc = useQueryClient();
 
