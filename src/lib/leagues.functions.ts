@@ -157,7 +157,14 @@ export const setProfileApproval = createServerFn({ method: "POST" })
             .select("id,approved")
             .in("id", userIds);
           const approvedSet = new Set((profs ?? []).filter((p) => p.approved).map((p) => p.id));
-          const nextUp = waitlisters.find((w) => approvedSet.has(w.user_id));
+          const { data: acks } = await supabaseAdmin
+            .from("league_rules_acknowledgements")
+            .select("user_id")
+            .eq("league_id", leagueId)
+            .in("user_id", userIds);
+          const ackedSet = new Set((acks ?? []).map((a: { user_id: string }) => a.user_id));
+          const nextUp = waitlisters.find((w) => approvedSet.has(w.user_id) && ackedSet.has(w.user_id));
+
           if (nextUp) {
             await supabaseAdmin.from("entries").update({ waitlist: false }).eq("id", nextUp.id);
             const { data: league } = await supabaseAdmin
