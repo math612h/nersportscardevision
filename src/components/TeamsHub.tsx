@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateTeamDialog } from "@/components/CreateTeamDialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { GuestBlur } from "@/components/GuestGate";
 
 type TeamRow = {
   id: string;
