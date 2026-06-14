@@ -446,7 +446,7 @@ function LeaderboardPage() {
                           {!r.user_id && <Badge variant="outline" className="text-[10px]">Gæst</Badge>}
                         </div>
                       </td>
-                      <td className="px-3 py-2"><Badge variant="secondary" className="text-[10px]">{r.car_class}</Badge></td>
+                      <td className="px-3 py-2"><Badge variant="outline" className={`text-[10px] ${classColor(r.car_class).badge}`}>{r.car_class}</Badge></td>
                       <td className="px-3 py-2 text-muted-foreground">{r.car_model ?? "–"}</td>
                       <td className="px-3 py-2"><span className="inline-flex items-center gap-1 text-muted-foreground"><MapPin className="h-3 w-3" />{displayTrackName(r.track)}</span></td>
                       <td className="px-3 py-2 hidden sm:table-cell text-muted-foreground">{r.layout ?? "–"}</td>
