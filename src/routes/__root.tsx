@@ -16,6 +16,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { AppHeader } from "@/components/AppHeader";
 import { BackBar } from "@/components/BackBar";
 import { Toaster } from "@/components/ui/sonner";
+import { SplashScreen } from "@/components/SplashScreen";
 
 function NotFoundComponent() {
   return (
@@ -152,6 +153,7 @@ function RootComponent() {
       <AuthProvider>
         <Shell />
         <Toaster />
+        <SplashScreen />
       </AuthProvider>
     </QueryClientProvider>
   );
