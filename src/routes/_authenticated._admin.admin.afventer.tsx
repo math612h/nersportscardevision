@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { setProfileApproval } from "@/lib/leagues.functions";
 import { sendAdminTemplateMessage, getAdminMessageStatus } from "@/lib/admin-messages.functions";
+import { refreshPendingDiscordNicknames } from "@/lib/discord-refresh.functions";
+import { useEffect } from "react";
 
 function formatRelativeDk(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
