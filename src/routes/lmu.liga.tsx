@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowUp, ArrowDown, Lock } from "lucide-react";
+import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -353,15 +353,11 @@ function LeagueCard({
             <ArrowUpRight className="h-3.5 w-3.5" />
           </div>
           {upcoming && (
-            <>
-              <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
-                <CardCountdown opensAt={l.signup_opens_at ?? null} />
-              </Badge>
-              <div className="absolute right-3 bottom-3 flex items-center gap-1 rounded-full bg-background/85 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur">
-                <Lock className="h-3 w-3" /> Tilmelding lukket
-              </div>
-            </>
+            <Badge className="absolute left-3 top-3 gap-1 bg-background/80 text-foreground backdrop-blur">
+              <CardCountdown opensAt={l.signup_opens_at ?? null} />
+            </Badge>
           )}
+
           {past && (
             <Badge variant="secondary" className="absolute left-3 top-3">Afsluttet</Badge>
           )}
@@ -423,7 +419,7 @@ function CardCountdown({ opensAt }: { opensAt: string | null }) {
     return () => window.clearInterval(id);
   }, [target]);
   if (!opensAt || target == null || Number.isNaN(target)) {
-    return <><Timer className="h-3 w-3" /> Tilmelding lukket</>;
+    return null;
   }
   const diff = target - now;
   if (diff <= 0) return <><Timer className="h-3 w-3" /> Åbnet</>;
@@ -432,6 +428,7 @@ function CardCountdown({ opensAt }: { opensAt: string | null }) {
   const h = Math.floor((s % 86400) / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sec = s % 60;
-  const label = d > 0 ? `${d}d ${h}t ${m}m` : h > 0 ? `${h}t ${m}m` : `${m}m ${String(sec).padStart(2, "0")}s`;
-  return <><Timer className="h-3 w-3" /> Åbner om {label}</>;
+  const label = d > 0 ? `${d}D${h}T${m}Min` : h > 0 ? `${h}T${m}Min` : `${m}Min ${String(sec).padStart(2, "0")}s`;
+  return <><Timer className="h-3 w-3" /> Tilmelding åbner om {label}</>;
+
 }
