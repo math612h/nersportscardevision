@@ -361,6 +361,28 @@ function LeagueDetail() {
                       })}
                     </div>
                   )}
+                  {hasLobby && !completed && (
+                    <ul className="mt-1 space-y-0.5 rounded border border-border/60 bg-muted/30 p-2 text-xs">
+                      {lobby?.server_name && (
+                        <li className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Server</span>
+                          <span className="font-mono font-medium truncate">{lobby.server_name}</span>
+                        </li>
+                      )}
+                      {lobby?.lobby_code && (
+                        <li className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Code</span>
+                          <span className="font-mono font-medium truncate">{lobby.lobby_code}</span>
+                        </li>
+                      )}
+                      {lobby?.lobby_password && (
+                        <li className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Password</span>
+                          <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
+                        </li>
+                      )}
+                    </ul>
+                  )}
                 </CardContent>
               </Card>
             );
