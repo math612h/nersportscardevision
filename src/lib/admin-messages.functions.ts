@@ -9,9 +9,9 @@ export const ADMIN_MESSAGE_TEMPLATES = {
     title: "Opdater dit navn for at blive godkendt",
     body:
       "Hej! For at blive godkendt som kører på LMU Danmark skal du registrere dig med dit rigtige for- og efternavn (uden forkortelser, kælenavne eller initialer). " +
-      "Det samme navn skal også stå på din Discord-profil, så vi kan koble din bruger på hjemmesiden sammen med din Discord-bruger. " +
+      "Det samme navn skal også stå på din Discord-serverprofil (serverens nickname – ikke din globale Discord-profil), så vi kan koble din bruger på hjemmesiden sammen med din Discord-bruger. " +
       "Du får først adgang til siden, når begge navne er ens. " +
-      "Gå til din profil og opdater dit visningsnavn — og ret samtidig dit navn på Discord — så godkender vi dig hurtigst muligt.",
+      "Gå til din profil og opdater dit visningsnavn – og ret samtidig dit server-nickname på LMU Danmark Discord-serveren – så godkender vi dig hurtigst muligt.",
     link: "/profil",
   },
   profile_approved: {
