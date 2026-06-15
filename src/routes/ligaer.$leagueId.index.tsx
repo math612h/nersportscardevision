@@ -1145,10 +1145,27 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   ).length;
   const cap = selected?.max_drivers ?? null;
   const isApproved = !!profile?.approved;
+  const { isAdmin } = useAuth();
   const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);
   const hasAcked = !!rulesAck;
   const effectiveAck = hasAcked || ackChecked;
   const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
+
+  // Leaderboard times gate (DB trigger enforces min 10 per car_class for non-admins)
+  const { data: lbCount } = useQuery({
+    queryKey: ["my-lb-count", user?.id, selected?.car_class],
+    enabled: !!user && !!selected,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("leaderboard_times")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .eq("car_class", selected!.car_class);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const needsMoreTimes = !isAdmin && selected != null && (lbCount ?? 0) < 10;
 
   const blockedByApprovedOnly = approvedOnly && !isApproved;
 
