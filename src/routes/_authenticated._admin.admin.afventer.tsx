@@ -41,6 +41,19 @@ function PendingApprovalsPage() {
   const approveFn = useServerFn(setProfileApproval);
   const sendMessageFn = useServerFn(sendAdminTemplateMessage);
   const fetchStatus = useServerFn(getAdminMessageStatus);
+  const refreshNicks = useServerFn(refreshPendingDiscordNicknames);
+
+  useEffect(() => {
+    refreshNicks()
+      .then((res) => {
+        if (res?.ok && res.updated > 0) {
+          qc.invalidateQueries({ queryKey: ["admin-pending-users"] });
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   const { data, isLoading } = useQuery({
     queryKey: ["admin-pending-users"],
