@@ -25,11 +25,13 @@ export const notifyAdminNameUpdated = createServerFn({ method: "POST" })
       .maybeSingle();
     const { data: priv } = await supabaseAdmin
       .from("profiles_private")
-      .select("discord_username")
+      .select("discord_username, discord_server_nickname")
       .eq("user_id", userId)
       .maybeSingle();
 
-    const discordName = (priv as { discord_username?: string | null } | null)?.discord_username ?? "(intet Discord-navn)";
+    const discordName = (priv as { discord_server_nickname?: string | null; discord_username?: string | null } | null)?.discord_server_nickname
+      || (priv as { discord_server_nickname?: string | null; discord_username?: string | null } | null)?.discord_username
+      || "(intet Discord-navn)";
     const lmuName = (profile as { lmu_name?: string | null } | null)?.lmu_name ?? "(intet LMU-navn)";
     const displayName = (profile as { display_name?: string | null } | null)?.display_name ?? "(intet navn)";
 

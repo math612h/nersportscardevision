@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles_private ADD COLUMN IF NOT EXISTS discord_server_nickname TEXT;
