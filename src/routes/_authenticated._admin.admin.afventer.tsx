@@ -50,19 +50,20 @@ function PendingApprovalsPage() {
         .order("created_at", { ascending: false });
       if (error) throw error;
       const userIds = (profiles ?? []).map((p) => p.id);
-      let discordMap: Record<string, string> = {};
+      let discordMap: Record<string, { discord_username?: string | null; discord_server_nickname?: string | null }> = {};
       if (userIds.length > 0) {
         const { data: priv } = await (supabase as unknown as { from: (t: string) => any })
           .from("profiles_private")
-          .select("user_id, discord_username")
+          .select("user_id, discord_username, discord_server_nickname")
           .in("user_id", userIds);
-        for (const row of (priv ?? []) as { user_id: string; discord_username?: string | null }[]) {
-          if (row.discord_username) discordMap[row.user_id] = row.discord_username;
+        for (const row of (priv ?? []) as { user_id: string; discord_username?: string | null; discord_server_nickname?: string | null }[]) {
+          discordMap[row.user_id] = { discord_username: row.discord_username, discord_server_nickname: row.discord_server_nickname };
         }
       }
       return ((profiles ?? []) as Profile[]).map((p) => ({
         ...p,
-        discord_username: discordMap[p.id] ?? null,
+        discord_username: discordMap[p.id]?.discord_username ?? null,
+        discord_server_nickname: discordMap[p.id]?.discord_server_nickname ?? null,
       }));
     },
   });
