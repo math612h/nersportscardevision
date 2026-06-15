@@ -61,6 +61,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
     const discordName = privRow?.discord_server_nickname || privRow?.discord_username || "(intet Discord-navn)";
 
     // If admin had previously asked the user to fix their name, notify the admin channel
+    const ADMIN_ROLE_ID = "1336285632066097233";
     try {
       const { data: notifs } = await supabaseAdmin
         .from("notifications")
@@ -69,12 +70,12 @@ export const completeOnboarding = createServerFn({ method: "POST" })
         .eq("title", "Opdater dit navn for at blive godkendt");
       if (notifs && notifs.length > 0) {
         const content =
-          `**Bruger har opdateret sine oplysninger**\n` +
+          `<@&${ADMIN_ROLE_ID}> **Bruger har opdateret sine oplysninger**\n` +
           `Discord: ${discordName}\n` +
           `LMU: ${data.lmu_name}\n` +
           `Navn: ${data.display_name}`;
         const { sendDiscordChannelMessage } = await import("./discord.server");
-        await sendDiscordChannelMessage("1515719754797678744", content);
+        await sendDiscordChannelMessage("1515719754797678744", content, [ADMIN_ROLE_ID]);
         await supabaseAdmin
           .from("notifications")
           .delete()
@@ -89,12 +90,12 @@ export const completeOnboarding = createServerFn({ method: "POST" })
     if (!isApproved) {
       try {
         const content =
-          `**Ny bruger afventer godkendelse**\n` +
+          `<@&${ADMIN_ROLE_ID}> **Ny bruger afventer godkendelse**\n` +
           `Navn: ${data.display_name}\n` +
           `LMU: ${data.lmu_name}\n` +
           `Discord: ${discordName}`;
         const { sendDiscordChannelMessage } = await import("./discord.server");
-        await sendDiscordChannelMessage("1516138512209018890", content);
+        await sendDiscordChannelMessage("1516138512209018890", content, [ADMIN_ROLE_ID]);
       } catch (e) {
         console.error("pending-approval notify failed", e);
       }
