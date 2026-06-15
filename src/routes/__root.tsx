@@ -84,7 +84,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     const siteDesc =
       "Sim-racing liga-hub til Le Mans Ultimate: tilmeld dig ligaer og off-season events, læs regelsæt, følg stillinger og se hurtigste omgangstider på leaderboardet.";
     const ogImage =
-      "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d87fccd1-59f4-47d9-a35d-21f44d2ae544/id-preview-492ebfc1--2054928e-8e3d-43f6-95a7-df5aedf97bab.lovable.app-1780398412613.png";
+      "https://lmudanmark.dk/__l5e/assets-v1/c7bbb42d-034b-400c-b4f2-f8f22f307569/lmu-logo.png";
     return {
       meta: [
         { charSet: "utf-8" },
