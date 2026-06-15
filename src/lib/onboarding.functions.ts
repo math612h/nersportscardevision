@@ -43,6 +43,23 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
 
+    // Check current approval status to decide which notifications to send
+    const { data: currentProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("approved")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const isApproved = (currentProfile as { approved?: boolean | null } | null)?.approved === true;
+
+    // Fetch Discord names once for both notifications below
+    const { data: priv2 } = await supabaseAdmin
+      .from("profiles_private")
+      .select("discord_username, discord_server_nickname")
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    const privRow = priv2 as { discord_username?: string | null; discord_server_nickname?: string | null } | null;
+    const discordName = privRow?.discord_server_nickname || privRow?.discord_username || "(intet Discord-navn)";
+
     // If admin had previously asked the user to fix their name, notify the admin channel
     try {
       const { data: notifs } = await supabaseAdmin
@@ -51,12 +68,6 @@ export const completeOnboarding = createServerFn({ method: "POST" })
         .eq("user_id", context.userId)
         .eq("title", "Opdater dit navn for at blive godkendt");
       if (notifs && notifs.length > 0) {
-        const { data: priv2 } = await supabaseAdmin
-          .from("profiles_private")
-          .select("discord_username")
-          .eq("user_id", context.userId)
-          .maybeSingle();
-        const discordName = (priv2 as { discord_username?: string | null } | null)?.discord_username ?? "(intet Discord-navn)";
         const content =
           `**Bruger har opdateret sine oplysninger**\n` +
           `Discord: ${discordName}\n` +
@@ -72,6 +83,21 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       }
     } catch (e) {
       console.error("admin name-update notify failed", e);
+    }
+
+    // Notify the pending-approval admin channel for brand-new (unapproved) users
+    if (!isApproved) {
+      try {
+        const content =
+          `**Ny bruger afventer godkendelse**\n` +
+          `Navn: ${data.display_name}\n` +
+          `LMU: ${data.lmu_name}\n` +
+          `Discord: ${discordName}`;
+        const { sendDiscordChannelMessage } = await import("./discord.server");
+        await sendDiscordChannelMessage("1516138512209018890", content);
+      } catch (e) {
+        console.error("pending-approval notify failed", e);
+      }
     }
 
     return { ok: true };
