@@ -50,6 +50,7 @@ export const Route = createFileRoute("/api/public/discord/callback")({
                   user_id: verified.userId,
                   discord_user_id,
                   discord_username,
+                  discord_server_nickname,
                   discord_linked_at: new Date().toISOString(),
                 },
                 { onConflict: "user_id" },
