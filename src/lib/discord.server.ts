@@ -95,6 +95,26 @@ export function buildDiscordAvatarUrl(discordUserId: string, avatarHash: string 
   return `https://cdn.discordapp.com/avatars/${discordUserId}/${avatarHash}.${ext}?size=128`;
 }
 
+export async function fetchDiscordGuildMember(discordUserId: string): Promise<{
+  nick: string | null;
+  user: { id: string; username: string; global_name?: string | null; avatar?: string | null } | null;
+} | null> {
+  const guildId = getEnv("DISCORD_GUILD_ID");
+  const res = await fetch(
+    `${DISCORD_API}/guilds/${guildId}/members/${discordUserId}`,
+    { headers: { Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}` } },
+  );
+  if (!res.ok) return null;
+  const data = (await res.json()) as {
+    nick?: string | null;
+    user?: { id: string; username: string; global_name?: string | null; avatar?: string | null };
+  };
+  return {
+    nick: data.nick ?? null,
+    user: data.user ?? null,
+  };
+}
+
 export async function fetchDiscordUserAvatar(discordUserId: string): Promise<string | null> {
   const res = await fetch(`${DISCORD_API}/users/${discordUserId}`, {
     headers: { Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}` },
@@ -107,6 +127,7 @@ export async function fetchDiscordUserAvatar(discordUserId: string): Promise<str
 export async function exchangeDiscordCode(code: string, origin: string): Promise<{
   discord_user_id: string;
   discord_username: string;
+  discord_server_nickname: string | null;
   discord_email: string | null;
   discord_email_verified: boolean;
   discord_avatar_url: string | null;
@@ -143,9 +164,15 @@ export async function exchangeDiscordCode(code: string, origin: string): Promise
     verified?: boolean;
     avatar?: string | null;
   };
+
+  // Also fetch guild member to get the server nickname (per-server profile name)
+  const member = await fetchDiscordGuildMember(me.id);
+  const serverNickname = member?.nick ?? null;
+
   return {
     discord_user_id: me.id,
     discord_username: me.global_name || me.username,
+    discord_server_nickname: serverNickname,
     discord_email: me.email ?? null,
     discord_email_verified: !!me.verified,
     discord_avatar_url: buildDiscordAvatarUrl(me.id, me.avatar ?? null),
