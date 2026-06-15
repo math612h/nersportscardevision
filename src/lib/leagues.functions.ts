@@ -87,15 +87,6 @@ export const setProfileApproval = createServerFn({ method: "POST" })
           .maybeSingle();
         const configs: Array<{ car_class: string; driver_category: string; max_drivers?: number | null }> =
           Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
-
-        // Get league cap for this class/category
-        const { data: league } = await supabaseAdmin
-          .from("leagues")
-          .select("class_configs,name")
-          .eq("id", leagueId)
-          .maybeSingle();
-        const configs: Array<{ car_class: string; driver_category: string; max_drivers?: number | null }> =
-          Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
         const cfg = configs.find((c) => c.car_class === entry.car_class && c.driver_category === entry.driver_category);
         const cap = cfg?.max_drivers ?? null;
 
