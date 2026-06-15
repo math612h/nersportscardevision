@@ -1321,7 +1321,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
                     For at tilmelde dig i <span className="font-medium">{selected!.car_class}</span> skal du have mindst <span className="font-medium">10 registrerede omgangstider</span> i klassen på dit personlige leaderboard. Du har lige nu <span className="font-medium">{lbCount ?? 0}</span>.
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Den nemmeste måde at få dine tider registreret er ved at downloade <span className="font-medium">NER Sportscar Companion</span> – den uploader automatisk dine omgangstider fra Le Mans Ultimate til dit leaderboard.
+                    Den nemmeste måde at få dine tider registreret er ved at downloade <span className="font-medium">LMU Danmark companion app</span> – den uploader automatisk dine omgangstider fra Le Mans Ultimate til dit leaderboard.
                   </p>
                 </div>
               </div>
