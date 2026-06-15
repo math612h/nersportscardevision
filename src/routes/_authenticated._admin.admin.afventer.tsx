@@ -139,6 +139,9 @@ function PendingApprovalsPage() {
                     {p.lmu_name && (
                       <Badge variant="secondary" className="text-xs">LMU: {p.lmu_name}</Badge>
                     )}
+                    {p.discord_username && (
+                      <Badge variant="secondary" className="text-xs">Discord: {p.discord_username}</Badge>
+                    )}
                     <span className="text-xs text-muted-foreground">
                       Tilmeldt {new Date(p.created_at).toLocaleDateString("da-DK")}
                     </span>
