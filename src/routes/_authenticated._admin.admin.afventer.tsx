@@ -140,7 +140,10 @@ function PendingApprovalsPage() {
                     {p.lmu_name && (
                       <Badge variant="secondary" className="text-xs">LMU: {p.lmu_name}</Badge>
                     )}
-                    {p.discord_username && (
+                    {p.discord_server_nickname && (
+                      <Badge variant="secondary" className="text-xs">Discord (server): {p.discord_server_nickname}</Badge>
+                    )}
+                    {!p.discord_server_nickname && p.discord_username && (
                       <Badge variant="secondary" className="text-xs">Discord: {p.discord_username}</Badge>
                     )}
                     <span className="text-xs text-muted-foreground">
