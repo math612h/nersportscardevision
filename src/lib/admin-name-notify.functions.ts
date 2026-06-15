@@ -35,8 +35,9 @@ export const notifyAdminNameUpdated = createServerFn({ method: "POST" })
     const lmuName = (profile as { lmu_name?: string | null } | null)?.lmu_name ?? "(intet LMU-navn)";
     const displayName = (profile as { display_name?: string | null } | null)?.display_name ?? "(intet navn)";
 
+    const ADMIN_ROLE_ID = "1336285632066097233";
     const content =
-      `**Bruger har opdateret sine oplysninger**\n` +
+      `<@&${ADMIN_ROLE_ID}> **Bruger har opdateret sine oplysninger**\n` +
       `Discord: ${discordName}\n` +
       `LMU: ${lmuName}\n` +
       `Navn: ${displayName}`;
@@ -44,7 +45,7 @@ export const notifyAdminNameUpdated = createServerFn({ method: "POST" })
     let sendResult: { ok: boolean; status: number; message?: string } = { ok: false, status: 0 };
     try {
       const { sendDiscordChannelMessage } = await import("./discord.server");
-      sendResult = await sendDiscordChannelMessage(ADMIN_CHANNEL_ID, content);
+      sendResult = await sendDiscordChannelMessage(ADMIN_CHANNEL_ID, content, [ADMIN_ROLE_ID]);
       console.log("[notifyAdminNameUpdated] discord send", sendResult);
     } catch (e) {
       console.error("[notifyAdminNameUpdated] discord threw", e);
