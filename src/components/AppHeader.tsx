@@ -3,6 +3,7 @@ import { Flag, Gauge, Home, LayoutGrid, LogOut, Shield, Trophy, User as UserIcon
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import logoAsset from "@/assets/lmu-logo.png.asset.json";
 
 
 export function AppHeader() {
@@ -14,8 +15,8 @@ export function AppHeader() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2 font-bold tracking-tight">
-          <Flag className="h-5 w-5 text-primary" />
+        <Link to="/" className="flex items-center gap-2 font-bold tracking-tight" aria-label="LMU Danmark – forside">
+          <img src={logoAsset.url} alt="LMU Danmark" className="h-8 w-8 object-contain" />
         </Link>
         <nav className="flex items-center gap-1 text-sm">
           {!isAdminRoute && (

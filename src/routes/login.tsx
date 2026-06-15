@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Flag, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
+import logoAsset from "@/assets/lmu-logo.png.asset.json";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -61,8 +62,8 @@ function LoginPage() {
       <Toaster />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-            <Flag className="h-6 w-6" />
+          <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center">
+            <img src={logoAsset.url} alt="LMU Danmark" className="h-16 w-16 object-contain" />
           </div>
           <CardTitle>LMU Danmark</CardTitle>
           <CardDescription>Log ind eller opret konto med Discord</CardDescription>
