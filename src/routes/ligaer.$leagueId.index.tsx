@@ -181,6 +181,33 @@ function LeagueDetail() {
     },
   });
 
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-profile-approved", user?.id ?? "anon"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("approved").eq("id", user!.id).maybeSingle();
+      if (error) throw error;
+      return data as { approved: boolean | null } | null;
+    },
+  });
+  const isApproved = !!myProfile?.approved;
+
+  const divisionIds = useMemo(() => (divisions ?? []).map((d: any) => d.id), [divisions]);
+  const { data: lobbies } = useQuery({
+    queryKey: ["divisions-lobbies", leagueId, divisionIds.join(",")],
+    enabled: !!user && isApproved && divisionIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("division_lobbies")
+        .select("division_id,lobby_code,lobby_password,server_name")
+        .in("division_id", divisionIds);
+      if (error) throw error;
+      const m: Record<string, { lobby_code: string | null; lobby_password: string | null; server_name: string | null }> = {};
+      (data ?? []).forEach((l: any) => { m[l.division_id] = l; });
+      return m;
+    },
+  });
+
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
 
   const trackFiles = useMemo(() => {
