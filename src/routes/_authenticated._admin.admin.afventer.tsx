@@ -43,13 +43,27 @@ function PendingApprovalsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["admin-pending-users"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: profiles, error } = await supabase
         .from("profiles")
         .select("id, display_name, created_at, lmu_name")
         .eq("approved", false)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return (data ?? []) as Profile[];
+      const userIds = (profiles ?? []).map((p) => p.id);
+      let discordMap: Record<string, string> = {};
+      if (userIds.length > 0) {
+        const { data: priv } = await (supabase as unknown as { from: (t: string) => any })
+          .from("profiles_private")
+          .select("user_id, discord_username")
+          .in("user_id", userIds);
+        for (const row of (priv ?? []) as { user_id: string; discord_username?: string | null }[]) {
+          if (row.discord_username) discordMap[row.user_id] = row.discord_username;
+        }
+      }
+      return ((profiles ?? []) as Profile[]).map((p) => ({
+        ...p,
+        discord_username: discordMap[p.id] ?? null,
+      }));
     },
   });
 
