@@ -303,6 +303,8 @@ function LeagueDetail() {
             const imgUrl = imgFile ? imageMap?.[imgFile] : null;
             const startedAt = d.race_date ? new Date(d.race_date).getTime() : 0;
             const isActive = !completed && startedAt > 0 && Date.now() >= startedAt && Date.now() - startedAt < 4 * 60 * 60 * 1000;
+            const lobby = lobbies?.[d.id];
+            const hasLobby = !!(lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password);
             const cardInner = (
               <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : "border-border hover:border-primary"}`}>
                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
