@@ -750,6 +750,7 @@ export type Database = {
           age: number | null
           created_at: string
           discord_linked_at: string | null
+          discord_server_nickname: string | null
           discord_user_id: string | null
           discord_username: string | null
           updated_at: string
@@ -759,6 +760,7 @@ export type Database = {
           age?: number | null
           created_at?: string
           discord_linked_at?: string | null
+          discord_server_nickname?: string | null
           discord_user_id?: string | null
           discord_username?: string | null
           updated_at?: string
@@ -768,6 +770,7 @@ export type Database = {
           age?: number | null
           created_at?: string
           discord_linked_at?: string | null
+          discord_server_nickname?: string | null
           discord_user_id?: string | null
           discord_username?: string | null
           updated_at?: string
