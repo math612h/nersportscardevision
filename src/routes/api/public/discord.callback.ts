@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/discord/callback")({
           const verified = await verifyDiscordState(state);
           if (!verified) return redirectToLogin("Ugyldig eller udløbet state");
 
-          const { discord_user_id, discord_username, discord_email, discord_avatar_url } = await exchangeDiscordCode(code, origin);
+          const { discord_user_id, discord_username, discord_server_nickname, discord_email, discord_avatar_url } = await exchangeDiscordCode(code, origin);
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
           // -------- LINK MODE (existing signed-in user) --------
