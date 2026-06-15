@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/afventer")({
   component: PendingApprovalsPage,
 });
 
-type Profile = { id: string; display_name: string | null; created_at: string; lmu_name: string | null; discord_username?: string | null };
+type Profile = { id: string; display_name: string | null; created_at: string; lmu_name: string | null; discord_username?: string | null; discord_server_nickname?: string | null };
 
 function PendingApprovalsPage() {
   const qc = useQueryClient();
