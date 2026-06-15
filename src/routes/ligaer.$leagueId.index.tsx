@@ -181,6 +181,33 @@ function LeagueDetail() {
     },
   });
 
+  const { data: myProfile } = useQuery({
+    queryKey: ["my-profile-approved", user?.id ?? "anon"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("profiles").select("approved").eq("id", user!.id).maybeSingle();
+      if (error) throw error;
+      return data as { approved: boolean | null } | null;
+    },
+  });
+  const isApproved = !!myProfile?.approved;
+
+  const divisionIds = useMemo(() => (divisions ?? []).map((d: any) => d.id), [divisions]);
+  const { data: lobbies } = useQuery({
+    queryKey: ["divisions-lobbies", leagueId, divisionIds.join(",")],
+    enabled: !!user && isApproved && divisionIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("division_lobbies")
+        .select("division_id,lobby_code,lobby_password,server_name")
+        .in("division_id", divisionIds);
+      if (error) throw error;
+      const m: Record<string, { lobby_code: string | null; lobby_password: string | null; server_name: string | null }> = {};
+      (data ?? []).forEach((l: any) => { m[l.division_id] = l; });
+      return m;
+    },
+  });
+
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
 
   const trackFiles = useMemo(() => {
@@ -276,6 +303,8 @@ function LeagueDetail() {
             const imgUrl = imgFile ? imageMap?.[imgFile] : null;
             const startedAt = d.race_date ? new Date(d.race_date).getTime() : 0;
             const isActive = !completed && startedAt > 0 && Date.now() >= startedAt && Date.now() - startedAt < 4 * 60 * 60 * 1000;
+            const lobby = lobbies?.[d.id];
+            const hasLobby = !!(lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password);
             const cardInner = (
               <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : "border-border hover:border-primary"}`}>
                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
@@ -331,6 +360,28 @@ function LeagueDetail() {
                         return <Icon key={i} className="h-4 w-4 text-muted-foreground" aria-label={w.label} />;
                       })}
                     </div>
+                  )}
+                  {hasLobby && !completed && (
+                    <ul className="mt-1 space-y-0.5 rounded border border-border/60 bg-muted/30 p-2 text-xs">
+                      {lobby?.server_name && (
+                        <li className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Server</span>
+                          <span className="font-mono font-medium truncate">{lobby.server_name}</span>
+                        </li>
+                      )}
+                      {lobby?.lobby_code && (
+                        <li className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Code</span>
+                          <span className="font-mono font-medium truncate">{lobby.lobby_code}</span>
+                        </li>
+                      )}
+                      {lobby?.lobby_password && (
+                        <li className="flex justify-between gap-2">
+                          <span className="text-muted-foreground">Password</span>
+                          <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
+                        </li>
+                      )}
+                    </ul>
                   )}
                 </CardContent>
               </Card>
