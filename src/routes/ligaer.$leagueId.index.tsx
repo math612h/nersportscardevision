@@ -1145,10 +1145,27 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   ).length;
   const cap = selected?.max_drivers ?? null;
   const isApproved = !!profile?.approved;
+  const { isAdmin } = useAuth();
   const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);
   const hasAcked = !!rulesAck;
   const effectiveAck = hasAcked || ackChecked;
   const goesToWaitlist = !isApproved || (cap != null && gridCount >= cap);
+
+  // Leaderboard times gate (DB trigger enforces min 10 per car_class for non-admins)
+  const { data: lbCount } = useQuery({
+    queryKey: ["my-lb-count", user?.id, selected?.car_class],
+    enabled: !!user && !!selected,
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("leaderboard_times")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user!.id)
+        .eq("car_class", selected!.car_class);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+  const needsMoreTimes = !isAdmin && selected != null && (lbCount ?? 0) < 10;
 
   const blockedByApprovedOnly = approvedOnly && !isApproved;
 
@@ -1294,96 +1311,125 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
               </SelectContent>
             </Select>
           </div>
-          {selected && (CARS_BY_CLASS[selected.car_class]?.length ?? 0) > 0 && (
-            <div>
-              <Label>Bil</Label>
-              <Select value={carModel} onValueChange={setCarModel}>
-                <SelectTrigger><SelectValue placeholder={`Vælg ${selected.car_class}-bil`} /></SelectTrigger>
-                <SelectContent>
-                  {CARS_BY_CLASS[selected.car_class].map((car) => (
-                    <SelectItem key={car} value={car}>{car}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="mt-1 text-xs text-muted-foreground">Du kan ændre bil indtil første afdeling er kørt.</p>
-            </div>
-          )}
-          {(myTeams ?? []).length > 0 && (
-            <div>
-              <Label>Team (valgfri)</Label>
-              <Select value={teamId || "none"} onValueChange={(v) => setTeamId(v === "none" ? "" : v)}>
-                <SelectTrigger><SelectValue placeholder="Intet team" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Intet team</SelectItem>
-                  {(myTeams ?? []).map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          {selected && goesToWaitlist && (
-            <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-              {!isApproved
-                ? "Din profil er endnu ikke godkendt. Du tilmeldes ventelisten og rykker automatisk op på griddet, når en admin godkender dig."
-                : `Klassen er fyldt (${gridCount}/${cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.`}
-            </p>
-          )}
-
-          {selected && (
-            <div className="space-y-2">
-              <Label>Kørenummer</Label>
-              <div className="grid grid-cols-8 gap-1 rounded-md border border-border p-2 max-h-48 overflow-y-auto">
-                {Array.from({ length: selected.number_to - selected.number_from + 1 }, (_, i) => selected.number_from + i).map((n) => {
-                  const isTaken = taken.includes(n);
-                  const isSel = carNumber === n;
-                  return (
-                    <button
-                      key={n}
-                      type="button"
-                      disabled={isTaken}
-                      onClick={() => setCarNumber(n)}
-                      className={`rounded px-1 py-1 text-xs ${isTaken ? "bg-muted text-muted-foreground line-through cursor-not-allowed" : isSel ? "bg-primary text-primary-foreground" : "bg-card border border-border hover:bg-accent"}`}
-                    >
-                      {n}
-                    </button>
-                  );
-                })}
+          {needsMoreTimes ? (
+            <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-4">
+              <div className="flex items-start gap-2">
+                <Timer className="h-5 w-5 mt-0.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold">Du opfylder ikke entry-kravene endnu</p>
+                  <p className="text-xs text-muted-foreground">
+                    For at tilmelde dig i <span className="font-medium">{selected!.car_class}</span> skal du have mindst <span className="font-medium">10 registrerede omgangstider</span> i klassen på dit personlige leaderboard. Du har lige nu <span className="font-medium">{lbCount ?? 0}</span>.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Den nemmeste måde at få dine tider registreret er ved at downloade <span className="font-medium">NER Sportscar Companion</span> – den uploader automatisk dine omgangstider fra Le Mans Ultimate til dit leaderboard.
+                  </p>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">{available.length} ledige · {taken.length} optaget</p>
-            </div>
-          )}
-
-          <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3">
-            <div className="flex items-center justify-between gap-2">
-              <Label className="text-sm font-medium">Reglement</Label>
-              <Link
-                to="/ligaer/$leagueId/regler"
-                params={{ leagueId }}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button type="button" variant="outline" size="sm" className="gap-2">
-                  <BookOpen className="h-4 w-4" /> Åbn reglement
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Button asChild type="button" size="sm" className="gap-2">
+                  <a href="/api/public/download/companion" download>
+                    <ArrowUpRight className="h-4 w-4" /> Download Companion-app
+                  </a>
                 </Button>
-              </Link>
+                <Button asChild type="button" variant="outline" size="sm" className="gap-2">
+                  <Link to="/leaderboard">Se dit leaderboard</Link>
+                </Button>
+              </div>
             </div>
-            <div className="flex items-start gap-2">
-              <Checkbox
-                id="signup-rules-ack"
-                checked={effectiveAck}
-                disabled={hasAcked}
-                onCheckedChange={(v) => setAckChecked(!!v)}
-                className="mt-0.5"
-              />
-              <label htmlFor="signup-rules-ack" className="cursor-pointer text-xs leading-relaxed">
-                Jeg har læst og forstået reglementet.
-                {hasAcked && <span className="ml-1 text-muted-foreground">(allerede bekræftet)</span>}
-              </label>
-            </div>
-          </div>
+          ) : (
+            <>
+              {selected && (CARS_BY_CLASS[selected.car_class]?.length ?? 0) > 0 && (
+                <div>
+                  <Label>Bil</Label>
+                  <Select value={carModel} onValueChange={setCarModel}>
+                    <SelectTrigger><SelectValue placeholder={`Vælg ${selected.car_class}-bil`} /></SelectTrigger>
+                    <SelectContent>
+                      {CARS_BY_CLASS[selected.car_class].map((car) => (
+                        <SelectItem key={car} value={car}>{car}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1 text-xs text-muted-foreground">Du kan ændre bil indtil første afdeling er kørt.</p>
+                </div>
+              )}
+              {(myTeams ?? []).length > 0 && (
+                <div>
+                  <Label>Team (valgfri)</Label>
+                  <Select value={teamId || "none"} onValueChange={(v) => setTeamId(v === "none" ? "" : v)}>
+                    <SelectTrigger><SelectValue placeholder="Intet team" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Intet team</SelectItem>
+                      {(myTeams ?? []).map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              {selected && goesToWaitlist && (
+                <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
+                  {!isApproved
+                    ? "Din profil er endnu ikke godkendt. Du tilmeldes ventelisten og rykker automatisk op på griddet, når en admin godkender dig."
+                    : `Klassen er fyldt (${gridCount}/${cap}). Du tilmeldes ventelisten og rykker op automatisk, hvis en plads bliver ledig.`}
+                </p>
+              )}
 
-          <DialogFooter><Button type="submit" disabled={carNumber == null || !carModel || !effectiveAck}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
+              {selected && (
+                <div className="space-y-2">
+                  <Label>Kørenummer</Label>
+                  <div className="grid grid-cols-8 gap-1 rounded-md border border-border p-2 max-h-48 overflow-y-auto">
+                    {Array.from({ length: selected.number_to - selected.number_from + 1 }, (_, i) => selected.number_from + i).map((n) => {
+                      const isTaken = taken.includes(n);
+                      const isSel = carNumber === n;
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          disabled={isTaken}
+                          onClick={() => setCarNumber(n)}
+                          className={`rounded px-1 py-1 text-xs ${isTaken ? "bg-muted text-muted-foreground line-through cursor-not-allowed" : isSel ? "bg-primary text-primary-foreground" : "bg-card border border-border hover:bg-accent"}`}
+                        >
+                          {n}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{available.length} ledige · {taken.length} optaget</p>
+                </div>
+              )}
+
+              <div className="space-y-2 rounded-md border border-border bg-muted/30 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <Label className="text-sm font-medium">Reglement</Label>
+                  <Link
+                    to="/ligaer/$leagueId/regler"
+                    params={{ leagueId }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button type="button" variant="outline" size="sm" className="gap-2">
+                      <BookOpen className="h-4 w-4" /> Åbn reglement
+                    </Button>
+                  </Link>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Checkbox
+                    id="signup-rules-ack"
+                    checked={effectiveAck}
+                    disabled={hasAcked}
+                    onCheckedChange={(v) => setAckChecked(!!v)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="signup-rules-ack" className="cursor-pointer text-xs leading-relaxed">
+                    Jeg har læst og forstået reglementet.
+                    {hasAcked && <span className="ml-1 text-muted-foreground">(allerede bekræftet)</span>}
+                  </label>
+                </div>
+              </div>
+
+              <DialogFooter><Button type="submit" disabled={carNumber == null || !carModel || !effectiveAck}>{goesToWaitlist ? "Tilmeld til venteliste" : "Tilmeld"}</Button></DialogFooter>
+            </>
+          )}
 
         </form>
       </DialogContent>

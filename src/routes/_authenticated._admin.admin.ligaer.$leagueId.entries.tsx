@@ -156,7 +156,23 @@ function AdminEntries() {
                               {e.profileApproved ? "Godkendt" : "Godkend"}
                             </Button>
                             <MoveEntryDialog entry={e} leagueId={leagueId} allEntries={data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
-                            <Button variant="ghost" size="sm" onClick={() => del.mutate(e.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" title="Fjern fra ligaen"><Trash2 className="h-3.5 w-3.5" /></Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Fjern {e.driver_name} fra ligaen?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Tilmeldingen slettes. Hvis køreren stod på griddet, rykker den første på ventelisten automatisk op.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Annullér</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => del.mutate(e.id)}>Fjern</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </li>
                       ))}
