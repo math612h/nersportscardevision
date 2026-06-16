@@ -257,11 +257,20 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   );
 }
 
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function EditDivisionDialog({ division, onDone }: { division: any; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
   const [temperature, setTemperature] = useState<number>(Number(division.settings?.temperature ?? 22));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
+  const [raceDate, setRaceDate] = useState<string>(toLocalInput(division.race_date ?? null));
   const [lobbyCode, setLobbyCode] = useState<string>("");
   const [lobbyPassword, setLobbyPassword] = useState<string>("");
   const [serverName, setServerName] = useState<string>("");
@@ -301,7 +310,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     // Ensure stale lobby fields aren't kept in settings
     delete (newSettings as any).lobby_code;
     delete (newSettings as any).lobby_password;
-    const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
+    const updatePayload: any = { settings: newSettings };
+    if (raceDate) updatePayload.race_date = new Date(raceDate).toISOString();
+    else updatePayload.race_date = null;
+    const { error } = await supabase.from("divisions").update(updatePayload).eq("id", division.id);
     if (error) return toast.error(error.message);
 
     const code = lobbyCode.trim() || null;
@@ -325,6 +337,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Rediger {division.name}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
+          <div>
+            <Label>Dato & tid</Label>
+            <Input type="datetime-local" value={raceDate} onChange={(e) => setRaceDate(e.target.value)} />
+          </div>
           <div>
             <Label>Point for hurtigste omgang (pr. klasse)</Label>
             <Input type="number" min={0} max={50} value={flPoints} onChange={(e) => setFlPoints(Number(e.target.value))} />
