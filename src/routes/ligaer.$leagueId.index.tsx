@@ -1635,6 +1635,19 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
     [signups, user],
   );
 
+  const { data: league } = useQuery({
+    queryKey: ["league-lock-settings", leagueId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("car_lock_never,car_lock_after_division_count")
+        .eq("id", leagueId)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const { data: divs } = useQuery({
     queryKey: ["league-divisions-completed", leagueId],
     queryFn: async () => {
@@ -1646,7 +1659,10 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
       return data ?? [];
     },
   });
-  const locked = (divs ?? []).some((d: any) => !!d?.settings?.completed);
+  const completedCount = (divs ?? []).filter((d: any) => !!d?.settings?.completed).length;
+  const lockThreshold = Math.max(1, (league as any)?.car_lock_after_division_count ?? 1);
+  const lockNever = !!(league as any)?.car_lock_never;
+  const locked = !lockNever && completedCount >= lockThreshold;
 
   const [carModel, setCarModel] = useState<string>("");
   const [teamId, setTeamId] = useState<string>("");
