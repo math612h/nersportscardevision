@@ -98,6 +98,18 @@ function PendingApprovalsPage() {
     },
   });
 
+  const { data: guildStatus } = useQuery({
+    queryKey: ["admin-guild-status", userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const rows = await checkGuildFn({ data: { userIds } });
+      const map: Record<string, "in_guild" | "not_member" | "not_linked" | "error"> = {};
+      for (const r of rows) map[r.user_id] = r.status;
+      return map;
+    },
+    staleTime: 60_000,
+  });
+
   const approveMut = useMutation({
     mutationFn: async (userId: string) => {
       await approveFn({ data: { targetUserId: userId, approved: true } });
