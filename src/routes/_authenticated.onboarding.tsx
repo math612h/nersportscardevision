@@ -118,7 +118,7 @@ function OnboardingPage() {
 
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <Label>Fulde navn (visningsnavn)</Label>
+              <Label>Profilnavn (fulde navn)</Label>
               <Input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -128,14 +128,22 @@ function OnboardingPage() {
                 placeholder="fx Anders Jensen"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Skal være dit <span className="font-medium text-foreground">rigtige fulde fornavn og efternavn</span> — ingen forkortelser, kælenavne eller initialer. Dit <span className="font-medium text-foreground">servernavn (kaldenavn) på LMU Danmark Discord-serveren SKAL matche</span> dit navn her på siden. Ellers bliver din profil ikke godkendt.
+                Dit profilnavn her på hjemmesiden <span className="font-medium text-foreground">skal være dit fulde fornavn og efternavn</span> — ingen forkortelser, kælenavne eller initialer.
+              </p>
+            </div>
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+              <p className="font-medium text-foreground">Vigtigt om dit Discord-servernavn</p>
+              <p className="mt-1 text-muted-foreground">
+                Dit <span className="font-medium text-foreground">servernavn (kaldenavn) på LMU Danmark Discord-serveren skal også være dit fulde fornavn og efternavn</span> — præcis det samme som dit profilnavn her. Ellers bliver din profil ikke godkendt.
               </p>
             </div>
             <div>
               <Label>LMU-navn</Label>
               <Input value={lmuName} onChange={(e) => setLmuName(e.target.value)} maxLength={80} required disabled={!discordLinked}
-                placeholder="Som det står i Le Mans Ultimate" />
-              <p className="mt-1 text-xs text-muted-foreground">Skal matche dit navn i spillet <span className="font-medium text-foreground">100% — inklusive store/små bogstaver og mellemrum</span>, præcis som det står in-game. Bruges til at koble løbsresultater til din konto.</p>
+                placeholder='Som det står i Le Mans Ultimate under "Profile"' />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Skal stå <span className="font-medium text-foreground">100% som det står i Le Mans Ultimate under "Profile"</span> — inklusive store/små bogstaver og mellemrum. Bruges til at koble løbsresultater til din konto.
+              </p>
             </div>
             <div>
               <Label>Email</Label>
