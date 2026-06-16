@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, Calendar, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, Smartphone, Trophy } from "lucide-react";
+import { useState } from "react";
+import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, Smartphone, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -357,37 +358,60 @@ function NewsPostsSection() {
     },
   });
 
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
   if (!posts || posts.length === 0) return null;
 
   return (
     <section className="space-y-4">
-      {posts.map((post) => (
-        <article
-          key={post.id}
-          className="overflow-hidden rounded-xl border border-primary/30 bg-card"
-        >
-          <div className="space-y-3 p-4 sm:p-6">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Nyhed</p>
-            <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{post.title}</h2>
-            {post.body && (
-              <div
-                className="prose-news text-sm text-foreground/90"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body) }}
-              />
-            )}
-          </div>
-          {post.image_path && imageMap?.[post.image_path] && (
-            <div className="relative max-h-64 w-full overflow-hidden">
-              <img
-                src={imageMap[post.image_path]}
-                alt={post.title}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
+      {posts.map((post) => {
+        const isExpanded = expanded[post.id] ?? false;
+        return (
+          <article
+            key={post.id}
+            className="overflow-hidden rounded-xl border border-primary/30 bg-card"
+          >
+            <div className="space-y-3 p-4 sm:p-6">
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Nyhed</p>
+              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">{post.title}</h2>
+              {post.body && (
+                <>
+                  <div
+                    className={`prose-news text-sm text-foreground/90 ${isExpanded ? "" : "line-clamp-3"}`}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body) }}
+                  />
+                  <button
+                    onClick={() =>
+                      setExpanded((prev) => ({ ...prev, [post.id]: !prev[post.id] }))
+                    }
+                    className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronUp className="h-3.5 w-3.5" /> Vis mindre
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-3.5 w-3.5" /> Se mere...
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
             </div>
-          )}
-        </article>
-      ))}
+            {post.image_path && imageMap?.[post.image_path] && (
+              <div className="relative max-h-64 w-full overflow-hidden">
+                <img
+                  src={imageMap[post.image_path]}
+                  alt={post.title}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            )}
+          </article>
+        );
+      })}
     </section>
   );
 }
