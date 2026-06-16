@@ -183,6 +183,44 @@ function BriefingOpenEditor({ value, onChange }: { value: EventSettings; onChang
   );
 }
 
+function CarLockEditor({
+  never,
+  after,
+  onNever,
+  onAfter,
+}: {
+  never: boolean;
+  after: number;
+  onNever: (v: boolean) => void;
+  onAfter: (v: number) => void;
+}) {
+  return (
+    <div className="space-y-2 rounded-md border border-border p-2">
+      <Label>Lås af bilvalg</Label>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <Checkbox checked={never} onCheckedChange={(v) => onNever(v === true)} />
+        <span className="text-sm">Bilvalg låses aldrig (deltagere kan altid skifte bil)</span>
+      </label>
+      <div className={never ? "opacity-50 pointer-events-none" : ""}>
+        <Label className="text-xs">Lås bilvalg efter antal kørte afdelinger</Label>
+        <Input
+          type="number"
+          min={1}
+          max={50}
+          value={after}
+          onChange={(e) => onAfter(Math.max(1, Number(e.target.value) || 1))}
+          disabled={never}
+        />
+        <p className="mt-1 text-xs text-muted-foreground">
+          Når dette antal afdelinger er markeret som "afsluttet", kan deltagerne ikke længere ændre bil. Standard er 1 (lås efter første afdeling).
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
+
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
   component: AdminLeagues,
@@ -220,6 +258,8 @@ function AdminLeagues() {
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
   const [pointsSystem, setPointsSystem] = useState<PointsSystem>({});
   const [signupOpensAt, setSignupOpensAt] = useState<string>("");
+  const [carLockNever, setCarLockNever] = useState<boolean>(false);
+  const [carLockAfter, setCarLockAfter] = useState<number>(1);
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
@@ -280,6 +320,8 @@ function AdminLeagues() {
       signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
       published: publish,
       created_by: user?.id,
+      car_lock_never: carLockNever,
+      car_lock_after_division_count: Math.max(1, Math.floor(carLockAfter || 1)),
     } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
@@ -298,6 +340,8 @@ function AdminLeagues() {
     setEventSettings({});
     setPointsSystem({});
     setSignupOpensAt("");
+    setCarLockNever(false);
+    setCarLockAfter(1);
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
@@ -372,6 +416,12 @@ function AdminLeagues() {
                   <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
                   <p className="text-xs text-muted-foreground">Lad være tom for at holde tilmelding lukket. En nedtælling vises på ligasiden indtil tidspunktet.</p>
                 </div>
+                <CarLockEditor
+                  never={carLockNever}
+                  after={carLockAfter}
+                  onNever={setCarLockNever}
+                  onAfter={setCarLockAfter}
+                />
                 <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
@@ -513,6 +563,12 @@ function EditLeagueDialog({ league }: { league: any }) {
   };
   const [signupOpensAt, setSignupOpensAt] = useState<string>(toLocalInput(league.signup_opens_at));
   const [discordRoleId, setDiscordRoleId] = useState<string>(league.discord_role_id ?? "");
+  const [carLockNever, setCarLockNever] = useState<boolean>(!!league.car_lock_never);
+  const [carLockAfter, setCarLockAfter] = useState<number>(
+    typeof league.car_lock_after_division_count === "number" && league.car_lock_after_division_count >= 1
+      ? league.car_lock_after_division_count
+      : 1,
+  );
   const [saving, setSaving] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const announceFn = useServerFn(sendLeagueAnnouncement);
@@ -549,6 +605,12 @@ function EditLeagueDialog({ league }: { league: any }) {
     setPointsSystem((league.points_system && typeof league.points_system === "object" ? league.points_system : {}) as PointsSystem);
     setSignupOpensAt(toLocalInput(league.signup_opens_at));
     setDiscordRoleId(league.discord_role_id ?? "");
+    setCarLockNever(!!league.car_lock_never);
+    setCarLockAfter(
+      typeof league.car_lock_after_division_count === "number" && league.car_lock_after_division_count >= 1
+        ? league.car_lock_after_division_count
+        : 1,
+    );
   };
 
   const submit = async (e: React.FormEvent | React.MouseEvent, publish: boolean) => {
@@ -582,6 +644,8 @@ function EditLeagueDialog({ league }: { league: any }) {
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
         discord_role_id: discordRoleId.trim() || null,
+        car_lock_never: carLockNever,
+        car_lock_after_division_count: Math.max(1, Math.floor(carLockAfter || 1)),
         published: publish,
       } as any)
       .eq("id", league.id);
@@ -650,6 +714,12 @@ function EditLeagueDialog({ league }: { league: any }) {
               Når en kører tilmelder sig denne liga, får de automatisk denne rolle på Discord (hvis de har forbundet deres Discord-konto). Find rolle-ID'et i Discord ved at højreklikke på rollen i Server Settings → Roles (Developer Mode skal være slået til).
             </p>
           </div>
+          <CarLockEditor
+            never={carLockNever}
+            after={carLockAfter}
+            onNever={setCarLockNever}
+            onAfter={setCarLockAfter}
+          />
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />

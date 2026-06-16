@@ -715,6 +715,8 @@ export type Database = {
           banner_url: string | null
           briefing_required: boolean
           car_class: string | null
+          car_lock_after_division_count: number
+          car_lock_never: boolean
           class_configs: Json
           created_at: string
           created_by: string | null
@@ -739,6 +741,8 @@ export type Database = {
           banner_url?: string | null
           briefing_required?: boolean
           car_class?: string | null
+          car_lock_after_division_count?: number
+          car_lock_never?: boolean
           class_configs?: Json
           created_at?: string
           created_by?: string | null
@@ -763,6 +767,8 @@ export type Database = {
           banner_url?: string | null
           briefing_required?: boolean
           car_class?: string | null
+          car_lock_after_division_count?: number
+          car_lock_never?: boolean
           class_configs?: Json
           created_at?: string
           created_by?: string | null
