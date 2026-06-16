@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import DOMPurify from "isomorphic-dompurify";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/nyhedsbrev")({
   component: NyhedsbrevAdmin,
