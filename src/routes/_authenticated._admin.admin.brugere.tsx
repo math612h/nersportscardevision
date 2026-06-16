@@ -156,19 +156,12 @@ function AdminUsersPage() {
                     >
                       <ThumbsUp className={`h-4 w-4 ${p.approved ? "text-green-600" : ""}`} />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={isAdmin ? "Fjern admin-rolle" : "Tildel admin-rolle"}
-                      onClick={() => roleMut.mutate({ userId: p.id, assign: !isAdmin })}
-                      disabled={roleMut.isPending}
-                    >
-                      {isAdmin ? (
-                        <ShieldOff className="h-4 w-4 text-destructive" />
-                      ) : (
-                        <Shield className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <RoleConfirmDialog
+                      profile={p}
+                      isAdmin={isAdmin}
+                      onConfirm={() => roleMut.mutate({ userId: p.id, assign: !isAdmin })}
+                      isPending={roleMut.isPending}
+                    />
                     <EditNameDialog profile={p} />
                     <DeleteConfirmDialog
                       profile={p}
