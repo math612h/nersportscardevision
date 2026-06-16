@@ -1,81 +1,96 @@
-# Plan
+## Mål
 
-## 1. "Besked om navn er sendt"-indikator
+- Erstat notifikations-popoveren med en rigtig beskedside (`/beskeder`).
+- Venstre side: liste over samtaler (System øverst + alle DM-tråde, søgbar).
+- Midten: chat-vindue med beskeder.
+- Direkte beskeder mellem alle brugere (også ikke-godkendte).
+- Web Push på mobil/PWA når man får ny besked eller ny notifikation.
 
-**Hvor:** Admin-flader hvor `sendAdminTemplateMessage` med template `wrong_name` kan trigges (typisk `_authenticated._admin.admin.afventer.tsx` og evt. brugerlisten).
+## UI
 
-- Ny tabel `admin_message_log` (user_id, template, sent_by, sent_at) — eller genbrug `notifications.created_at` med filter på title.
-  - Vælger: ny lille tabel `admin_message_log` — renere og uafhængig af notification-titel.
-- `sendAdminTemplateMessage` skriver en række hver gang.
-- Server-fn `getAdminMessageStatus({userIds, template})` returnerer seneste sent_at pr. bruger.
-- UI: knappen viser "Sendt {relativ tid} – send igen" når der findes en log-række; ellers normal tekst.
+**Route:** `src/routes/_authenticated.beskeder.tsx` (+ valgfri `$threadId`)
 
-## 2. Fjern auto-kategori-begrænsning + krav om 10 leaderboard-tider
+```
+┌──────────────────────────────────────────────┐
+│ AppHeader (klokke → /beskeder, ingen popover)│
+├────────────┬─────────────────────────────────┤
+│ Søg bruger │  Modtager-navn          ⋯       │
+│ ─────────  │ ─────────────────────────────── │
+│ ⚙ System 3 │                                 │
+│ Anders   1 │  beskeder (boble-stil)          │
+│ Maria      │                                 │
+│ Peter      │                                 │
+│            │ ─────────────────────────────── │
+│            │ [skriv besked...]        [Send] │
+└────────────┴─────────────────────────────────┘
+```
 
-- Fjern brug af `allowed_categories_for_signup` i tilmeldings-UI: vis alle kategorier i klassen igen.
-  - Behold DB-funktionen (ikke-destruktivt) — den kaldes bare ikke længere.
-- Tilføj guard i tilmeldings-flow + i `entries` INSERT-policy/trigger:
-  - Tæl `leaderboard_times` for `user_id` (alle klasser eller samme klasse?). **Vælger: samme `car_class`** — det er det, der er relevant for splittet og ratingen.
-  - Hvis < 10 → fejl: "Du skal have mindst 10 registrerede tider i [klasse] før du kan tilmelde dig."
-- Trigger på `entries` BEFORE INSERT der validerer dette server-side, så hverken UI eller admin-bypass kan omgå det utilsigtet (admin-tilføj kan dog skippe via `SECURITY DEFINER` server-fn).
+- Mobil: liste først; tap åbner chat (fuldskærm) med tilbageknap.
+- System-tråden viser eksisterende `notifications`-rows, klikbare links, ingen tekstfelt.
+- Brugersøgning i toppen af sidebar (alle profiler, ikke kun godkendte).
+- Realtime via Supabase channel.
 
-## 3. "Opdel feltet i Pro & Am"-knap
+## Header-ændring
 
-**Hvor:** Liga-redigering (admin), pr. klasse-config der har kun én `driver_category`.
+`NotificationsBell` → simpelt link til `/beskeder` med uread-badge (sum af ulæste DMs + ulæste notifikationer). Popover fjernes.
 
-**Algoritme (server-fn `splitClassIntoProAm`):**
-1. Hent alle ikke-waitlist entries for (league_id, car_class).
-2. For hver kører: `score = 0.7 * elo_normalized + 0.3 * leaderboard_normalized`
-   - ELO: `user_ratings.score` (default 1500 hvis mangler), normaliseret til 0-100 via percent_rank inden for feltet.
-   - Leaderboard: brugerens bedste lap i klassen vs feltets median (samme formel som `compute_user_class_score` men kun inden for feltets kørere), 0-100.
-3. Sortér kørere efter score desc.
-4. Find optimalt split-indeks `k` (1 ≤ k ≤ n-1):
-   - `balance_score = 1 - |k - n/2| / (n/2)` (1 når lige store, 0 ved kant)
-   - `gap_score`: størrelsen af gap mellem score[k-1] og score[k] normaliseret mod max gap i feltet (0-1)
-   - `total = 0.35 * balance_score + 0.65 * gap_score`
-   - Vælg k med højeste total.
-5. Top k → "Pro", resten → "Am".
-6. Opdater:
-   - `leagues.class_configs`: erstat den ene config med to (Pro + Am), genbrug `number_from/to` (fx split intervallet i to halvdele) eller behold samme interval for begge — **vælger: behold samme interval**, admin kan justere bagefter.
-   - `entries.driver_category` opdateres til "Pro"/"Am" for hver kører.
-7. Direkte opdeling (ingen preview) — toast viser fx "12 i Pro, 13 i Am".
+## Database
 
-**Knap-betingelse:** Vis kun når klassen har præcis én `driver_category` og mindst 2 entries.
+Ny migration:
 
-## 4. "Tilføj bruger til liga"-knap
+- `direct_messages(id, sender_id, recipient_id, body text, created_at, read_at)` — RLS: kun afsender/modtager ser; insert kun som sig selv; update af `read_at` kun som modtager.
+- `push_subscriptions(id, user_id, endpoint unique, p256dh, auth, user_agent, created_at)` — RLS: ejer.
+- Realtime publication: tilføj `direct_messages` og `notifications`.
+- GRANTs på begge.
 
-**Hvor:** Admin liga-side (entries-view eller liga-oversigt).
+## Server functions
 
-- Dialog: søg bruger (`profiles.display_name` ilike), vælg liga (allerede kendt fra context), vælg klasse-config (samme dropdown som `EntryDialog`), vælg bilnummer (samme grid som `MoveEntryDialog`).
-- Server-fn `adminAddEntry` (kræver admin via `has_role`): bypasser 10-tider-check, indsætter direkte i `entries`.
+`src/lib/messages.functions.ts`:
+- `listThreads()` — returner system-tråd-meta + DM-tråde (sidste besked, ulæst-count).
+- `getThread({ otherUserId })` — beskeder + marker som læst.
+- `sendMessage({ recipientId, body })` — insert + trigger push.
+- `searchUsers({ q })` — profil-søgning.
 
-## 5. ELO på tværs af kategorier inden for samme bilklasse
+`src/lib/push.functions.ts`:
+- `getVapidPublicKey()`, `savePushSubscription({ ... })`, `removePushSubscription({ endpoint })`.
 
-- Opdater `recompute_all_elo()`:
-  - Skift `GROUP BY league_id, round, car_class` til `GROUP BY league_id, round, car_class` (uændret — bilklasse er allerede grupperingsnøglen).
-  - **Verificér** at den nuværende inner-loop ikke filtrerer på `driver_category`. Den nuværende funktion gør det allerede ikke — alle med samme `car_class` indgår. **Konklusion:** Funktionen er sandsynligvis allerede korrekt; jeg verificerer ved at læse den og bekræfter. Hvis det viser sig at trigger/entry-query filtrerer kategori et sted, fjerner jeg det.
-- Kør `recompute_all_elo()` én gang efter migration for at sikre konsistens.
+`src/lib/push.server.ts`: `sendPushToUser(userId, { title, body, url })` via `web-push` med VAPID. Kaldes fra:
+- `sendMessage` (DM)
+- Eksisterende notifikations-insert-steder (lille helper der wrapper)
+
+## Web Push / PWA
+
+- Tilføj `web-push` dep.
+- Generér VAPID-nøgler én gang, gem som secrets `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`.
+- Service worker `public/push-sw.js` (messaging-only, ikke app-shell cache — undgår Lovable preview-problemer).
+- Klient-helper registrerer SW + henter VAPID-public-key + beder om `Notification.requestPermission()` ved første besøg på `/beskeder` (med en "Aktiver notifikationer"-knap, ikke auto-prompt).
+- Manifest har allerede `apple-touch-icon` etc.; iOS PWA push virker når brugeren har "Add to Home Screen".
 
 ## Tekniske detaljer
 
-**Nye filer:**
-- `src/lib/admin-messages-log.functions.ts` — `getAdminMessageStatus`
-- `src/lib/league-split.functions.ts` — `splitClassIntoProAm`
-- `src/lib/league-admin-entries.functions.ts` — `adminAddEntry`, `searchUsers`
+- `direct_messages` index: `(recipient_id, sender_id, created_at desc)` for thread-lookup; thread-key = sorteret par `(least(a,b), greatest(a,b))`.
+- Ulæste-count: `count(*) where recipient_id = me and read_at is null`.
+- Markér læst når thread åbnes (server fn).
+- Push payload: `{ title, body, url, tag }`; SW viser notifikation + `notificationclick` → `clients.openWindow(url)`.
+- Push fails (410/404) → slet subscription.
 
-**Migrationer:**
-1. `admin_message_log` tabel (+ GRANTs + RLS: admin read, service_role all)
-2. Trigger på `entries` BEFORE INSERT for 10-tider-krav (med bypass for admin via `SECURITY DEFINER` server-fn der ikke kalder triggeren? — bedre: tjek i triggeren om `current_setting('request.jwt.claims', true)` indeholder admin-rolle, og spring over). Alternativ: kald `set_config('app.bypass_entry_limit','on',true)` i admin-server-fn.
-3. Kør `recompute_all_elo()` (efter at have læst og evt. justeret funktionen).
+## Filer der oprettes/ændres
 
-**UI ændringer:**
-- `src/routes/_authenticated._admin.admin.afventer.tsx` (eller hvor wrong_name sendes fra) — vis status.
-- Tilmeldings-flow: fjern `allowed_categories_for_signup`-kald.
-- Admin liga entries-side: ny "Opdel"-knap + ny "Tilføj bruger"-knap.
+Nye:
+- `src/routes/_authenticated.beskeder.tsx`
+- `src/routes/_authenticated.beskeder.$threadId.tsx` (valgfrit hvis vi vil have URL pr. tråd)
+- `src/lib/messages.functions.ts`
+- `src/lib/push.functions.ts`
+- `src/lib/push.server.ts`
+- `public/push-sw.js`
+- `src/lib/push-client.ts` (registrering + subscription)
+- Migration
 
-## Rækkefølge
-1. Migration 1 (admin_message_log) → skriv server-fn + UI for status
-2. Migration 2 (10-tider trigger) → fjern auto-kategori i tilmelding
-3. Server-fn + UI for split-knap
-4. Server-fn + UI for tilføj-bruger
-5. Læs `recompute_all_elo`, juster hvis nødvendigt, kør recompute
+Ændres:
+- `src/components/NotificationsBell.tsx` → simpel badge-link
+- `src/components/AppHeader.tsx` (måske bare label-ændring)
+- Steder der inserter i `notifications` (admin-notify, onboarding, team-message-trigger m.fl.) får et call til `sendPushToUser` — eller endnu bedre: DB-trigger der enqueuer + en single server route der sender push når en `notifications`-row inserts. Jeg vælger sidstnævnte: en trigger der kalder `pg_net` er overkill — i stedet kalder vi `sendPushToUser` direkte fra de eksisterende server-fns der allerede inserter notifications (begrænset antal steder).
+
+## Note om scope
+
+Det her er ~6-8 nye filer + migration + secrets. Jeg leverer alt på én gang. VAPID-nøgler genererer jeg selv og lægger ind via secrets-værktøjet (offentlig nøgle bruges også på klient — den henter vi via server fn så vi ikke skal bruge `VITE_`).
