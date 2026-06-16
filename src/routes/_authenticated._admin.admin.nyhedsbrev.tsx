@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import DOMPurify from "isomorphic-dompurify";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/nyhedsbrev")({
   component: NyhedsbrevAdmin,
@@ -246,7 +247,7 @@ function NyhedsbrevAdmin() {
                 </CardHeader>
                 {(p.body || p.image_path) && (
                   <CardContent className="space-y-3">
-                    {p.body && <div className="prose-news text-sm" dangerouslySetInnerHTML={{ __html: p.body }} />}
+                    {p.body && <div className="prose-news text-sm" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(p.body) }} />}
                     {p.image_path && (
                       imageMap?.[p.image_path] ? (
                         <img

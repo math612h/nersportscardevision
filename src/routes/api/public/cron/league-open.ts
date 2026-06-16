@@ -134,13 +134,13 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
       POST: async ({ request }) => {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-        const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
-        if (!supabaseUrl || !supabaseServiceKey) {
+        const cronSecret = process.env.CRON_SECRET
+        if (!supabaseUrl || !supabaseServiceKey || !cronSecret) {
           return Response.json({ error: 'Server misconfigured' }, { status: 500 })
         }
-        // Authenticate caller via anon apikey header
-        const apikey = request.headers.get('apikey')
-        if (!apikey || apikey !== anonKey) {
+        // Authenticate caller via server-only shared secret
+        const provided = request.headers.get('x-cron-secret')
+        if (!provided || provided !== cronSecret) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 

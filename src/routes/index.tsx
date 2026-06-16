@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTrackImageFile } from "@/lib/tracks";
+import DOMPurify from "isomorphic-dompurify";
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
 const PAGE_DESC =
@@ -371,7 +372,7 @@ function NewsPostsSection() {
             {post.body && (
               <div
                 className="prose-news text-sm text-foreground/90"
-                dangerouslySetInnerHTML={{ __html: post.body }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body) }}
               />
             )}
           </div>
