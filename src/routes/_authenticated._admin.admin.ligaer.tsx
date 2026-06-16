@@ -257,7 +257,7 @@ function AdminLeagues() {
   const [pointsSystem, setPointsSystem] = useState<PointsSystem>({});
   const [signupOpensAt, setSignupOpensAt] = useState<string>("");
   const [carLockNever, setCarLockNever] = useState<boolean>(false);
-  const [carLockAfter, setCarLockAfter] = useState<number>(1);
+  const [carLockAt, setCarLockAt] = useState<string>("");
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
