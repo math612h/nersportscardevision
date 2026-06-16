@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Bell } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,7 @@ export function NotificationsBell() {
       aria-label="Beskeder"
       title="Beskeder"
     >
-      <Bell className="h-4 w-4" />
+      <MessageCircle className="h-4 w-4" />
       {count > 0 && (
         <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">{count}</Badge>
       )}
