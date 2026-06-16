@@ -48,6 +48,7 @@ import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/publi
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
+import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
@@ -268,6 +269,12 @@ const ApiPublicCompanionVerifyTokenRoute =
     path: '/api/public/companion/verify-token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedBeskederGruppeGroupIdRoute =
+  AuthenticatedBeskederGruppeGroupIdRouteImport.update({
+    id: '/gruppe/$groupId',
+    path: '/gruppe/$groupId',
+    getParentRoute: () => AuthenticatedBeskederRoute,
+  } as any)
 const AuthenticatedAdminAdminProtestsRoute =
   AuthenticatedAdminAdminProtestsRouteImport.update({
     id: '/admin/protests',
@@ -365,6 +372,7 @@ export interface FileRoutesByFullPath {
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
@@ -413,6 +421,7 @@ export interface FileRoutesByTo {
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
@@ -466,6 +475,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
@@ -518,6 +528,7 @@ export interface FileRouteTypes {
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
     | '/admin/protests'
+    | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
@@ -566,6 +577,7 @@ export interface FileRouteTypes {
     | '/admin/brugere'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
+    | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
@@ -618,6 +630,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/ligaer'
     | '/_authenticated/_admin/admin/nyhedsbrev'
     | '/_authenticated/_admin/admin/protests'
+    | '/_authenticated/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
@@ -943,6 +956,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCompanionVerifyTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/beskeder/gruppe/$groupId': {
+      id: '/_authenticated/beskeder/gruppe/$groupId'
+      path: '/gruppe/$groupId'
+      fullPath: '/beskeder/gruppe/$groupId'
+      preLoaderRoute: typeof AuthenticatedBeskederGruppeGroupIdRouteImport
+      parentRoute: typeof AuthenticatedBeskederRoute
+    }
     '/_authenticated/_admin/admin/protests': {
       id: '/_authenticated/_admin/admin/protests'
       path: '/admin/protests'
@@ -1092,11 +1112,14 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedBeskederRouteChildren {
   AuthenticatedBeskederThreadIdRoute: typeof AuthenticatedBeskederThreadIdRoute
   AuthenticatedBeskederSystemRoute: typeof AuthenticatedBeskederSystemRoute
+  AuthenticatedBeskederGruppeGroupIdRoute: typeof AuthenticatedBeskederGruppeGroupIdRoute
 }
 
 const AuthenticatedBeskederRouteChildren: AuthenticatedBeskederRouteChildren = {
   AuthenticatedBeskederThreadIdRoute: AuthenticatedBeskederThreadIdRoute,
   AuthenticatedBeskederSystemRoute: AuthenticatedBeskederSystemRoute,
+  AuthenticatedBeskederGruppeGroupIdRoute:
+    AuthenticatedBeskederGruppeGroupIdRoute,
 }
 
 const AuthenticatedBeskederRouteWithChildren =
