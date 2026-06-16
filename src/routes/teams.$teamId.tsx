@@ -275,27 +275,10 @@ function TeamDetailPage() {
       {isOwner && <OwnerInbox teamId={teamId} />}
       {isOwner && <InviteCard teamId={teamId} userId={user!.id} existingMemberIds={memberIds} />}
 
-      {isMember && (
-        <ComposeMessageCard
-          teamId={teamId}
-          userId={user!.id}
-          members={members ?? []}
-          profiles={profiles ?? {}}
-        />
-      )}
-
-      {isMember && <TeamChat teamId={teamId} userId={user!.id} profiles={profiles ?? {}} avatars={avatars ?? {}} />}
-      {!isMember && (
-        <Card>
-          <CardContent className="py-6 text-center text-sm text-muted-foreground">
-            <MessageSquare className="mx-auto mb-2 h-5 w-5" />
-            Kun teamets medlemmer kan se chatten.
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
+
 
 // --- Recent results per member ---
 function RecentResultsCard({
