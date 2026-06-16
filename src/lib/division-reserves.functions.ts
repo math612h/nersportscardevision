@@ -12,6 +12,10 @@ async function notifyAndDM(
   link: string,
 ) {
   await admin.from("notifications").insert({ user_id: userId, title, body, link });
+  try {
+    const { sendPushToUser } = await import("./push.server");
+    void sendPushToUser(userId, { title, body, url: link, tag: `notif:${userId}` }).catch(() => {});
+  } catch (_) {}
   const { data: priv } = await admin
     .from("profiles_private")
     .select("discord_user_id")

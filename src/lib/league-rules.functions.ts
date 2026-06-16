@@ -69,6 +69,10 @@ export const acknowledgeLeagueRules = createServerFn({ method: "POST" })
       body: `Tak fordi du har læst reglementet. Du er nu på griddet i ${myEntry.car_class} · ${myEntry.driver_category}.`,
       link: `/ligaer/${data.leagueId}`,
     });
+    try {
+      const { sendPushToUser } = await import("./push.server");
+      void sendPushToUser(userId, { title: `Du er rykket op i ${league?.name ?? "ligaen"}`, url: `/ligaer/${data.leagueId}` }).catch(() => {});
+    } catch (_) {}
 
     try {
       const { data: priv } = await supabaseAdmin

@@ -13,6 +13,10 @@ async function notifyAndDM(
 ) {
   await admin.from("notifications").insert({ user_id: userId, title, body, link });
   try {
+    const { sendPushToUser } = await import("./push.server");
+    void sendPushToUser(userId, { title, body, url: link, tag: `notif:${userId}` }).catch(() => {});
+  } catch (_) {}
+  try {
     const { data: priv } = await admin
       .from("profiles_private")
       .select("discord_user_id")
@@ -119,6 +123,10 @@ export const setProfileApproval = createServerFn({ method: "POST" })
         body: `Du kan nu deltage i ligaer uden yderligere godkendelse, og du har adgang til lobby-information på dine afdelinger.`,
         link: `/profil`,
       });
+      try {
+        const { sendPushToUser } = await import("./push.server");
+        void sendPushToUser(data.targetUserId, { title: "Din profil er blevet godkendt", url: "/profil" }).catch(() => {});
+      } catch (_) {}
     }
 
     if (!data.approved && myEntries) {
@@ -171,6 +179,10 @@ export const setProfileApproval = createServerFn({ method: "POST" })
         body: `Dine tilmeldinger er flyttet til ventelisten. Kontakt en admin hvis du har spørgsmål.`,
         link: `/profil`,
       });
+      try {
+        const { sendPushToUser } = await import("./push.server");
+        void sendPushToUser(data.targetUserId, { title: "Din godkendelse er fjernet", url: "/profil" }).catch(() => {});
+      } catch (_) {}
     }
 
     return { ok: true, changed: true, approved: data.approved, promoted, demoted };
