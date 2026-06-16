@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { GuestLock } from "@/components/GuestGate";
 import { useServerFn } from "@tanstack/react-start";
 import { triggerReserveOfferForAbsence, respondReserveOffer } from "@/lib/division-reserves.functions";
+import { PracticeSessionsList } from "@/components/PracticeSessionsList";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_NUMERIC_FIELDS } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DriverLink } from "@/components/DriverLink";
@@ -479,6 +480,8 @@ function DivisionDetail() {
         )}
         {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
+
+      <PracticeSessionsList divisionId={divisionId} />
 
       {(results?.length ?? 0) > 0 && (() => {
         const sessions: { type: "race" | "qualifying"; label: string }[] = [
