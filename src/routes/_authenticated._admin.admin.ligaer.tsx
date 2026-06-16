@@ -706,9 +706,9 @@ function EditLeagueDialog({ league }: { league: any }) {
           </div>
           <CarLockEditor
             never={carLockNever}
-            after={carLockAfter}
+            at={carLockAt}
             onNever={setCarLockNever}
-            onAfter={setCarLockAfter}
+            onAt={setCarLockAt}
           />
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
