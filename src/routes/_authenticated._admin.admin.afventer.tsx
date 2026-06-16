@@ -173,6 +173,16 @@ function PendingApprovalsPage() {
         </Link>
         <UserCheck className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold">Afventer godkendelse</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto gap-2"
+          onClick={() => void runRefresh(false)}
+          disabled={refreshing}
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          Opdater Discord-navne
+        </Button>
       </div>
 
       {isLoading ? (
