@@ -372,7 +372,7 @@ function NewsPostsSection() {
             {post.body && (
               <div
                 className="prose-news text-sm text-foreground/90"
-                dangerouslySetInnerHTML={{ __html: post.body }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body) }}
               />
             )}
           </div>
