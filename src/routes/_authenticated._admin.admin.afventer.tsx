@@ -46,14 +46,35 @@ function PendingApprovalsPage() {
   const checkGuildFn = useServerFn(checkPendingGuildMembership);
 
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const runRefresh = async (silent = true) => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      const res = await refreshNicks();
+      if (res?.ok && res.updated > 0) {
+        await qc.invalidateQueries({ queryKey: ["admin-pending-users"] });
+      }
+      await qc.invalidateQueries({ queryKey: ["admin-guild-status"] });
+      if (!silent) {
+        toast.success(
+          res?.ok
+            ? `Opdateret (${res.updated ?? 0} navne ændret)`
+            : "Kunne ikke opdatere",
+        );
+      }
+    } catch (e) {
+      if (!silent) toast.error(e instanceof Error ? e.message : "Fejl ved opdatering");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    refreshNicks()
-      .then((res) => {
-        if (res?.ok && res.updated > 0) {
-          qc.invalidateQueries({ queryKey: ["admin-pending-users"] });
-        }
-      })
-      .catch(() => {});
+    void runRefresh(true);
+    const id = window.setInterval(() => void runRefresh(true), 30_000);
+    return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
