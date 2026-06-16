@@ -51,14 +51,35 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .maybeSingle();
     const isApproved = (currentProfile as { approved?: boolean | null } | null)?.approved === true;
 
-    // Fetch Discord names once for both notifications below
-    const { data: priv2 } = await supabaseAdmin
-      .from("profiles_private")
-      .select("discord_username, discord_server_nickname")
-      .eq("user_id", context.userId)
-      .maybeSingle();
-    const privRow = priv2 as { discord_username?: string | null; discord_server_nickname?: string | null } | null;
-    const discordName = privRow?.discord_server_nickname || privRow?.discord_username || "(intet Discord-navn)";
+    // Fetch the LIVE Discord server-nickname (don't rely on cached value, which
+    // can be stale if the user just renamed themselves on the Discord server).
+    const { fetchDiscordGuildMember } = await import("./discord.server");
+    let liveServerNick: string | null = null;
+    let liveUsername: string | null = null;
+    try {
+      const member = await fetchDiscordGuildMember(discordId);
+      liveServerNick = member?.nick ?? null;
+      liveUsername = member?.user?.global_name || member?.user?.username || null;
+      // Persist the fresh values so the rest of the app sees them too.
+      await supabaseAdmin
+        .from("profiles_private")
+        .update({
+          discord_server_nickname: liveServerNick,
+          ...(liveUsername ? { discord_username: liveUsername } : {}),
+        })
+        .eq("user_id", context.userId);
+    } catch (e) {
+      console.error("live discord member fetch failed", e);
+    }
+    if (!liveUsername) {
+      const { data: priv2 } = await supabaseAdmin
+        .from("profiles_private")
+        .select("discord_username")
+        .eq("user_id", context.userId)
+        .maybeSingle();
+      liveUsername = (priv2 as { discord_username?: string | null } | null)?.discord_username ?? null;
+    }
+    const discordName = liveServerNick || liveUsername || "(intet Discord-navn)";
 
     // If admin had previously asked the user to fix their name, notify the admin channel
     const ADMIN_ROLE_ID = "1336285632066097233";
