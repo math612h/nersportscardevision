@@ -1,0 +1,1 @@
+ALTER TABLE public.profiles_private ADD COLUMN IF NOT EXISTS pending_discord_message_id text;
