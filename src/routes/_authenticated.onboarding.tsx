@@ -128,7 +128,7 @@ function OnboardingPage() {
                 placeholder="fx Anders Jensen"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Skal være dit <span className="font-medium text-foreground">rigtige for- og efternavn</span> — ingen forkortelser, kælenavne eller initialer. Profiler uden korrekt navn bliver ikke godkendt.
+                Skal være dit <span className="font-medium text-foreground">rigtige fornavn og efternavn</span> — ingen forkortelser, kælenavne eller initialer. Du <span className="font-medium text-foreground">SKAL</span> desuden ændre dit servernavn (kaldenavn) på LMU Danmark Discord-serveren til præcis det samme fornavn og efternavn. Profiler uden korrekt navn — eller hvor Discord-navnet ikke matcher — bliver ikke godkendt.
               </p>
             </div>
             <div>
