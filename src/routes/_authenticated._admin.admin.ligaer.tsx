@@ -185,14 +185,14 @@ function BriefingOpenEditor({ value, onChange }: { value: EventSettings; onChang
 
 function CarLockEditor({
   never,
-  after,
+  at,
   onNever,
-  onAfter,
+  onAt,
 }: {
   never: boolean;
-  after: number;
+  at: string;
   onNever: (v: boolean) => void;
-  onAfter: (v: number) => void;
+  onAt: (v: string) => void;
 }) {
   return (
     <div className="space-y-2 rounded-md border border-border p-2">
@@ -202,17 +202,15 @@ function CarLockEditor({
         <span className="text-sm">Bilvalg låses aldrig (deltagere kan altid skifte bil)</span>
       </label>
       <div className={never ? "opacity-50 pointer-events-none" : ""}>
-        <Label className="text-xs">Lås bilvalg efter antal kørte afdelinger</Label>
+        <Label className="text-xs">Lås bilvalg fra og med</Label>
         <Input
-          type="number"
-          min={1}
-          max={50}
-          value={after}
-          onChange={(e) => onAfter(Math.max(1, Number(e.target.value) || 1))}
+          type="datetime-local"
+          value={at}
+          onChange={(e) => onAt(e.target.value)}
           disabled={never}
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          Når dette antal afdelinger er markeret som "afsluttet", kan deltagerne ikke længere ændre bil. Standard er 1 (lås efter første afdeling).
+          Vælg dato og tid. Når tidspunktet er nået, kan deltagerne ikke længere ændre bil. Lad være tom for at undlade at låse.
         </p>
       </div>
     </div>
@@ -259,7 +257,7 @@ function AdminLeagues() {
   const [pointsSystem, setPointsSystem] = useState<PointsSystem>({});
   const [signupOpensAt, setSignupOpensAt] = useState<string>("");
   const [carLockNever, setCarLockNever] = useState<boolean>(false);
-  const [carLockAfter, setCarLockAfter] = useState<number>(1);
+  const [carLockAt, setCarLockAt] = useState<string>("");
   const [createdLeague, setCreatedLeague] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
@@ -321,7 +319,7 @@ function AdminLeagues() {
       published: publish,
       created_by: user?.id,
       car_lock_never: carLockNever,
-      car_lock_after_division_count: Math.max(1, Math.floor(carLockAfter || 1)),
+      car_lock_at: carLockNever ? null : (carLockAt ? new Date(carLockAt).toISOString() : null),
     } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
@@ -341,7 +339,7 @@ function AdminLeagues() {
     setPointsSystem({});
     setSignupOpensAt("");
     setCarLockNever(false);
-    setCarLockAfter(1);
+    setCarLockAt("");
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
@@ -418,9 +416,9 @@ function AdminLeagues() {
                 </div>
                 <CarLockEditor
                   never={carLockNever}
-                  after={carLockAfter}
+                  at={carLockAt}
                   onNever={setCarLockNever}
-                  onAfter={setCarLockAfter}
+                  onAt={setCarLockAt}
                 />
                 <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
@@ -564,11 +562,7 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [signupOpensAt, setSignupOpensAt] = useState<string>(toLocalInput(league.signup_opens_at));
   const [discordRoleId, setDiscordRoleId] = useState<string>(league.discord_role_id ?? "");
   const [carLockNever, setCarLockNever] = useState<boolean>(!!league.car_lock_never);
-  const [carLockAfter, setCarLockAfter] = useState<number>(
-    typeof league.car_lock_after_division_count === "number" && league.car_lock_after_division_count >= 1
-      ? league.car_lock_after_division_count
-      : 1,
-  );
+  const [carLockAt, setCarLockAt] = useState<string>(toLocalInput(league.car_lock_at));
   const [saving, setSaving] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const announceFn = useServerFn(sendLeagueAnnouncement);
@@ -606,11 +600,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setSignupOpensAt(toLocalInput(league.signup_opens_at));
     setDiscordRoleId(league.discord_role_id ?? "");
     setCarLockNever(!!league.car_lock_never);
-    setCarLockAfter(
-      typeof league.car_lock_after_division_count === "number" && league.car_lock_after_division_count >= 1
-        ? league.car_lock_after_division_count
-        : 1,
-    );
+    setCarLockAt(toLocalInput(league.car_lock_at));
   };
 
   const submit = async (e: React.FormEvent | React.MouseEvent, publish: boolean) => {
@@ -645,7 +635,7 @@ function EditLeagueDialog({ league }: { league: any }) {
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
         discord_role_id: discordRoleId.trim() || null,
         car_lock_never: carLockNever,
-        car_lock_after_division_count: Math.max(1, Math.floor(carLockAfter || 1)),
+        car_lock_at: carLockNever ? null : (carLockAt ? new Date(carLockAt).toISOString() : null),
         published: publish,
       } as any)
       .eq("id", league.id);
@@ -716,9 +706,9 @@ function EditLeagueDialog({ league }: { league: any }) {
           </div>
           <CarLockEditor
             never={carLockNever}
-            after={carLockAfter}
+            at={carLockAt}
             onNever={setCarLockNever}
-            onAfter={setCarLockAfter}
+            onAt={setCarLockAt}
           />
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
