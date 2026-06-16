@@ -196,13 +196,14 @@ function TeamDetailPage() {
               {user && !isMember && <ApplyButton teamId={teamId} userId={user.id} />}
               {user && isMember && !isOwner && <LeaveButton teamId={teamId} userId={user.id} onLeft={() => navigate({ to: "/teams" })} />}
               {isOwner && <EditTeamButton team={team} />}
-              {isOwner && (
+              {(isOwner || isAdmin) && (
                 <Button
                   variant="outline"
                   size="sm"
                   className="gap-1 text-destructive"
                   onClick={async () => {
-                    if (!confirm("Slet team for evigt?")) return;
+                    if (!confirm("Slet team for evigt? Denne handling kan ikke fortrydes.")) return;
+                    if (!confirm("Er du HELT sikker? Teamet og alle dets data slettes permanent.")) return;
                     const { error } = await (supabase as any).from("teams").delete().eq("id", team.id);
                     if (error) toast.error(error.message);
                     else {
@@ -213,7 +214,7 @@ function TeamDetailPage() {
                     }
                   }}
                 >
-                  <Trash2 className="h-4 w-4" /> Slet team
+                  <Trash2 className="h-4 w-4" /> Slet team{isAdmin && !isOwner ? " (admin)" : ""}
                 </Button>
               )}
             </div>
