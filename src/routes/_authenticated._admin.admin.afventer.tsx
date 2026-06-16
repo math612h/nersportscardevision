@@ -43,6 +43,8 @@ function PendingApprovalsPage() {
   const sendMessageFn = useServerFn(sendAdminTemplateMessage);
   const fetchStatus = useServerFn(getAdminMessageStatus);
   const refreshNicks = useServerFn(refreshPendingDiscordNicknames);
+  const checkGuildFn = useServerFn(checkPendingGuildMembership);
+
 
   useEffect(() => {
     refreshNicks()
