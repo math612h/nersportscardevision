@@ -338,6 +338,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
         <DialogHeader><DialogTitle>Rediger {division.name}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div>
+            <Label>Dato & tid</Label>
+            <Input type="datetime-local" value={raceDate} onChange={(e) => setRaceDate(e.target.value)} />
+          </div>
+          <div>
             <Label>Point for hurtigste omgang (pr. klasse)</Label>
             <Input type="number" min={0} max={50} value={flPoints} onChange={(e) => setFlPoints(Number(e.target.value))} />
           </div>
