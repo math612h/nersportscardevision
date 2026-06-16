@@ -128,7 +128,8 @@ function PendingApprovalsPage() {
       for (const r of rows) map[r.user_id] = r.status;
       return map;
     },
-    staleTime: 60_000,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
   });
 
   const approveMut = useMutation({
