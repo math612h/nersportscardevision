@@ -69,6 +69,32 @@ export const setProfileApproval = createServerFn({ method: "POST" })
       .eq("id", data.targetUserId);
     if (upErr) throw new Error(upErr.message);
 
+    // When approving, remove the "afventer godkendelse" Discord notice
+    if (data.approved) {
+      try {
+        const { data: priv } = await supabaseAdmin
+          .from("profiles_private")
+          .select("pending_discord_message_id")
+          .eq("user_id", data.targetUserId)
+          .maybeSingle();
+        const msgId = (priv as { pending_discord_message_id?: string | null } | null)?.pending_discord_message_id ?? null;
+        if (msgId) {
+          const { deleteDiscordChannelMessage } = await import("./discord.server");
+          const delRes = await deleteDiscordChannelMessage("1516138512209018890", msgId);
+          if (!delRes.ok && delRes.status !== 404) {
+            console.error("Failed to delete pending-approval discord message", delRes);
+          }
+          await supabaseAdmin
+            .from("profiles_private")
+            .update({ pending_discord_message_id: null })
+            .eq("user_id", data.targetUserId);
+        }
+      } catch (e) {
+        console.error("pending-approval discord cleanup failed", e);
+      }
+    }
+
+
     // Fetch user's primary league signups (division_id null)
     const { data: myEntries } = await supabaseAdmin
       .from("entries")
