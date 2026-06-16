@@ -644,6 +644,8 @@ function EditLeagueDialog({ league }: { league: any }) {
         points_system: pointsSystem as any,
         signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
         discord_role_id: discordRoleId.trim() || null,
+        car_lock_never: carLockNever,
+        car_lock_after_division_count: Math.max(1, Math.floor(carLockAfter || 1)),
         published: publish,
       } as any)
       .eq("id", league.id);
