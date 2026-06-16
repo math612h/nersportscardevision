@@ -12,6 +12,16 @@ export type ThreadSummary = {
   lastSenderId: string;
 };
 
+export type GroupSummary = {
+  groupId: string;
+  name: string;
+  memberIds: string[];
+  lastBody: string | null;
+  lastAt: string | null;
+  lastSenderId: string | null;
+  unread: number;
+};
+
 export type SystemSummary = {
   unread: number;
   lastTitle: string | null;
@@ -20,11 +30,15 @@ export type SystemSummary = {
 
 export const listThreads = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<{ threads: ThreadSummary[]; system: SystemSummary }> => {
+  .handler(async ({ context }): Promise<{
+    threads: ThreadSummary[];
+    groups: GroupSummary[];
+    system: SystemSummary;
+  }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const me = context.userId;
 
-    // All DMs that involve me, newest first
+    // DMs
     const { data: msgs, error } = await (supabaseAdmin as any)
       .from("direct_messages")
       .select("sender_id,recipient_id,body,created_at,read_at")
@@ -36,8 +50,7 @@ export const listThreads = createServerFn({ method: "GET" })
     const map = new Map<string, ThreadSummary>();
     for (const m of (msgs ?? []) as any[]) {
       const other = m.sender_id === me ? m.recipient_id : m.sender_id;
-      const existing = map.get(other);
-      if (!existing) {
+      if (!map.has(other)) {
         map.set(other, {
           otherUserId: other,
           otherName: "",
@@ -71,6 +84,70 @@ export const listThreads = createServerFn({ method: "GET" })
       (a, b) => +new Date(b.lastAt) - +new Date(a.lastAt),
     );
 
+    // Groups I'm a member of
+    const { data: myMemberships } = await (supabaseAdmin as any)
+      .from("chat_group_members")
+      .select("group_id,last_read_at")
+      .eq("user_id", me);
+
+    const groupIds = (myMemberships ?? []).map((r: any) => r.group_id) as string[];
+    const lastReadByGroup = new Map<string, string>(
+      (myMemberships ?? []).map((r: any) => [r.group_id, r.last_read_at]),
+    );
+
+    const groups: GroupSummary[] = [];
+    if (groupIds.length > 0) {
+      const { data: gRows } = await (supabaseAdmin as any)
+        .from("chat_groups")
+        .select("id,name")
+        .in("id", groupIds);
+      const { data: allMembers } = await (supabaseAdmin as any)
+        .from("chat_group_members")
+        .select("group_id,user_id")
+        .in("group_id", groupIds);
+      const membersByGroup = new Map<string, string[]>();
+      for (const m of (allMembers ?? []) as any[]) {
+        const list = membersByGroup.get(m.group_id) ?? [];
+        list.push(m.user_id);
+        membersByGroup.set(m.group_id, list);
+      }
+
+      // Last message per group
+      const { data: gm } = await (supabaseAdmin as any)
+        .from("group_messages")
+        .select("group_id,sender_id,body,created_at")
+        .in("group_id", groupIds)
+        .order("created_at", { ascending: false })
+        .limit(500);
+      const lastByGroup = new Map<string, any>();
+      const unreadByGroup = new Map<string, number>();
+      for (const m of (gm ?? []) as any[]) {
+        if (!lastByGroup.has(m.group_id)) lastByGroup.set(m.group_id, m);
+        const lr = lastReadByGroup.get(m.group_id);
+        if (m.sender_id !== me && lr && new Date(m.created_at) > new Date(lr)) {
+          unreadByGroup.set(m.group_id, (unreadByGroup.get(m.group_id) ?? 0) + 1);
+        }
+      }
+
+      for (const g of (gRows ?? []) as any[]) {
+        const last = lastByGroup.get(g.id);
+        groups.push({
+          groupId: g.id,
+          name: g.name,
+          memberIds: membersByGroup.get(g.id) ?? [],
+          lastBody: last?.body ?? null,
+          lastAt: last?.created_at ?? null,
+          lastSenderId: last?.sender_id ?? null,
+          unread: unreadByGroup.get(g.id) ?? 0,
+        });
+      }
+      groups.sort((a, b) => {
+        const av = a.lastAt ? +new Date(a.lastAt) : 0;
+        const bv = b.lastAt ? +new Date(b.lastAt) : 0;
+        return bv - av;
+      });
+    }
+
     // System notifications summary
     const { data: notif } = await supabaseAdmin
       .from("notifications")
@@ -85,7 +162,7 @@ export const listThreads = createServerFn({ method: "GET" })
       lastAt: (notif?.[0] as any)?.created_at ?? null,
     };
 
-    return { threads, system };
+    return { threads, groups, system };
   });
 
 const getThreadSchema = z.object({ otherUserId: z.string().uuid() });
@@ -108,7 +185,6 @@ export const getThread = createServerFn({ method: "POST" })
       .limit(500);
     if (error) throw new Error(error.message);
 
-    // Mark unread incoming as read
     await (supabaseAdmin as any)
       .from("direct_messages")
       .update({ read_at: new Date().toISOString() })
@@ -158,7 +234,6 @@ export const sendMessage = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    // Sender display name for push
     const { data: me } = await supabaseAdmin
       .from("profiles")
       .select("display_name")
@@ -183,8 +258,6 @@ export const sendMessage = createServerFn({ method: "POST" })
       read_at: string | null;
     };
   });
-
-const markSysSchema = z.object({}).optional();
 
 export const markSystemRead = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -232,4 +305,215 @@ export const searchUsers = createServerFn({ method: "POST" })
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
     return { users: rows ?? [] };
+  });
+
+// ============== GROUPS ==============
+
+const createGroupSchema = z.object({
+  name: z.string().trim().min(1).max(80),
+  memberIds: z.array(z.string().uuid()).min(1).max(50),
+});
+
+export const createGroup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => createGroupSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const me = context.userId;
+    const members = Array.from(new Set([me, ...data.memberIds]));
+
+    const { data: g, error } = await (supabaseAdmin as any)
+      .from("chat_groups")
+      .insert({ name: data.name, created_by: me })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    const rows = members.map((uid) => ({ group_id: g.id, user_id: uid }));
+    const { error: mErr } = await (supabaseAdmin as any)
+      .from("chat_group_members")
+      .insert(rows);
+    if (mErr) throw new Error(mErr.message);
+
+    return { groupId: g.id as string };
+  });
+
+const renameGroupSchema = z.object({
+  groupId: z.string().uuid(),
+  name: z.string().trim().min(1).max(80),
+});
+
+export const renameGroup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => renameGroupSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: isMember } = await (supabaseAdmin as any).rpc("is_chat_group_member", {
+      _group_id: data.groupId,
+      _user_id: context.userId,
+    });
+    if (!isMember) throw new Error("Du er ikke medlem af denne gruppe.");
+
+    const { error } = await (supabaseAdmin as any)
+      .from("chat_groups")
+      .update({ name: data.name })
+      .eq("id", data.groupId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+const groupIdSchema = z.object({ groupId: z.string().uuid() });
+
+export const getGroup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => groupIdSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const me = context.userId;
+
+    const { data: isMember } = await (supabaseAdmin as any).rpc("is_chat_group_member", {
+      _group_id: data.groupId,
+      _user_id: me,
+    });
+    if (!isMember) throw new Error("Du er ikke medlem af denne gruppe.");
+
+    const [{ data: group }, { data: memberRows }, { data: messages }] = await Promise.all([
+      (supabaseAdmin as any).from("chat_groups").select("id,name,created_by,created_at").eq("id", data.groupId).single(),
+      (supabaseAdmin as any).from("chat_group_members").select("user_id,joined_at").eq("group_id", data.groupId),
+      (supabaseAdmin as any)
+        .from("group_messages")
+        .select("id,sender_id,body,created_at")
+        .eq("group_id", data.groupId)
+        .order("created_at", { ascending: true })
+        .limit(500),
+    ]);
+
+    const memberIds = (memberRows ?? []).map((m: any) => m.user_id);
+    const { data: profiles } = await supabaseAdmin
+      .from("profiles")
+      .select("id,display_name,avatar_url")
+      .in("id", memberIds.length > 0 ? memberIds : ["00000000-0000-0000-0000-000000000000"]);
+
+    // Mark read
+    await (supabaseAdmin as any)
+      .from("chat_group_members")
+      .update({ last_read_at: new Date().toISOString() })
+      .eq("group_id", data.groupId)
+      .eq("user_id", me);
+
+    return {
+      group,
+      members: (profiles ?? []) as Array<{ id: string; display_name: string | null; avatar_url: string | null }>,
+      messages: (messages ?? []) as Array<{ id: string; sender_id: string; body: string; created_at: string }>,
+    };
+  });
+
+const sendGroupSchema = z.object({
+  groupId: z.string().uuid(),
+  body: z.string().trim().min(1).max(4000),
+});
+
+export const sendGroupMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => sendGroupSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const me = context.userId;
+
+    const { data: isMember } = await (supabaseAdmin as any).rpc("is_chat_group_member", {
+      _group_id: data.groupId,
+      _user_id: me,
+    });
+    if (!isMember) throw new Error("Du er ikke medlem af denne gruppe.");
+
+    const { data: row, error } = await (supabaseAdmin as any)
+      .from("group_messages")
+      .insert({ group_id: data.groupId, sender_id: me, body: data.body })
+      .select("id,sender_id,body,created_at")
+      .single();
+    if (error) throw new Error(error.message);
+
+    // Bump my last_read_at so I don't get unread for my own msg
+    await (supabaseAdmin as any)
+      .from("chat_group_members")
+      .update({ last_read_at: new Date().toISOString() })
+      .eq("group_id", data.groupId)
+      .eq("user_id", me);
+
+    // Push to other members
+    const [{ data: members }, { data: prof }, { data: g }] = await Promise.all([
+      (supabaseAdmin as any).from("chat_group_members").select("user_id").eq("group_id", data.groupId).neq("user_id", me),
+      supabaseAdmin.from("profiles").select("display_name").eq("id", me).maybeSingle(),
+      (supabaseAdmin as any).from("chat_groups").select("name").eq("id", data.groupId).single(),
+    ]);
+    const senderName = (prof as any)?.display_name ?? "Ny besked";
+    const title = `${(g as any)?.name ?? "Gruppe"}`;
+    const { sendPushToUser } = await import("./push.server");
+    for (const m of (members ?? []) as any[]) {
+      void sendPushToUser(m.user_id, {
+        title,
+        body: `${senderName}: ${data.body.slice(0, 120)}`,
+        url: `/beskeder/gruppe/${data.groupId}`,
+        tag: `grp:${data.groupId}`,
+      }).catch(() => {});
+    }
+
+    return row;
+  });
+
+const memberMutSchema = z.object({
+  groupId: z.string().uuid(),
+  userId: z.string().uuid(),
+});
+
+export const addGroupMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => memberMutSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: isMember } = await (supabaseAdmin as any).rpc("is_chat_group_member", {
+      _group_id: data.groupId,
+      _user_id: context.userId,
+    });
+    if (!isMember) throw new Error("Du er ikke medlem af denne gruppe.");
+    const { error } = await (supabaseAdmin as any)
+      .from("chat_group_members")
+      .upsert({ group_id: data.groupId, user_id: data.userId }, { onConflict: "group_id,user_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const removeGroupMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => memberMutSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: isMember } = await (supabaseAdmin as any).rpc("is_chat_group_member", {
+      _group_id: data.groupId,
+      _user_id: context.userId,
+    });
+    if (!isMember && data.userId !== context.userId) {
+      throw new Error("Du er ikke medlem af denne gruppe.");
+    }
+    const { error } = await (supabaseAdmin as any)
+      .from("chat_group_members")
+      .delete()
+      .eq("group_id", data.groupId)
+      .eq("user_id", data.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const leaveGroup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => groupIdSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await (supabaseAdmin as any)
+      .from("chat_group_members")
+      .delete()
+      .eq("group_id", data.groupId)
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
