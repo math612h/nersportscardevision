@@ -219,6 +219,65 @@ export type Database = {
         }
         Relationships: []
       }
+      division_practice_sessions: {
+        Row: {
+          created_at: string
+          division_id: string
+          has_qualifying: boolean
+          has_race: boolean
+          id: string
+          lobby_code: string | null
+          lobby_password: string | null
+          practice_minutes: number | null
+          qualifying_minutes: number | null
+          race_minutes: number | null
+          server_name: string | null
+          settings: Json
+          starts_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          division_id: string
+          has_qualifying?: boolean
+          has_race?: boolean
+          id?: string
+          lobby_code?: string | null
+          lobby_password?: string | null
+          practice_minutes?: number | null
+          qualifying_minutes?: number | null
+          race_minutes?: number | null
+          server_name?: string | null
+          settings?: Json
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          division_id?: string
+          has_qualifying?: boolean
+          has_race?: boolean
+          id?: string
+          lobby_code?: string | null
+          lobby_password?: string | null
+          practice_minutes?: number | null
+          qualifying_minutes?: number | null
+          race_minutes?: number | null
+          server_name?: string | null
+          settings?: Json
+          starts_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "division_practice_sessions_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       division_reserve_offers: {
         Row: {
           absentee_user_id: string

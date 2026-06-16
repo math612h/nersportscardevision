@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { PracticeSessionsAdmin } from "@/components/PracticeSessionsAdmin";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger")({
   component: AdminDivisions,
@@ -111,6 +112,7 @@ function AdminDivisions() {
                     })}
                   </div>
                 )}
+                <PracticeSessionsAdmin divisionId={d.id} />
               </CardContent>
             </Card>
           );

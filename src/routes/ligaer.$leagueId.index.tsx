@@ -29,6 +29,7 @@ import { CARS_BY_CLASS, classColor } from "@/lib/lmu-cars";
 import { Checkbox } from "@/components/ui/checkbox";
 import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
 import { GuestBlur } from "@/components/GuestGate";
+import { PracticeSessionsList } from "@/components/PracticeSessionsList";
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
   component: LeagueDetail,
@@ -388,20 +389,25 @@ function LeagueDetail() {
             );
             if (isGuest) {
               return (
-                <div key={d.id} className="group block h-full opacity-90" aria-disabled="true">
-                  {cardInner}
+                <div key={d.id} className="space-y-2">
+                  <div className="group block h-full opacity-90" aria-disabled="true">
+                    {cardInner}
+                  </div>
+                  <PracticeSessionsList divisionId={d.id} />
                 </div>
               );
             }
             return (
-              <Link
-                key={d.id}
-                to="/ligaer/$leagueId/afdeling/$divisionId"
-                params={{ leagueId, divisionId: d.id }}
-                className="group block h-full"
-              >
-                {cardInner}
-              </Link>
+              <div key={d.id} className="space-y-2">
+                <Link
+                  to="/ligaer/$leagueId/afdeling/$divisionId"
+                  params={{ leagueId, divisionId: d.id }}
+                  className="group block h-full"
+                >
+                  {cardInner}
+                </Link>
+                <PracticeSessionsList divisionId={d.id} />
+              </div>
             );
           })}
         </div>
