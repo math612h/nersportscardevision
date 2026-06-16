@@ -1679,7 +1679,7 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
   const cars = CARS_BY_CLASS[myEntry.car_class] ?? [];
 
   const save = async () => {
-    if (locked) return toast.error("Første afdeling er kørt – bilvalg er låst.");
+    if (locked) return toast.error("Bilvalg er låst.");
     if (!carModel) return toast.error("Vælg din bil.");
     const { error } = await (supabase as any)
       .from("entries")
