@@ -1,17 +1,18 @@
-import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Bell, Search, MessageSquare } from "lucide-react";
+import { Bell, Search, MessageSquare, Users, Plus } from "lucide-react";
 import { listThreads, searchUsers } from "@/lib/messages.functions";
 import { UserAvatarOnly } from "@/components/UserAvatar";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CreateGroupDialog } from "@/components/CreateGroupDialog";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useQueryClient } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated/beskeder")({
   head: () => ({ meta: [{ title: "Beskeder — LMU Danmark" }] }),
@@ -22,7 +23,9 @@ function MessagesLayout() {
   const { user } = useAuth();
   const qc = useQueryClient();
   const location = useLocation();
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
 
   const { data, refetch } = useQuery({
     queryKey: ["msg-threads"],
@@ -36,7 +39,6 @@ function MessagesLayout() {
     queryFn: () => searchUsers({ data: { q: q.trim() } }),
   });
 
-  // Realtime: refetch threads + active thread when new DM arrives
   useEffect(() => {
     if (!user) return;
     const ch = supabase
@@ -57,6 +59,16 @@ function MessagesLayout() {
           qc.invalidateQueries({ queryKey: ["msg-system"] });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "group_messages" },
+        () => void refetch(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_group_members", filter: `user_id=eq.${user.id}` },
+        () => void refetch(),
+      )
       .subscribe();
     return () => {
       void supabase.removeChannel(ch);
@@ -65,22 +77,27 @@ function MessagesLayout() {
 
   const isIndex = location.pathname === "/beskeder" || location.pathname === "/beskeder/";
   const threads = data?.threads ?? [];
+  const groups = data?.groups ?? [];
   const system = data?.system;
 
-  // Build sidebar items: system first, then DM threads, then search results not yet in threads
   const threadIds = new Set(threads.map((t) => t.otherUserId));
   const extraUsers = (search?.users ?? []).filter((u: any) => !threadIds.has(u.id));
 
   return (
-    <div className="grid h-[calc(100vh-8rem)] grid-cols-1 gap-0 md:grid-cols-[320px_1fr] md:overflow-hidden md:rounded-lg md:border md:border-border">
-      {/* Sidebar */}
+    <div className="grid h-[calc(100vh-8rem)] grid-cols-1 gap-0 md:grid-cols-[320px_1fr] md:overflow-hidden md:rounded-lg md:border md:border-border md:bg-card md:shadow-sm">
       <aside
         className={cn(
           "flex h-full min-h-0 flex-col border-border md:border-r",
           isIndex ? "block" : "hidden md:flex",
         )}
       >
-        <div className="border-b border-border p-3">
+        <div className="space-y-2 border-b border-border p-3">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold">Beskeder</h2>
+            <Button size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-3.5 w-3.5" /> Ny gruppe
+            </Button>
+          </div>
           <div className="relative">
             <Search className="pointer-events-none absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -92,10 +109,10 @@ function MessagesLayout() {
           </div>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {/* System thread */}
+          {/* System */}
           <Link
             to="/beskeder/system"
-            className="flex items-center gap-3 border-b border-border px-3 py-3 hover:bg-accent"
+            className="flex items-center gap-3 border-b border-border px-3 py-3 transition-colors hover:bg-accent"
             activeProps={{ className: "bg-accent" }}
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -119,12 +136,56 @@ function MessagesLayout() {
             )}
           </Link>
 
+          {/* Groups */}
+          {groups.length > 0 && (
+            <div className="border-b border-border bg-muted/30 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Grupper
+            </div>
+          )}
+          {groups.map((g) => (
+            <Link
+              key={g.groupId}
+              to="/beskeder/gruppe/$groupId"
+              params={{ groupId: g.groupId }}
+              className="flex items-center gap-3 border-b border-border px-3 py-3 transition-colors hover:bg-accent"
+              activeProps={{ className: "bg-accent" }}
+            >
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                <Users className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-medium">{g.name}</p>
+                  {g.lastAt && (
+                    <span className="shrink-0 text-[10px] text-muted-foreground">
+                      {formatDistanceToNow(new Date(g.lastAt), { addSuffix: false, locale: da })}
+                    </span>
+                  )}
+                </div>
+                <p className="truncate text-xs text-muted-foreground">
+                  {g.lastBody
+                    ? `${g.lastSenderId === user?.id ? "Du: " : ""}${g.lastBody}`
+                    : `${g.memberIds.length} medlemmer`}
+                </p>
+              </div>
+              {g.unread > 0 && (
+                <Badge variant="destructive" className="h-5 px-1.5 text-[10px]">{g.unread}</Badge>
+              )}
+            </Link>
+          ))}
+
+          {/* DMs */}
+          {threads.length > 0 && (
+            <div className="border-b border-border bg-muted/30 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Direkte beskeder
+            </div>
+          )}
           {threads.map((t) => (
             <Link
               key={t.otherUserId}
               to="/beskeder/$threadId"
               params={{ threadId: t.otherUserId }}
-              className="flex items-center gap-3 border-b border-border px-3 py-3 hover:bg-accent"
+              className="flex items-center gap-3 border-b border-border px-3 py-3 transition-colors hover:bg-accent"
               activeProps={{ className: "bg-accent" }}
             >
               <UserAvatarOnly userId={t.otherUserId} fallbackName={t.otherName} size="md" />
@@ -146,7 +207,7 @@ function MessagesLayout() {
           ))}
 
           {extraUsers.length > 0 && (
-            <div className="px-3 py-2 text-[10px] uppercase tracking-wide text-muted-foreground">
+            <div className="border-b border-border bg-muted/30 px-3 py-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
               Andre brugere
             </div>
           )}
@@ -165,16 +226,15 @@ function MessagesLayout() {
             </Link>
           ))}
 
-          {threads.length === 0 && extraUsers.length === 0 && q.trim().length === 0 && (
+          {threads.length === 0 && groups.length === 0 && extraUsers.length === 0 && q.trim().length === 0 && (
             <div className="p-6 text-center text-xs text-muted-foreground">
-              Ingen samtaler endnu. Søg efter en bruger for at starte en chat.
+              Ingen samtaler endnu. Søg efter en bruger eller opret en gruppe.
             </div>
           )}
         </div>
       </aside>
 
-      {/* Main pane */}
-      <section className={cn("flex h-full min-h-0 flex-col", isIndex ? "hidden md:flex" : "flex")}>
+      <section className={cn("flex h-full min-h-0 flex-col bg-background", isIndex ? "hidden md:flex" : "flex")}>
         {isIndex ? (
           <div className="flex flex-1 items-center justify-center text-center text-sm text-muted-foreground">
             <div>
@@ -186,6 +246,12 @@ function MessagesLayout() {
           <Outlet />
         )}
       </section>
+
+      <CreateGroupDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={(id) => navigate({ to: "/beskeder/gruppe/$groupId", params: { groupId: id } })}
+      />
     </div>
   );
 }
