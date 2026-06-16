@@ -924,6 +924,7 @@ export type Database = {
           discord_server_nickname: string | null
           discord_user_id: string | null
           discord_username: string | null
+          pending_discord_message_id: string | null
           updated_at: string
           user_id: string
         }
@@ -934,6 +935,7 @@ export type Database = {
           discord_server_nickname?: string | null
           discord_user_id?: string | null
           discord_username?: string | null
+          pending_discord_message_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -944,6 +946,7 @@ export type Database = {
           discord_server_nickname?: string | null
           discord_user_id?: string | null
           discord_username?: string | null
+          pending_discord_message_id?: string | null
           updated_at?: string
           user_id?: string
         }

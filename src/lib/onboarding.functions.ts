@@ -116,11 +116,18 @@ export const completeOnboarding = createServerFn({ method: "POST" })
           `LMU: ${data.lmu_name}\n` +
           `Discord: ${discordName}`;
         const { sendDiscordChannelMessage } = await import("./discord.server");
-        await sendDiscordChannelMessage("1516138512209018890", content, [ADMIN_ROLE_ID]);
+        const res = await sendDiscordChannelMessage("1516138512209018890", content, [ADMIN_ROLE_ID]);
+        if (res.ok && res.messageId) {
+          await supabaseAdmin
+            .from("profiles_private")
+            .update({ pending_discord_message_id: res.messageId })
+            .eq("user_id", context.userId);
+        }
       } catch (e) {
         console.error("pending-approval notify failed", e);
       }
     }
+
 
     return { ok: true };
   });
