@@ -59,7 +59,7 @@ async function signed(bucket: string, path: string) {
 
 function TeamDetailPage() {
   const { teamId } = useParams({ from: "/teams/$teamId" });
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const qc = useQueryClient();
   const navigate = useNavigate();
 
