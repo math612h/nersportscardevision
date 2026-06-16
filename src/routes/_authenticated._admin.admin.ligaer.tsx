@@ -714,6 +714,12 @@ function EditLeagueDialog({ league }: { league: any }) {
               Når en kører tilmelder sig denne liga, får de automatisk denne rolle på Discord (hvis de har forbundet deres Discord-konto). Find rolle-ID'et i Discord ved at højreklikke på rollen i Server Settings → Roles (Developer Mode skal være slået til).
             </p>
           </div>
+          <CarLockEditor
+            never={carLockNever}
+            after={carLockAfter}
+            onNever={setCarLockNever}
+            onAfter={setCarLockAfter}
+          />
           <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
