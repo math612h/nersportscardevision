@@ -1716,9 +1716,12 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
           </div>
           {locked && (
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-              {lockThreshold === 1
-                ? "Første afdeling er kørt – bilvalg kan ikke længere ændres."
-                : `${lockThreshold} afdelinger er kørt – bilvalg kan ikke længere ændres.`}
+              Bilvalg er låst{lockAtDate ? ` (siden ${lockAtDate.toLocaleString("da-DK")})` : ""} – kan ikke længere ændres.
+            </p>
+          )}
+          {!locked && !lockNever && lockAtDate && (
+            <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
+              Bilvalg låses {lockAtDate.toLocaleString("da-DK")}.
             </p>
           )}
         </div>
