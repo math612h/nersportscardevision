@@ -47,18 +47,20 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Kun admins kan sende beskeder til brugere.");
 
     const tpl = ADMIN_MESSAGE_TEMPLATES[data.template];
+    const inviteUrl = process.env.DISCORD_INVITE_URL ?? "";
+    const body = tpl.body.replace(/\{discord_invite\}/g, inviteUrl || "(Discord-invitations-link mangler — kontakt en admin)");
 
     // 1) Website notification
     const { error: notifErr } = await supabaseAdmin.from("notifications").insert({
       user_id: data.targetUserId,
       title: tpl.title,
-      body: tpl.body,
+      body,
       link: tpl.link,
     });
     if (notifErr) throw new Error(notifErr.message);
     try {
       const { sendPushToUser } = await import("./push.server");
-      void sendPushToUser(data.targetUserId, { title: tpl.title, body: tpl.body.slice(0, 140), url: tpl.link }).catch(() => {});
+      void sendPushToUser(data.targetUserId, { title: tpl.title, body: body.slice(0, 140), url: tpl.link }).catch(() => {});
     } catch (_) {}
 
     // 2) Discord DM (best-effort)
@@ -71,7 +73,7 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
     const discordUserId = (priv as { discord_user_id?: string | null } | null)?.discord_user_id ?? null;
     if (discordUserId) {
       const { sendDiscordDM } = await import("./discord.server");
-      const content = `**${tpl.title}**\n\n${tpl.body}\n\nhttps://lmudanmark.dk${tpl.link}`;
+      const content = `**${tpl.title}**\n\n${body}\n\nhttps://lmudanmark.dk${tpl.link}`;
       const res = await sendDiscordDM(discordUserId, content);
       discordResult = res.ok
         ? { ok: true, status: res.status }
