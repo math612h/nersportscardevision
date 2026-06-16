@@ -257,7 +257,7 @@ export async function sendDiscordChannelMessage(
   channelId: string,
   content: string,
   roleMentions?: string[],
-): Promise<{ ok: boolean; status: number; message?: string }> {
+): Promise<{ ok: boolean; status: number; message?: string; messageId?: string }> {
   const botToken = getEnv("DISCORD_BOT_TOKEN");
   const allowedMentions = roleMentions && roleMentions.length > 0
     ? { parse: [] as string[], roles: roleMentions }
@@ -270,8 +270,30 @@ export async function sendDiscordChannelMessage(
     },
     body: JSON.stringify({ content: content.slice(0, 1900), allowed_mentions: allowedMentions }),
   });
-  if (msgRes.status === 200 || msgRes.status === 201) return { ok: true, status: msgRes.status };
+  if (msgRes.status === 200 || msgRes.status === 201) {
+    let messageId: string | undefined;
+    try {
+      const json = (await msgRes.json()) as { id?: string };
+      messageId = json?.id;
+    } catch (_) {}
+    return { ok: true, status: msgRes.status, messageId };
+  }
   const text = await msgRes.text().catch(() => "");
   return { ok: false, status: msgRes.status, message: text };
 }
+
+export async function deleteDiscordChannelMessage(
+  channelId: string,
+  messageId: string,
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const botToken = getEnv("DISCORD_BOT_TOKEN");
+  const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages/${messageId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bot ${botToken}` },
+  });
+  if (res.status === 204 || res.status === 200) return { ok: true, status: res.status };
+  const text = await res.text().catch(() => "");
+  return { ok: false, status: res.status, message: text };
+}
+
 
