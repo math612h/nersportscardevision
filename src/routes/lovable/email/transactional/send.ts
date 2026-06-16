@@ -115,6 +115,31 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           )
         }
 
+        // Authorization: prevent abuse as an open mail relay.
+        // - Template-defined fixed recipient (`template.to`) is always allowed.
+        // - Otherwise the caller may only send to their own verified email,
+        //   unless they hold the 'admin' role.
+        if (!template.to) {
+          const callerEmail = (user.email ?? '').toLowerCase()
+          const targetEmail = effectiveRecipient.toLowerCase()
+          if (callerEmail !== targetEmail) {
+            const { data: isAdmin } = await supabase.rpc('has_role', {
+              _user_id: user.id,
+              _role: 'admin',
+            })
+            if (!isAdmin) {
+              console.warn('Email send blocked: recipient mismatch and not admin', {
+                user_id: user.id,
+                recipient_redacted: redactEmail(effectiveRecipient),
+              })
+              return Response.json(
+                { error: 'Forbidden: can only send to your own email' },
+                { status: 403 }
+              )
+            }
+          }
+        }
+
         // 2. Check suppression list (fail-closed: if we can't verify, don't send)
         const { data: suppressed, error: suppressionError } = await supabase
           .from('suppressed_emails')
