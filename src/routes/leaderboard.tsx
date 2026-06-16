@@ -90,7 +90,7 @@ function LeaderboardPage() {
     queryKey: ["leaderboard"],
     queryFn: async () => {
       const data = await fetchLeaderboard();
-      return data.map((r) => ({ user_id: null, ...r })) as Row[];
+      return data as Row[];
     },
   });
 
