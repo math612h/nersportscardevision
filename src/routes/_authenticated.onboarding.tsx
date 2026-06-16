@@ -128,14 +128,14 @@ function OnboardingPage() {
                 placeholder="fx Anders Jensen"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Skal være dit <span className="font-medium text-foreground">rigtige fornavn og efternavn</span> — ingen forkortelser, kælenavne eller initialer. Du <span className="font-medium text-foreground">SKAL</span> desuden ændre dit servernavn (kaldenavn) på LMU Danmark Discord-serveren til <span className="font-medium text-foreground">præcis det samme fornavn og efternavn</span>. Det skal matche 100% — inklusive store/små bogstaver og mellemrum. Profiler uden korrekt navn — eller hvor Discord-navnet ikke matcher 100% — bliver ikke godkendt.
+                Skal være dit <span className="font-medium text-foreground">rigtige fulde fornavn og efternavn</span> — ingen forkortelser, kælenavne eller initialer. Dit <span className="font-medium text-foreground">servernavn (kaldenavn) på LMU Danmark Discord-serveren SKAL matche</span> dit navn her på siden. Ellers bliver din profil ikke godkendt.
               </p>
             </div>
             <div>
               <Label>LMU-navn</Label>
               <Input value={lmuName} onChange={(e) => setLmuName(e.target.value)} maxLength={80} required disabled={!discordLinked}
                 placeholder="Som det står i Le Mans Ultimate" />
-              <p className="mt-1 text-xs text-muted-foreground">Skal matche dit navn i spillet 100% – bruges til at koble løbsresultater til din konto.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Skal matche dit navn i spillet <span className="font-medium text-foreground">100% — inklusive store/små bogstaver og mellemrum</span>, præcis som det står in-game. Bruges til at koble løbsresultater til din konto.</p>
             </div>
             <div>
               <Label>Email</Label>
