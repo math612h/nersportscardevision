@@ -378,6 +378,12 @@ function AdminLeagues() {
                   <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
                   <p className="text-xs text-muted-foreground">Lad være tom for at holde tilmelding lukket. En nedtælling vises på ligasiden indtil tidspunktet.</p>
                 </div>
+                <CarLockEditor
+                  never={carLockNever}
+                  after={carLockAfter}
+                  onNever={setCarLockNever}
+                  onAfter={setCarLockAfter}
+                />
                 <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
