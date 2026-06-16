@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
+import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +17,7 @@ import { setProfileApproval } from "@/lib/leagues.functions";
 import { sendAdminTemplateMessage, getAdminMessageStatus } from "@/lib/admin-messages.functions";
 import { refreshPendingDiscordNicknames } from "@/lib/discord-refresh.functions";
 import { checkPendingGuildMembership } from "@/lib/discord-guild.functions";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 function formatRelativeDk(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -46,14 +46,35 @@ function PendingApprovalsPage() {
   const checkGuildFn = useServerFn(checkPendingGuildMembership);
 
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const runRefresh = async (silent = true) => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      const res = await refreshNicks();
+      if (res?.ok && res.updated > 0) {
+        await qc.invalidateQueries({ queryKey: ["admin-pending-users"] });
+      }
+      await qc.invalidateQueries({ queryKey: ["admin-guild-status"] });
+      if (!silent) {
+        toast.success(
+          res?.ok
+            ? `Opdateret (${res.updated ?? 0} navne ændret)`
+            : "Kunne ikke opdatere",
+        );
+      }
+    } catch (e) {
+      if (!silent) toast.error(e instanceof Error ? e.message : "Fejl ved opdatering");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    refreshNicks()
-      .then((res) => {
-        if (res?.ok && res.updated > 0) {
-          qc.invalidateQueries({ queryKey: ["admin-pending-users"] });
-        }
-      })
-      .catch(() => {});
+    void runRefresh(true);
+    const id = window.setInterval(() => void runRefresh(true), 30_000);
+    return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -107,7 +128,8 @@ function PendingApprovalsPage() {
       for (const r of rows) map[r.user_id] = r.status;
       return map;
     },
-    staleTime: 60_000,
+    staleTime: 15_000,
+    refetchInterval: 30_000,
   });
 
   const approveMut = useMutation({
@@ -151,6 +173,16 @@ function PendingApprovalsPage() {
         </Link>
         <UserCheck className="h-6 w-6 text-primary" />
         <h1 className="text-2xl font-bold">Afventer godkendelse</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          className="ml-auto gap-2"
+          onClick={() => void runRefresh(false)}
+          disabled={refreshing}
+        >
+          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          Opdater Discord-navne
+        </Button>
       </div>
 
       {isLoading ? (

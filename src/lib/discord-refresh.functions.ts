@@ -39,10 +39,12 @@ export const refreshPendingDiscordNicknames = createServerFn({ method: "POST" })
       checked++;
       try {
         const member = await fetchDiscordGuildMember(row.discord_user_id);
-        if (member && (member.nick ?? null) !== (row.discord_server_nickname ?? null)) {
+        // Always write the live value (incl. null) so stale cache can't linger.
+        const liveNick = member?.nick ?? null;
+        if (liveNick !== (row.discord_server_nickname ?? null)) {
           await supabaseAdmin
             .from("profiles_private")
-            .update({ discord_server_nickname: member.nick })
+            .update({ discord_server_nickname: liveNick })
             .eq("user_id", row.user_id);
           updated++;
         }
