@@ -376,39 +376,35 @@ function LeagueDetail() {
                           <span className="font-mono font-medium truncate">{lobby.lobby_code}</span>
                         </li>
                       )}
-                      {lobby?.lobby_password && (
-                        <li className="flex justify-between gap-2">
-                          <span className="text-muted-foreground">Password</span>
-                          <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
-                        </li>
-                      )}
-                    </ul>
+                  {lobby?.lobby_password && (
+                    <li className="flex justify-between gap-2">
+                      <span className="text-muted-foreground">Password</span>
+                      <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
+                    </li>
                   )}
-                </CardContent>
-              </Card>
-            );
-            if (isGuest) {
-              return (
-                <div key={d.id} className="space-y-2">
-                  <div className="group block h-full opacity-90" aria-disabled="true">
-                    {cardInner}
-                  </div>
-                  <PracticeSessionsList divisionId={d.id} />
-                </div>
-              );
-            }
-            return (
-              <div key={d.id} className="space-y-2">
-                <Link
-                  to="/ligaer/$leagueId/afdeling/$divisionId"
-                  params={{ leagueId, divisionId: d.id }}
-                  className="group block h-full"
-                >
-                  {cardInner}
-                </Link>
-                <PracticeSessionsList divisionId={d.id} />
-              </div>
-            );
+                </ul>
+              )}
+              <PracticeSessionsList divisionId={d.id} />
+            </CardContent>
+          </Card>
+        );
+        if (isGuest) {
+          return (
+            <div key={d.id} className="group block h-full opacity-90" aria-disabled="true">
+              {cardInner}
+            </div>
+          );
+        }
+        return (
+          <Link
+            key={d.id}
+            to="/ligaer/$leagueId/afdeling/$divisionId"
+            params={{ leagueId, divisionId: d.id }}
+            className="group block h-full"
+          >
+            {cardInner}
+          </Link>
+        );
           })}
         </div>
       </section>
