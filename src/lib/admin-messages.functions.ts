@@ -71,14 +71,15 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
         inGuild = res.inGuild;
       }
 
+      const wrongTpl = ADMIN_MESSAGE_TEMPLATES.wrong_name;
       if (inGuild) {
-        body = tpl.bodyInGuild;
+        body = wrongTpl.bodyInGuild;
       } else {
         const inviteUrl = process.env.DISCORD_INVITE_URL ?? "";
-        body = tpl.bodyNotInGuild.replace(/\{discord_invite\}/g, inviteUrl || "(Discord-invitations-link mangler — kontakt en admin)");
+        body = wrongTpl.bodyNotInGuild.replace(/\{discord_invite\}/g, inviteUrl || "(Discord-invitations-link mangler — kontakt en admin)");
       }
     } else {
-      body = (tpl as typeof ADMIN_MESSAGE_TEMPLATES["profile_approved"]).body;
+      body = ADMIN_MESSAGE_TEMPLATES.profile_approved.body;
     }
 
     // 1) Website notification
