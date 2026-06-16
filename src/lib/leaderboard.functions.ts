@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 
 export type LeaderboardRow = {
   id: string;
+  user_id: string | null;
   driver_name: string;
   track: string;
   layout: string | null;
@@ -23,7 +24,7 @@ export const getLeaderboardRows = createServerFn({ method: "GET" }).handler(asyn
     const to = from + PAGE_SIZE - 1;
     const { data, error } = await supabaseAdmin
       .from("leaderboard_times")
-      .select("id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at")
+      .select("id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at")
       .order("best_lap_ms", { ascending: true })
       .range(from, to);
 
