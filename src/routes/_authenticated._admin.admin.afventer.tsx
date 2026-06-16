@@ -185,6 +185,21 @@ function PendingApprovalsPage() {
                         Navne-besked sendt {formatRelativeDk(wrongNameStatus[p.id])}
                       </Badge>
                     )}
+                    {guildStatus?.[p.id] === "in_guild" && (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3 w-3" /> På Discord-server
+                      </Badge>
+                    )}
+                    {guildStatus?.[p.id] === "not_member" && (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-red-500/50 text-red-600 dark:text-red-400">
+                        <XCircle className="h-3 w-3" /> Ikke på Discord-server
+                      </Badge>
+                    )}
+                    {guildStatus?.[p.id] === "not_linked" && (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-muted-foreground/40 text-muted-foreground">
+                        <HelpCircle className="h-3 w-3" /> Discord ikke tilknyttet
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1">
