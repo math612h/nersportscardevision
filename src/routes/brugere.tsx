@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Users, Search, CheckCircle2 } from "lucide-react";
+import { Users, Search, CheckCircle2, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,8 @@ type ProfileRow = {
   approved: boolean;
 };
 
+type RatingRow = { user_id: string; score: number | null; percentile: number | null };
+
 async function signed(path: string) {
   const { data } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24);
   return data?.signedUrl ?? null;
@@ -46,6 +48,19 @@ function UsersPage() {
         .order("display_name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
+    },
+  });
+
+  const { data: ratings } = useQuery({
+    queryKey: ["all-user-ratings"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("user_ratings")
+        .select("user_id,score,percentile");
+      if (error) throw error;
+      const m: Record<string, RatingRow> = {};
+      (data ?? []).forEach((r: RatingRow) => { m[r.user_id] = r; });
+      return m;
     },
   });
 
@@ -81,6 +96,8 @@ function UsersPage() {
     );
   }, [profiles, q]);
 
+  const totalCount = profiles?.length ?? 0;
+
   return (
     <div className="space-y-6">
       <header className="space-y-2">
@@ -88,7 +105,9 @@ function UsersPage() {
           <Users className="h-5 w-5" />
           <h1 className="text-2xl font-bold tracking-tight">Brugere</h1>
         </div>
-        <p className="text-sm text-muted-foreground">Alle brugere på LMU Danmark.</p>
+        <p className="text-sm text-muted-foreground">
+          {totalCount} {totalCount === 1 ? "bruger" : "brugere"} på LMU Danmark.
+        </p>
       </header>
 
       <div className="relative max-w-sm">
@@ -103,11 +122,13 @@ function UsersPage() {
           {filtered.map((p) => {
             const initials = (p.display_name || "?").slice(0, 2).toUpperCase();
             const avatarUrl = avatars?.[p.id];
+            const rating = ratings?.[p.id];
+            const elo = rating?.score != null ? Math.round(rating.score) : null;
             return (
               <Link key={p.id} to="/profil/$userId" params={{ userId: p.id }}>
-                <Card className="transition hover:border-primary">
+                <Card className="h-full transition hover:border-primary">
                   <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-12 w-12">
                       {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
                       <AvatarFallback>{initials}</AvatarFallback>
                     </Avatar>
@@ -123,7 +144,16 @@ function UsersPage() {
                       </Badge>
                     )}
                   </CardHeader>
-                  <CardContent className="pt-0" />
+                  <CardContent className="pt-0">
+                    <div className="flex items-center gap-1.5 text-xs">
+                      <Trophy className="h-3.5 w-3.5 text-primary" />
+                      <span className="font-medium text-muted-foreground">Elo:</span>
+                      <span className="font-semibold tabular-nums">{elo ?? "–"}</span>
+                      {rating?.percentile != null && (
+                        <span className="text-muted-foreground">· top {Math.max(1, Math.round(100 - rating.percentile))}%</span>
+                      )}
+                    </div>
+                  </CardContent>
                 </Card>
               </Link>
             );
