@@ -183,6 +183,44 @@ function BriefingOpenEditor({ value, onChange }: { value: EventSettings; onChang
   );
 }
 
+function CarLockEditor({
+  never,
+  after,
+  onNever,
+  onAfter,
+}: {
+  never: boolean;
+  after: number;
+  onNever: (v: boolean) => void;
+  onAfter: (v: number) => void;
+}) {
+  return (
+    <div className="space-y-2 rounded-md border border-border p-2">
+      <Label>Lås af bilvalg</Label>
+      <label className="flex items-center gap-2 cursor-pointer">
+        <Checkbox checked={never} onCheckedChange={(v) => onNever(v === true)} />
+        <span className="text-sm">Bilvalg låses aldrig (deltagere kan altid skifte bil)</span>
+      </label>
+      <div className={never ? "opacity-50 pointer-events-none" : ""}>
+        <Label className="text-xs">Lås bilvalg efter antal kørte afdelinger</Label>
+        <Input
+          type="number"
+          min={1}
+          max={50}
+          value={after}
+          onChange={(e) => onAfter(Math.max(1, Number(e.target.value) || 1))}
+          disabled={never}
+        />
+        <p className="mt-1 text-xs text-muted-foreground">
+          Når dette antal afdelinger er markeret som "afsluttet", kan deltagerne ikke længere ændre bil. Standard er 1 (lås efter første afdeling).
+        </p>
+      </div>
+    </div>
+  );
+}
+
+
+
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer")({
   component: AdminLeagues,
