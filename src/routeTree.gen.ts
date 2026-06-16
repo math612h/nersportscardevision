@@ -24,6 +24,7 @@ import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
 import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
+import { Route as AuthenticatedBeskederRouteImport } from './routes/_authenticated.beskeder'
 import { Route as AuthenticatedArkivRouteImport } from './routes/_authenticated.arkiv'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
 import { Route as LigaerLeagueIdIndexRouteImport } from './routes/ligaer.$leagueId.index'
@@ -32,6 +33,8 @@ import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/em
 import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
 import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/public/leaderboard-upload'
 import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
+import { Route as AuthenticatedBeskederSystemRouteImport } from './routes/_authenticated.beskeder.system'
+import { Route as AuthenticatedBeskederThreadIdRouteImport } from './routes/_authenticated.beskeder.$threadId'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated._admin.admin.index'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -132,6 +135,11 @@ const AuthenticatedMineProtestsRoute =
     path: '/mine-protests',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedBeskederRoute = AuthenticatedBeskederRouteImport.update({
+  id: '/beskeder',
+  path: '/beskeder',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedArkivRoute = AuthenticatedArkivRouteImport.update({
   id: '/arkiv',
   path: '/arkiv',
@@ -173,6 +181,18 @@ const AuthenticatedProfilUserIdRoute =
     id: '/profil/$userId',
     path: '/profil/$userId',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBeskederSystemRoute =
+  AuthenticatedBeskederSystemRouteImport.update({
+    id: '/system',
+    path: '/system',
+    getParentRoute: () => AuthenticatedBeskederRoute,
+  } as any)
+const AuthenticatedBeskederThreadIdRoute =
+  AuthenticatedBeskederThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedBeskederRoute,
   } as any)
 const AuthenticatedAdminAdminIndexRoute =
   AuthenticatedAdminAdminIndexRouteImport.update({
@@ -323,6 +343,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/arkiv': typeof AuthenticatedArkivRoute
+  '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -331,6 +352,8 @@ export interface FileRoutesByFullPath {
   '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
   '/teams/': typeof TeamsIndexRoute
+  '/beskeder/$threadId': typeof AuthenticatedBeskederThreadIdRoute
+  '/beskeder/system': typeof AuthenticatedBeskederSystemRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -370,6 +393,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/arkiv': typeof AuthenticatedArkivRoute
+  '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -377,6 +401,8 @@ export interface FileRoutesByTo {
   '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
   '/teams': typeof TeamsIndexRoute
+  '/beskeder/$threadId': typeof AuthenticatedBeskederThreadIdRoute
+  '/beskeder/system': typeof AuthenticatedBeskederSystemRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -418,6 +444,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/arkiv': typeof AuthenticatedArkivRoute
+  '/_authenticated/beskeder': typeof AuthenticatedBeskederRouteWithChildren
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -426,6 +453,8 @@ export interface FileRoutesById {
   '/lmu/teams': typeof LmuTeamsRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
   '/teams/': typeof TeamsIndexRoute
+  '/_authenticated/beskeder/$threadId': typeof AuthenticatedBeskederThreadIdRoute
+  '/_authenticated/beskeder/system': typeof AuthenticatedBeskederSystemRoute
   '/_authenticated/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -467,6 +496,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/sitemap.xml'
     | '/arkiv'
+    | '/beskeder'
     | '/mine-protests'
     | '/onboarding'
     | '/email/unsubscribe'
@@ -475,6 +505,8 @@ export interface FileRouteTypes {
     | '/lmu/teams'
     | '/teams/$teamId'
     | '/teams/'
+    | '/beskeder/$threadId'
+    | '/beskeder/system'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
@@ -514,6 +546,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/sitemap.xml'
     | '/arkiv'
+    | '/beskeder'
     | '/mine-protests'
     | '/onboarding'
     | '/email/unsubscribe'
@@ -521,6 +554,8 @@ export interface FileRouteTypes {
     | '/lmu/teams'
     | '/teams/$teamId'
     | '/teams'
+    | '/beskeder/$threadId'
+    | '/beskeder/system'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
@@ -561,6 +596,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/_admin'
     | '/_authenticated/arkiv'
+    | '/_authenticated/beskeder'
     | '/_authenticated/mine-protests'
     | '/_authenticated/onboarding'
     | '/email/unsubscribe'
@@ -569,6 +605,8 @@ export interface FileRouteTypes {
     | '/lmu/teams'
     | '/teams/$teamId'
     | '/teams/'
+    | '/_authenticated/beskeder/$threadId'
+    | '/_authenticated/beskeder/system'
     | '/_authenticated/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
@@ -737,6 +775,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMineProtestsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/beskeder': {
+      id: '/_authenticated/beskeder'
+      path: '/beskeder'
+      fullPath: '/beskeder'
+      preLoaderRoute: typeof AuthenticatedBeskederRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/arkiv': {
       id: '/_authenticated/arkiv'
       path: '/arkiv'
@@ -792,6 +837,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/profil/$userId'
       preLoaderRoute: typeof AuthenticatedProfilUserIdRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/beskeder/system': {
+      id: '/_authenticated/beskeder/system'
+      path: '/system'
+      fullPath: '/beskeder/system'
+      preLoaderRoute: typeof AuthenticatedBeskederSystemRouteImport
+      parentRoute: typeof AuthenticatedBeskederRoute
+    }
+    '/_authenticated/beskeder/$threadId': {
+      id: '/_authenticated/beskeder/$threadId'
+      path: '/$threadId'
+      fullPath: '/beskeder/$threadId'
+      preLoaderRoute: typeof AuthenticatedBeskederThreadIdRouteImport
+      parentRoute: typeof AuthenticatedBeskederRoute
     }
     '/_authenticated/_admin/admin/': {
       id: '/_authenticated/_admin/admin/'
@@ -1030,9 +1089,25 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
 const AuthenticatedAdminRouteWithChildren =
   AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
 
+interface AuthenticatedBeskederRouteChildren {
+  AuthenticatedBeskederThreadIdRoute: typeof AuthenticatedBeskederThreadIdRoute
+  AuthenticatedBeskederSystemRoute: typeof AuthenticatedBeskederSystemRoute
+}
+
+const AuthenticatedBeskederRouteChildren: AuthenticatedBeskederRouteChildren = {
+  AuthenticatedBeskederThreadIdRoute: AuthenticatedBeskederThreadIdRoute,
+  AuthenticatedBeskederSystemRoute: AuthenticatedBeskederSystemRoute,
+}
+
+const AuthenticatedBeskederRouteWithChildren =
+  AuthenticatedBeskederRoute._addFileChildren(
+    AuthenticatedBeskederRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedArkivRoute: typeof AuthenticatedArkivRoute
+  AuthenticatedBeskederRoute: typeof AuthenticatedBeskederRouteWithChildren
   AuthenticatedMineProtestsRoute: typeof AuthenticatedMineProtestsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedProfilUserIdRoute: typeof AuthenticatedProfilUserIdRoute
@@ -1042,6 +1117,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedArkivRoute: AuthenticatedArkivRoute,
+  AuthenticatedBeskederRoute: AuthenticatedBeskederRouteWithChildren,
   AuthenticatedMineProtestsRoute: AuthenticatedMineProtestsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedProfilUserIdRoute: AuthenticatedProfilUserIdRoute,
