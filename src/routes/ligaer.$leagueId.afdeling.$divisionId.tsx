@@ -480,6 +480,8 @@ function DivisionDetail() {
         {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
 
+      <PracticeSessionsList divisionId={divisionId} />
+
       {(results?.length ?? 0) > 0 && (() => {
         const sessions: { type: "race" | "qualifying"; label: string }[] = [
           { type: "race", label: "Race resultater" },
