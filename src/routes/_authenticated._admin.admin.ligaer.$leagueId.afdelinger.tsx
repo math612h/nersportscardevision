@@ -310,7 +310,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     // Ensure stale lobby fields aren't kept in settings
     delete (newSettings as any).lobby_code;
     delete (newSettings as any).lobby_password;
-    const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
+    const updatePayload: any = { settings: newSettings };
+    if (raceDate) updatePayload.race_date = new Date(raceDate).toISOString();
+    else updatePayload.race_date = null;
+    const { error } = await supabase.from("divisions").update(updatePayload).eq("id", division.id);
     if (error) return toast.error(error.message);
 
     const code = lobbyCode.trim() || null;
