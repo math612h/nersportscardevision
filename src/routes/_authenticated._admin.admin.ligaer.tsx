@@ -282,6 +282,8 @@ function AdminLeagues() {
       signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
       published: publish,
       created_by: user?.id,
+      car_lock_never: carLockNever,
+      car_lock_after_division_count: Math.max(1, Math.floor(carLockAfter || 1)),
     } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
