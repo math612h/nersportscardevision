@@ -319,7 +319,7 @@ function AdminLeagues() {
       published: publish,
       created_by: user?.id,
       car_lock_never: carLockNever,
-      car_lock_after_division_count: Math.max(1, Math.floor(carLockAfter || 1)),
+      car_lock_at: carLockNever ? null : (carLockAt ? new Date(carLockAt).toISOString() : null),
     } as any);
     setSubmitting(false);
     if (error) return toast.error(error.message);
