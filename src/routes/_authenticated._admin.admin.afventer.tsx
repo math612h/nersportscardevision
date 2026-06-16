@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning } from "lucide-react";
+import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
