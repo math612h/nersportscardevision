@@ -16,6 +16,7 @@ import {
 import { setProfileApproval } from "@/lib/leagues.functions";
 import { sendAdminTemplateMessage, getAdminMessageStatus } from "@/lib/admin-messages.functions";
 import { refreshPendingDiscordNicknames } from "@/lib/discord-refresh.functions";
+import { checkPendingGuildMembership } from "@/lib/discord-guild.functions";
 import { useEffect } from "react";
 
 function formatRelativeDk(iso: string): string {
