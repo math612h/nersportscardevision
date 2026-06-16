@@ -600,11 +600,7 @@ function EditLeagueDialog({ league }: { league: any }) {
     setSignupOpensAt(toLocalInput(league.signup_opens_at));
     setDiscordRoleId(league.discord_role_id ?? "");
     setCarLockNever(!!league.car_lock_never);
-    setCarLockAfter(
-      typeof league.car_lock_after_division_count === "number" && league.car_lock_after_division_count >= 1
-        ? league.car_lock_after_division_count
-        : 1,
-    );
+    setCarLockAt(toLocalInput(league.car_lock_at));
   };
 
   const submit = async (e: React.FormEvent | React.MouseEvent, publish: boolean) => {
