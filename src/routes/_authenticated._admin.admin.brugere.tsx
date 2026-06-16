@@ -156,19 +156,12 @@ function AdminUsersPage() {
                     >
                       <ThumbsUp className={`h-4 w-4 ${p.approved ? "text-green-600" : ""}`} />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={isAdmin ? "Fjern admin-rolle" : "Tildel admin-rolle"}
-                      onClick={() => roleMut.mutate({ userId: p.id, assign: !isAdmin })}
-                      disabled={roleMut.isPending}
-                    >
-                      {isAdmin ? (
-                        <ShieldOff className="h-4 w-4 text-destructive" />
-                      ) : (
-                        <Shield className="h-4 w-4" />
-                      )}
-                    </Button>
+                    <RoleConfirmDialog
+                      profile={p}
+                      isAdmin={isAdmin}
+                      onConfirm={() => roleMut.mutate({ userId: p.id, assign: !isAdmin })}
+                      isPending={roleMut.isPending}
+                    />
                     <EditNameDialog profile={p} />
                     <DeleteConfirmDialog
                       profile={p}
@@ -268,6 +261,73 @@ function DeleteConfirmDialog({
             disabled={isPending}
           >
             Slet bruger
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function RoleConfirmDialog({
+  profile,
+  isAdmin,
+  onConfirm,
+  isPending,
+}: {
+  profile: Profile;
+  isAdmin: boolean;
+  onConfirm: () => void;
+  isPending: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={isAdmin ? "Fjern admin-rolle" : "Tildel admin-rolle"}
+        >
+          {isAdmin ? (
+            <ShieldOff className="h-4 w-4 text-destructive" />
+          ) : (
+            <Shield className="h-4 w-4" />
+          )}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {isAdmin ? "Fjern admin-rolle?" : "Tildel admin-rolle?"}
+          </DialogTitle>
+          <DialogDescription>
+            {isAdmin ? (
+              <>
+                Er du sikker på, at du vil fjerne admin-rollen fra{" "}
+                <strong>{profile.display_name || "(uden navn)"}</strong>?
+              </>
+            ) : (
+              <>
+                Er du sikker på, at du vil gøre{" "}
+                <strong>{profile.display_name || "(uden navn)"}</strong> til admin?
+                <br />
+                Admins har fuld adgang til kontrolpanelet og kan ændre alt.
+              </>
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
+          <Button
+            variant={isAdmin ? "destructive" : "default"}
+            onClick={() => {
+              onConfirm();
+              setOpen(false);
+            }}
+            disabled={isPending}
+          >
+            {isAdmin ? "Fjern admin" : "Gør til admin"}
           </Button>
         </DialogFooter>
       </DialogContent>
