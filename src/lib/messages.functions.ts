@@ -295,12 +295,13 @@ export const searchUsers = createServerFn({ method: "POST" })
     const q = data.q;
     let query = supabaseAdmin
       .from("profiles")
-      .select("id,display_name,avatar_url")
+      .select("id,display_name,avatar_url,lmu_name")
       .neq("id", context.userId)
       .order("display_name", { ascending: true })
       .limit(20);
     if (q.length > 0) {
-      query = query.ilike("display_name", `%${q}%`);
+      const like = `%${q}%`;
+      query = query.or(`display_name.ilike.${like},lmu_name.ilike.${like}`);
     }
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
