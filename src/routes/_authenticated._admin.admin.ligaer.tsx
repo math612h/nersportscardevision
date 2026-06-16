@@ -185,14 +185,14 @@ function BriefingOpenEditor({ value, onChange }: { value: EventSettings; onChang
 
 function CarLockEditor({
   never,
-  after,
+  at,
   onNever,
-  onAfter,
+  onAt,
 }: {
   never: boolean;
-  after: number;
+  at: string;
   onNever: (v: boolean) => void;
-  onAfter: (v: number) => void;
+  onAt: (v: string) => void;
 }) {
   return (
     <div className="space-y-2 rounded-md border border-border p-2">
@@ -202,17 +202,15 @@ function CarLockEditor({
         <span className="text-sm">Bilvalg låses aldrig (deltagere kan altid skifte bil)</span>
       </label>
       <div className={never ? "opacity-50 pointer-events-none" : ""}>
-        <Label className="text-xs">Lås bilvalg efter antal kørte afdelinger</Label>
+        <Label className="text-xs">Lås bilvalg fra og med</Label>
         <Input
-          type="number"
-          min={1}
-          max={50}
-          value={after}
-          onChange={(e) => onAfter(Math.max(1, Number(e.target.value) || 1))}
+          type="datetime-local"
+          value={at}
+          onChange={(e) => onAt(e.target.value)}
           disabled={never}
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          Når dette antal afdelinger er markeret som "afsluttet", kan deltagerne ikke længere ændre bil. Standard er 1 (lås efter første afdeling).
+          Vælg dato og tid. Når tidspunktet er nået, kan deltagerne ikke længere ændre bil. Lad være tom for at undlade at låse.
         </p>
       </div>
     </div>
