@@ -563,6 +563,12 @@ function EditLeagueDialog({ league }: { league: any }) {
   };
   const [signupOpensAt, setSignupOpensAt] = useState<string>(toLocalInput(league.signup_opens_at));
   const [discordRoleId, setDiscordRoleId] = useState<string>(league.discord_role_id ?? "");
+  const [carLockNever, setCarLockNever] = useState<boolean>(!!league.car_lock_never);
+  const [carLockAfter, setCarLockAfter] = useState<number>(
+    typeof league.car_lock_after_division_count === "number" && league.car_lock_after_division_count >= 1
+      ? league.car_lock_after_division_count
+      : 1,
+  );
   const [saving, setSaving] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const announceFn = useServerFn(sendLeagueAnnouncement);
