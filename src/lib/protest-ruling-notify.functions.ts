@@ -93,6 +93,10 @@ export const notifyProtestRuling = createServerFn({ method: "POST" })
       }));
       const { error: nErr } = await supabaseAdmin.from("notifications").insert(rows);
       if (nErr) console.error("notify ruling insert failed", nErr);
+      try {
+        const { sendPushToUser } = await import("./push.server");
+        await Promise.all(recipientIds.map((uid) => sendPushToUser(uid, { title, body: body.slice(0, 140), url: link }).catch(() => {})));
+      } catch (_) {}
     }
 
     // 2) Discord DMs to all parties (best-effort)

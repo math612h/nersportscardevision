@@ -48,6 +48,10 @@ export const notifyProtestInvolved = createServerFn({ method: "POST" })
     if (rows.length > 0) {
       const { error: nErr } = await supabaseAdmin.from("notifications").insert(rows);
       if (nErr) console.error("notify protest involved insert failed", nErr);
+      try {
+        const { sendPushToUser } = await import("./push.server");
+        await Promise.all(rows.map((r) => sendPushToUser(r.user_id, { title, body: body.slice(0, 140), url: link }).catch(() => {})));
+      } catch (_) {}
     }
 
     // 2) Discord DMs (best-effort)

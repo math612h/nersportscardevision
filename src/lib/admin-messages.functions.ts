@@ -54,6 +54,10 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
       link: tpl.link,
     });
     if (notifErr) throw new Error(notifErr.message);
+    try {
+      const { sendPushToUser } = await import("./push.server");
+      void sendPushToUser(data.targetUserId, { title: tpl.title, body: tpl.body.slice(0, 140), url: tpl.link }).catch(() => {});
+    } catch (_) {}
 
     // 2) Discord DM (best-effort)
     let discordResult: { ok: boolean; reason?: string; status?: number } = { ok: false, reason: "not_linked" };
