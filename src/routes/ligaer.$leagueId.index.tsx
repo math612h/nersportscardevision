@@ -1640,7 +1640,7 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("car_lock_never,car_lock_after_division_count")
+        .select("car_lock_never,car_lock_at")
         .eq("id", leagueId)
         .single();
       if (error) throw error;
@@ -1648,21 +1648,10 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
     },
   });
 
-  const { data: divs } = useQuery({
-    queryKey: ["league-divisions-completed", leagueId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("divisions")
-        .select("id,settings")
-        .eq("league_id", leagueId);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-  const completedCount = (divs ?? []).filter((d: any) => !!d?.settings?.completed).length;
-  const lockThreshold = Math.max(1, (league as any)?.car_lock_after_division_count ?? 1);
   const lockNever = !!(league as any)?.car_lock_never;
-  const locked = !lockNever && completedCount >= lockThreshold;
+  const lockAtRaw = (league as any)?.car_lock_at ?? null;
+  const lockAtDate = lockAtRaw ? new Date(lockAtRaw) : null;
+  const locked = !lockNever && !!lockAtDate && Date.now() >= lockAtDate.getTime();
 
   const [carModel, setCarModel] = useState<string>("");
   const [teamId, setTeamId] = useState<string>("");
