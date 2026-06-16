@@ -257,11 +257,20 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   );
 }
 
+function toLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function EditDivisionDialog({ division, onDone }: { division: any; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
   const [temperature, setTemperature] = useState<number>(Number(division.settings?.temperature ?? 22));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
+  const [raceDate, setRaceDate] = useState<string>(toLocalInput(division.race_date ?? null));
   const [lobbyCode, setLobbyCode] = useState<string>("");
   const [lobbyPassword, setLobbyPassword] = useState<string>("");
   const [serverName, setServerName] = useState<string>("");
