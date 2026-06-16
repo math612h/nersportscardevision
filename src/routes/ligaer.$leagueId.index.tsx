@@ -1351,7 +1351,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="mt-1 text-xs text-muted-foreground">Du kan ændre bil indtil første afdeling er kørt.</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Du kan ændre bil indtil bilvalget låses (se ligaens indstillinger).</p>
                 </div>
               )}
               {(myTeams ?? []).length > 0 && (
