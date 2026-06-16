@@ -339,7 +339,7 @@ function AdminLeagues() {
     setPointsSystem({});
     setSignupOpensAt("");
     setCarLockNever(false);
-    setCarLockAfter(1);
+    setCarLockAt("");
     qc.invalidateQueries({ queryKey: ["leagues-admin"] });
     qc.invalidateQueries({ queryKey: ["leagues"] });
   };
