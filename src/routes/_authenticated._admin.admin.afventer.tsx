@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning } from "lucide-react";
+import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import {
 import { setProfileApproval } from "@/lib/leagues.functions";
 import { sendAdminTemplateMessage, getAdminMessageStatus } from "@/lib/admin-messages.functions";
 import { refreshPendingDiscordNicknames } from "@/lib/discord-refresh.functions";
+import { checkPendingGuildMembership } from "@/lib/discord-guild.functions";
 import { useEffect } from "react";
 
 function formatRelativeDk(iso: string): string {
@@ -42,6 +43,8 @@ function PendingApprovalsPage() {
   const sendMessageFn = useServerFn(sendAdminTemplateMessage);
   const fetchStatus = useServerFn(getAdminMessageStatus);
   const refreshNicks = useServerFn(refreshPendingDiscordNicknames);
+  const checkGuildFn = useServerFn(checkPendingGuildMembership);
+
 
   useEffect(() => {
     refreshNicks()
@@ -93,6 +96,18 @@ function PendingApprovalsPage() {
       for (const r of rows) map[r.user_id] = r.sent_at;
       return map;
     },
+  });
+
+  const { data: guildStatus } = useQuery({
+    queryKey: ["admin-guild-status", userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const rows = await checkGuildFn({ data: { userIds } });
+      const map: Record<string, "in_guild" | "not_member" | "not_linked" | "error"> = {};
+      for (const r of rows) map[r.user_id] = r.status;
+      return map;
+    },
+    staleTime: 60_000,
   });
 
   const approveMut = useMutation({
@@ -168,6 +183,21 @@ function PendingApprovalsPage() {
                       <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">
                         <MessageSquareWarning className="h-3 w-3" />
                         Navne-besked sendt {formatRelativeDk(wrongNameStatus[p.id])}
+                      </Badge>
+                    )}
+                    {guildStatus?.[p.id] === "in_guild" && (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3 w-3" /> På Discord-server
+                      </Badge>
+                    )}
+                    {guildStatus?.[p.id] === "not_member" && (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-red-500/50 text-red-600 dark:text-red-400">
+                        <XCircle className="h-3 w-3" /> Ikke på Discord-server
+                      </Badge>
+                    )}
+                    {guildStatus?.[p.id] === "not_linked" && (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-muted-foreground/40 text-muted-foreground">
+                        <HelpCircle className="h-3 w-3" /> Discord ikke tilknyttet
                       </Badge>
                     )}
                   </div>

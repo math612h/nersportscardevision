@@ -8,10 +8,12 @@ export const ADMIN_MESSAGE_TEMPLATES = {
   wrong_name: {
     title: "Opdater dit navn for at blive godkendt",
     body:
-      "Hej! For at blive godkendt som kører på LMU Danmark skal du registrere dig med dit rigtige for- og efternavn (uden forkortelser, kælenavne eller initialer). " +
-      "Det samme navn skal også stå på din Discord-serverprofil (serverens nickname – ikke din globale Discord-profil), så vi kan koble din bruger på hjemmesiden sammen med din Discord-bruger. " +
-      "Du får først adgang til siden, når begge navne er ens. " +
-      "Gå til din profil og opdater dit visningsnavn – og ret samtidig dit server-nickname på LMU Danmark Discord-serveren – så godkender vi dig hurtigst muligt.",
+      "Hej! For at blive godkendt som kører på LMU Danmark skal to ting være på plads:\n\n" +
+      "1) Du skal være medlem af vores Discord-server. Det er en forudsætning for at blive godkendt, fordi vi koordinerer kørsel, briefings og protests via Discord. " +
+      "Du kan tilmelde dig her: {discord_invite}\n\n" +
+      "2) Du skal registrere dig med dit rigtige for- og efternavn (uden forkortelser, kælenavne eller initialer), og det samme navn skal stå som dit server-nickname på vores Discord-server (ikke din globale Discord-profil). " +
+      "Vi bruger navnet til at koble din bruger på hjemmesiden sammen med din Discord-bruger.\n\n" +
+      "Gå til din profil og opdater dit visningsnavn — og ret samtidig dit server-nickname på LMU Danmark Discord-serveren — så godkender vi dig hurtigst muligt.",
     link: "/profil",
   },
   profile_approved: {
@@ -45,18 +47,20 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
     if (!isAdmin) throw new Error("Kun admins kan sende beskeder til brugere.");
 
     const tpl = ADMIN_MESSAGE_TEMPLATES[data.template];
+    const inviteUrl = process.env.DISCORD_INVITE_URL ?? "";
+    const body = tpl.body.replace(/\{discord_invite\}/g, inviteUrl || "(Discord-invitations-link mangler — kontakt en admin)");
 
     // 1) Website notification
     const { error: notifErr } = await supabaseAdmin.from("notifications").insert({
       user_id: data.targetUserId,
       title: tpl.title,
-      body: tpl.body,
+      body,
       link: tpl.link,
     });
     if (notifErr) throw new Error(notifErr.message);
     try {
       const { sendPushToUser } = await import("./push.server");
-      void sendPushToUser(data.targetUserId, { title: tpl.title, body: tpl.body.slice(0, 140), url: tpl.link }).catch(() => {});
+      void sendPushToUser(data.targetUserId, { title: tpl.title, body: body.slice(0, 140), url: tpl.link }).catch(() => {});
     } catch (_) {}
 
     // 2) Discord DM (best-effort)
@@ -69,7 +73,7 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
     const discordUserId = (priv as { discord_user_id?: string | null } | null)?.discord_user_id ?? null;
     if (discordUserId) {
       const { sendDiscordDM } = await import("./discord.server");
-      const content = `**${tpl.title}**\n\n${tpl.body}\n\nhttps://lmudanmark.dk${tpl.link}`;
+      const content = `**${tpl.title}**\n\n${body}\n\nhttps://lmudanmark.dk${tpl.link}`;
       const res = await sendDiscordDM(discordUserId, content);
       discordResult = res.ok
         ? { ok: true, status: res.status }
