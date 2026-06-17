@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { sendLeagueAnnouncement } from "@/lib/league-announce.functions";
+import { syncDiscordRolesForLeague } from "@/lib/discord-sync.functions";
 
 import {
   CAR_CLASSES,
