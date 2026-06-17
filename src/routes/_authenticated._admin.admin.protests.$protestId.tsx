@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { toastError } from "@/lib/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -219,10 +220,10 @@ function AdminProtestDetail() {
       try {
         await notifyRuling({ data: { protestId } });
       } catch (e: any) {
-        toast.error(`Kunne ikke sende beskeder: ${e.message ?? e}`);
+        toastError(`Kunne ikke sende beskeder: ${e.message ?? e}`);
       }
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toastError(e.message),
   });
 
   if (!p) return <p className="text-sm text-muted-foreground">Indlæser…</p>;

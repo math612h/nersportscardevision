@@ -5,6 +5,7 @@ import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, UserMinus, Users, Trop
 import { useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { toastError } from "@/lib/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
@@ -1173,33 +1174,33 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return toast.error("Du skal være logget ind.");
-    if (!signupOpen) return toast.error("Tilmelding er ikke åbnet endnu.");
-    if (blockedByApprovedOnly) return toast.error("Denne liga er kun åben for godkendte profiler.");
-    if (!selected) return toast.error("Vælg en klasse.");
-    if (carNumber == null) return toast.error("Vælg et kørenummer.");
-    if (!carModel) return toast.error("Vælg din bil.");
-    if (!driverName) return toast.error("Dit kørernavn mangler på profilen.");
-    if (!effectiveLmu) return toast.error("Indtast dit LMU-navn præcis som det står i spillet.");
-    if (!effectiveAck) return toast.error("Du skal bekræfte at du har læst og forstået reglementet.");
+    if (!user) return toastError("Du skal være logget ind.");
+    if (!signupOpen) return toastError("Tilmelding er ikke åbnet endnu.");
+    if (blockedByApprovedOnly) return toastError("Denne liga er kun åben for godkendte profiler.");
+    if (!selected) return toastError("Vælg en klasse.");
+    if (carNumber == null) return toastError("Vælg et kørenummer.");
+    if (!carModel) return toastError("Vælg din bil.");
+    if (!driverName) return toastError("Dit kørernavn mangler på profilen.");
+    if (!effectiveLmu) return toastError("Indtast dit LMU-navn præcis som det står i spillet.");
+    if (!effectiveAck) return toastError("Du skal bekræfte at du har læst og forstået reglementet.");
 
     // Discord guild membership gate
     try {
       const guild = await checkGuild();
       if (!guild.ok) {
         if (guild.reason === "not_linked") {
-          return toast.error("Du skal forbinde din Discord-konto på din profil før du kan tilmelde dig.");
+          return toastError("Du skal forbinde din Discord-konto på din profil før du kan tilmelde dig.");
         }
-        return toast.error("Du skal være medlem af LMU Danmark-discorden for at tilmelde dig en liga.");
+        return toastError("Du skal være medlem af LMU Danmark-discorden for at tilmelde dig en liga.");
       }
     } catch (err) {
-      return toast.error(err instanceof Error ? err.message : "Kunne ikke verificere Discord-medlemskab.");
+      return toastError(err instanceof Error ? err.message : "Kunne ikke verificere Discord-medlemskab.");
     }
 
     // Persist LMU name on profile if user just provided it
     if (!existingLmu && lmuInput.trim()) {
       const { error: pErr } = await supabase.from("profiles").update({ lmu_name: lmuInput.trim() }).eq("id", user.id);
-      if (pErr) return toast.error(`Kunne ikke gemme LMU-navn: ${pErr.message}`);
+      if (pErr) return toastError(`Kunne ikke gemme LMU-navn: ${pErr.message}`);
     }
 
     // Persist rules acknowledgement if user just ticked the box
@@ -1208,7 +1209,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
         await ackFn({ data: { leagueId } });
         qc.invalidateQueries({ queryKey: ["rules-ack", leagueId, user.id] });
       } catch (err) {
-        return toast.error(err instanceof Error ? err.message : "Kunne ikke gemme reglement-bekræftelse.");
+        return toastError(err instanceof Error ? err.message : "Kunne ikke gemme reglement-bekræftelse.");
       }
     }
 
@@ -1223,7 +1224,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
       team_id: teamId || null,
       car_model: carModel || null,
     } as any);
-    if (error) return toast.error(error.message);
+    if (error) return toastError(error.message);
     toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
     setOpen(false);
     setCarNumber(null);
@@ -1592,7 +1593,7 @@ function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
       setOpen(false);
       qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
     } catch (e: any) {
-      toast.error(e?.message ?? "Kunne ikke melde dig ud.");
+      toastError(e?.message ?? "Kunne ikke melde dig ud.");
     } finally {
       setLoading(false);
     }
@@ -1668,13 +1669,13 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
   const cars = CARS_BY_CLASS[myEntry.car_class] ?? [];
 
   const save = async () => {
-    if (locked) return toast.error("Bilvalg er låst.");
-    if (!carModel) return toast.error("Vælg din bil.");
+    if (locked) return toastError("Bilvalg er låst.");
+    if (!carModel) return toastError("Vælg din bil.");
     const { error } = await (supabase as any)
       .from("entries")
       .update({ car_model: carModel, team_id: teamId || null })
       .eq("id", myEntry.id);
-    if (error) return toast.error(error.message);
+    if (error) return toastError(error.message);
     toast.success("Tilmelding opdateret.");
     setOpen(false);
     qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
