@@ -522,6 +522,7 @@ function AdminLeagues() {
                 <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/stillinger" params={{ leagueId: l.id }}>Stillinger</Link></Button>
                 <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/regler" params={{ leagueId: l.id }}>Regler</Link></Button>
                 <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/entries" params={{ leagueId: l.id }}>Entries</Link></Button>
+                {l.discord_role_id && <SyncDiscordRolesButton leagueId={l.id} />}
               </CardContent>
             </Card>
           );
