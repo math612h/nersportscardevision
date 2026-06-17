@@ -107,10 +107,6 @@ function LeaderboardPage() {
     return m;
   }, [rows]);
   const tracks = useMemo(() => Array.from(trackLayoutMap.keys()).sort(), [trackLayoutMap]);
-  const layouts = useMemo(() => {
-    if (track === ALL) return [] as string[];
-    return Array.from(trackLayoutMap.get(track) ?? []).sort();
-  }, [trackLayoutMap, track]);
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerTrack, setPickerTrack] = useState<string | null>(null);
