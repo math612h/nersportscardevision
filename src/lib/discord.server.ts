@@ -296,4 +296,35 @@ export async function deleteDiscordChannelMessage(
   return { ok: false, status: res.status, message: text };
 }
 
+// List all guild members that have a given role. Paginates via `after`.
+// NOTE: Listing all guild members requires the GUILD_MEMBERS privileged intent on the bot.
+export async function listGuildMemberIdsWithRole(roleId: string): Promise<string[]> {
+  const guildId = getEnv("DISCORD_GUILD_ID");
+  const botToken = getEnv("DISCORD_BOT_TOKEN");
+  const ids: string[] = [];
+  let after = "0";
+  // Safety cap: 50 pages * 1000 = 50k members
+  for (let page = 0; page < 50; page++) {
+    const url = `${DISCORD_API}/guilds/${guildId}/members?limit=1000&after=${after}`;
+    const res = await fetch(url, { headers: { Authorization: `Bot ${botToken}` } });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`Discord guild member list fejlede: ${res.status} ${text}`);
+    }
+    const members = (await res.json()) as Array<{ user?: { id?: string }; roles?: string[] }>;
+    if (!Array.isArray(members) || members.length === 0) break;
+    for (const m of members) {
+      const uid = m.user?.id;
+      if (!uid) continue;
+      if (Array.isArray(m.roles) && m.roles.includes(roleId)) ids.push(uid);
+    }
+    if (members.length < 1000) break;
+    const lastId = members[members.length - 1]?.user?.id;
+    if (!lastId) break;
+    after = lastId;
+  }
+  return ids;
+}
+
+
 
