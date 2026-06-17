@@ -1644,6 +1644,13 @@ export type Database = {
         }
         Returns: number
       }
+      normalize_track_layout: {
+        Args: { _layout: string; _track: string }
+        Returns: {
+          layout: string
+          track: string
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
