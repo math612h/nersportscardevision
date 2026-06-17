@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { sendLeagueAnnouncement } from "@/lib/league-announce.functions";
+import { syncDiscordRolesForLeague } from "@/lib/discord-sync.functions";
 
 import {
   CAR_CLASSES,
@@ -522,6 +523,7 @@ function AdminLeagues() {
                 <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/stillinger" params={{ leagueId: l.id }}>Stillinger</Link></Button>
                 <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/regler" params={{ leagueId: l.id }}>Regler</Link></Button>
                 <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/entries" params={{ leagueId: l.id }}>Entries</Link></Button>
+                {l.discord_role_id && <SyncDiscordRolesButton leagueId={l.id} />}
               </CardContent>
             </Card>
           );
@@ -738,3 +740,36 @@ function EditLeagueDialog({ league }: { league: any }) {
     </Dialog>
   );
 }
+
+function SyncDiscordRolesButton({ leagueId }: { leagueId: string }) {
+  const syncFn = useServerFn(syncDiscordRolesForLeague);
+  const [pending, setPending] = useState(false);
+  const onClick = async () => {
+    if (!confirm("Synkronisér Discord-rollen, så kun folk på entry-listen har den?")) return;
+    setPending(true);
+    try {
+      const res = await syncFn({ data: { leagueId } });
+      if (!res.ok) {
+        toast.error(res.reason === "no_role" ? "Ligaen har ingen Discord-rolle." : "Sync mislykkedes.");
+        return;
+      }
+      toast.success(
+        `Sync færdig: tilføjet ${res.added}, fjernet ${res.removed} (mål ${res.targets}, havde ${res.hadRole}).`,
+      );
+      if (res.errors && res.errors.length > 0) {
+        console.warn("Discord sync-fejl:", res.errors);
+        toast.message(`${res.errors.length} kald fejlede – se konsol.`);
+      }
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sync fejlede.");
+    } finally {
+      setPending(false);
+    }
+  };
+  return (
+    <Button variant="outline" size="sm" disabled={pending} onClick={onClick}>
+      {pending ? "Synkroniserer…" : "Synk Discord-rolle"}
+    </Button>
+  );
+}
+

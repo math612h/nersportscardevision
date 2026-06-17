@@ -9,6 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { setProfileApproval } from "@/lib/leagues.functions";
 import { splitClassIntoProAm } from "@/lib/league-split.functions";
 import { searchUsersForAdmin, adminAddEntryToLeague } from "@/lib/league-admin-entries.functions";
+import { adminDeleteEntryWithRoleCleanup } from "@/lib/discord-sync.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,9 +65,13 @@ function AdminEntries() {
     },
   });
 
+  const delEntryFn = useServerFn(adminDeleteEntryWithRoleCleanup);
   const del = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("entries").delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => { toast.success("Fjernet"); qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] }); },
+    mutationFn: async (id: string) => await delEntryFn({ data: { entryId: id } }),
+    onSuccess: (res) => {
+      toast.success(res?.roleRemoved ? "Fjernet – Discord-rolle fjernet" : "Fjernet");
+      qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
