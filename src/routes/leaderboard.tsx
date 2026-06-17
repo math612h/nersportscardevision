@@ -98,22 +98,22 @@ function LeaderboardPage() {
   const [track, setTrack] = useState<string>(ALL);
   const [layout, setLayout] = useState<string>(ALL);
 
-  const tracks = useMemo(
-    () => Array.from(new Set((rows ?? []).map((r) => r.track))).sort(),
-    [rows],
-  );
-  const layouts = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (rows ?? [])
-            .filter((r) => track === ALL || r.track === track)
-            .map((r) => r.layout ?? "")
-            .filter(Boolean),
-        ),
-      ).sort(),
-    [rows, track],
-  );
+  const trackLayoutMap = useMemo(() => {
+    const m = new Map<string, Set<string>>();
+    for (const r of rows ?? []) {
+      if (!m.has(r.track)) m.set(r.track, new Set());
+      if (r.layout) m.get(r.track)!.add(r.layout);
+    }
+    return m;
+  }, [rows]);
+  const tracks = useMemo(() => Array.from(trackLayoutMap.keys()).sort(), [trackLayoutMap]);
+  const layouts = useMemo(() => {
+    if (track === ALL) return [] as string[];
+    return Array.from(trackLayoutMap.get(track) ?? []).sort();
+  }, [trackLayoutMap, track]);
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerTrack, setPickerTrack] = useState<string | null>(null);
   const classes = useMemo(
     () => Array.from(new Set((rows ?? []).map((r) => r.car_class))).sort(),
     [rows],
