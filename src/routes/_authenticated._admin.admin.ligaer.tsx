@@ -753,12 +753,14 @@ function SyncDiscordRolesButton({ leagueId }: { leagueId: string }) {
         toast.error(res.reason === "no_role" ? "Ligaen har ingen Discord-rolle." : "Sync mislykkedes.");
         return;
       }
-      toast.success(
-        `Sync færdig: tilføjet ${res.added}, fjernet ${res.removed} (mål ${res.targets}, havde ${res.hadRole}).`,
-      );
+      const baseMsg = `Sync færdig: tilføjet ${res.added}, fjernet ${res.removed} (mål ${res.targets}, havde ${res.hadRole}).`;
       if (res.errors && res.errors.length > 0) {
         console.warn("Discord sync-fejl:", res.errors);
-        toast.message(`${res.errors.length} kald fejlede – se konsol.`);
+        toast.error(`${baseMsg}\n${res.errors.length} kald fejlede:\n${res.errors.join("\n")}`, {
+          duration: 20000,
+        });
+      } else {
+        toast.success(baseMsg);
       }
     } catch (e: any) {
       toast.error(e?.message ?? "Sync fejlede.");
