@@ -65,9 +65,13 @@ function AdminEntries() {
     },
   });
 
+  const delEntryFn = useServerFn(adminDeleteEntryWithRoleCleanup);
   const del = useMutation({
-    mutationFn: async (id: string) => { const { error } = await supabase.from("entries").delete().eq("id", id); if (error) throw error; },
-    onSuccess: () => { toast.success("Fjernet"); qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] }); },
+    mutationFn: async (id: string) => await delEntryFn({ data: { entryId: id } }),
+    onSuccess: (res) => {
+      toast.success(res?.roleRemoved ? "Fjernet – Discord-rolle fjernet" : "Fjernet");
+      qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 
