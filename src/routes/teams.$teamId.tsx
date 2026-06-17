@@ -403,9 +403,10 @@ function ApplyButton({ teamId, userId }: { teamId: string; userId: string }) {
   const acceptInvite = useMutation({
     mutationFn: async () => {
       if (!invite) return;
+      const { error: updErr } = await (supabase as any).from("team_invitations").update({ status: "accepted", responded_at: new Date().toISOString() }).eq("id", invite.id);
+      if (updErr) throw updErr;
       const { error: insErr } = await (supabase as any).from("team_members").insert({ team_id: teamId, user_id: userId, role: "member" });
       if (insErr) throw insErr;
-      await (supabase as any).from("team_invitations").update({ status: "accepted", responded_at: new Date().toISOString() }).eq("id", invite.id);
     },
     onSuccess: () => {
       toast.success("Du er nu medlem!");
