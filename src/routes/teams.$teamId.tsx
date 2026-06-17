@@ -2,6 +2,7 @@ import { createFileRoute, useParams, Link, useNavigate } from "@tanstack/react-r
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { toastError } from "@/lib/toast";
 import {
   ArrowLeft, Camera, Loader2, MessageSquare, Send, Shield, Star, Trash2, UserPlus,
   Users, Check, X, LogOut, Crown, Pencil, Trophy,
