@@ -3,20 +3,20 @@ import { Sun, Cloud, CloudDrizzle, CloudRain, CloudLightning, type LucideIcon } 
 export type TrackInfo = { name: string; layouts: string[] };
 
 export const LMU_TRACKS: TrackInfo[] = [
-  { name: "Circuit de la Sarthe (Le Mans)", layouts: ["24h Circuit", "Mulsanne No Chicanes"] },
+  { name: "Le Mans", layouts: ["24h Circuit", "Mulsanne No Chicanes"] },
   { name: "Bahrain International Circuit", layouts: ["Endurance Circuit", "Paddock Circuit", "Outer Circuit", "Endurance Inner"] },
-  { name: "Spa-Francorchamps", layouts: ["Grand Prix"] },
-  { name: "Autodromo Nazionale Monza", layouts: ["Grand Prix", "Curva Grande"] },
-  { name: "Sebring International Raceway", layouts: ["Full Circuit", "School Circuit"] },
+  { name: "Spa", layouts: ["Grand Prix"] },
+  { name: "Monza", layouts: ["Grand Prix", "Curva Grande"] },
+  { name: "Sebring", layouts: ["Sebring", "School"] },
   { name: "Fuji Speedway", layouts: ["Grand Prix", "Classic (No Chicane)"] },
-  { name: "Algarve International Circuit (Portimão)", layouts: ["Full Circuit"] },
-  { name: "Circuit of the Americas", layouts: ["Full Circuit", "National"] },
+  { name: "Portimao", layouts: ["Full Circuit"] },
+  { name: "Cota", layouts: ["Circuit of the Americas", "National"] },
   { name: "Circuit Paul Ricard", layouts: ["1a", "1av2", "1av2-short", "3a"] },
   { name: "Silverstone", layouts: ["Silverstone National", "Silverstone International", "Silverstone GP (WEC)"] },
-  { name: "Autodromo Internazionale Enzo e Dino Ferrari (Imola)", layouts: ["Grand Prix"] },
-  { name: "Lusail International Circuit (Qatar)", layouts: ["Grand Prix", "Short"] },
+  { name: "Imola", layouts: ["Grand Prix"] },
+  { name: "Lusail", layouts: ["Lusail International Circuit", "Lusail Short"] },
   { name: "Interlagos", layouts: ["Grand Prix"] },
-  { name: "Circuit de Barcelona-Catalunya", layouts: ["Grand Prix", "National"] },
+  { name: "Barcelona", layouts: ["Grand Prix"] },
 ];
 
 export const CAR_CLASSES = ["Hypercar", "LMP2", "LMP3", "GT-E", "LMGT3"] as const;
