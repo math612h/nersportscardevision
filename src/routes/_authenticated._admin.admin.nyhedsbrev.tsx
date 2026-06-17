@@ -91,22 +91,22 @@ function NyhedsbrevAdmin() {
       qc.invalidateQueries({ queryKey: ["admin-news-posts"] });
       qc.invalidateQueries({ queryKey: ["home-news-posts"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Kunne ikke slette"),
+    onError: (e: any) => toastError(e.message ?? "Kunne ikke slette"),
   });
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) {
-      toast.error("Overskrift mangler");
+      toastError("Overskrift mangler");
       return;
     }
     if (!expiresAt) {
-      toast.error("Vælg udløbsdato");
+      toastError("Vælg udløbsdato");
       return;
     }
     const exp = new Date(expiresAt);
     if (Number.isNaN(exp.getTime()) || exp.getTime() <= Date.now()) {
-      toast.error("Udløbstidspunkt skal ligge i fremtiden");
+      toastError("Udløbstidspunkt skal ligge i fremtiden");
       return;
     }
     setSubmitting(true);
@@ -137,7 +137,7 @@ function NyhedsbrevAdmin() {
       qc.invalidateQueries({ queryKey: ["admin-news-posts"] });
       qc.invalidateQueries({ queryKey: ["home-news-posts"] });
     } catch (err: any) {
-      toast.error(err.message ?? "Kunne ikke oprette nyhed");
+      toastError(err.message ?? "Kunne ikke oprette nyhed");
     } finally {
       setSubmitting(false);
     }
@@ -296,10 +296,10 @@ function EditNewsDialog({ post }: { post: NewsPost }) {
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) return toast.error("Overskrift mangler");
-    if (!expiresAt) return toast.error("Vælg udløbsdato");
+    if (!title.trim()) return toastError("Overskrift mangler");
+    if (!expiresAt) return toastError("Vælg udløbsdato");
     const exp = new Date(expiresAt);
-    if (Number.isNaN(exp.getTime())) return toast.error("Ugyldig dato");
+    if (Number.isNaN(exp.getTime())) return toastError("Ugyldig dato");
 
     setSaving(true);
     try {
@@ -342,7 +342,7 @@ function EditNewsDialog({ post }: { post: NewsPost }) {
       qc.invalidateQueries({ queryKey: ["admin-news-images"] });
       qc.invalidateQueries({ queryKey: ["home-news-images"] });
     } catch (err: any) {
-      toast.error(err.message ?? "Kunne ikke gemme nyhed");
+      toastError(err.message ?? "Kunne ikke gemme nyhed");
     } finally {
       setSaving(false);
     }

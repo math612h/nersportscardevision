@@ -206,7 +206,7 @@ function TeamDetailPage() {
                     if (!confirm("Slet team for evigt? Denne handling kan ikke fortrydes.")) return;
                     if (!confirm("Er du HELT sikker? Teamet og alle dets data slettes permanent.")) return;
                     const { error } = await (supabase as any).from("teams").delete().eq("id", team.id);
-                    if (error) toast.error(error.message);
+                    if (error) toastError(error.message);
                     else {
                       toast.success("Team slettet");
                       qc.invalidateQueries({ queryKey: ["teams"] });
@@ -255,7 +255,7 @@ function TeamDetailPage() {
                       onClick={async () => {
                         if (!confirm(`Fjern ${name} fra teamet?`)) return;
                         const { error } = await (supabase as any).from("team_members").delete().eq("id", m.id);
-                        if (error) toast.error(error.message);
+                        if (error) toastError(error.message);
                         else {
                           toast.success("Medlem fjernet");
                           qc.invalidateQueries({ queryKey: ["team-members", teamId] });
@@ -415,7 +415,7 @@ function ApplyButton({ teamId, userId }: { teamId: string; userId: string }) {
       qc.invalidateQueries({ queryKey: ["my-team-invitation", teamId, userId] });
       qc.invalidateQueries({ queryKey: ["my-teams"] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e.message),
   });
 
   const submit = useMutation({
@@ -430,7 +430,7 @@ function ApplyButton({ teamId, userId }: { teamId: string; userId: string }) {
       setOpen(false); setMsg("");
       qc.invalidateQueries({ queryKey: ["my-team-application", teamId, userId] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toastError(e.message),
   });
 
   if (invite) {
@@ -476,7 +476,7 @@ function LeaveButton({ teamId, userId, onLeft }: { teamId: string; userId: strin
       onClick={async () => {
         if (!confirm("Forlad teamet?")) return;
         const { error } = await (supabase as any).from("team_members").delete().eq("team_id", teamId).eq("user_id", userId);
-        if (error) toast.error(error.message);
+        if (error) toastError(error.message);
         else { toast.success("Du har forladt teamet"); onLeft(); }
       }}
     >
@@ -495,7 +495,7 @@ function EditTeamButton({ team }: { team: Team }) {
 
   const save = async () => {
     const { error } = await (supabase as any).from("teams").update({ bio: bio.trim() || null }).eq("id", team.id);
-    if (error) return toast.error(error.message);
+    if (error) return toastError(error.message);
     toast.success("Gemt");
     qc.invalidateQueries({ queryKey: ["team", team.id] });
     qc.invalidateQueries({ queryKey: ["teams"] });
@@ -506,18 +506,18 @@ function EditTeamButton({ team }: { team: Team }) {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) return toast.error("Maks 5 MB.");
-    if (!file.type.startsWith("image/")) return toast.error("Vælg en billedfil.");
+    if (file.size > 5 * 1024 * 1024) return toastError("Maks 5 MB.");
+    if (!file.type.startsWith("image/")) return toastError("Vælg en billedfil.");
     setUploading(true);
     const ext = file.name.split(".").pop()?.toLowerCase() || "png";
     const path = `${team.id}/logo-${Date.now()}.${ext}`;
     const { error: upErr } = await supabase.storage.from("team-logos").upload(path, file, {
       cacheControl: "3600", upsert: true, contentType: file.type,
     });
-    if (upErr) { setUploading(false); return toast.error(upErr.message); }
+    if (upErr) { setUploading(false); return toastError(upErr.message); }
     const { error: dbErr } = await (supabase as any).from("teams").update({ logo_url: path }).eq("id", team.id);
     setUploading(false);
-    if (dbErr) return toast.error(dbErr.message);
+    if (dbErr) return toastError(dbErr.message);
     toast.success("Logo opdateret");
     qc.invalidateQueries({ queryKey: ["team", team.id] });
     qc.invalidateQueries({ queryKey: ["teams"] });
@@ -589,7 +589,7 @@ function OwnerInbox({ teamId }: { teamId: string }) {
 
   const accept = async (a: { id: string; user_id: string }) => {
     const { error: insErr } = await (supabase as any).from("team_members").insert({ team_id: teamId, user_id: a.user_id, role: "member" });
-    if (insErr) return toast.error(insErr.message);
+    if (insErr) return toastError(insErr.message);
     await (supabase as any).from("team_applications").update({ status: "accepted", responded_at: new Date().toISOString() }).eq("id", a.id);
     toast.success("Optaget i teamet");
     qc.invalidateQueries({ queryKey: ["team-applications", teamId] });
@@ -597,7 +597,7 @@ function OwnerInbox({ teamId }: { teamId: string }) {
   };
   const reject = async (a: { id: string }) => {
     const { error } = await (supabase as any).from("team_applications").update({ status: "rejected", responded_at: new Date().toISOString() }).eq("id", a.id);
-    if (error) return toast.error(error.message);
+    if (error) return toastError(error.message);
     qc.invalidateQueries({ queryKey: ["team-applications", teamId] });
   };
 
@@ -653,7 +653,7 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
     const { error } = await (supabase as any).from("team_invitations").insert({
       team_id: teamId, user_id: selected, invited_by: userId,
     });
-    if (error) return toast.error(error.message);
+    if (error) return toastError(error.message);
     toast.success("Invitation sendt");
     setSelected("");
     qc.invalidateQueries({ queryKey: ["team-invitations-out", teamId] });

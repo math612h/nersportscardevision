@@ -220,10 +220,10 @@ function AdminProtestDetail() {
       try {
         await notifyRuling({ data: { protestId } });
       } catch (e: any) {
-        toast.error(`Kunne ikke sende beskeder: ${e.message ?? e}`);
+        toastError(`Kunne ikke sende beskeder: ${e.message ?? e}`);
       }
     },
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => toastError(e.message),
   });
 
   if (!p) return <p className="text-sm text-muted-foreground">Indlæser…</p>;
