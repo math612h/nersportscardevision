@@ -32,7 +32,7 @@ function AdminUsersPage() {
   const [search, setSearch] = useState("");
   
   const qc = useQueryClient();
-  const toggleRole = useServerFn(toggleUserRole);
+  
   const approveFn = useServerFn(setProfileApproval);
   const deleteUserFn = useServerFn(deleteUser);
 
@@ -61,16 +61,6 @@ function AdminUsersPage() {
     return (p.display_name ?? "").toLowerCase().includes(search.toLowerCase());
   });
 
-  const roleMut = useMutation({
-    mutationFn: async ({ userId, assign }: { userId: string; assign: boolean }) => {
-      await toggleRole({ data: { userId, role: "admin", assign } });
-    },
-    onSuccess: (_, { assign }) => {
-      toast.success(assign ? "Admin-rolle tildelt" : "Admin-rolle fjernet");
-      qc.invalidateQueries({ queryKey: ["admin-users"] });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
 
   const approveMut = useMutation({
     mutationFn: async ({ userId, approved }: { userId: string; approved: boolean }) => {
