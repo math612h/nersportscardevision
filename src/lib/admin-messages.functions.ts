@@ -25,7 +25,7 @@ export const ADMIN_MESSAGE_TEMPLATES = {
   profile_approved: {
     title: "Din profil er godkendt",
     body:
-      "Hej! Din profil på LMU Danmark er nu godkendt. Du kan nu tilmelde dig ligaer og deltage i kamskaberne. " +
+      "Hej! Din profil på LMU Danmark er nu godkendt. Du kan nu tilmelde dig ligaer og deltage i kampene. " +
       "Gå til liga-oversigten og find en liga der passer til dig.",
     link: "/ligaer",
   },
