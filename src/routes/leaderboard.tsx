@@ -379,7 +379,7 @@ function LeaderboardPage() {
           <Filter className="h-4 w-4" />
           <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Filtre</h2>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <Label className="text-xs">Bilklasse</Label>
             <Select value={carClass} onValueChange={setCarClass}>
@@ -396,24 +396,114 @@ function LeaderboardPage() {
             </Select>
           </div>
           <div>
-            <Label className="text-xs">Bane</Label>
-            <Select value={track} onValueChange={(v) => { setTrack(v); setLayout(ALL); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>Alle baner</SelectItem>
-                {tracks.map((t) => <SelectItem key={t} value={t}>{displayTrackName(t)}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label className="text-xs">Layout</Label>
-            <Select value={layout} onValueChange={setLayout} disabled={layouts.length === 0}>
-              <SelectTrigger><SelectValue placeholder={layouts.length === 0 ? "–" : "Vælg"} /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>Alle layouts</SelectItem>
-                {layouts.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Label className="text-xs">Bane / layout</Label>
+            <Popover
+              open={pickerOpen}
+              onOpenChange={(o) => {
+                setPickerOpen(o);
+                if (!o) setPickerTrack(null);
+              }}
+            >
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-left text-sm shadow-sm transition hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <span className="truncate">
+                    {track === ALL
+                      ? "Alle baner"
+                      : layout === ALL
+                        ? `${displayTrackName(track)} · alle layouts`
+                        : `${displayTrackName(track)} · ${layout}`}
+                  </span>
+                  <ChevronRight className="ml-2 h-4 w-4 shrink-0 rotate-90 text-muted-foreground" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-[--radix-popover-trigger-width] max-h-[60vh] overflow-y-auto p-1">
+                {pickerTrack === null ? (
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTrack(ALL);
+                        setLayout(ALL);
+                        setPickerOpen(false);
+                      }}
+                      className="flex items-center justify-between rounded-sm px-2 py-2 text-sm hover:bg-accent"
+                    >
+                      <span>Alle baner</span>
+                      {track === ALL && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                    {tracks.map((t) => {
+                      const tLayouts = Array.from(trackLayoutMap.get(t) ?? []);
+                      const hasMultiple = tLayouts.length > 1;
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => {
+                            if (hasMultiple) {
+                              setPickerTrack(t);
+                            } else {
+                              setTrack(t);
+                              setLayout(tLayouts[0] ?? ALL);
+                              setPickerOpen(false);
+                            }
+                          }}
+                          className="flex items-center justify-between rounded-sm px-2 py-2 text-sm hover:bg-accent"
+                        >
+                          <span className="truncate">{displayTrackName(t)}</span>
+                          <span className="ml-2 flex items-center gap-1 text-muted-foreground">
+                            {track === t && <Check className="h-4 w-4 text-primary" />}
+                            {hasMultiple && <ChevronRight className="h-4 w-4" />}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => setPickerTrack(null)}
+                      className="flex items-center gap-2 rounded-sm px-2 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground hover:bg-accent"
+                    >
+                      <ArrowLeft className="h-3.5 w-3.5" /> {displayTrackName(pickerTrack)}
+                    </button>
+                    <div className="my-1 h-px bg-border" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTrack(pickerTrack);
+                        setLayout(ALL);
+                        setPickerOpen(false);
+                        setPickerTrack(null);
+                      }}
+                      className="flex items-center justify-between rounded-sm px-2 py-2 text-sm hover:bg-accent"
+                    >
+                      <span>Alle layouts</span>
+                      {track === pickerTrack && layout === ALL && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                    {Array.from(trackLayoutMap.get(pickerTrack) ?? []).sort().map((l) => (
+                      <button
+                        key={l}
+                        type="button"
+                        onClick={() => {
+                          setTrack(pickerTrack);
+                          setLayout(l);
+                          setPickerOpen(false);
+                          setPickerTrack(null);
+                        }}
+                        className="flex items-center justify-between rounded-sm px-2 py-2 text-sm hover:bg-accent"
+                      >
+                        <span className="truncate">{l}</span>
+                        {track === pickerTrack && layout === l && <Check className="h-4 w-4 text-primary" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </section>
