@@ -29,8 +29,7 @@ const LB_DESC =
   "Hurtigste omgangstider pr. bane og bilklasse på tværs af alle LMU Danmark-løb i Le Mans Ultimate. Upload din race-fil og kom på listen.";
 const LB_URL = "https://danishenduranceseries.dk/leaderboard";
 
-const displayTrackName = (track: string) =>
-  track === "Circuit de la Sarthe" ? "Le Mans (Circuit de la Sarthe)" : track;
+const displayTrackName = (track: string) => track;
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
