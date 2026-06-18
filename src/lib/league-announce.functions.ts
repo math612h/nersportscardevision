@@ -119,7 +119,7 @@ export function buildSignupOpenMessage(args: {
   return parts.join("\n");
 }
 
-function buildCountdownMessage(args: {
+export function buildCountdownMessage(args: {
   leagueName: string;
   leagueUrl: string;
   signupOpensAt: string;
