@@ -160,7 +160,7 @@ function NewsHome() {
           )}
           <Button asChild variant="outline" className="w-full justify-center gap-2 sm:w-auto">
             <a
-              href="https://discord.gg/EFaq8cDdMa"
+            href="https://discord.gg/7Ye7R9qAHF"
               target="_blank"
               rel="noopener noreferrer"
             >
