@@ -18,9 +18,10 @@ interface Props {
   leagueName?: string
   text?: string
   bannerUrl?: string | null
+  discordReminder?: string
 }
 
-const FbAnnouncementEmail = ({ leagueName, text, bannerUrl }: Props) => {
+const FbAnnouncementEmail = ({ leagueName, text, bannerUrl, discordReminder }: Props) => {
   const league = leagueName || 'liga'
   const body = text || ''
   return (
@@ -50,6 +51,14 @@ const FbAnnouncementEmail = ({ leagueName, text, bannerUrl }: Props) => {
               </Text>
             </Section>
           ) : null}
+
+          {discordReminder ? (
+            <Section style={reminderBox}>
+              <Text style={reminderTitle}>📢 HUSK</Text>
+              <Text style={preText}>{discordReminder}</Text>
+            </Section>
+          ) : null}
+
           <Hr style={hr} />
           <Text style={signature}>
             LMU Danmark<br />
@@ -68,8 +77,9 @@ export const template = {
   displayName: 'FB-annoncering (admin)',
   previewData: {
     leagueName: 'GT3 Vinterserie 2026',
-    text: '🏁 Tilmeldingen er åben!\n\nGå til lmudanmark.dk',
+    text: '🏁 TILMELDINGEN ER ÅBEN!\n\n🏆 GT3 Vinterserie 2026\n\nSå er det nu! Sæt dig klar i pit-lane og snup din plads inden den er væk. 🔥\n\n👉 Tilmeld dig her: https://www.lmudanmark.dk/ligaer/...',
     bannerUrl: null,
+    discordReminder: 'HUSK: Du skal være medlem af vores Discord for at få fuld adgang til hjemmesiden og ligaerne.\nJoin her: https://discord.gg/7Ye7R9qAHF',
   },
 } satisfies TemplateEntry
 
@@ -83,6 +93,19 @@ const textBox = {
   borderRadius: '8px',
   padding: '16px 18px',
   margin: '8px 0',
+}
+const reminderBox = {
+  backgroundColor: '#fff8e1',
+  border: '1px solid #ffd54f',
+  borderRadius: '8px',
+  padding: '16px 18px',
+  margin: '16px 0',
+}
+const reminderTitle = {
+  fontSize: '15px',
+  fontWeight: 'bold' as const,
+  color: '#0b0b0b',
+  margin: '0 0 8px',
 }
 const preText = {
   fontSize: '14px',
