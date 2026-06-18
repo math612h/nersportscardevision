@@ -754,6 +754,9 @@ function EditLeagueDialog({ league }: { league: any }) {
                 Send en Discord-annoncering nu. Hvis tilmeldingen endnu ikke er åben, sendes et hype-opslag med live-nedtælling. Er tilmeldingen allerede åben, sendes den samme besked som ved auto-åbning.
               </div>
             </div>
+            <Button type="button" variant="outline" disabled={emailing} onClick={emailFbAnnouncement} className="gap-1">
+              <Megaphone className="h-4 w-4" /> {emailing ? "Sender…" : "Send FB annoncering til mail"}
+            </Button>
             <Button type="button" variant="outline" disabled={announcing} onClick={announce} className="gap-1">
               <Megaphone className="h-4 w-4" /> {announcing ? "Sender…" : "Send annoncering"}
             </Button>
