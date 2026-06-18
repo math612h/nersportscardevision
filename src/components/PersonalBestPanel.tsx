@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyArchive } from "@/lib/rating.functions";
 import { classColor } from "@/lib/lmu-cars";
+import { normalizeTrackName } from "@/lib/tracks";
 
 
 function fmtLap(ms: number | null | undefined) {
@@ -136,11 +137,12 @@ function useDriverBests(userId: string | null) {
       if (error) throw error;
       const map = new Map<string, BestRow>();
       for (const t of (data ?? []) as any[]) {
-        const key = `${t.track}|${t.layout ?? ""}|${t.car_class}`;
+        const normTrack = normalizeTrackName(t.track) || t.track;
+        const key = `${normTrack}|${t.layout ?? ""}|${t.car_class}`;
         const cur = map.get(key);
         if (!cur || t.best_lap_ms < cur.best_lap_ms) {
           map.set(key, {
-            track: t.track,
+            track: normTrack,
             layout: t.layout,
             car_class: t.car_class,
             car_model: t.car_model,
