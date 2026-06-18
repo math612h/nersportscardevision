@@ -434,7 +434,6 @@ function AdminLeagues() {
                   onNever={setCarLockNever}
                   onAt={setCarLockAt}
                 />
-                <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
                 <DialogFooter className="gap-2 sm:gap-2">
