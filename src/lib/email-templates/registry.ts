@@ -17,4 +17,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   welcome: welcomeTemplate,
   'league-open': leagueOpenTemplate,
   'league-signup-confirmation': leagueSignupConfirmationTemplate,
+  'fb-announcement': fbAnnouncementTemplate,
 }
