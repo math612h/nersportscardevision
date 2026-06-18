@@ -580,19 +580,44 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [saving, setSaving] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const [emailing, setEmailing] = useState(false);
+  const [discordEdit, setDiscordEdit] = useState<{ open: boolean; text: string; loading: boolean }>({
+    open: false,
+    text: "",
+    loading: false,
+  });
+  const [fbEdit, setFbEdit] = useState<{ open: boolean; text: string; loading: boolean }>({
+    open: false,
+    text: "",
+    loading: false,
+  });
   const announceFn = useServerFn(sendLeagueAnnouncement);
+  const previewFn = useServerFn(previewLeagueAnnouncement);
   const buildEmailFn = useServerFn(buildLeagueAnnouncementEmail);
   const { user } = useAuth();
 
-  const announce = async () => {
+  const openDiscordEditor = async () => {
+    setDiscordEdit({ open: true, text: "", loading: true });
+    try {
+      const res = await previewFn({ data: { leagueId: league.id } });
+      setDiscordEdit({ open: true, text: res.content, loading: false });
+    } catch (e: any) {
+      setDiscordEdit({ open: false, text: "", loading: false });
+      toast.error(e?.message ?? "Kunne ikke hente annoncering.");
+    }
+  };
+
+  const sendDiscord = async () => {
     setAnnouncing(true);
     try {
-      const res = await announceFn({ data: { leagueId: league.id } });
+      const res = await announceFn({
+        data: { leagueId: league.id, overrideContent: discordEdit.text },
+      });
       toast.success(
         res.kind === "countdown"
           ? "Annoncering med nedtælling sendt til Discord."
           : "Annoncering om åben tilmelding sendt til Discord.",
       );
+      setDiscordEdit({ open: false, text: "", loading: false });
     } catch (e: any) {
       toast.error(e?.message ?? "Kunne ikke sende annoncering.");
     } finally {
@@ -600,7 +625,22 @@ function EditLeagueDialog({ league }: { league: any }) {
     }
   };
 
-  const emailFbAnnouncement = async () => {
+  const openFbEditor = async () => {
+    if (!user?.email) {
+      toast.error("Din bruger har ingen e-mail.");
+      return;
+    }
+    setFbEdit({ open: true, text: "", loading: true });
+    try {
+      const built = await buildEmailFn({ data: { leagueId: league.id } });
+      setFbEdit({ open: true, text: built.text, loading: false });
+    } catch (e: any) {
+      setFbEdit({ open: false, text: "", loading: false });
+      toast.error(e?.message ?? "Kunne ikke bygge annoncering.");
+    }
+  };
+
+  const sendFb = async () => {
     if (!user?.email) {
       toast.error("Din bruger har ingen e-mail.");
       return;
@@ -614,18 +654,21 @@ function EditLeagueDialog({ league }: { league: any }) {
         idempotencyKey: `fb-announce-${league.id}-${Date.now()}`,
         templateData: {
           leagueName: built.leagueName,
-          text: built.text,
+          text: fbEdit.text,
           bannerUrl: built.bannerUrl,
         },
       });
-      if (res.ok) toast.success(`FB-annoncering sendt til ${user.email}.`);
-      else toast.error("Kunne ikke sende mail.");
+      if (res.ok) {
+        toast.success(`FB-annoncering sendt til ${user.email}.`);
+        setFbEdit({ open: false, text: "", loading: false });
+      } else toast.error("Kunne ikke sende mail.");
     } catch (e: any) {
-      toast.error(e?.message ?? "Kunne ikke bygge annoncering.");
+      toast.error(e?.message ?? "Kunne ikke sende annoncering.");
     } finally {
       setEmailing(false);
     }
   };
+
 
 
   const reset = () => {
