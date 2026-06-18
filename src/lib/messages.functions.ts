@@ -518,3 +518,37 @@ export const leaveGroup = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const teamInviteNotifySchema = z.object({
+  teamId: z.string().uuid(),
+  userId: z.string().uuid(),
+});
+
+export const notifyTeamInvitation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => teamInviteNotifySchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Verify caller is the team owner (or admin)
+    const { data: team } = await (supabaseAdmin as any)
+      .from("teams")
+      .select("id, name, owner_id")
+      .eq("id", data.teamId)
+      .maybeSingle();
+    if (!team) throw new Error("Team findes ikke");
+
+    const { data: isAdmin } = await (context.supabase as any)
+      .rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (team.owner_id !== context.userId && !isAdmin) {
+      throw new Error("Kun teamejeren kan sende invitationer");
+    }
+
+    const { error } = await (supabaseAdmin as any).from("notifications").insert({
+      user_id: data.userId,
+      title: `Du er blevet inviteret til at joine "${team.name}"`,
+      body: "Åbn beskeder for at acceptere eller afvise invitationen.",
+      link: `/beskeder/system`,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

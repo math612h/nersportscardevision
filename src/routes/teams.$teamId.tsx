@@ -670,6 +670,12 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
       }
       return toastError(error.message);
     }
+    try {
+      const { notifyTeamInvitation } = await import("@/lib/messages.functions");
+      await notifyTeamInvitation({ data: { teamId, userId: selected } });
+    } catch (e) {
+      console.error("notifyTeamInvitation failed", e);
+    }
     toast.success("Invitation sendt");
     setSelected("");
     qc.invalidateQueries({ queryKey: ["team-invitations-out", teamId] });
