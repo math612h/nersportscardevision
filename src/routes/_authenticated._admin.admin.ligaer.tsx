@@ -178,7 +178,7 @@ function DriverAidsEditor({ value, onChange }: { value: EventSettings; onChange:
   );
 }
 
-function BriefingOpenEditor({ value, onChange }: { value: EventSettings; onChange: (next: EventSettings) => void }) {
+function BriefingOpenEditor({ value, onChange, disabled }: { value: EventSettings; onChange: (next: EventSettings) => void; disabled?: boolean }) {
   const current = value.briefing_open_minutes_before ?? 30;
   return (
     <div className="space-y-1 rounded-md border border-border p-2">
@@ -188,9 +188,10 @@ function BriefingOpenEditor({ value, onChange }: { value: EventSettings; onChang
         min={0}
         max={1440}
         value={current}
+        disabled={disabled}
         onChange={(e) => onChange({ ...value, briefing_open_minutes_before: Number(e.target.value) })}
       />
-      <p className="text-xs text-muted-foreground">Nedtælling vises på knappen indtil kanalen åbner. Admins har altid adgang.</p>
+      <p className="text-xs text-muted-foreground">{disabled ? "Aktivér \"Drivers Briefing er obligatorisk\" for at redigere." : "Nedtælling vises på knappen indtil kanalen åbner. Admins har altid adgang."}</p>
     </div>
   );
 }
