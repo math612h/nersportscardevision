@@ -1260,6 +1260,8 @@ export type Database = {
       team_invitations: {
         Row: {
           created_at: string
+          discord_channel_id: string | null
+          discord_message_id: string | null
           id: string
           invited_by: string
           responded_at: string | null
@@ -1269,6 +1271,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          discord_channel_id?: string | null
+          discord_message_id?: string | null
           id?: string
           invited_by: string
           responded_at?: string | null
@@ -1278,6 +1282,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          discord_channel_id?: string | null
+          discord_message_id?: string | null
           id?: string
           invited_by?: string
           responded_at?: string | null
