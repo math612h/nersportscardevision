@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyArchive } from "@/lib/rating.functions";
 import { classColor } from "@/lib/lmu-cars";
+import { normalizeTrackName } from "@/lib/tracks";
 
 
 function fmtLap(ms: number | null | undefined) {
