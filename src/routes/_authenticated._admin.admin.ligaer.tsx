@@ -755,7 +755,7 @@ function EditLeagueDialog({ league }: { league: any }) {
             onNever={setCarLockNever}
             onAt={setCarLockAt}
           />
-          <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
+          
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
           <div className="rounded-md border border-border p-2 space-y-2">
