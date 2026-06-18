@@ -194,10 +194,27 @@ function LeagueDetail() {
   });
   const isApproved = !!myProfile?.approved;
 
+  const { data: mySignup } = useQuery({
+    queryKey: ["my-league-signup", leagueId, user?.id ?? "anon"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("id")
+        .eq("league_id", leagueId)
+        .eq("user_id", user!.id)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const isSignedUp = !!mySignup;
+
   const divisionIds = useMemo(() => (divisions ?? []).map((d: any) => d.id), [divisions]);
   const { data: lobbies } = useQuery({
     queryKey: ["divisions-lobbies", leagueId, divisionIds.join(",")],
-    enabled: !!user && isApproved && divisionIds.length > 0,
+    enabled: !!user && isApproved && isSignedUp && divisionIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
