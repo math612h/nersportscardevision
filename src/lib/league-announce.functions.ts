@@ -69,7 +69,7 @@ async function postDiscordMessage(
   return { ok: false, status: res.status, error: text };
 }
 
-function buildSignupOpenMessage(args: {
+export function buildSignupOpenMessage(args: {
   leagueName: string;
   leagueUrl: string;
   classConfigs: Array<{ car_class?: string; driver_category?: string; max_drivers?: number }> | null;
