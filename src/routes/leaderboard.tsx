@@ -90,8 +90,10 @@ function LeaderboardPage() {
   const { data: rows, isLoading } = useQuery({
     queryKey: ["leaderboard"],
     queryFn: async () => {
-      const data = await fetchLeaderboard();
-      return data as Row[];
+      const data = (await fetchLeaderboard()) as Row[];
+      // Normaliser banenavne så nye LMU-eksportnavne ("Circuit de Spa Francorchamps"
+      // osv.) smelter sammen med de korte navne i dropdown og gruppering.
+      return data.map((r) => ({ ...r, track: normalizeTrackName(r.track) || r.track }));
     },
   });
 
