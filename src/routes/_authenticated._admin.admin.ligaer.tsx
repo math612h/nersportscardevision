@@ -94,9 +94,22 @@ function ClassConfigsEditor({ configs, setConfigs }: { configs: ClassConfig[]; s
   const update = (i: number, patch: Partial<ClassConfig>) =>
     setConfigs((prev) => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
   const remove = (i: number) => setConfigs((prev) => prev.filter((_, idx) => idx !== i));
+  const sharedDns = configs.find((c) => c.dns_limit != null)?.dns_limit;
+  const setSharedDns = (v: number | undefined) =>
+    setConfigs((prev) => prev.map((c) => ({ ...c, dns_limit: v })));
   return (
     <div className="space-y-2">
       <Label>Bilklasser og kørenumre</Label>
+      <div className="rounded-md border border-border p-2">
+        <Label className="text-xs">DNS-grænse (fælles for alle klasser)</Label>
+        <Input
+          type="number"
+          min={1}
+          value={sharedDns ?? ""}
+          placeholder="Ingen"
+          onChange={(e) => setSharedDns(e.target.value === "" ? undefined : Number(e.target.value))}
+        />
+      </div>
       {configs.map((c, i) => (
         <div key={i} className="space-y-2 rounded-md border border-border p-2">
           <div className="flex items-center justify-between">
@@ -128,18 +141,14 @@ function ClassConfigsEditor({ configs, setConfigs }: { configs: ClassConfig[]; s
               <Label className="text-xs">Til nr.</Label>
               <Input type="number" min={1} value={c.number_to} onChange={(e) => update(i, { number_to: Number(e.target.value) })} />
             </div>
-            <div>
+            <div className="col-span-2">
               <Label className="text-xs">Maks. deltagere</Label>
               <Input type="number" min={1} value={c.max_drivers ?? ""} placeholder="Ubegrænset" onChange={(e) => update(i, { max_drivers: e.target.value === "" ? undefined : Number(e.target.value) })} />
-            </div>
-            <div>
-              <Label className="text-xs">DNS-grænse</Label>
-              <Input type="number" min={1} value={c.dns_limit ?? ""} placeholder="Ingen" onChange={(e) => update(i, { dns_limit: e.target.value === "" ? undefined : Number(e.target.value) })} />
             </div>
           </div>
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={() => setConfigs((p) => [...p, emptyConfig()])}>
+      <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={() => setConfigs((p) => [...p, { ...emptyConfig(), dns_limit: sharedDns }])}>
         <Plus className="h-3 w-3" /> Tilføj klasse
       </Button>
     </div>
@@ -169,7 +178,7 @@ function DriverAidsEditor({ value, onChange }: { value: EventSettings; onChange:
   );
 }
 
-function BriefingOpenEditor({ value, onChange }: { value: EventSettings; onChange: (next: EventSettings) => void }) {
+function BriefingOpenEditor({ value, onChange, disabled }: { value: EventSettings; onChange: (next: EventSettings) => void; disabled?: boolean }) {
   const current = value.briefing_open_minutes_before ?? 30;
   return (
     <div className="space-y-1 rounded-md border border-border p-2">
@@ -179,9 +188,10 @@ function BriefingOpenEditor({ value, onChange }: { value: EventSettings; onChang
         min={0}
         max={1440}
         value={current}
+        disabled={disabled}
         onChange={(e) => onChange({ ...value, briefing_open_minutes_before: Number(e.target.value) })}
       />
-      <p className="text-xs text-muted-foreground">Nedtælling vises på knappen indtil kanalen åbner. Admins har altid adgang.</p>
+      <p className="text-xs text-muted-foreground">{disabled ? "Aktivér \"Drivers Briefing er obligatorisk\" for at redigere." : "Nedtælling vises på knappen indtil kanalen åbner. Admins har altid adgang."}</p>
     </div>
   );
 }
@@ -401,6 +411,7 @@ function AdminLeagues() {
                   <Checkbox checked={briefingRequired} onCheckedChange={(v) => setBriefingRequired(v === true)} />
                   <span className="text-sm">Drivers Briefing er obligatorisk (knap vises på afdelinger)</span>
                 </label>
+                <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} disabled={!briefingRequired} />
                 <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
                   <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
                   <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
@@ -423,7 +434,6 @@ function AdminLeagues() {
                   onNever={setCarLockNever}
                   onAt={setCarLockAt}
                 />
-                <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
                 <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
                 <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
                 <DialogFooter className="gap-2 sm:gap-2">
@@ -710,6 +720,7 @@ function EditLeagueDialog({ league }: { league: any }) {
             <Checkbox checked={briefingRequired} onCheckedChange={(v) => setBriefingRequired(v === true)} />
             <span className="text-sm">Drivers Briefing er obligatorisk (knap vises på afdelinger)</span>
           </label>
+          <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} disabled={!briefingRequired} />
           <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
             <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
             <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
@@ -744,7 +755,7 @@ function EditLeagueDialog({ league }: { league: any }) {
             onNever={setCarLockNever}
             onAt={setCarLockAt}
           />
-          <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} />
+          
           <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
           <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
           <div className="rounded-md border border-border p-2 space-y-2">
