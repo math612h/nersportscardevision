@@ -94,9 +94,22 @@ function ClassConfigsEditor({ configs, setConfigs }: { configs: ClassConfig[]; s
   const update = (i: number, patch: Partial<ClassConfig>) =>
     setConfigs((prev) => prev.map((c, idx) => (idx === i ? { ...c, ...patch } : c)));
   const remove = (i: number) => setConfigs((prev) => prev.filter((_, idx) => idx !== i));
+  const sharedDns = configs.find((c) => c.dns_limit != null)?.dns_limit;
+  const setSharedDns = (v: number | undefined) =>
+    setConfigs((prev) => prev.map((c) => ({ ...c, dns_limit: v })));
   return (
     <div className="space-y-2">
       <Label>Bilklasser og kørenumre</Label>
+      <div className="rounded-md border border-border p-2">
+        <Label className="text-xs">DNS-grænse (fælles for alle klasser)</Label>
+        <Input
+          type="number"
+          min={1}
+          value={sharedDns ?? ""}
+          placeholder="Ingen"
+          onChange={(e) => setSharedDns(e.target.value === "" ? undefined : Number(e.target.value))}
+        />
+      </div>
       {configs.map((c, i) => (
         <div key={i} className="space-y-2 rounded-md border border-border p-2">
           <div className="flex items-center justify-between">
@@ -128,18 +141,14 @@ function ClassConfigsEditor({ configs, setConfigs }: { configs: ClassConfig[]; s
               <Label className="text-xs">Til nr.</Label>
               <Input type="number" min={1} value={c.number_to} onChange={(e) => update(i, { number_to: Number(e.target.value) })} />
             </div>
-            <div>
+            <div className="col-span-2">
               <Label className="text-xs">Maks. deltagere</Label>
               <Input type="number" min={1} value={c.max_drivers ?? ""} placeholder="Ubegrænset" onChange={(e) => update(i, { max_drivers: e.target.value === "" ? undefined : Number(e.target.value) })} />
-            </div>
-            <div>
-              <Label className="text-xs">DNS-grænse</Label>
-              <Input type="number" min={1} value={c.dns_limit ?? ""} placeholder="Ingen" onChange={(e) => update(i, { dns_limit: e.target.value === "" ? undefined : Number(e.target.value) })} />
             </div>
           </div>
         </div>
       ))}
-      <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={() => setConfigs((p) => [...p, emptyConfig()])}>
+      <Button type="button" variant="outline" size="sm" className="w-full gap-1" onClick={() => setConfigs((p) => [...p, { ...emptyConfig(), dns_limit: sharedDns }])}>
         <Plus className="h-3 w-3" /> Tilføj klasse
       </Button>
     </div>
