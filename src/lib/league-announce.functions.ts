@@ -23,7 +23,7 @@ function formatDanishDate(iso: string | null | undefined): string {
   }
 }
 
-async function resolveBannerUrl(admin: any, bannerPath: string | null): Promise<string | null> {
+export async function resolveBannerUrl(admin: any, bannerPath: string | null): Promise<string | null> {
   if (!bannerPath) return null;
   if (bannerPath.startsWith("http")) return bannerPath;
   const { data: signed } = await admin.storage
