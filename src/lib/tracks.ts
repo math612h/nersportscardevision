@@ -112,3 +112,40 @@ export function getTrackImageFile(trackName?: string | null): string | null {
   for (const r of TRACK_IMAGE_RULES) if (n.includes(r.match)) return r.file;
   return null;
 }
+
+// LMU has started writing full official track names in the result XML
+// (e.g. "Circuit de Spa Francorchamps" instead of "Spa"). Normalize to the
+// short canonical names we've always used, so the leaderboard dropdown and
+// grouping stay consistent regardless of which naming the file uses.
+const TRACK_NAME_ALIASES: { match: string; canonical: string }[] = [
+  { match: "spa", canonical: "Spa" },
+  { match: "sarthe", canonical: "Le Mans" },
+  { match: "le mans", canonical: "Le Mans" },
+  { match: "americas", canonical: "Cota" },
+  { match: "cota", canonical: "Cota" },
+  { match: "sebring", canonical: "Sebring" },
+  { match: "monza", canonical: "Monza" },
+  { match: "lusail", canonical: "Lusail" },
+  { match: "qatar", canonical: "Lusail" },
+  { match: "enzo", canonical: "Imola" },
+  { match: "imola", canonical: "Imola" },
+  { match: "josé carlos", canonical: "Interlagos" },
+  { match: "jose carlos", canonical: "Interlagos" },
+  { match: "interlagos", canonical: "Interlagos" },
+  { match: "barcelona", canonical: "Barcelona" },
+  { match: "algarve", canonical: "Portimao" },
+  { match: "portim", canonical: "Portimao" },
+  { match: "bahrain", canonical: "Bahrain International Circuit" },
+  { match: "fuji", canonical: "Fuji Speedway" },
+  { match: "paul ricard", canonical: "Circuit Paul Ricard" },
+  { match: "silverstone", canonical: "Silverstone" },
+];
+
+export function normalizeTrackName(track?: string | null): string {
+  const raw = (track ?? "").trim();
+  if (!raw) return "";
+  const lower = raw.toLowerCase();
+  for (const r of TRACK_NAME_ALIASES) if (lower.includes(r.match)) return r.canonical;
+  return raw;
+}
+
