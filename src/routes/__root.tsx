@@ -95,6 +95,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { property: "og:title", content: siteTitle },
         { property: "og:description", content: siteDesc },
         { property: "og:type", content: "website" },
+        { property: "og:image", content: ogImage },
+        { property: "og:image:alt", content: "LMU Danmark logo" },
         { name: "twitter:title", content: siteTitle },
         { name: "twitter:description", content: siteDesc },
         { name: "twitter:image", content: ogImage },
