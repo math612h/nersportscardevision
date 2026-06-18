@@ -222,15 +222,17 @@ export async function isUserInGuild(discordUserId: string): Promise<{ inGuild: b
   return { inGuild: false, status: res.status, message: text };
 }
 
-export async function sendDiscordDM(discordUserId: string, content: string): Promise<{ ok: boolean; status: number; message?: string }> {
+export type DiscordComponent = Record<string, unknown>;
+
+export async function sendDiscordDM(
+  discordUserId: string,
+  content: string,
+  components?: DiscordComponent[],
+): Promise<{ ok: boolean; status: number; message?: string; channelId?: string; messageId?: string }> {
   const botToken = getEnv("DISCORD_BOT_TOKEN");
-  // 1) Open a DM channel with the user
   const dmRes = await fetch(`${DISCORD_API}/users/@me/channels`, {
     method: "POST",
-    headers: {
-      Authorization: `Bot ${botToken}`,
-      "Content-Type": "application/json",
-    },
+    headers: { Authorization: `Bot ${botToken}`, "Content-Type": "application/json" },
     body: JSON.stringify({ recipient_id: discordUserId }),
   });
   if (!dmRes.ok) {
@@ -239,18 +241,82 @@ export async function sendDiscordDM(discordUserId: string, content: string): Pro
   }
   const dm = (await dmRes.json()) as { id: string };
 
-  // 2) Post the message
+  const body: Record<string, unknown> = {
+    content: content.slice(0, 1900),
+    allowed_mentions: { parse: [] },
+  };
+  if (components && components.length > 0) body.components = components;
+
   const msgRes = await fetch(`${DISCORD_API}/channels/${dm.id}/messages`, {
     method: "POST",
-    headers: {
-      Authorization: `Bot ${botToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ content: content.slice(0, 1900), allowed_mentions: { parse: [] } }),
+    headers: { Authorization: `Bot ${botToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
-  if (msgRes.status === 200 || msgRes.status === 201) return { ok: true, status: msgRes.status };
+  if (msgRes.status === 200 || msgRes.status === 201) {
+    let messageId: string | undefined;
+    try {
+      const json = (await msgRes.json()) as { id?: string };
+      messageId = json?.id;
+    } catch (_) {}
+    return { ok: true, status: msgRes.status, channelId: dm.id, messageId };
+  }
   const text = await msgRes.text().catch(() => "");
   return { ok: false, status: msgRes.status, message: text };
+}
+
+export async function editDiscordMessage(
+  channelId: string,
+  messageId: string,
+  content: string,
+  components?: DiscordComponent[],
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const botToken = getEnv("DISCORD_BOT_TOKEN");
+  const body: Record<string, unknown> = {
+    content: content.slice(0, 1900),
+    allowed_mentions: { parse: [] },
+    components: components ?? [],
+  };
+  const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages/${messageId}`, {
+    method: "PATCH",
+    headers: { Authorization: `Bot ${botToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 200) return { ok: true, status: 200 };
+  const text = await res.text().catch(() => "");
+  return { ok: false, status: res.status, message: text };
+}
+
+// Verify Discord interaction signature (ed25519). Returns true if valid.
+export async function verifyDiscordInteractionSignature(
+  signatureHex: string,
+  timestamp: string,
+  rawBody: string,
+): Promise<boolean> {
+  const publicKeyHex = process.env.DISCORD_PUBLIC_KEY;
+  if (!publicKeyHex || !signatureHex || !timestamp) return false;
+  try {
+    const hexToBytes = (h: string) => {
+      const out = new Uint8Array(h.length / 2);
+      for (let i = 0; i < out.length; i++) out[i] = parseInt(h.substr(i * 2, 2), 16);
+      return out;
+    };
+    const key = await crypto.subtle.importKey(
+      "raw",
+      hexToBytes(publicKeyHex),
+      { name: "Ed25519" } as unknown as AlgorithmIdentifier,
+      false,
+      ["verify"],
+    );
+    const data = new TextEncoder().encode(timestamp + rawBody);
+    return await crypto.subtle.verify(
+      { name: "Ed25519" } as unknown as AlgorithmIdentifier,
+      key,
+      hexToBytes(signatureHex),
+      data,
+    );
+  } catch {
+    return false;
+  }
 }
 
 export async function sendDiscordChannelMessage(

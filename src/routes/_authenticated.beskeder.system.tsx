@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Bell, Check, UserPlus, X } from "lucide-react";
-import { getSystemNotifications, markSystemRead } from "@/lib/messages.functions";
+import { getSystemNotifications, markSystemRead, respondTeamInvitation } from "@/lib/messages.functions";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
@@ -61,15 +61,7 @@ function SystemThread() {
 
   const accept = useMutation({
     mutationFn: async (inv: PendingInvite) => {
-      const { error: updErr } = await (supabase as any)
-        .from("team_invitations")
-        .update({ status: "accepted", responded_at: new Date().toISOString() })
-        .eq("id", inv.id);
-      if (updErr) throw updErr;
-      const { error: insErr } = await (supabase as any)
-        .from("team_members")
-        .insert({ team_id: inv.team_id, user_id: user!.id, role: "member" });
-      if (insErr) throw insErr;
+      await respondTeamInvitation({ data: { invitationId: inv.id, action: "accept" } });
     },
     onSuccess: (_d, inv) => {
       toast.success(`Du er nu medlem af ${inv.team_name}!`);
@@ -82,11 +74,7 @@ function SystemThread() {
 
   const reject = useMutation({
     mutationFn: async (inv: PendingInvite) => {
-      const { error } = await (supabase as any)
-        .from("team_invitations")
-        .update({ status: "rejected", responded_at: new Date().toISOString() })
-        .eq("id", inv.id);
-      if (error) throw error;
+      await respondTeamInvitation({ data: { invitationId: inv.id, action: "reject" } });
     },
     onSuccess: () => {
       toast.success("Invitation afvist");

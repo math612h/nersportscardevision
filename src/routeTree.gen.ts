@@ -44,6 +44,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
 import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
 import { Route as ApiPublicDiscordLoginRouteImport } from './routes/api/public/discord.login'
+import { Route as ApiPublicDiscordInteractionsRouteImport } from './routes/api/public/discord.interactions'
 import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/public/discord.callback'
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
@@ -246,6 +247,12 @@ const ApiPublicDiscordLoginRoute = ApiPublicDiscordLoginRouteImport.update({
   path: '/api/public/discord/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicDiscordInteractionsRoute =
+  ApiPublicDiscordInteractionsRouteImport.update({
+    id: '/api/public/discord/interactions',
+    path: '/api/public/discord/interactions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicDiscordCallbackRoute =
   ApiPublicDiscordCallbackRouteImport.update({
     id: '/api/public/discord/callback',
@@ -377,6 +384,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
+  '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
@@ -426,6 +434,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
+  '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
@@ -480,6 +489,7 @@ export interface FileRoutesById {
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
+  '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
@@ -533,6 +543,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/discord/callback'
+    | '/api/public/discord/interactions'
     | '/api/public/discord/login'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
@@ -582,6 +593,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/discord/callback'
+    | '/api/public/discord/interactions'
     | '/api/public/discord/login'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
@@ -635,6 +647,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/discord/callback'
+    | '/api/public/discord/interactions'
     | '/api/public/discord/login'
     | '/api/public/download/companion'
     | '/ligaer/$leagueId/afdeling/$divisionId'
@@ -672,6 +685,7 @@ export interface RootRouteChildren {
   ApiPublicCronExpireReserveOffersRoute: typeof ApiPublicCronExpireReserveOffersRoute
   ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
   ApiPublicDiscordCallbackRoute: typeof ApiPublicDiscordCallbackRoute
+  ApiPublicDiscordInteractionsRoute: typeof ApiPublicDiscordInteractionsRoute
   ApiPublicDiscordLoginRoute: typeof ApiPublicDiscordLoginRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -926,6 +940,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/discord/login'
       fullPath: '/api/public/discord/login'
       preLoaderRoute: typeof ApiPublicDiscordLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/discord/interactions': {
+      id: '/api/public/discord/interactions'
+      path: '/api/public/discord/interactions'
+      fullPath: '/api/public/discord/interactions'
+      preLoaderRoute: typeof ApiPublicDiscordInteractionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/discord/callback': {
@@ -1187,6 +1208,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronExpireReserveOffersRoute: ApiPublicCronExpireReserveOffersRoute,
   ApiPublicCronLeagueOpenRoute: ApiPublicCronLeagueOpenRoute,
   ApiPublicDiscordCallbackRoute: ApiPublicDiscordCallbackRoute,
+  ApiPublicDiscordInteractionsRoute: ApiPublicDiscordInteractionsRoute,
   ApiPublicDiscordLoginRoute: ApiPublicDiscordLoginRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,

@@ -529,7 +529,6 @@ export const notifyTeamInvitation = createServerFn({ method: "POST" })
   .inputValidator((i) => teamInviteNotifySchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    // Verify caller is the team owner (or admin)
     const { data: team } = await (supabaseAdmin as any)
       .from("teams")
       .select("id, name, owner_id, bio, logo_url")
@@ -551,7 +550,18 @@ export const notifyTeamInvitation = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
-    // Send Discord DM with full team info (best-effort)
+    // Find the pending invitation row to reference in Discord buttons
+    const { data: invRow } = await (supabaseAdmin as any)
+      .from("team_invitations")
+      .select("id")
+      .eq("team_id", team.id)
+      .eq("user_id", data.userId)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const invitationId = (invRow as any)?.id as string | undefined;
+
     try {
       const { data: priv } = await (supabaseAdmin as any)
         .from("profiles_private")
@@ -584,18 +594,21 @@ export const notifyTeamInvitation = createServerFn({ method: "POST" })
           })
           .join("\n");
 
-        const ratingLine = rating
-          ? `**Rating:** ${Number((rating as any).score).toFixed(0)}${
-              (rating as any).percentile != null
-                ? ` (top ${(100 - Number((rating as any).percentile)).toFixed(0)}%)`
-                : ""
-            }`
-          : `**Rating:** ingen endnu`;
+        let ratingLine = `**Rating:** ingen endnu`;
+        if (rating) {
+          const score = Number((rating as any).score).toFixed(0);
+          const pct = (rating as any).percentile;
+          if (pct != null) {
+            const top = Math.max(1, Math.round(100 - Number(pct)));
+            ratingLine = `**Rating:** ${score} (top ${top}%)`;
+          } else {
+            ratingLine = `**Rating:** ${score}`;
+          }
+        }
 
         const lines = [
           `🏁 **Du er inviteret til at joine teamet "${team.name}"** på LMU Danmark!`,
           "",
-          (team as any).logo_url ? `**Logo:** ${(team as any).logo_url}` : null,
           `**Navn:** ${team.name}`,
           ratingLine,
           "",
@@ -604,16 +617,58 @@ export const notifyTeamInvitation = createServerFn({ method: "POST" })
           "",
           (team as any).bio ? `**Bio:**\n${(team as any).bio}` : null,
           "",
-          `Du kan **acceptere** eller **afvise** invitationen her:`,
+          `Du kan acceptere eller afvise nedenfor — eller gøre det på hjemmesiden:`,
           `https://lmudanmark.dk/beskeder/system`,
         ].filter(Boolean).join("\n");
 
+        const components = invitationId
+          ? [
+              {
+                type: 1,
+                components: [
+                  { type: 2, style: 3, label: "Accepter", custom_id: `team_invite_accept:${invitationId}` },
+                  { type: 2, style: 4, label: "Afvis", custom_id: `team_invite_reject:${invitationId}` },
+                ],
+              },
+            ]
+          : undefined;
+
         const { sendDiscordDM } = await import("./discord.server");
-        await sendDiscordDM(discordUserId, lines).catch(() => {});
+        const dmRes = await sendDiscordDM(discordUserId, lines, components).catch(() => null);
+        if (dmRes?.ok && dmRes.channelId && dmRes.messageId && invitationId) {
+          await (supabaseAdmin as any)
+            .from("team_invitations")
+            .update({
+              discord_channel_id: dmRes.channelId,
+              discord_message_id: dmRes.messageId,
+            })
+            .eq("id", invitationId);
+        }
       }
     } catch (_) {
-      // swallow — Discord DM is best-effort
+      // best-effort
     }
 
     return { ok: true };
+  });
+
+const respondInviteSchema = z.object({
+  invitationId: z.string().uuid(),
+  action: z.enum(["accept", "reject"]),
+});
+
+export const respondTeamInvitation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => respondInviteSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { respondToTeamInvitationCore } = await import("./team-invitations.server");
+    const res = await respondToTeamInvitationCore({
+      invitationId: data.invitationId,
+      action: data.action,
+      actingUserId: context.userId,
+    });
+    if (res.status === "missing") throw new Error("Invitation findes ikke");
+    if (res.status === "forbidden") throw new Error("Du har ikke adgang til denne invitation");
+    if (res.status === "already") throw new Error("Invitationen er allerede besvaret");
+    return { ok: true, teamName: res.teamName };
   });
