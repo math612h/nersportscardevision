@@ -532,7 +532,7 @@ export const notifyTeamInvitation = createServerFn({ method: "POST" })
     // Verify caller is the team owner (or admin)
     const { data: team } = await (supabaseAdmin as any)
       .from("teams")
-      .select("id, name, owner_id")
+      .select("id, name, owner_id, bio, logo_url")
       .eq("id", data.teamId)
       .maybeSingle();
     if (!team) throw new Error("Team findes ikke");
@@ -550,5 +550,70 @@ export const notifyTeamInvitation = createServerFn({ method: "POST" })
       link: `/beskeder/system`,
     });
     if (error) throw new Error(error.message);
+
+    // Send Discord DM with full team info (best-effort)
+    try {
+      const { data: priv } = await (supabaseAdmin as any)
+        .from("profiles_private")
+        .select("discord_user_id")
+        .eq("user_id", data.userId)
+        .maybeSingle();
+      const discordUserId = (priv as any)?.discord_user_id as string | null | undefined;
+      if (discordUserId) {
+        const { data: rating } = await (supabaseAdmin as any)
+          .from("team_ratings")
+          .select("score, percentile")
+          .eq("team_id", team.id)
+          .maybeSingle();
+
+        const { data: memberRows } = await (supabaseAdmin as any)
+          .from("team_members")
+          .select("user_id, role")
+          .eq("team_id", team.id);
+        const memberIds = ((memberRows ?? []) as any[]).map((m) => m.user_id);
+        const profilesRes = memberIds.length > 0
+          ? await supabaseAdmin.from("profiles").select("id, display_name").in("id", memberIds)
+          : { data: [] as any[] };
+        const nameById = new Map<string, string>(
+          (((profilesRes as any).data ?? []) as any[]).map((p) => [p.id, p.display_name ?? "Ukendt"]),
+        );
+        const memberList = ((memberRows ?? []) as any[])
+          .map((m) => {
+            const n = nameById.get(m.user_id) ?? "Ukendt";
+            return m.role === "owner" ? `• ${n} (ejer)` : `• ${n}`;
+          })
+          .join("\n");
+
+        const ratingLine = rating
+          ? `**Rating:** ${Number((rating as any).score).toFixed(0)}${
+              (rating as any).percentile != null
+                ? ` (top ${(100 - Number((rating as any).percentile)).toFixed(0)}%)`
+                : ""
+            }`
+          : `**Rating:** ingen endnu`;
+
+        const lines = [
+          `🏁 **Du er inviteret til at joine teamet "${team.name}"** på LMU Danmark!`,
+          "",
+          (team as any).logo_url ? `**Logo:** ${(team as any).logo_url}` : null,
+          `**Navn:** ${team.name}`,
+          ratingLine,
+          "",
+          `**Medlemmer:**`,
+          memberList || "_Ingen medlemmer endnu_",
+          "",
+          (team as any).bio ? `**Bio:**\n${(team as any).bio}` : null,
+          "",
+          `Du kan **acceptere** eller **afvise** invitationen her:`,
+          `https://lmudanmark.dk/beskeder/system`,
+        ].filter(Boolean).join("\n");
+
+        const { sendDiscordDM } = await import("./discord.server");
+        await sendDiscordDM(discordUserId, lines).catch(() => {});
+      }
+    } catch (_) {
+      // swallow — Discord DM is best-effort
+    }
+
     return { ok: true };
   });
