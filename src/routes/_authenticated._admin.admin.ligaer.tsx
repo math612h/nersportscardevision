@@ -569,7 +569,10 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [carLockAt, setCarLockAt] = useState<string>(toLocalInput(league.car_lock_at));
   const [saving, setSaving] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
+  const [emailing, setEmailing] = useState(false);
   const announceFn = useServerFn(sendLeagueAnnouncement);
+  const buildEmailFn = useServerFn(buildLeagueAnnouncementEmail);
+  const { user } = useAuth();
 
   const announce = async () => {
     setAnnouncing(true);
@@ -584,6 +587,33 @@ function EditLeagueDialog({ league }: { league: any }) {
       toast.error(e?.message ?? "Kunne ikke sende annoncering.");
     } finally {
       setAnnouncing(false);
+    }
+  };
+
+  const emailFbAnnouncement = async () => {
+    if (!user?.email) {
+      toast.error("Din bruger har ingen e-mail.");
+      return;
+    }
+    setEmailing(true);
+    try {
+      const built = await buildEmailFn({ data: { leagueId: league.id } });
+      const res = await sendTransactionalEmail({
+        templateName: "fb-announcement",
+        recipientEmail: user.email,
+        idempotencyKey: `fb-announce-${league.id}-${Date.now()}`,
+        templateData: {
+          leagueName: built.leagueName,
+          text: built.text,
+          bannerUrl: built.bannerUrl,
+        },
+      });
+      if (res.ok) toast.success(`FB-annoncering sendt til ${user.email}.`);
+      else toast.error("Kunne ikke sende mail.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke bygge annoncering.");
+    } finally {
+      setEmailing(false);
     }
   };
 
