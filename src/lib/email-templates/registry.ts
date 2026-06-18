@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { template as welcomeTemplate } from './welcome'
 import { template as leagueOpenTemplate } from './league-open'
 import { template as leagueSignupConfirmationTemplate } from './league-signup-confirmation'
+import { template as fbAnnouncementTemplate } from './fb-announcement'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -16,4 +17,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   welcome: welcomeTemplate,
   'league-open': leagueOpenTemplate,
   'league-signup-confirmation': leagueSignupConfirmationTemplate,
+  'fb-announcement': fbAnnouncementTemplate,
 }

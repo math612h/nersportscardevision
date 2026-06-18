@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { sendLeagueAnnouncement } from "@/lib/league-announce.functions";
+import { buildLeagueAnnouncementEmail } from "@/lib/league-announce-email.functions";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import { syncDiscordRolesForLeague } from "@/lib/discord-sync.functions";
 
 import {
@@ -567,7 +569,10 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [carLockAt, setCarLockAt] = useState<string>(toLocalInput(league.car_lock_at));
   const [saving, setSaving] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
+  const [emailing, setEmailing] = useState(false);
   const announceFn = useServerFn(sendLeagueAnnouncement);
+  const buildEmailFn = useServerFn(buildLeagueAnnouncementEmail);
+  const { user } = useAuth();
 
   const announce = async () => {
     setAnnouncing(true);
@@ -582,6 +587,33 @@ function EditLeagueDialog({ league }: { league: any }) {
       toast.error(e?.message ?? "Kunne ikke sende annoncering.");
     } finally {
       setAnnouncing(false);
+    }
+  };
+
+  const emailFbAnnouncement = async () => {
+    if (!user?.email) {
+      toast.error("Din bruger har ingen e-mail.");
+      return;
+    }
+    setEmailing(true);
+    try {
+      const built = await buildEmailFn({ data: { leagueId: league.id } });
+      const res = await sendTransactionalEmail({
+        templateName: "fb-announcement",
+        recipientEmail: user.email,
+        idempotencyKey: `fb-announce-${league.id}-${Date.now()}`,
+        templateData: {
+          leagueName: built.leagueName,
+          text: built.text,
+          bannerUrl: built.bannerUrl,
+        },
+      });
+      if (res.ok) toast.success(`FB-annoncering sendt til ${user.email}.`);
+      else toast.error("Kunne ikke sende mail.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke bygge annoncering.");
+    } finally {
+      setEmailing(false);
     }
   };
 
@@ -722,6 +754,9 @@ function EditLeagueDialog({ league }: { league: any }) {
                 Send en Discord-annoncering nu. Hvis tilmeldingen endnu ikke er åben, sendes et hype-opslag med live-nedtælling. Er tilmeldingen allerede åben, sendes den samme besked som ved auto-åbning.
               </div>
             </div>
+            <Button type="button" variant="outline" disabled={emailing} onClick={emailFbAnnouncement} className="gap-1">
+              <Megaphone className="h-4 w-4" /> {emailing ? "Sender…" : "Send FB annoncering til mail"}
+            </Button>
             <Button type="button" variant="outline" disabled={announcing} onClick={announce} className="gap-1">
               <Megaphone className="h-4 w-4" /> {announcing ? "Sender…" : "Send annoncering"}
             </Button>

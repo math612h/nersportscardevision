@@ -23,7 +23,7 @@ function formatDanishDate(iso: string | null | undefined): string {
   }
 }
 
-async function resolveBannerUrl(admin: any, bannerPath: string | null): Promise<string | null> {
+export async function resolveBannerUrl(admin: any, bannerPath: string | null): Promise<string | null> {
   if (!bannerPath) return null;
   if (bannerPath.startsWith("http")) return bannerPath;
   const { data: signed } = await admin.storage
@@ -69,7 +69,7 @@ async function postDiscordMessage(
   return { ok: false, status: res.status, error: text };
 }
 
-function buildSignupOpenMessage(args: {
+export function buildSignupOpenMessage(args: {
   leagueName: string;
   leagueUrl: string;
   classConfigs: Array<{ car_class?: string; driver_category?: string; max_drivers?: number }> | null;
@@ -119,7 +119,7 @@ function buildSignupOpenMessage(args: {
   return parts.join("\n");
 }
 
-function buildCountdownMessage(args: {
+export function buildCountdownMessage(args: {
   leagueName: string;
   leagueUrl: string;
   signupOpensAt: string;
