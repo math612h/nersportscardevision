@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Bell, Check, UserPlus, X } from "lucide-react";
-import { getSystemNotifications, markSystemRead } from "@/lib/messages.functions";
+import { getSystemNotifications, markSystemRead, respondTeamInvitation } from "@/lib/messages.functions";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
