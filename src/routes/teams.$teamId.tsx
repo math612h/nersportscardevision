@@ -650,10 +650,26 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
 
   const send = async () => {
     if (!selected) return;
+    // Check for an existing pending invitation to avoid the unique constraint error.
+    const { data: existing } = await (supabase as any)
+      .from("team_invitations")
+      .select("id")
+      .eq("team_id", teamId)
+      .eq("user_id", selected)
+      .eq("status", "pending")
+      .maybeSingle();
+    if (existing) {
+      return toastError("Denne bruger har allerede en afventende invitation til teamet.");
+    }
     const { error } = await (supabase as any).from("team_invitations").insert({
       team_id: teamId, user_id: selected, invited_by: userId,
     });
-    if (error) return toastError(error.message);
+    if (error) {
+      if ((error as any).code === "23505") {
+        return toastError("Denne bruger har allerede en afventende invitation til teamet.");
+      }
+      return toastError(error.message);
+    }
     toast.success("Invitation sendt");
     setSelected("");
     qc.invalidateQueries({ queryKey: ["team-invitations-out", teamId] });
