@@ -174,61 +174,92 @@ export function buildCountdownMessage(args: {
   return parts.join("\n");
 }
 
-export const sendLeagueAnnouncement = createServerFn({ method: "POST" })
+async function assertAdmin(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+  const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+  if (!isAdmin) throw new Error("Kun admins kan sende annonceringer.");
+}
+
+async function loadAnnouncementContext(leagueId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: league, error: lErr } = await supabaseAdmin
+    .from("leagues")
+    .select("id, name, signup_opens_at, class_configs, banner_url")
+    .eq("id", leagueId)
+    .maybeSingle();
+  if (lErr) throw new Error(lErr.message);
+  if (!league) throw new Error("Liga findes ikke.");
+
+  const leagueUrl = `${SITE_URL}/ligaer/${league.id}`;
+  const bannerUrl = await resolveBannerUrl(supabaseAdmin, (league as any).banner_url ?? null);
+
+  const { data: divs } = await supabaseAdmin
+    .from("divisions")
+    .select("name, track, layout, race_date")
+    .eq("league_id", league.id as string)
+    .order("race_date", { ascending: true });
+
+  const opensAtRaw = (league as any).signup_opens_at as string | null;
+  const opensAt = opensAtRaw ? new Date(opensAtRaw).getTime() : null;
+  const isOpen = opensAt === null || opensAt <= Date.now();
+
+  const content = isOpen
+    ? buildSignupOpenMessage({
+        leagueName: league.name as string,
+        leagueUrl,
+        classConfigs: (league as any).class_configs ?? null,
+        divisions: (divs ?? []) as any,
+      })
+    : buildCountdownMessage({
+        leagueName: league.name as string,
+        leagueUrl,
+        signupOpensAt: opensAtRaw as string,
+        classConfigs: (league as any).class_configs ?? null,
+        divisions: (divs ?? []) as any,
+      });
+
+  return { league, bannerUrl, content, isOpen };
+}
+
+export const previewLeagueAnnouncement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ leagueId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { userId } = context;
+    await assertAdmin(context.userId);
+    const { content, bannerUrl, isOpen } = await loadAnnouncementContext(data.leagueId);
+    return {
+      content,
+      bannerUrl,
+      kind: isOpen ? ("signup-open" as const) : ("countdown" as const),
+    };
+  });
+
+export const sendLeagueAnnouncement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        leagueId: z.string().uuid(),
+        overrideContent: z.string().trim().min(1).max(4000).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { league, bannerUrl, content: defaultContent, isOpen } = await loadAnnouncementContext(
+      data.leagueId,
+    );
 
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
-    if (!isAdmin) throw new Error("Kun admins kan sende annonceringer.");
-
-    const { data: league, error: lErr } = await supabaseAdmin
-      .from("leagues")
-      .select("id, name, signup_opens_at, class_configs, banner_url")
-      .eq("id", data.leagueId)
-      .maybeSingle();
-    if (lErr) throw new Error(lErr.message);
-    if (!league) throw new Error("Liga findes ikke.");
-
-    const leagueUrl = `${SITE_URL}/ligaer/${league.id}`;
-    const bannerUrl = await resolveBannerUrl(supabaseAdmin, (league as any).banner_url ?? null);
-
-    const { data: divs } = await supabaseAdmin
-      .from("divisions")
-      .select("name, track, layout, race_date")
-      .eq("league_id", league.id as string)
-      .order("race_date", { ascending: true });
-
-    const opensAtRaw = (league as any).signup_opens_at as string | null;
-    const opensAt = opensAtRaw ? new Date(opensAtRaw).getTime() : null;
-    const now = Date.now();
-    const isOpen = opensAt === null || opensAt <= now;
-
-    const content = isOpen
-      ? buildSignupOpenMessage({
-          leagueName: league.name as string,
-          leagueUrl,
-          classConfigs: (league as any).class_configs ?? null,
-          divisions: (divs ?? []) as any,
-        })
-      : buildCountdownMessage({
-          leagueName: league.name as string,
-          leagueUrl,
-          signupOpensAt: opensAtRaw as string,
-          classConfigs: (league as any).class_configs ?? null,
-          divisions: (divs ?? []) as any,
-        });
+    const content = data.overrideContent ?? defaultContent;
 
     const res = await postDiscordMessage(content, bannerUrl);
     if (!res.ok) throw new Error(`Discord-fejl (${res.status}): ${res.error ?? "ukendt"}`);
 
-    // Mark as already-notified so the cron doesn't send a duplicate when signup opens.
     if (isOpen) {
       await supabaseAdmin
         .from("leagues")

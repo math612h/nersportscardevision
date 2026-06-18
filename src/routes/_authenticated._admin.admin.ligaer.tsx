@@ -6,7 +6,7 @@ import { ArrowLeft, Plus, Trash2, Settings, Pencil, ImagePlus, Archive, ArchiveR
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { sendLeagueAnnouncement } from "@/lib/league-announce.functions";
+import { sendLeagueAnnouncement, previewLeagueAnnouncement } from "@/lib/league-announce.functions";
 import { buildLeagueAnnouncementEmail } from "@/lib/league-announce-email.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { syncDiscordRolesForLeague } from "@/lib/discord-sync.functions";
@@ -580,19 +580,44 @@ function EditLeagueDialog({ league }: { league: any }) {
   const [saving, setSaving] = useState(false);
   const [announcing, setAnnouncing] = useState(false);
   const [emailing, setEmailing] = useState(false);
+  const [discordEdit, setDiscordEdit] = useState<{ open: boolean; text: string; loading: boolean }>({
+    open: false,
+    text: "",
+    loading: false,
+  });
+  const [fbEdit, setFbEdit] = useState<{ open: boolean; text: string; loading: boolean }>({
+    open: false,
+    text: "",
+    loading: false,
+  });
   const announceFn = useServerFn(sendLeagueAnnouncement);
+  const previewFn = useServerFn(previewLeagueAnnouncement);
   const buildEmailFn = useServerFn(buildLeagueAnnouncementEmail);
   const { user } = useAuth();
 
-  const announce = async () => {
+  const openDiscordEditor = async () => {
+    setDiscordEdit({ open: true, text: "", loading: true });
+    try {
+      const res = await previewFn({ data: { leagueId: league.id } });
+      setDiscordEdit({ open: true, text: res.content, loading: false });
+    } catch (e: any) {
+      setDiscordEdit({ open: false, text: "", loading: false });
+      toast.error(e?.message ?? "Kunne ikke hente annoncering.");
+    }
+  };
+
+  const sendDiscord = async () => {
     setAnnouncing(true);
     try {
-      const res = await announceFn({ data: { leagueId: league.id } });
+      const res = await announceFn({
+        data: { leagueId: league.id, overrideContent: discordEdit.text },
+      });
       toast.success(
         res.kind === "countdown"
           ? "Annoncering med nedtælling sendt til Discord."
           : "Annoncering om åben tilmelding sendt til Discord.",
       );
+      setDiscordEdit({ open: false, text: "", loading: false });
     } catch (e: any) {
       toast.error(e?.message ?? "Kunne ikke sende annoncering.");
     } finally {
@@ -600,7 +625,22 @@ function EditLeagueDialog({ league }: { league: any }) {
     }
   };
 
-  const emailFbAnnouncement = async () => {
+  const openFbEditor = async () => {
+    if (!user?.email) {
+      toast.error("Din bruger har ingen e-mail.");
+      return;
+    }
+    setFbEdit({ open: true, text: "", loading: true });
+    try {
+      const built = await buildEmailFn({ data: { leagueId: league.id } });
+      setFbEdit({ open: true, text: built.text, loading: false });
+    } catch (e: any) {
+      setFbEdit({ open: false, text: "", loading: false });
+      toast.error(e?.message ?? "Kunne ikke bygge annoncering.");
+    }
+  };
+
+  const sendFb = async () => {
     if (!user?.email) {
       toast.error("Din bruger har ingen e-mail.");
       return;
@@ -614,18 +654,21 @@ function EditLeagueDialog({ league }: { league: any }) {
         idempotencyKey: `fb-announce-${league.id}-${Date.now()}`,
         templateData: {
           leagueName: built.leagueName,
-          text: built.text,
+          text: fbEdit.text,
           bannerUrl: built.bannerUrl,
         },
       });
-      if (res.ok) toast.success(`FB-annoncering sendt til ${user.email}.`);
-      else toast.error("Kunne ikke sende mail.");
+      if (res.ok) {
+        toast.success(`FB-annoncering sendt til ${user.email}.`);
+        setFbEdit({ open: false, text: "", loading: false });
+      } else toast.error("Kunne ikke sende mail.");
     } catch (e: any) {
-      toast.error(e?.message ?? "Kunne ikke bygge annoncering.");
+      toast.error(e?.message ?? "Kunne ikke sende annoncering.");
     } finally {
       setEmailing(false);
     }
   };
+
 
 
   const reset = () => {
@@ -765,13 +808,82 @@ function EditLeagueDialog({ league }: { league: any }) {
                 Send en Discord-annoncering nu. Hvis tilmeldingen endnu ikke er åben, sendes et hype-opslag med live-nedtælling. Er tilmeldingen allerede åben, sendes den samme besked som ved auto-åbning.
               </div>
             </div>
-            <Button type="button" variant="outline" disabled={emailing} onClick={emailFbAnnouncement} className="gap-1">
-              <Megaphone className="h-4 w-4" /> {emailing ? "Sender…" : "Send FB annoncering til mail"}
+            <Button type="button" variant="outline" disabled={emailing || fbEdit.loading} onClick={openFbEditor} className="gap-1">
+              <Megaphone className="h-4 w-4" /> {fbEdit.loading ? "Henter…" : "Send FB annoncering til mail"}
             </Button>
-            <Button type="button" variant="outline" disabled={announcing} onClick={announce} className="gap-1">
-              <Megaphone className="h-4 w-4" /> {announcing ? "Sender…" : "Send annoncering"}
+            <Button type="button" variant="outline" disabled={announcing || discordEdit.loading} onClick={openDiscordEditor} className="gap-1">
+              <Megaphone className="h-4 w-4" /> {discordEdit.loading ? "Henter…" : "Send annoncering"}
             </Button>
           </div>
+
+          <Dialog
+            open={discordEdit.open}
+            onOpenChange={(o) => !o && setDiscordEdit((s) => ({ ...s, open: false }))}
+          >
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Rediger Discord-annoncering</DialogTitle>
+              </DialogHeader>
+              <p className="text-xs text-muted-foreground">
+                Ret teksten her og tryk Send. Ændringer gemmes ikke — næste gang henter vi en frisk
+                auto-genereret tekst.
+              </p>
+              <Textarea
+                value={discordEdit.text}
+                onChange={(e) => setDiscordEdit((s) => ({ ...s, text: e.target.value }))}
+                rows={20}
+                className="min-h-[400px] font-mono text-xs"
+              />
+              <DialogFooter className="gap-2 sm:gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDiscordEdit({ open: false, text: "", loading: false })}
+                  disabled={announcing}
+                >
+                  Annullér ændringer
+                </Button>
+                <Button type="button" onClick={sendDiscord} disabled={announcing || !discordEdit.text.trim()} className="gap-1">
+                  <Send className="h-4 w-4" /> {announcing ? "Sender…" : "Send"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog
+            open={fbEdit.open}
+            onOpenChange={(o) => !o && setFbEdit((s) => ({ ...s, open: false }))}
+          >
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Rediger FB-annoncering</DialogTitle>
+              </DialogHeader>
+              <p className="text-xs text-muted-foreground">
+                Ret teksten her og tryk Send. Ændringer gemmes ikke — næste gang henter vi en frisk
+                auto-genereret tekst.
+              </p>
+              <Textarea
+                value={fbEdit.text}
+                onChange={(e) => setFbEdit((s) => ({ ...s, text: e.target.value }))}
+                rows={20}
+                className="min-h-[400px] font-mono text-xs"
+              />
+              <DialogFooter className="gap-2 sm:gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setFbEdit({ open: false, text: "", loading: false })}
+                  disabled={emailing}
+                >
+                  Annullér ændringer
+                </Button>
+                <Button type="button" onClick={sendFb} disabled={emailing || !fbEdit.text.trim()} className="gap-1">
+                  <Send className="h-4 w-4" /> {emailing ? "Sender…" : "Send"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <DialogFooter className="gap-2 sm:gap-2">
             <Button type="button" variant="secondary" disabled={saving} onClick={(e) => submit(e, false)} className="gap-1">
               <Archive className="h-4 w-4" /> {saving ? "Gemmer…" : "Arkiver"}
