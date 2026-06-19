@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { postDiscordWelcomeMessage } from "@/lib/discord-welcome.functions";
+import { stripUnverifiedMembers } from "@/lib/discord-strip-unverified.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/")({
   component: AdminHub,
@@ -76,6 +77,23 @@ function AdminHub() {
     }
   };
 
+  const stripUnverified = useServerFn(stripUnverifiedMembers);
+  const [stripping, setStripping] = useState(false);
+  const handleStripUnverified = async () => {
+    if (stripping) return;
+    if (!confirm("Fjern 'Medlem'-rollen fra alle der ikke har gennemført velkomst-flowet (intet nickname)?")) return;
+    setStripping(true);
+    try {
+      const res = await stripUnverified();
+      toast.success(`Scannede ${res.scanned}, fjernede rolle fra ${res.stripped}.`);
+      if (res.errors.length > 0) console.warn("strip errors:", res.errors);
+    } catch (e) {
+      toast.error((e as Error).message || "Kunne ikke køre.");
+    } finally {
+      setStripping(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2"><Shield className="h-6 w-6 text-primary" /><h1 className="text-2xl font-bold">Admin</h1></div>
@@ -101,9 +119,12 @@ function AdminHub() {
             (eller hvis beskeden bliver slettet).
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-wrap gap-2">
           <Button onClick={handlePostWelcome} disabled={posting}>
             {posting ? "Sender..." : "Post velkomstbesked"}
+          </Button>
+          <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
+            {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
           </Button>
         </CardContent>
       </Card>
