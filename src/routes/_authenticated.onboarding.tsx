@@ -158,7 +158,7 @@ function OnboardingPage() {
                 className="mt-0.5"
               />
               <span className="text-sm">
-                Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen — inkl. drivers briefings, regler og protests — foregår på dansk.
+                Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen — inkl. drivers briefings, regler og protester — foregår på dansk.
               </span>
             </label>
             <div className="flex items-center justify-between gap-2 pt-2">

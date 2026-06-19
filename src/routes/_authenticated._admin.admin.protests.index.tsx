@@ -28,8 +28,8 @@ function AdminProtests() {
       <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Tilbage til admin
       </Link>
-      <h1 className="text-2xl font-bold">Alle protests</h1>
-      {data?.length === 0 && <p className="text-muted-foreground">Ingen protests.</p>}
+      <h1 className="text-2xl font-bold">Alle protester</h1>
+      {data?.length === 0 && <p className="text-muted-foreground">Ingen protester.</p>}
       <div className="space-y-3">
         {data?.map((p: any) => {
           const total = p.protest_involved?.length ?? 0;

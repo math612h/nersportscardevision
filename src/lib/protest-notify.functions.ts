@@ -24,7 +24,7 @@ export const notifyProtestInvolved = createServerFn({ method: "POST" })
         .select("role")
         .eq("user_id", context.userId);
       const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
-      if (!isAdmin) throw new Error("Du kan kun sende beskeder til indklagede i dine egne protests.");
+      if (!isAdmin) throw new Error("Du kan kun sende beskeder til indklagede i dine egne protester.");
     }
 
     const { data: involved, error: iErr } = await supabaseAdmin
@@ -35,9 +35,9 @@ export const notifyProtestInvolved = createServerFn({ method: "POST" })
 
     const ligaNavn = (protest as any).divisions?.leagues?.name ?? "ligaen";
     const afdNavn = (protest as any).divisions?.name ?? "";
-    const title = "Du er indklaget i en incident-rapport";
+    const title = "Du er indklaget i en protest";
     const body =
-      `Der er indsendt en incident-rapport hvor du er involveret (${ligaNavn}${afdNavn ? " · " + afdNavn : ""}). ` +
+      `Der er indsendt en protest hvor du er involveret (${ligaNavn}${afdNavn ? " · " + afdNavn : ""}). ` +
       `Du bedes afgive din forklaring via hjemmesiden under "Mine sager".`;
     const link = "/mine-protests";
 

@@ -62,7 +62,7 @@ function MyProtests() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-bold">Mine sager</h1>
-        <p className="text-sm text-muted-foreground">Dine indsendte protests og sager hvor du er indklaget.</p>
+        <p className="text-sm text-muted-foreground">Dine indsendte protester og sager hvor du er indklaget.</p>
       </div>
 
       <Tabs defaultValue={pendingCount > 0 ? "against" : "submitted"}>
@@ -75,7 +75,7 @@ function MyProtests() {
         </TabsList>
 
         <TabsContent value="submitted" className="space-y-3">
-          {submitted?.length === 0 && <p className="text-sm text-muted-foreground">Du har ikke indsendt nogen protests.</p>}
+          {submitted?.length === 0 && <p className="text-sm text-muted-foreground">Du har ikke indsendt nogen protester.</p>}
           {submitted?.map((p: any) => <SubmittedCard key={p.id} protest={p} />)}
         </TabsContent>
 

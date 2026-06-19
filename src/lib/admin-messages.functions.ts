@@ -10,7 +10,7 @@ export const ADMIN_MESSAGE_TEMPLATES = {
     // Used when the user is NOT in the Discord guild
     bodyNotInGuild:
       "Hej! For at blive godkendt som kører på LMU Danmark skal to ting være på plads:\n\n" +
-      "1) Du skal være medlem af vores Discord-server. Det er en forudsætning for at blive godkendt, fordi vi koordinerer kørsel, briefings og protests via Discord. " +
+      "1) Du skal være medlem af vores Discord-server. Det er en forudsætning for at blive godkendt, fordi vi koordinerer kørsel, briefings og protester via Discord. " +
       "Du kan tilmelde dig her: {discord_invite}\n\n" +
       "2) Du skal registrere dig med dit rigtige for- og efternavn (uden forkortelser, kælenavne eller initialer), og det samme navn skal stå som dit server-nickname på vores Discord-server (ikke din globale Discord-profil). " +
       "Vi bruger navnet til at koble din bruger på hjemmesiden sammen med din Discord-bruger.\n\n" +
