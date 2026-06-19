@@ -386,11 +386,18 @@ export async function deleteDiscordChannelMessage(
 // List all guild members that have a given role. Paginates via `after`.
 // NOTE: Listing all guild members requires the GUILD_MEMBERS privileged intent on the bot.
 export async function listGuildMemberIdsWithRole(roleId: string): Promise<string[]> {
+  const members = await listGuildMembersWithRole(roleId);
+  return members.map((m) => m.id);
+}
+
+// Same as above but also returns each member's server nickname (if any).
+export async function listGuildMembersWithRole(
+  roleId: string,
+): Promise<Array<{ id: string; nick: string | null }>> {
   const guildId = getEnv("DISCORD_GUILD_ID");
   const botToken = getEnv("DISCORD_BOT_TOKEN");
-  const ids: string[] = [];
+  const out: Array<{ id: string; nick: string | null }> = [];
   let after = "0";
-  // Safety cap: 50 pages * 1000 = 50k members
   for (let page = 0; page < 50; page++) {
     const url = `${DISCORD_API}/guilds/${guildId}/members?limit=1000&after=${after}`;
     const res = await fetch(url, { headers: { Authorization: `Bot ${botToken}` } });
@@ -398,19 +405,25 @@ export async function listGuildMemberIdsWithRole(roleId: string): Promise<string
       const text = await res.text().catch(() => "");
       throw new Error(`Discord guild member list fejlede: ${res.status} ${text}`);
     }
-    const members = (await res.json()) as Array<{ user?: { id?: string }; roles?: string[] }>;
+    const members = (await res.json()) as Array<{
+      user?: { id?: string };
+      roles?: string[];
+      nick?: string | null;
+    }>;
     if (!Array.isArray(members) || members.length === 0) break;
     for (const m of members) {
       const uid = m.user?.id;
       if (!uid) continue;
-      if (Array.isArray(m.roles) && m.roles.includes(roleId)) ids.push(uid);
+      if (Array.isArray(m.roles) && m.roles.includes(roleId)) {
+        out.push({ id: uid, nick: m.nick ?? null });
+      }
     }
     if (members.length < 1000) break;
     const lastId = members[members.length - 1]?.user?.id;
     if (!lastId) break;
     after = lastId;
   }
-  return ids;
+  return out;
 }
 
 
