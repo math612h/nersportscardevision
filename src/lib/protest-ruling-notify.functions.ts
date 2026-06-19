@@ -73,10 +73,10 @@ export const notifyProtestRuling = createServerFn({ method: "POST" })
       .filter((n): n is string => Boolean(n));
     const penalizedText = penalizedNames.length > 0 ? penalizedNames.join(", ") : "Ingen";
 
-    const title = "Afgørelse i incident-rapport";
+    const title = "Afgørelse i protest";
     const link = "/mine-protests";
     const body =
-      `Der er afgivet en afgørelse i en incident-rapport (${ligaNavn}${afdNavn ? " · " + afdNavn : ""}).\n\n` +
+      `Der er afgivet en afgørelse i en protest (${ligaNavn}${afdNavn ? " · " + afdNavn : ""}).\n\n` +
       `**Involverede:** ${involvedNames}\n` +
       `**Modtager straf:** ${penalizedText}\n` +
       `**Afgørelse:** ${outcomeText}\n\n` +
