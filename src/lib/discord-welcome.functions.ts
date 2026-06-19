@@ -5,6 +5,7 @@ const WELCOME_TEXT = [
   "👋 **Velkommen til LMU Danmark!**",
   "",
   "For at få adgang til resten af serveren skal du skrive dit **rigtige fornavn og efternavn**.",
+  "**Det er IKKE tilladt at anvende gamer tags, forkortelser eller noget som helst andet end sit rigtige for- og efternavn.**",
   "Det gør det nemmere for alle at vide hvem der er hvem på racerbanen.",
   "",
   "Klik på knappen herunder og udfyld felterne.",
