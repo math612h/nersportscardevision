@@ -3,20 +3,20 @@ import { Sun, Cloud, CloudDrizzle, CloudRain, CloudLightning, type LucideIcon } 
 export type TrackInfo = { name: string; layouts: string[] };
 
 export const LMU_TRACKS: TrackInfo[] = [
-  { name: "Le Mans", layouts: ["24h Circuit", "Mulsanne No Chicanes"] },
-  { name: "Bahrain International Circuit", layouts: ["Endurance Circuit", "Paddock Circuit", "Outer Circuit", "Endurance Inner"] },
-  { name: "Spa", layouts: ["Grand Prix"] },
-  { name: "Monza", layouts: ["Grand Prix", "Curva Grande"] },
-  { name: "Sebring", layouts: ["Sebring", "School"] },
-  { name: "Fuji Speedway", layouts: ["Grand Prix", "Classic (No Chicane)"] },
-  { name: "Portimao", layouts: ["Full Circuit"] },
+  { name: "Portimão", layouts: ["Portimão"] },
+  { name: "Imola", layouts: ["Imola"] },
+  { name: "Interlagos", layouts: ["Interlagos"] },
+  { name: "Bahrain", layouts: ["Bahrain", "Outer", "Paddock"] },
   { name: "Cota", layouts: ["Circuit of the Americas", "National"] },
-  { name: "Circuit Paul Ricard", layouts: ["1a", "1av2", "1av2-short", "3a"] },
-  { name: "Silverstone", layouts: ["Silverstone National", "Silverstone International", "Silverstone GP (WEC)"] },
-  { name: "Imola", layouts: ["Grand Prix"] },
-  { name: "Lusail", layouts: ["Lusail International Circuit", "Lusail Short"] },
-  { name: "Interlagos", layouts: ["Grand Prix"] },
-  { name: "Barcelona", layouts: ["Grand Prix"] },
+  { name: "Le Mans", layouts: ["24h Circuit", "Mulsanne No Chicanes"] },
+  { name: "Fuji", layouts: ["Fuji", "Classic"] },
+  { name: "Lusail", layouts: ["Lusail", "Short"] },
+  { name: "Monza", layouts: ["Monza", "Curva Grande"] },
+  { name: "Sebring", layouts: ["Sebring", "School"] },
+  { name: "Spa-Francorchamps", layouts: ["Grand Prix"] },
+  { name: "Silverstone", layouts: ["International", "National", "GP Circuit"] },
+  { name: "Barcelona", layouts: ["Barcelona"] },
+  { name: "Paul Ricard", layouts: ["Paul Ricard", "1a", "1av2", "1av2-short"] },
 ];
 
 export const CAR_CLASSES = ["Hypercar", "LMP2", "LMP3", "GT-E", "LMGT3"] as const;
@@ -118,7 +118,7 @@ export function getTrackImageFile(trackName?: string | null): string | null {
 // short canonical names we've always used, so the leaderboard dropdown and
 // grouping stay consistent regardless of which naming the file uses.
 const TRACK_NAME_ALIASES: { match: string; canonical: string }[] = [
-  { match: "spa", canonical: "Spa" },
+  { match: "spa", canonical: "Spa-Francorchamps" },
   { match: "sarthe", canonical: "Le Mans" },
   { match: "le mans", canonical: "Le Mans" },
   { match: "americas", canonical: "Cota" },
@@ -133,11 +133,11 @@ const TRACK_NAME_ALIASES: { match: string; canonical: string }[] = [
   { match: "jose carlos", canonical: "Interlagos" },
   { match: "interlagos", canonical: "Interlagos" },
   { match: "barcelona", canonical: "Barcelona" },
-  { match: "algarve", canonical: "Portimao" },
-  { match: "portim", canonical: "Portimao" },
-  { match: "bahrain", canonical: "Bahrain International Circuit" },
-  { match: "fuji", canonical: "Fuji Speedway" },
-  { match: "paul ricard", canonical: "Circuit Paul Ricard" },
+  { match: "algarve", canonical: "Portimão" },
+  { match: "portim", canonical: "Portimão" },
+  { match: "bahrain", canonical: "Bahrain" },
+  { match: "fuji", canonical: "Fuji" },
+  { match: "paul ricard", canonical: "Paul Ricard" },
   { match: "silverstone", canonical: "Silverstone" },
 ];
 
