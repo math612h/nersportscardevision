@@ -196,6 +196,27 @@ export async function addGuildRole(discordUserId: string, roleId: string): Promi
   return { ok: false, status: res.status, message: text };
 }
 
+export async function setGuildMemberNickname(
+  discordUserId: string,
+  nickname: string,
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const guildId = getEnv("DISCORD_GUILD_ID");
+  const res = await fetch(
+    `${DISCORD_API}/guilds/${guildId}/members/${discordUserId}`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ nick: nickname.slice(0, 32) }),
+    },
+  );
+  if (res.status === 200 || res.status === 204) return { ok: true, status: res.status };
+  const text = await res.text().catch(() => "");
+  return { ok: false, status: res.status, message: text };
+}
+
 export async function removeGuildRole(discordUserId: string, roleId: string): Promise<{ ok: boolean; status: number; message?: string }> {
   const guildId = getEnv("DISCORD_GUILD_ID");
   const res = await fetch(

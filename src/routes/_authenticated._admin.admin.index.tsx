@@ -1,9 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Shield, Flag, MessageSquareWarning, Newspaper, Users, UserCheck, Shield as ShieldIcon } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { Shield, Flag, MessageSquareWarning, Newspaper, Users, UserCheck, Shield as ShieldIcon, MessageCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { postDiscordWelcomeMessage } from "@/lib/discord-welcome.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/")({
   component: AdminHub,
@@ -54,6 +59,23 @@ function AdminHub() {
     { to: "/admin/brugere", title: "Brugere", desc: `${membersCount ?? 0} godkendte medlemmer. Administrér brugere og roller.`, icon: Users, badge: null },
     { to: "/teams", title: "Teams", desc: "Se alle teams, opret nyt og administrér medlemmer.", icon: ShieldIcon, badge: null },
   ] as const;
+
+  const postWelcome = useServerFn(postDiscordWelcomeMessage);
+  const [posting, setPosting] = useState(false);
+  const handlePostWelcome = async () => {
+    if (posting) return;
+    if (!confirm("Poste velkomstbesked med 'Skriv dit navn'-knap i #velkomst?")) return;
+    setPosting(true);
+    try {
+      await postWelcome();
+      toast.success("Velkomstbesked sendt til #velkomst.");
+    } catch (e) {
+      toast.error((e as Error).message || "Kunne ikke sende besked.");
+    } finally {
+      setPosting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2"><Shield className="h-6 w-6 text-primary" /><h1 className="text-2xl font-bold">Admin</h1></div>
@@ -69,6 +91,22 @@ function AdminHub() {
           </Link>
         ))}
       </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary" /><CardTitle>Discord velkomst</CardTitle></div>
+          <CardDescription>
+            Poster en besked i #velkomst med en knap som nye medlemmer klikker for at skrive deres navn.
+            Botten sætter automatisk deres nickname og giver "Medlem"-rollen. Behøver kun gøres én gang
+            (eller hvis beskeden bliver slettet).
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={handlePostWelcome} disabled={posting}>
+            {posting ? "Sender..." : "Post velkomstbesked"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
