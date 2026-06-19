@@ -24,7 +24,7 @@ export const notifyProtestInvolved = createServerFn({ method: "POST" })
         .select("role")
         .eq("user_id", context.userId);
       const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
-      if (!isAdmin) throw new Error("Du kan kun sende beskeder til indklagede i dine egne protests.");
+      if (!isAdmin) throw new Error("Du kan kun sende beskeder til indklagede i dine egne protester.");
     }
 
     const { data: involved, error: iErr } = await supabaseAdmin
