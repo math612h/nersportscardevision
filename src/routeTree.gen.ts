@@ -46,6 +46,7 @@ import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/pub
 import { Route as ApiPublicDiscordLoginRouteImport } from './routes/api/public/discord.login'
 import { Route as ApiPublicDiscordInteractionsRouteImport } from './routes/api/public/discord.interactions'
 import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/public/discord.callback'
+import { Route as ApiPublicCronStripUnverifiedMembersRouteImport } from './routes/api/public/cron/strip-unverified-members'
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
@@ -259,6 +260,12 @@ const ApiPublicDiscordCallbackRoute =
     path: '/api/public/discord/callback',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronStripUnverifiedMembersRoute =
+  ApiPublicCronStripUnverifiedMembersRouteImport.update({
+    id: '/api/public/cron/strip-unverified-members',
+    path: '/api/public/cron/strip-unverified-members',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLeagueOpenRoute = ApiPublicCronLeagueOpenRouteImport.update({
   id: '/api/public/cron/league-open',
   path: '/api/public/cron/league-open',
@@ -383,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
+  '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
@@ -433,6 +441,7 @@ export interface FileRoutesByTo {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
+  '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
@@ -488,6 +497,7 @@ export interface FileRoutesById {
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
+  '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
@@ -542,6 +552,7 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
+    | '/api/public/cron/strip-unverified-members'
     | '/api/public/discord/callback'
     | '/api/public/discord/interactions'
     | '/api/public/discord/login'
@@ -592,6 +603,7 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
+    | '/api/public/cron/strip-unverified-members'
     | '/api/public/discord/callback'
     | '/api/public/discord/interactions'
     | '/api/public/discord/login'
@@ -646,6 +658,7 @@ export interface FileRouteTypes {
     | '/api/public/companion/verify-token'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
+    | '/api/public/cron/strip-unverified-members'
     | '/api/public/discord/callback'
     | '/api/public/discord/interactions'
     | '/api/public/discord/login'
@@ -684,6 +697,7 @@ export interface RootRouteChildren {
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
   ApiPublicCronExpireReserveOffersRoute: typeof ApiPublicCronExpireReserveOffersRoute
   ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
+  ApiPublicCronStripUnverifiedMembersRoute: typeof ApiPublicCronStripUnverifiedMembersRoute
   ApiPublicDiscordCallbackRoute: typeof ApiPublicDiscordCallbackRoute
   ApiPublicDiscordInteractionsRoute: typeof ApiPublicDiscordInteractionsRoute
   ApiPublicDiscordLoginRoute: typeof ApiPublicDiscordLoginRoute
@@ -956,6 +970,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicDiscordCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/strip-unverified-members': {
+      id: '/api/public/cron/strip-unverified-members'
+      path: '/api/public/cron/strip-unverified-members'
+      fullPath: '/api/public/cron/strip-unverified-members'
+      preLoaderRoute: typeof ApiPublicCronStripUnverifiedMembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/league-open': {
       id: '/api/public/cron/league-open'
       path: '/api/public/cron/league-open'
@@ -1207,6 +1228,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
   ApiPublicCronExpireReserveOffersRoute: ApiPublicCronExpireReserveOffersRoute,
   ApiPublicCronLeagueOpenRoute: ApiPublicCronLeagueOpenRoute,
+  ApiPublicCronStripUnverifiedMembersRoute:
+    ApiPublicCronStripUnverifiedMembersRoute,
   ApiPublicDiscordCallbackRoute: ApiPublicDiscordCallbackRoute,
   ApiPublicDiscordInteractionsRoute: ApiPublicDiscordInteractionsRoute,
   ApiPublicDiscordLoginRoute: ApiPublicDiscordLoginRoute,
