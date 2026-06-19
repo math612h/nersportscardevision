@@ -75,7 +75,7 @@ function MyProtests() {
         </TabsList>
 
         <TabsContent value="submitted" className="space-y-3">
-          {submitted?.length === 0 && <p className="text-sm text-muted-foreground">Du har ikke indsendt nogen protests.</p>}
+          {submitted?.length === 0 && <p className="text-sm text-muted-foreground">Du har ikke indsendt nogen protester.</p>}
           {submitted?.map((p: any) => <SubmittedCard key={p.id} protest={p} />)}
         </TabsContent>
 
