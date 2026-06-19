@@ -27,12 +27,33 @@ export function CreateTeamDialog({ trigger }: { trigger?: React.ReactNode }) {
       const trimmed = name.trim();
       if (trimmed.length < 2) throw new Error("Teamnavnet skal være mindst 2 tegn.");
       if (trimmed.length > 60) throw new Error("Teamnavnet må højst være 60 tegn.");
+
+      // Preflight: brugeren skal være godkendt for at oprette et team (RLS-krav).
+      const { data: profile, error: pErr } = await supabase
+        .from("profiles")
+        .select("approved")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (pErr) throw pErr;
+      if (!profile?.approved) {
+        throw new Error(
+          "Din profil er endnu ikke godkendt af en admin. Du kan oprette et team, så snart din profil er godkendt."
+        );
+      }
+
       const { data, error } = await supabase
         .from("teams" as any)
         .insert({ name: trimmed, bio: bio.trim() || null, owner_id: user.id })
         .select("id")
         .single();
-      if (error) throw error;
+      if (error) {
+        if ((error as any).code === "42501" || /row-level security/i.test(error.message)) {
+          throw new Error(
+            "Du har ikke rettigheder til at oprette et team. Tjek at din profil er godkendt."
+          );
+        }
+        throw error;
+      }
       return (data as any).id as string;
     },
     onSuccess: async (id) => {
