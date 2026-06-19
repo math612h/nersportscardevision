@@ -28,6 +28,12 @@ export function CreateTeamDialog({ trigger }: { trigger?: React.ReactNode }) {
       if (trimmed.length < 2) throw new Error("Teamnavnet skal være mindst 2 tegn.");
       if (trimmed.length > 60) throw new Error("Teamnavnet må højst være 60 tegn.");
 
+      // Preflight: bekræft aktiv session (ellers er auth.uid() null på serveren og RLS fejler).
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error("Din session er udløbet. Log venligst ud og ind igen.");
+      }
+
       // Preflight: brugeren skal være godkendt for at oprette et team (RLS-krav).
       const { data: profile, error: pErr } = await supabase
         .from("profiles")
@@ -35,7 +41,10 @@ export function CreateTeamDialog({ trigger }: { trigger?: React.ReactNode }) {
         .eq("id", user.id)
         .maybeSingle();
       if (pErr) throw pErr;
-      if (!profile?.approved) {
+      if (!profile) {
+        throw new Error("Din profil kunne ikke findes. Log ud og ind igen.");
+      }
+      if (!profile.approved) {
         throw new Error(
           "Din profil er endnu ikke godkendt af en admin. Du kan oprette et team, så snart din profil er godkendt."
         );
