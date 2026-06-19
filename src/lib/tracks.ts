@@ -118,7 +118,7 @@ export function getTrackImageFile(trackName?: string | null): string | null {
 // short canonical names we've always used, so the leaderboard dropdown and
 // grouping stay consistent regardless of which naming the file uses.
 const TRACK_NAME_ALIASES: { match: string; canonical: string }[] = [
-  { match: "spa", canonical: "Spa" },
+  { match: "spa", canonical: "Spa-Francorchamps" },
   { match: "sarthe", canonical: "Le Mans" },
   { match: "le mans", canonical: "Le Mans" },
   { match: "americas", canonical: "Cota" },
@@ -133,11 +133,11 @@ const TRACK_NAME_ALIASES: { match: string; canonical: string }[] = [
   { match: "jose carlos", canonical: "Interlagos" },
   { match: "interlagos", canonical: "Interlagos" },
   { match: "barcelona", canonical: "Barcelona" },
-  { match: "algarve", canonical: "Portimao" },
-  { match: "portim", canonical: "Portimao" },
-  { match: "bahrain", canonical: "Bahrain International Circuit" },
-  { match: "fuji", canonical: "Fuji Speedway" },
-  { match: "paul ricard", canonical: "Circuit Paul Ricard" },
+  { match: "algarve", canonical: "Portimão" },
+  { match: "portim", canonical: "Portimão" },
+  { match: "bahrain", canonical: "Bahrain" },
+  { match: "fuji", canonical: "Fuji" },
+  { match: "paul ricard", canonical: "Paul Ricard" },
   { match: "silverstone", canonical: "Silverstone" },
 ];
 
