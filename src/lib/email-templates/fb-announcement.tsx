@@ -79,7 +79,7 @@ export const template = {
     leagueName: 'GT3 Vinterserie 2026',
     text: '🏁 TILMELDINGEN ER ÅBEN!\n\n🏆 GT3 Vinterserie 2026\n\nSå er det nu! Sæt dig klar i pit-lane og snup din plads inden den er væk. 🔥\n\n👉 Tilmeld dig her: https://www.lmudanmark.dk/ligaer/...',
     bannerUrl: null,
-    discordReminder: 'HUSK: Du skal være medlem af vores Discord for at få fuld adgang til hjemmesiden og ligaerne.\nJoin her: https://discord.gg/7Ye7R9qAHF',
+    discordReminder: 'HUSK: Du skal være medlem af vores Discord for at få fuld adgang til hjemmesiden og ligaerne.\nJoin her: https://discord.gg/bwVMAfrm55',
   },
 } satisfies TemplateEntry
 

@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resolveBannerUrl } from "./league-announce.functions";
 
 const SITE_URL = "https://www.lmudanmark.dk";
-const DISCORD_INVITE_URL = "https://discord.gg/7Ye7R9qAHF";
+const DISCORD_INVITE_URL = "https://discord.gg/bwVMAfrm55";
 
 function formatDanishDate(iso: string | null | undefined): string {
   if (!iso) return "TBA";
