@@ -7,13 +7,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // edit them via the Besked Hub.
 export const ADMIN_MESSAGE_TEMPLATE_KEYS = {
   wrong_name_in_guild: "wrong_name_in_guild",
-  wrong_name_not_in_guild: "wrong_name_not_in_guild",
   profile_approved: "profile_approved",
 } as const;
 
 export const ADMIN_MESSAGE_LINKS: Record<string, string> = {
   wrong_name_in_guild: "/profil",
-  wrong_name_not_in_guild: "/profil",
   profile_approved: "/ligaer",
 };
 
@@ -43,26 +41,10 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
     let attachWelcomeButton = false;
 
     if (data.template === "wrong_name") {
-      const { data: priv } = await supabaseAdmin
-        .from("profiles_private")
-        .select("discord_user_id")
-        .eq("user_id", data.targetUserId)
-        .maybeSingle();
-      const discordUserId = (priv as { discord_user_id?: string | null } | null)?.discord_user_id ?? null;
-
-      let inGuild = false;
-      if (discordUserId) {
-        const { isUserInGuild } = await import("./discord.server");
-        const res = await isUserInGuild(discordUserId);
-        inGuild = res.inGuild;
-      }
-
-      templateKey = inGuild ? "wrong_name_in_guild" : "wrong_name_not_in_guild";
+      templateKey = "wrong_name_in_guild";
       const tpl = await getTemplateByKey(templateKey);
       title = tpl?.title ?? "Opdater dit navn for at blive godkendt";
       body = tpl?.body ?? "";
-      const inviteUrl = process.env.DISCORD_INVITE_URL ?? "";
-      body = body.replace(/\{discord_invite\}/g, inviteUrl || "(Discord-invitations-link mangler)");
       link = ADMIN_MESSAGE_LINKS[templateKey];
       // Attach the same "Skriv dit navn" button as #velkomst — only if linked to Discord
       attachWelcomeButton = !!discordUserId;
