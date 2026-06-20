@@ -83,6 +83,24 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             });
           }
 
+          // Hosted session flow: button → open modal
+          if (customId === "host_session_share") {
+            return Response.json({
+              type: MODAL,
+              data: {
+                custom_id: "host_session_share_modal",
+                title: "Del din hosted session",
+                components: [
+                  { type: 1, components: [{ type: 4, custom_id: "server_name", label: "Server-navn", style: 1, required: true, min_length: 1, max_length: 80 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "server_code", label: "Server-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "lobby_code", label: "Lobby-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "start_time", label: "Starter kl. (HH:MM)", style: 1, required: true, min_length: 4, max_length: 5, placeholder: "20:30" }] },
+                  { type: 1, components: [{ type: 4, custom_id: "end_time", label: "Slutter kl. (HH:MM)", style: 1, required: true, min_length: 4, max_length: 5, placeholder: "22:00" }] },
+                ],
+              },
+            });
+          }
+
           const [kind, invitationId] = customId.split(":");
           if (
             (kind === "team_invite_accept" || kind === "team_invite_reject") &&
@@ -264,6 +282,59 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               },
             });
           }
+
+          if (customId === "host_session_share_modal") {
+            const rows = (payload?.data?.components ?? []) as Array<{
+              components: Array<{ custom_id: string; value: string }>;
+            }>;
+            const values: Record<string, string> = {};
+            for (const row of rows) {
+              for (const c of row.components ?? []) {
+                values[c.custom_id] = (c.value ?? "").trim();
+              }
+            }
+            const { HOST_SESSION_CHANNEL_ID } = await import("@/lib/discord-host-session.functions");
+            const { parseCphHHMMToUnix } = await import("@/lib/discord-time.server");
+            const startUnix = parseCphHHMMToUnix(values.start_time ?? "");
+            let endUnix = parseCphHHMMToUnix(values.end_time ?? "");
+            if (!startUnix || !endUnix) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: "Tider skal være i formatet HH:MM (fx 20:30)." },
+              });
+            }
+            if (endUnix <= startUnix) endUnix += 86400;
+
+            const hosterMention = discordUserId ? `<@${discordUserId}>` : "Et medlem";
+            const serverName = (values.server_name ?? "").slice(0, 80);
+            const serverCode = (values.server_code ?? "").slice(0, 40);
+            const lobbyCode = (values.lobby_code ?? "").slice(0, 40);
+
+            const content = [
+              `🎮 **Hosted session af ${hosterMention}**`,
+              "",
+              `🖥️ Server: **${serverName}**`,
+              `🔑 Server-kode: \`${serverCode}\``,
+              `🎯 Lobby-kode: \`${lobbyCode}\``,
+              `🕒 Starter: <t:${startUnix}:t> (<t:${startUnix}:R>)`,
+              `⏱️ Slutter: <t:${endUnix}:t> (<t:${endUnix}:R>)`,
+            ].join("\n");
+
+            const { sendDiscordChannelMessage } = await import("@/lib/discord.server");
+            const res = await sendDiscordChannelMessage(HOST_SESSION_CHANNEL_ID, content);
+            if (!res.ok) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: `Kunne ikke poste session (${res.status}).` },
+              });
+            }
+            return Response.json({
+              type: CHANNEL_MESSAGE_WITH_SOURCE,
+              data: { flags: FLAG_EPHEMERAL, content: "✅ Din session er delt i kanalen." },
+            });
+          }
+
+
 
           return Response.json({
             type: CHANNEL_MESSAGE_WITH_SOURCE,

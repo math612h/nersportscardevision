@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { postDiscordWelcomeMessage } from "@/lib/discord-welcome.functions";
+import { postHostSessionAnchor } from "@/lib/discord-host-session.functions";
 import { stripUnverifiedMembers } from "@/lib/discord-strip-unverified.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/")({
@@ -79,6 +80,22 @@ function AdminHub() {
     }
   };
 
+  const postHostAnchor = useServerFn(postHostSessionAnchor);
+  const [postingHost, setPostingHost] = useState(false);
+  const handlePostHostAnchor = async () => {
+    if (postingHost) return;
+    if (!confirm("Poste 'Del din hosted session'-knap i serverhosting-kanalen?")) return;
+    setPostingHost(true);
+    try {
+      await postHostAnchor();
+      toast.success("Hosted session-knap sendt til kanalen.");
+    } catch (e) {
+      toast.error((e as Error).message || "Kunne ikke sende besked.");
+    } finally {
+      setPostingHost(false);
+    }
+  };
+
   const stripUnverified = useServerFn(stripUnverifiedMembers);
   const [stripping, setStripping] = useState(false);
   const [roleAdminOpen, setRoleAdminOpen] = useState(false);
@@ -132,6 +149,9 @@ function AdminHub() {
             <CardContent className="flex flex-wrap gap-2">
               <Button onClick={handlePostWelcome} disabled={posting}>
                 {posting ? "Sender..." : "Post velkomstbesked"}
+              </Button>
+              <Button onClick={handlePostHostAnchor} disabled={postingHost} variant="outline">
+                {postingHost ? "Sender..." : "Post hosted session-knap"}
               </Button>
               <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
                 {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
