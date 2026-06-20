@@ -80,6 +80,7 @@ function AdminHub() {
 
   const stripUnverified = useServerFn(stripUnverifiedMembers);
   const [stripping, setStripping] = useState(false);
+  const [roleAdminOpen, setRoleAdminOpen] = useState(false);
   const handleStripUnverified = async () => {
     if (stripping) return;
     if (!confirm("Fjern 'Medlem'-rollen fra alle der ikke har gennemført velkomst-flowet (intet nickname)?")) return;
