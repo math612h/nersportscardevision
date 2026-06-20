@@ -375,3 +375,15 @@ export async function expireStaleReserveOffersImpl() {
   }
   return { expired, newOffers };
 }
+
+/** Re-offer the next eligible reserve after a decline. Server-only helper used by the Discord webhook. */
+export async function offerNextReserveAfterDecline(params: {
+  divisionId: string;
+  absenteeUserId: string;
+  carClass: string;
+  driverCategory: string;
+}) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return offerNextReserveImpl(supabaseAdmin, params);
+}
+
