@@ -45,7 +45,59 @@ export async function stripUnverifiedMembersImpl(): Promise<{
   }
 
   return { scanned: members.length, stripped, errors: errors.slice(0, 20) };
+
+// Cron-variant: kun helt nye joinere (sidste 15 min) der ikke er approved.
+// Holder cron-jobbet billigt og undgår at røre eksisterende medlemmer.
+export async function stripNewJoinersImpl(): Promise<{
+  scanned: number;
+  stripped: number;
+  errors: string[];
+}> {
+  const memberRoleId = process.env.DISCORD_MEMBER_ROLE_ID;
+  if (!memberRoleId) throw new Error("DISCORD_MEMBER_ROLE_ID mangler.");
+
+  const { listGuildMembersWithRole, removeGuildRole } = await import("./discord.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+  const allMembers = await listGuildMembersWithRole(memberRoleId);
+  const cutoff = Date.now() - 15 * 60 * 1000;
+  const newMembers = allMembers.filter((m) => {
+    if (!m.joined_at) return false;
+    const t = Date.parse(m.joined_at);
+    return Number.isFinite(t) && t >= cutoff;
+  });
+
+  if (newMembers.length === 0) {
+    return { scanned: 0, stripped: 0, errors: [] };
+  }
+
+  const { data: approvedRows, error } = await supabaseAdmin
+    .from("profiles_private")
+    .select("discord_user_id, profiles!inner(approved)")
+    .in("discord_user_id", newMembers.map((m) => m.id))
+    .eq("profiles.approved", true);
+  if (error) throw new Error(`Kunne ikke hente godkendte profiler: ${error.message}`);
+  const approved = new Set(
+    (approvedRows ?? [])
+      .map((r: { discord_user_id: string | null }) => r.discord_user_id)
+      .filter((v): v is string => !!v),
+  );
+
+  let stripped = 0;
+  const errors: string[] = [];
+  for (const m of newMembers) {
+    if (approved.has(m.id)) continue;
+    try {
+      const res = await removeGuildRole(m.id, memberRoleId);
+      if (res.ok) stripped++;
+      else errors.push(`${m.id}: ${res.status} ${res.message ?? ""}`);
+    } catch (e) {
+      errors.push(`${m.id}: ${(e as Error).message}`);
+    }
+  }
+  return { scanned: newMembers.length, stripped, errors: errors.slice(0, 20) };
 }
+
 
 export const stripUnverifiedMembers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
