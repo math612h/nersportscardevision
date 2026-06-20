@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { postDiscordWelcomeMessage } from "@/lib/discord-welcome.functions";
+import { postHostSessionAnchor } from "@/lib/discord-host-session.functions";
 import { stripUnverifiedMembers } from "@/lib/discord-strip-unverified.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/")({
