@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const WELCOME_TEXT = [
+  "@everyone",
   "👋 **Velkommen til LMU Danmark!**",
   "",
   "For at få adgang til resten af serveren skal du skrive dit **rigtige fornavn og efternavn**.",
