@@ -105,13 +105,6 @@ export async function respondReserveOfferCore(opts: {
       `Du er nu på griddet til "${afd}" i ${ligaNavn} (${offer.car_class} · ${offer.driver_category}). Pladsen gælder kun denne ene afdeling — bagefter er du tilbage på ventelisten med din nuværende plads i køen.`,
       `/ligaer/${(div as any)!.league_id}/afdeling/${offer.division_id}`,
     );
-    await notifyAndDMSimple(
-      supabaseAdmin,
-      offer.absentee_user_id,
-      `Reserve fundet til ${afd}`,
-      `En reserve har taget din plads til "${afd}" i ${ligaNavn}.`,
-      `/ligaer/${(div as any)!.league_id}/afdeling/${offer.division_id}`,
-    );
     return {
       status: "accepted",
       afd,
