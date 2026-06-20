@@ -11,10 +11,12 @@ export type MessageTemplate = {
   body: string;
   kind: MessageTemplateKind;
   default_channel_id: string | null;
+  league_id: string | null;
   is_system: boolean;
   created_at: string;
   updated_at: string;
 };
+
 
 async function assertAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
