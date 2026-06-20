@@ -2,11 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
-import { Shield, Flag, MessageSquareWarning, Newspaper, Users, UserCheck, Shield as ShieldIcon, MessageCircle } from "lucide-react";
+import { Shield, Flag, MessageSquareWarning, Newspaper, Users, UserCheck, Shield as ShieldIcon, MessageCircle, AlertTriangle, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import { postDiscordWelcomeMessage } from "@/lib/discord-welcome.functions";
 import { stripUnverifiedMembers } from "@/lib/discord-strip-unverified.functions";
@@ -79,6 +80,7 @@ function AdminHub() {
 
   const stripUnverified = useServerFn(stripUnverifiedMembers);
   const [stripping, setStripping] = useState(false);
+  const [roleAdminOpen, setRoleAdminOpen] = useState(false);
   const handleStripUnverified = async () => {
     if (stripping) return;
     if (!confirm("Fjern 'Medlem'-rollen fra alle der ikke har gennemført velkomst-flowet (intet nickname)?")) return;
@@ -111,24 +113,32 @@ function AdminHub() {
         ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary" /><CardTitle>Discord velkomst</CardTitle></div>
-          <CardDescription>
-            Poster en besked i #velkomst med en knap som nye medlemmer klikker for at skrive deres navn.
-            Botten sætter automatisk deres nickname og giver "Medlem"-rollen. Behøver kun gøres én gang
-            (eller hvis beskeden bliver slettet).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button onClick={handlePostWelcome} disabled={posting}>
-            {posting ? "Sender..." : "Post velkomstbesked"}
-          </Button>
-          <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
-            {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
-          </Button>
-        </CardContent>
-      </Card>
+      <Collapsible open={roleAdminOpen} onOpenChange={setRoleAdminOpen}>
+        <Card className="border-destructive/60">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer select-none">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <CardTitle className="text-destructive">Rolle administration</CardTitle>
+                <ChevronDown className={`h-4 w-4 ml-auto text-muted-foreground transition-transform ${roleAdminOpen ? "rotate-180" : ""}`} />
+              </div>
+              <CardDescription>
+                Advarsels-område: Handlinger her påvirker Discord-roller direkte. Åbn kun når du ved hvad du gør.
+              </CardDescription>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="flex flex-wrap gap-2">
+              <Button onClick={handlePostWelcome} disabled={posting}>
+                {posting ? "Sender..." : "Post velkomstbesked"}
+              </Button>
+              <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
+                {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
+              </Button>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 }
