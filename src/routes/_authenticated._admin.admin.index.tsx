@@ -112,24 +112,32 @@ function AdminHub() {
         ))}
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-primary" /><CardTitle>Discord velkomst</CardTitle></div>
-          <CardDescription>
-            Poster en besked i #velkomst med en knap som nye medlemmer klikker for at skrive deres navn.
-            Botten sætter automatisk deres nickname og giver "Medlem"-rollen. Behøver kun gøres én gang
-            (eller hvis beskeden bliver slettet).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
-          <Button onClick={handlePostWelcome} disabled={posting}>
-            {posting ? "Sender..." : "Post velkomstbesked"}
-          </Button>
-          <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
-            {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
-          </Button>
-        </CardContent>
-      </Card>
+      <Collapsible open={roleAdminOpen} onOpenChange={setRoleAdminOpen}>
+        <Card className="border-destructive/60">
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer select-none">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+                <CardTitle className="text-destructive">Rolle administration</CardTitle>
+                <ChevronDown className={`h-4 w-4 ml-auto text-muted-foreground transition-transform ${roleAdminOpen ? "rotate-180" : ""}`} />
+              </div>
+              <CardDescription>
+                Advarsels-område: Handlinger her påvirker Discord-roller direkte. Åbn kun når du ved hvad du gør.
+              </CardDescription>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="flex flex-wrap gap-2">
+              <Button onClick={handlePostWelcome} disabled={posting}>
+                {posting ? "Sender..." : "Post velkomstbesked"}
+              </Button>
+              <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
+                {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
+              </Button>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
     </div>
   );
 }
