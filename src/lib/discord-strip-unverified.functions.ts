@@ -62,7 +62,7 @@ export async function stripNewJoinersImpl(): Promise<{
 
   const { listGuildMembersWithRole, removeGuildRole } = await import("./discord.server");
   const allMembers = await listGuildMembersWithRole(memberRoleId);
-  const cutoff = Date.now() - 10 * 60 * 1000;
+  const cutoff = Date.now() - 2 * 60 * 1000;
   const newMembers = allMembers.filter((m) => {
     if (!m.joined_at) return false;
     const t = Date.parse(m.joined_at);
