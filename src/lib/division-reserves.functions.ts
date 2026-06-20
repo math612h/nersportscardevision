@@ -182,7 +182,7 @@ export const triggerReserveOfferForAbsence = createServerFn({ method: "POST" })
     // Find user's league entry for the league this division belongs to
     const { data: div } = await supabaseAdmin
       .from("divisions")
-      .select("league_id")
+      .select("id,name,league_id,leagues(name)")
       .eq("id", data.divisionId)
       .maybeSingle();
     if (!div) return { ok: false, reason: "no_division" };
@@ -195,6 +195,17 @@ export const triggerReserveOfferForAbsence = createServerFn({ method: "POST" })
       .eq("user_id", userId)
       .maybeSingle();
     if (!entry || entry.waitlist) return { ok: false, reason: "not_on_grid" };
+
+    // Confirm to the absentee that the abstention is registered
+    const ligaNavn = (div as any)?.leagues?.name ?? "ligaen";
+    const afd = div.name;
+    await notifyAndDM(
+      supabaseAdmin,
+      userId,
+      `Afbud registreret — ${afd}`,
+      `Vi har registreret dit afbud til afdelingen "${afd}" i ${ligaNavn}. Vi forsøger nu at finde en reserve fra ventelisten, så din plads kan blive besat. Du behøver ikke foretage dig mere.`,
+      `/ligaer/${div.league_id}/afdeling/${data.divisionId}`,
+    );
 
     return await offerNextReserveImpl(supabaseAdmin, {
       divisionId: data.divisionId,
