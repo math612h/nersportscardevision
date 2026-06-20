@@ -171,6 +171,30 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_hosted_sessions: {
+        Row: {
+          channel_id: string
+          created_at: string
+          delete_at: string
+          id: string
+          message_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          delete_at: string
+          id?: string
+          message_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          delete_at?: string
+          id?: string
+          message_id?: string
+        }
+        Relationships: []
+      }
       discord_member_role_strips: {
         Row: {
           discord_user_id: string
