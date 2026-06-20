@@ -39,7 +39,7 @@ function LoginPage() {
     const sp = new URLSearchParams(window.location.search);
     const status = sp.get("discord");
     if (status === "not_member") {
-      setNotMemberInvite(sp.get("discord_invite") || "https://discord.gg/");
+      setNotMemberInvite(sp.get("discord_invite") || "https://discord.gg/bwVMAfrm55");
       sp.delete("discord");
       sp.delete("discord_invite");
       const newUrl = window.location.pathname + (sp.toString() ? `?${sp}` : "");
