@@ -242,9 +242,18 @@ function DiscordLinkCard() {
     const status = sp.get("discord");
     if (!status) return;
     if (status === "ok") toast.success("Discord-konto tilknyttet.");
-    else toast.error(`Kunne ikke tilknytte Discord: ${sp.get("discord_msg") ?? "ukendt fejl"}`);
+    else if (status === "not_member") {
+      const invite = sp.get("discord_invite") || "";
+      toast.error(
+        invite
+          ? `Du er ikke medlem af LMU Danmark Discord. Tilmeld dig først: ${invite}`
+          : "Du er ikke medlem af LMU Danmark Discord-serveren. Tilmeld dig først, og prøv så igen.",
+        { duration: 10000 },
+      );
+    } else toast.error(`Kunne ikke tilknytte Discord: ${sp.get("discord_msg") ?? "ukendt fejl"}`);
     sp.delete("discord");
     sp.delete("discord_msg");
+    sp.delete("discord_invite");
     const newUrl = window.location.pathname + (sp.toString() ? `?${sp}` : "");
     window.history.replaceState({}, "", newUrl);
     qc.invalidateQueries({ queryKey: ["discord-link", user?.id] });

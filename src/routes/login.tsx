@@ -21,6 +21,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showLegacy, setShowLegacy] = useState(false);
+  const [notMemberInvite, setNotMemberInvite] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -36,7 +37,14 @@ function LoginPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const sp = new URLSearchParams(window.location.search);
-    if (sp.get("discord") === "error") {
+    const status = sp.get("discord");
+    if (status === "not_member") {
+      setNotMemberInvite(sp.get("discord_invite") || "https://discord.gg/");
+      sp.delete("discord");
+      sp.delete("discord_invite");
+      const newUrl = window.location.pathname + (sp.toString() ? `?${sp}` : "");
+      window.history.replaceState({}, "", newUrl);
+    } else if (status === "error") {
       toast.error(`Discord login fejlede: ${sp.get("discord_msg") ?? "ukendt fejl"}`);
       sp.delete("discord");
       sp.delete("discord_msg");
@@ -69,6 +77,19 @@ function LoginPage() {
           <CardDescription>Log ind eller opret konto med Discord</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {notMemberInvite ? (
+            <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+              <p className="font-medium text-foreground">Du er ikke medlem af LMU Danmark Discord</p>
+              <p className="text-muted-foreground">
+                For at oprette en konto skal du først være medlem af LMU Danmark Discord-serveren. Brug invitationen herunder, accepter, og prøv så at oprette konto igen.
+              </p>
+              <Button asChild className="w-full gap-2 bg-[#5865F2] text-white hover:bg-[#4752C4]">
+                <a href={notMemberInvite} target="_blank" rel="noopener noreferrer">
+                  <MessageSquare className="h-4 w-4" /> Tilmeld dig Discord-serveren
+                </a>
+              </Button>
+            </div>
+          ) : null}
           <Button
             onClick={onDiscord}
             className="w-full gap-2 bg-[#5865F2] text-white hover:bg-[#4752C4]"
@@ -78,8 +99,9 @@ function LoginPage() {
             Fortsæt med Discord
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Nye konti skal oprettes med Discord. Bagefter udfylder du email, navn og LMU-navn.
+            Nye konti skal oprettes med Discord. Du skal være medlem af LMU Danmark Discord-serveren. Bagefter udfylder du email, navn og LMU-navn.
           </p>
+
 
           <div className="pt-2">
             {!showLegacy ? (

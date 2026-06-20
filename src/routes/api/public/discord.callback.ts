@@ -23,14 +23,29 @@ export const Route = createFileRoute("/api/public/discord/callback")({
           return Response.redirect(target.toString(), 302);
         };
 
+        const redirectNotMember = (mode: "login" | "link") => {
+          const invite = process.env.DISCORD_INVITE_URL ?? "";
+          const target = new URL(mode === "link" ? "/profil" : "/login", origin);
+          target.searchParams.set("discord", "not_member");
+          if (invite) target.searchParams.set("discord_invite", invite);
+          return Response.redirect(target.toString(), 302);
+        };
+
         if (!code || !state) return redirectToLogin("Mangler kode eller state");
 
         try {
-          const { verifyDiscordState, exchangeDiscordCode } = await import("@/lib/discord.server");
+          const { verifyDiscordState, exchangeDiscordCode, fetchDiscordGuildMember } = await import("@/lib/discord.server");
           const verified = await verifyDiscordState(state);
           if (!verified) return redirectToLogin("Ugyldig eller udløbet state");
 
           const { discord_user_id, discord_username, discord_server_nickname, discord_email, discord_avatar_url } = await exchangeDiscordCode(code, origin);
+
+          // Krav: brugeren skal være medlem af LMU Danmark Discord-serveren
+          const guildMember = await fetchDiscordGuildMember(discord_user_id);
+          if (!guildMember) {
+            return redirectNotMember(verified.mode === "link" ? "link" : "login");
+          }
+
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
           // -------- LINK MODE (existing signed-in user) --------
