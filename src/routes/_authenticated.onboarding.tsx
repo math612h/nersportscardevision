@@ -29,13 +29,14 @@ function OnboardingPage() {
     enabled: !!user,
     queryFn: async () => {
       const [{ data: profile }, { data: priv }] = await Promise.all([
-        supabase.from("profiles").select("display_name, lmu_name").eq("id", user!.id).maybeSingle(),
+        supabase.from("profiles").select("display_name, lmu_name, accepts_danish").eq("id", user!.id).maybeSingle(),
         (supabase as unknown as { from: (t: string) => any }).from("profiles_private")
           .select("discord_user_id, discord_username, discord_server_nickname").eq("user_id", user!.id).maybeSingle(),
       ]);
       return {
         display_name: (profile as any)?.display_name ?? "",
         lmu_name: (profile as any)?.lmu_name ?? "",
+        accepts_danish: (profile as any)?.accepts_danish === true,
         discord_user_id: (priv as any)?.discord_user_id ?? null,
         discord_username: (priv as any)?.discord_username ?? null,
         discord_server_nickname: (priv as any)?.discord_server_nickname ?? null,
