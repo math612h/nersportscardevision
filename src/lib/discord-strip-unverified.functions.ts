@@ -17,18 +17,28 @@ export async function stripUnverifiedMembersImpl(): Promise<{
 
   const members = await listGuildMembersWithRole(memberRoleId);
 
-  // Build set of approved Discord user ids
-  const { data: approvedRows, error } = await supabaseAdmin
-    .from("profiles_private")
-    .select("discord_user_id, profiles!inner(approved)")
-    .not("discord_user_id", "is", null)
-    .eq("profiles.approved", true);
-  if (error) throw new Error(`Kunne ikke hente godkendte profiler: ${error.message}`);
-  const approved = new Set(
-    (approvedRows ?? [])
+  // Build set of approved Discord user ids (two-step: ingen FK mellem profiles_private og profiles)
+  const { data: approvedProfiles, error: approvedErr } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("approved", true);
+  if (approvedErr) throw new Error(`Kunne ikke hente godkendte profiler: ${approvedErr.message}`);
+  const approvedUserIds = (approvedProfiles ?? []).map((p: { id: string }) => p.id);
+
+  let approvedDiscordIds: string[] = [];
+  if (approvedUserIds.length > 0) {
+    const { data: linkRows, error: linkErr } = await supabaseAdmin
+      .from("profiles_private")
+      .select("discord_user_id")
+      .in("user_id", approvedUserIds)
+      .not("discord_user_id", "is", null);
+    if (linkErr) throw new Error(`Kunne ikke hente discord-koblinger: ${linkErr.message}`);
+    approvedDiscordIds = (linkRows ?? [])
       .map((r: { discord_user_id: string | null }) => r.discord_user_id)
-      .filter((v): v is string => !!v),
-  );
+      .filter((v): v is string => !!v);
+  }
+  const approved = new Set(approvedDiscordIds);
+
 
   let stripped = 0;
   const errors: string[] = [];
