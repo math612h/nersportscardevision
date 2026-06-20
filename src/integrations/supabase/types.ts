@@ -847,6 +847,7 @@ export type Database = {
           is_system: boolean
           key: string
           kind: string
+          league_id: string | null
           title: string
           updated_at: string
         }
@@ -858,6 +859,7 @@ export type Database = {
           is_system?: boolean
           key: string
           kind?: string
+          league_id?: string | null
           title: string
           updated_at?: string
         }
@@ -869,10 +871,19 @@ export type Database = {
           is_system?: boolean
           key?: string
           kind?: string
+          league_id?: string | null
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "message_templates_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       news_posts: {
         Row: {
