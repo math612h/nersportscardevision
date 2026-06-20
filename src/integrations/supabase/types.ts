@@ -814,6 +814,39 @@ export type Database = {
         }
         Relationships: []
       }
+      message_templates: {
+        Row: {
+          body: string
+          created_at: string
+          default_channel_id: string | null
+          id: string
+          is_system: boolean
+          key: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          default_channel_id?: string | null
+          id?: string
+          is_system?: boolean
+          key: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          default_channel_id?: string | null
+          id?: string
+          is_system?: boolean
+          key?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       news_posts: {
         Row: {
           body: string | null
@@ -909,6 +942,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          accepts_danish: boolean
           achievements: string | null
           approved: boolean
           avatar_url: string | null
@@ -921,6 +955,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          accepts_danish?: boolean
           achievements?: string | null
           approved?: boolean
           avatar_url?: string | null
@@ -933,6 +968,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          accepts_danish?: boolean
           achievements?: string | null
           approved?: boolean
           avatar_url?: string | null
