@@ -97,6 +97,22 @@ function AdminHub() {
     }
   };
 
+  const postOffseason = useServerFn(postOffseasonCalendar);
+  const [postingOffseason, setPostingOffseason] = useState(false);
+  const handlePostOffseason = async () => {
+    if (postingOffseason) return;
+    if (!confirm("Poste off-season kalenderen som baner i Discord-kanalen?")) return;
+    setPostingOffseason(true);
+    try {
+      const res = await postOffseason();
+      toast.success(`Postede ${res.posted} afdelinger fra ${res.league}.`);
+    } catch (e) {
+      toast.error((e as Error).message || "Kunne ikke sende besked.");
+    } finally {
+      setPostingOffseason(false);
+    }
+  };
+
   const stripUnverified = useServerFn(stripUnverifiedMembers);
   const [stripping, setStripping] = useState(false);
   const [roleAdminOpen, setRoleAdminOpen] = useState(false);
