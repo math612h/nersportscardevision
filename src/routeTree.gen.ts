@@ -49,6 +49,7 @@ import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/publi
 import { Route as ApiPublicCronStripUnverifiedMembersRouteImport } from './routes/api/public/cron/strip-unverified-members'
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
+import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './routes/api/public/cron/delete-expired-host-sessions'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
@@ -278,6 +279,12 @@ const ApiPublicCronExpireReserveOffersRoute =
     path: '/api/public/cron/expire-reserve-offers',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronDeleteExpiredHostSessionsRoute =
+  ApiPublicCronDeleteExpiredHostSessionsRouteImport.update({
+    id: '/api/public/cron/delete-expired-host-sessions',
+    path: '/api/public/cron/delete-expired-host-sessions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCompanionVerifyTokenRoute =
   ApiPublicCompanionVerifyTokenRouteImport.update({
     id: '/api/public/companion/verify-token',
@@ -396,6 +403,7 @@ export interface FileRoutesByFullPath {
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
@@ -448,6 +456,7 @@ export interface FileRoutesByTo {
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
@@ -505,6 +514,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
@@ -561,6 +571,7 @@ export interface FileRouteTypes {
     | '/admin/protests'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/cron/strip-unverified-members'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/admin/nyhedsbrev'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/cron/strip-unverified-members'
@@ -669,6 +681,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/protests'
     | '/_authenticated/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/cron/strip-unverified-members'
@@ -708,6 +721,7 @@ export interface RootRouteChildren {
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
+  ApiPublicCronDeleteExpiredHostSessionsRoute: typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   ApiPublicCronExpireReserveOffersRoute: typeof ApiPublicCronExpireReserveOffersRoute
   ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
   ApiPublicCronStripUnverifiedMembersRoute: typeof ApiPublicCronStripUnverifiedMembersRoute
@@ -1004,6 +1018,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronExpireReserveOffersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/delete-expired-host-sessions': {
+      id: '/api/public/cron/delete-expired-host-sessions'
+      path: '/api/public/cron/delete-expired-host-sessions'
+      fullPath: '/api/public/cron/delete-expired-host-sessions'
+      preLoaderRoute: typeof ApiPublicCronDeleteExpiredHostSessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/companion/verify-token': {
       id: '/api/public/companion/verify-token'
       path: '/api/public/companion/verify-token'
@@ -1248,6 +1269,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
+  ApiPublicCronDeleteExpiredHostSessionsRoute:
+    ApiPublicCronDeleteExpiredHostSessionsRoute,
   ApiPublicCronExpireReserveOffersRoute: ApiPublicCronExpireReserveOffersRoute,
   ApiPublicCronLeagueOpenRoute: ApiPublicCronLeagueOpenRoute,
   ApiPublicCronStripUnverifiedMembersRoute:
