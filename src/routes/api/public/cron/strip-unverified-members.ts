@@ -15,7 +15,7 @@ function authorize(request: Request): Response | null {
 
 async function run() {
   try {
-    const res = await stripUnverifiedMembersImpl();
+    const res = await stripNewJoinersImpl();
     return Response.json({ ok: true, ...res });
   } catch (e) {
     console.error("strip-unverified-members failed", e);
