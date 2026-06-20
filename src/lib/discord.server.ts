@@ -390,13 +390,13 @@ export async function listGuildMemberIdsWithRole(roleId: string): Promise<string
   return members.map((m) => m.id);
 }
 
-// Same as above but also returns each member's server nickname (if any).
+// Same as above but also returns each member's server nickname and join time.
 export async function listGuildMembersWithRole(
   roleId: string,
-): Promise<Array<{ id: string; nick: string | null }>> {
+): Promise<Array<{ id: string; nick: string | null; joined_at: string | null }>> {
   const guildId = getEnv("DISCORD_GUILD_ID");
   const botToken = getEnv("DISCORD_BOT_TOKEN");
-  const out: Array<{ id: string; nick: string | null }> = [];
+  const out: Array<{ id: string; nick: string | null; joined_at: string | null }> = [];
   let after = "0";
   for (let page = 0; page < 50; page++) {
     const url = `${DISCORD_API}/guilds/${guildId}/members?limit=1000&after=${after}`;
@@ -409,13 +409,14 @@ export async function listGuildMembersWithRole(
       user?: { id?: string };
       roles?: string[];
       nick?: string | null;
+      joined_at?: string | null;
     }>;
     if (!Array.isArray(members) || members.length === 0) break;
     for (const m of members) {
       const uid = m.user?.id;
       if (!uid) continue;
       if (Array.isArray(m.roles) && m.roles.includes(roleId)) {
-        out.push({ id: uid, nick: m.nick ?? null });
+        out.push({ id: uid, nick: m.nick ?? null, joined_at: m.joined_at ?? null });
       }
     }
     if (members.length < 1000) break;
@@ -425,6 +426,7 @@ export async function listGuildMembersWithRole(
   }
   return out;
 }
+
 
 
 
