@@ -170,6 +170,9 @@ function AdminHub() {
               <Button onClick={handlePostHostAnchor} disabled={postingHost} variant="outline">
                 {postingHost ? "Sender..." : "Post hosted session-knap"}
               </Button>
+              <Button onClick={handlePostOffseason} disabled={postingOffseason} variant="outline">
+                {postingOffseason ? "Sender..." : "Post off-season kalender"}
+              </Button>
               <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
                 {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
               </Button>
