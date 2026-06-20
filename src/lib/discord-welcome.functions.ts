@@ -30,7 +30,7 @@ export const postDiscordWelcomeMessage = createServerFn({ method: "POST" })
 
     const body = {
       content: WELCOME_TEXT,
-      allowed_mentions: { parse: [] as string[] },
+      allowed_mentions: { parse: ["everyone"] as string[] },
       components: [
         {
           type: 1,
