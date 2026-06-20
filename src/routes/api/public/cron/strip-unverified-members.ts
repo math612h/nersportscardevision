@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { stripUnverifiedMembersImpl } from "@/lib/discord-strip-unverified.functions";
+import { stripNewJoinersImpl } from "@/lib/discord-strip-unverified.functions";
 
 function authorize(request: Request): Response | null {
   const secret = process.env.CRON_SECRET;
