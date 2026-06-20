@@ -147,14 +147,3 @@ export const postTemplateToDiscord = createServerFn({ method: "POST" })
     return { ok: true, messageId: res.messageId };
   });
 
-// Server-only helper used by other server fns to fetch a template body
-export async function getTemplateByKey(key: string): Promise<MessageTemplate | null> {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("message_templates")
-    .select("*")
-    .eq("key", key)
-    .maybeSingle();
-  if (error) return null;
-  return (data ?? null) as MessageTemplate | null;
-}
