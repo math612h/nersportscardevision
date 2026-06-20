@@ -77,7 +77,7 @@ function OnboardingPage() {
     if (!acceptsDanish) return toast.error("Bekræft venligst at du kan læse og skrive dansk.");
     setSaving(true);
     try {
-      await finish({ data: { display_name: displayName.trim(), lmu_name: lmuName.trim(), email: email.trim() } });
+      await finish({ data: { display_name: displayName.trim(), lmu_name: lmuName.trim(), email: email.trim(), accepts_danish: acceptsDanish } });
       toast.success("Profil gemt.");
       await qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] });
       navigate({ to: "/" });
