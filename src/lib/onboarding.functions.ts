@@ -35,11 +35,14 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       if (emailErr) throw new Error(emailErr.message);
     }
 
+    if (!data.accepts_danish) throw new Error("Du skal bekræfte at du kan læse og skrive dansk.");
+
     const { error } = await supabaseAdmin
       .from("profiles")
       .update({
         display_name: data.display_name,
         lmu_name: data.lmu_name,
+        accepts_danish: true,
       })
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
