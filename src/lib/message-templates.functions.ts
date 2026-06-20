@@ -2,11 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export type MessageTemplateKind = "discord" | "email";
+
 export type MessageTemplate = {
   id: string;
   key: string;
   title: string;
   body: string;
+  kind: MessageTemplateKind;
   default_channel_id: string | null;
   is_system: boolean;
   created_at: string;
@@ -42,6 +45,7 @@ const upsertSchema = z.object({
   key: z.string().trim().min(1).max(80).regex(/^[a-z0-9_]+$/i, "Kun bogstaver, tal og _"),
   title: z.string().trim().min(1).max(200),
   body: z.string().trim().min(1).max(4000),
+  kind: z.enum(["discord", "email"]).optional(),
   default_channel_id: z.string().trim().max(40).nullable().optional(),
 });
 
@@ -69,6 +73,7 @@ export const upsertMessageTemplate = createServerFn({ method: "POST" })
         key: data.key,
         title: data.title,
         body: data.body,
+        kind: data.kind ?? "discord",
         default_channel_id: data.default_channel_id ?? null,
         is_system: false,
       })
