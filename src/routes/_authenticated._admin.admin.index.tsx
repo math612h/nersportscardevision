@@ -203,6 +203,46 @@ function AdminHub() {
           </CollapsibleContent>
         </Card>
       </Collapsible>
+
+      <Dialog open={offseasonOpen} onOpenChange={setOffseasonOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Post liga-kalender til Discord</DialogTitle>
+            <DialogDescription>Vælg liga og kanal. Hver afdeling postes som et embed med banebillede.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Liga</Label>
+              <Select value={offseasonLeagueId} onValueChange={setOffseasonLeagueId}>
+                <SelectTrigger><SelectValue placeholder="Vælg liga..." /></SelectTrigger>
+                <SelectContent>
+                  {leagueOptions.map((l: any) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.name}{l.is_offseason ? " (off-season)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Discord kanal-ID</Label>
+              <Input
+                value={offseasonChannelId}
+                onChange={(e) => setOffseasonChannelId(e.target.value)}
+                placeholder="fx 1515256915611881573"
+                inputMode="numeric"
+              />
+              <p className="text-xs text-muted-foreground">Højreklik på kanalen i Discord → "Kopiér kanal-ID" (kræver udvikler-tilstand).</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOffseasonOpen(false)} disabled={postingOffseason}>Annullér</Button>
+            <Button onClick={handlePostOffseason} disabled={postingOffseason}>
+              {postingOffseason ? "Sender..." : "Post kalender"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
