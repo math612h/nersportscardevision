@@ -80,6 +80,22 @@ function AdminHub() {
     }
   };
 
+  const postHostAnchor = useServerFn(postHostSessionAnchor);
+  const [postingHost, setPostingHost] = useState(false);
+  const handlePostHostAnchor = async () => {
+    if (postingHost) return;
+    if (!confirm("Poste 'Del din hosted session'-knap i serverhosting-kanalen?")) return;
+    setPostingHost(true);
+    try {
+      await postHostAnchor();
+      toast.success("Hosted session-knap sendt til kanalen.");
+    } catch (e) {
+      toast.error((e as Error).message || "Kunne ikke sende besked.");
+    } finally {
+      setPostingHost(false);
+    }
+  };
+
   const stripUnverified = useServerFn(stripUnverifiedMembers);
   const [stripping, setStripping] = useState(false);
   const [roleAdminOpen, setRoleAdminOpen] = useState(false);
