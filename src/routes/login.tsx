@@ -21,6 +21,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showLegacy, setShowLegacy] = useState(false);
+  const [notMemberInvite, setNotMemberInvite] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -36,7 +37,14 @@ function LoginPage() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const sp = new URLSearchParams(window.location.search);
-    if (sp.get("discord") === "error") {
+    const status = sp.get("discord");
+    if (status === "not_member") {
+      setNotMemberInvite(sp.get("discord_invite") || "https://discord.gg/");
+      sp.delete("discord");
+      sp.delete("discord_invite");
+      const newUrl = window.location.pathname + (sp.toString() ? `?${sp}` : "");
+      window.history.replaceState({}, "", newUrl);
+    } else if (status === "error") {
       toast.error(`Discord login fejlede: ${sp.get("discord_msg") ?? "ukendt fejl"}`);
       sp.delete("discord");
       sp.delete("discord_msg");
