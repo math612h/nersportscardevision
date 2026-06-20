@@ -20,21 +20,24 @@ function Gate() {
     enabled: !!user,
     queryFn: async () => {
       const [{ data: profile }, { data: priv }] = await Promise.all([
-        supabase.from("profiles").select("display_name, lmu_name").eq("id", user!.id).maybeSingle(),
+        supabase.from("profiles").select("display_name, lmu_name, accepts_danish").eq("id", user!.id).maybeSingle(),
         (supabase as unknown as { from: (t: string) => any }).from("profiles_private")
           .select("discord_user_id").eq("user_id", user!.id).maybeSingle(),
       ]);
       const discordLinked = !!(priv as { discord_user_id?: string | null } | null)?.discord_user_id;
       const lmu = (profile as { lmu_name?: string | null } | null)?.lmu_name?.trim() ?? "";
       const name = (profile as { display_name?: string | null } | null)?.display_name?.trim() ?? "";
+      const accepts = (profile as { accepts_danish?: boolean | null } | null)?.accepts_danish === true;
       const email = (user?.email ?? "").trim();
       const hasRealEmail = !!email && !email.endsWith("@no-email.lmudanmark.dk");
-      return { discordLinked, complete: discordLinked && !!lmu && !!name && hasRealEmail };
+      return {
+        discordLinked,
+        complete: discordLinked && !!lmu && !!name && hasRealEmail && accepts,
+      };
     },
   });
 
-  // Refresh own Discord avatar højst hvert 10. minut, så ændringer på Discord
-  // automatisk slår igennem på hjemmesiden.
+  // Refresh own Discord avatar højst hvert 10. minut.
   useEffect(() => {
     if (!user || !status?.discordLinked) return;
     const key = `discord-avatar-refreshed-at:${user.id}`;
@@ -70,5 +73,12 @@ function Gate() {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">Indlæser…</div>;
   }
   if (!user) return null;
+
+  // BLOCK rendering the rest of the app until onboarding is complete.
+  // The user must finish their profile (all fields + Danish confirmation) first.
+  const onOnboarding = location.pathname === "/onboarding";
+  if (status && !status.complete && !onOnboarding) {
+    return <div className="flex items-center justify-center py-20 text-muted-foreground">Sender dig til profil-opsætning…</div>;
+  }
   return <Outlet />;
 }
