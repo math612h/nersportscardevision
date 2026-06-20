@@ -70,6 +70,10 @@ export async function stripNewJoinersImpl(): Promise<{
     return Number.isFinite(t) && t >= cutoff;
   });
 
+  if (newMembers.length === 0) {
+    return { scanned: 0, stripped: 0, errors: [] };
+  }
+
   const { data: processedRows, error: processedError } = await (supabaseAdmin as any)
     .from("discord_member_role_strips")
     .select("discord_user_id, joined_at")
