@@ -83,23 +83,63 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             });
           }
 
-          // Hosted session flow: button → open modal
+          // Hosted session flow: button → ephemeral with track pulldown
           if (customId === "host_session_share") {
+            const { LMU_TRACKS } = await import("@/lib/tracks");
+            const options = LMU_TRACKS.slice(0, 25).map((t) => ({
+              label: t.name,
+              value: t.name,
+            }));
             return Response.json({
-              type: MODAL,
+              type: CHANNEL_MESSAGE_WITH_SOURCE,
               data: {
-                custom_id: "host_session_share_modal",
-                title: "Del din hosted session",
+                flags: FLAG_EPHEMERAL,
+                content: "Vælg banen du hoster på:",
                 components: [
-                  { type: 1, components: [{ type: 4, custom_id: "server_name", label: "Server-navn", style: 1, required: true, min_length: 1, max_length: 80 }] },
-                  { type: 1, components: [{ type: 4, custom_id: "server_code", label: "Server-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
-                  { type: 1, components: [{ type: 4, custom_id: "lobby_code", label: "Lobby-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
-                  { type: 1, components: [{ type: 4, custom_id: "start_time", label: "Starter kl. (HH:MM)", style: 1, required: true, min_length: 4, max_length: 5, placeholder: "20:30" }] },
-                  { type: 1, components: [{ type: 4, custom_id: "end_time", label: "Slutter kl. (HH:MM)", style: 1, required: true, min_length: 4, max_length: 5, placeholder: "22:00" }] },
+                  {
+                    type: 1,
+                    components: [
+                      {
+                        type: 3, // STRING_SELECT
+                        custom_id: "host_session_track_select",
+                        placeholder: "Vælg bane",
+                        min_values: 1,
+                        max_values: 1,
+                        options,
+                      },
+                    ],
+                  },
                 ],
               },
             });
           }
+
+          // Track picked → open modal with remaining fields
+          if (customId === "host_session_track_select") {
+            const track = (payload?.data?.values?.[0] ?? "").toString().slice(0, 80);
+            if (!track) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: "Ingen bane valgt." },
+              });
+            }
+            // Encode track into modal custom_id so we can read it on submit.
+            const modalId = `host_session_share_modal:${encodeURIComponent(track)}`.slice(0, 100);
+            return Response.json({
+              type: MODAL,
+              data: {
+                custom_id: modalId,
+                title: `Hosted session — ${track}`.slice(0, 45),
+                components: [
+                  { type: 1, components: [{ type: 4, custom_id: "server_name", label: "Server-navn", style: 1, required: true, min_length: 1, max_length: 80 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "server_code", label: "Server-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "lobby_code", label: "Lobby-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "time_window", label: "Tidspunkt (HH:MM-HH:MM)", style: 1, required: true, min_length: 9, max_length: 13, placeholder: "20:30-22:00" }] },
+                ],
+              },
+            });
+          }
+
 
           const [kind, invitationId] = customId.split(":");
           if (
@@ -362,7 +402,11 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             });
           }
 
-          if (customId === "host_session_share_modal") {
+          if (customId.startsWith("host_session_share_modal")) {
+            const trackEncoded = customId.includes(":") ? customId.split(":").slice(1).join(":") : "";
+            let track = "";
+            try { track = decodeURIComponent(trackEncoded); } catch { track = trackEncoded; }
+
             const rows = (payload?.data?.components ?? []) as Array<{
               components: Array<{ custom_id: string; value: string }>;
             }>;
@@ -374,12 +418,14 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             }
             const { HOST_SESSION_CHANNEL_ID } = await import("@/lib/discord-host-session.functions");
             const { parseCphHHMMToUnix } = await import("@/lib/discord-time.server");
-            const startUnix = parseCphHHMMToUnix(values.start_time ?? "");
-            let endUnix = parseCphHHMMToUnix(values.end_time ?? "");
+            const tw = (values.time_window ?? "").replace(/\s+/g, "");
+            const m = tw.match(/^(\d{1,2}:\d{2})[-–—to]+(\d{1,2}:\d{2})$/i);
+            const startUnix = m ? parseCphHHMMToUnix(m[1]) : null;
+            let endUnix = m ? parseCphHHMMToUnix(m[2]) : null;
             if (!startUnix || !endUnix) {
               return Response.json({
                 type: CHANNEL_MESSAGE_WITH_SOURCE,
-                data: { flags: FLAG_EPHEMERAL, content: "Tider skal være i formatet HH:MM (fx 20:30)." },
+                data: { flags: FLAG_EPHEMERAL, content: "Tidspunkt skal være i formatet HH:MM-HH:MM (fx 20:30-22:00)." },
               });
             }
             if (endUnix <= startUnix) endUnix += 86400;
@@ -392,12 +438,14 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             const content = [
               `🎮 **Hosted session af ${hosterMention}**`,
               "",
+              track ? `🏁 Bane: **${track}**` : null,
               `🖥️ Server: **${serverName}**`,
               `🔑 Server-kode: \`${serverCode}\``,
               `🎯 Lobby-kode: \`${lobbyCode}\``,
               `🕒 Starter: <t:${startUnix}:t> (<t:${startUnix}:R>)`,
               `⏱️ Slutter: <t:${endUnix}:t> (<t:${endUnix}:R>)`,
-            ].join("\n");
+            ].filter(Boolean).join("\n");
+
 
             const { sendDiscordChannelMessage } = await import("@/lib/discord.server");
             const res = await sendDiscordChannelMessage(HOST_SESSION_CHANNEL_ID, content);
