@@ -167,7 +167,10 @@ function ProfilePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label>Visningsnavn</Label>
-                <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={80} required />
+                <Input value={displayName} readOnly disabled />
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Synkroniseres fra dit Discord-servernavn. Skift det via <span className="font-medium text-foreground">"Skriv dit navn"</span> i #velkomst-kanalen.
+                </p>
               </div>
               <div>
                 <Label>LMU-navn</Label>

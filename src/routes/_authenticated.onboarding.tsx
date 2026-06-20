@@ -31,13 +31,14 @@ function OnboardingPage() {
       const [{ data: profile }, { data: priv }] = await Promise.all([
         supabase.from("profiles").select("display_name, lmu_name").eq("id", user!.id).maybeSingle(),
         (supabase as unknown as { from: (t: string) => any }).from("profiles_private")
-          .select("discord_user_id, discord_username").eq("user_id", user!.id).maybeSingle(),
+          .select("discord_user_id, discord_username, discord_server_nickname").eq("user_id", user!.id).maybeSingle(),
       ]);
       return {
         display_name: (profile as any)?.display_name ?? "",
         lmu_name: (profile as any)?.lmu_name ?? "",
         discord_user_id: (priv as any)?.discord_user_id ?? null,
         discord_username: (priv as any)?.discord_username ?? null,
+        discord_server_nickname: (priv as any)?.discord_server_nickname ?? null,
       };
     },
   });
@@ -50,10 +51,13 @@ function OnboardingPage() {
 
   useEffect(() => {
     if (!state) return;
-    setDisplayName(state.display_name || state.discord_username || "");
+    // Profilnavn kommer altid fra Discord-servernavnet (sat via #velkomst-knappen)
+    setDisplayName(state.discord_server_nickname || state.display_name || "");
     setLmuName(state.lmu_name || "");
     setEmail((user?.email && !user.email.endsWith("@no-email.lmudanmark.dk")) ? user.email : "");
   }, [state, user]);
+
+  const hasServerNickname = !!state?.discord_server_nickname;
 
   const discordLinked = !!state?.discord_user_id;
 
@@ -63,9 +67,9 @@ function OnboardingPage() {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!displayName.trim()) return toast.error("Indtast dit fulde navn.");
+    if (!displayName.trim()) return toast.error("Sæt dit navn via #velkomst på Discord først.");
     if (!/\S+\s+\S+/.test(displayName.trim())) {
-      return toast.error("Dit visningsnavn skal indeholde både for- og efternavn.");
+      return toast.error("Dit Discord-servernavn skal indeholde både for- og efternavn.");
     }
     if (!lmuName.trim()) return toast.error("Indtast dit LMU-navn.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return toast.error("Indtast en gyldig email.");
@@ -121,22 +125,22 @@ function OnboardingPage() {
               <Label>Profilnavn (fulde navn)</Label>
               <Input
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                maxLength={80}
-                required
-                disabled={!discordLinked}
-                placeholder="fx Anders Jensen"
+                readOnly
+                disabled
+                placeholder={hasServerNickname ? "" : "Sæt dit navn via #velkomst på Discord"}
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Dit profilnavn her på hjemmesiden <span className="font-medium text-foreground">skal være dit fulde fornavn og efternavn</span> — ingen forkortelser, kælenavne eller initialer.
+                Dit profilnavn er <span className="font-medium text-foreground">låst og synkroniseres automatisk fra dit Discord-servernavn</span> på LMU Danmark-serveren. Skift dit navn via knappen <span className="font-medium text-foreground">"Skriv dit navn"</span> i #velkomst-kanalen — så opdateres det her med det samme.
               </p>
             </div>
-            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
-              <p className="font-medium text-foreground">Vigtigt om dit Discord-servernavn</p>
-              <p className="mt-1 text-muted-foreground">
-                Dit <span className="font-medium text-foreground">servernavn (kaldenavn) på LMU Danmark Discord-serveren skal også være dit fulde fornavn og efternavn</span> — præcis det samme som dit profilnavn her. Ellers bliver din profil ikke godkendt.
-              </p>
-            </div>
+            {!hasServerNickname && discordLinked ? (
+              <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                <p className="font-medium text-foreground">Du mangler at sætte dit navn på Discord</p>
+                <p className="mt-1 text-muted-foreground">
+                  Gå til <span className="font-medium text-foreground">#velkomst</span> på LMU Danmark-Discord-serveren, klik på <span className="font-medium text-foreground">"Skriv dit navn"</span> og udfyld dit fornavn og efternavn. Kom derefter tilbage hertil og genindlæs siden.
+                </p>
+              </div>
+            ) : null}
             <div>
               <Label>LMU-navn</Label>
               <Input value={lmuName} onChange={(e) => setLmuName(e.target.value)} maxLength={80} required disabled={!discordLinked}
