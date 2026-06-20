@@ -205,7 +205,12 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             const { setGuildMemberNickname, addGuildRole } = await import("@/lib/discord.server");
 
             const nickRes = await setGuildMemberNickname(discordUserId, fullName);
-            if (!nickRes.ok) {
+            // Discord returnerer 403 hvis brugeren er server-ejer eller har en
+            // rolle højere end botten — det kan vi ikke omgå. Vi fortsætter
+            // alligevel (gemmer navnet i DB + tildeler rolle) og beder brugeren
+            // selv sætte sit kælenavn.
+            const nickFailedDueToHierarchy = !nickRes.ok && nickRes.status === 403;
+            if (!nickRes.ok && !nickFailedDueToHierarchy) {
               return Response.json({
                 type: CHANNEL_MESSAGE_WITH_SOURCE,
                 data: {
