@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const WELCOME_TEXT = [
+  "@everyone",
   "👋 **Velkommen til LMU Danmark!**",
   "",
   "For at få adgang til resten af serveren skal du skrive dit **rigtige fornavn og efternavn**.",
@@ -29,7 +30,7 @@ export const postDiscordWelcomeMessage = createServerFn({ method: "POST" })
 
     const body = {
       content: WELCOME_TEXT,
-      allowed_mentions: { parse: [] as string[] },
+      allowed_mentions: { parse: ["everyone"] as string[] },
       components: [
         {
           type: 1,
