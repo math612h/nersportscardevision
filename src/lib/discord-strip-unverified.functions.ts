@@ -45,6 +45,9 @@ export async function stripUnverifiedMembersImpl(): Promise<{
   }
 
   return { scanned: members.length, stripped, errors: errors.slice(0, 20) };
+}
+
+
 
 // Cron-variant: kun helt nye joinere (sidste 15 min) der ikke er approved.
 // Holder cron-jobbet billigt og undgår at røre eksisterende medlemmer.
