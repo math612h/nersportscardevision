@@ -215,6 +215,29 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               });
             }
 
+            // Sync navnet til hjemmesiden hvis Discord-kontoen er koblet til en profil
+            try {
+              const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+              const { data: priv } = await (supabaseAdmin as any)
+                .from("profiles_private")
+                .select("user_id")
+                .eq("discord_user_id", discordUserId)
+                .maybeSingle();
+              const linkedUserId = (priv as { user_id?: string } | null)?.user_id;
+              if (linkedUserId) {
+                await supabaseAdmin
+                  .from("profiles_private")
+                  .update({ discord_server_nickname: fullName })
+                  .eq("user_id", linkedUserId);
+                await supabaseAdmin
+                  .from("profiles")
+                  .update({ display_name: fullName })
+                  .eq("id", linkedUserId);
+              }
+            } catch (e) {
+              console.error("welcome_name profile sync failed", e);
+            }
+
             const roleRes = await addGuildRole(discordUserId, memberRoleId);
             if (!roleRes.ok) {
               return Response.json({
