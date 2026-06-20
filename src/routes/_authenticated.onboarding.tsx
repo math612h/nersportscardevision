@@ -52,10 +52,10 @@ function OnboardingPage() {
 
   useEffect(() => {
     if (!state) return;
-    // Profilnavn kommer altid fra Discord-servernavnet (sat via #velkomst-knappen)
     setDisplayName(state.discord_server_nickname || state.display_name || "");
     setLmuName(state.lmu_name || "");
     setEmail((user?.email && !user.email.endsWith("@no-email.lmudanmark.dk")) ? user.email : "");
+    setAcceptsDanish(!!state.accepts_danish);
   }, [state, user]);
 
   const hasServerNickname = !!state?.discord_server_nickname;
