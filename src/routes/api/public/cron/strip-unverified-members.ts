@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { stripUnverifiedMembersImpl } from "@/lib/discord-strip-unverified.functions";
+import { stripNewJoinersImpl } from "@/lib/discord-strip-unverified.functions";
 
 function authorize(request: Request): Response | null {
   const secret = process.env.CRON_SECRET;
@@ -15,7 +15,7 @@ function authorize(request: Request): Response | null {
 
 async function run() {
   try {
-    const res = await stripUnverifiedMembersImpl();
+    const res = await stripNewJoinersImpl();
     return Response.json({ ok: true, ...res });
   } catch (e) {
     console.error("strip-unverified-members failed", e);
