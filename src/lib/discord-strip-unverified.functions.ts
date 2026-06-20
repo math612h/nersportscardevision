@@ -1,11 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-// Strips the "Medlem" role from every guild member who has NOT completed the
-// #velkomst flow. The welcome modal always sets a server nickname ("Fornavn
-// Efternavn"), so a member with the Medlem role but no server nickname must
-// have received it from another source (Discord onboarding, server template,
-// external bot) and should be forced back through #velkomst.
+// Strips the "Medlem" role from every guild member who is NOT approved on
+// the website. Approval = a profile row with approved=true linked to the
+// Discord user id via profiles_private.discord_user_id.
 export async function stripUnverifiedMembersImpl(): Promise<{
   scanned: number;
   stripped: number;
@@ -15,14 +13,28 @@ export async function stripUnverifiedMembersImpl(): Promise<{
   if (!memberRoleId) throw new Error("DISCORD_MEMBER_ROLE_ID mangler.");
 
   const { listGuildMembersWithRole, removeGuildRole } = await import("./discord.server");
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
   const members = await listGuildMembersWithRole(memberRoleId);
+
+  // Build set of approved Discord user ids
+  const { data: approvedRows, error } = await supabaseAdmin
+    .from("profiles_private")
+    .select("discord_user_id, profiles!inner(approved)")
+    .not("discord_user_id", "is", null)
+    .eq("profiles.approved", true);
+  if (error) throw new Error(`Kunne ikke hente godkendte profiler: ${error.message}`);
+  const approved = new Set(
+    (approvedRows ?? [])
+      .map((r: { discord_user_id: string | null }) => r.discord_user_id)
+      .filter((v): v is string => !!v),
+  );
 
   let stripped = 0;
   const errors: string[] = [];
 
   for (const m of members) {
-    const nick = (m.nick ?? "").trim();
-    if (nick.length > 0) continue; // har været igennem velkomst-modal
+    if (approved.has(m.id)) continue; // godkendt på hjemmesiden — behold rolle
     try {
       const res = await removeGuildRole(m.id, memberRoleId);
       if (res.ok) stripped++;
