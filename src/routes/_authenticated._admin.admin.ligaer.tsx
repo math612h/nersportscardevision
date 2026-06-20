@@ -805,84 +805,15 @@ function EditLeagueDialog({ league }: { league: any }) {
             <div className="flex items-start gap-2">
               <Megaphone className="h-4 w-4 mt-0.5 text-primary shrink-0" />
               <div className="text-xs text-muted-foreground">
-                Send en Discord-annoncering nu. Hvis tilmeldingen endnu ikke er åben, sendes et hype-opslag med live-nedtælling. Er tilmeldingen allerede åben, sendes den samme besked som ved auto-åbning.
+                Annonceringer sendes ikke længere automatisk. Når ligaen er publiceret, ligger der både en Discord- og en e-mail-skabelon klar i Besked Hub som du kan redigere og selv sende ud.
               </div>
             </div>
-            <Button type="button" variant="outline" disabled={emailing || fbEdit.loading} onClick={openFbEditor} className="gap-1">
-              <Megaphone className="h-4 w-4" /> {fbEdit.loading ? "Henter…" : "Send FB annoncering til mail"}
-            </Button>
-            <Button type="button" variant="outline" disabled={announcing || discordEdit.loading} onClick={openDiscordEditor} className="gap-1">
-              <Megaphone className="h-4 w-4" /> {discordEdit.loading ? "Henter…" : "Send annoncering"}
+            <Button type="button" variant="outline" asChild className="gap-1">
+              <Link to="/admin/beskeder"><Megaphone className="h-4 w-4" /> Åbn Besked Hub</Link>
             </Button>
           </div>
 
-          <Dialog
-            open={discordEdit.open}
-            onOpenChange={(o) => !o && setDiscordEdit((s) => ({ ...s, open: false }))}
-          >
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Rediger Discord-annoncering</DialogTitle>
-              </DialogHeader>
-              <p className="text-xs text-muted-foreground">
-                Ret teksten her og tryk Send. Ændringer gemmes ikke — næste gang henter vi en frisk
-                auto-genereret tekst.
-              </p>
-              <Textarea
-                value={discordEdit.text}
-                onChange={(e) => setDiscordEdit((s) => ({ ...s, text: e.target.value }))}
-                rows={20}
-                className="min-h-[400px] font-mono text-xs"
-              />
-              <DialogFooter className="gap-2 sm:gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDiscordEdit({ open: false, text: "", loading: false })}
-                  disabled={announcing}
-                >
-                  Annullér ændringer
-                </Button>
-                <Button type="button" onClick={sendDiscord} disabled={announcing || !discordEdit.text.trim()} className="gap-1">
-                  <Send className="h-4 w-4" /> {announcing ? "Sender…" : "Send"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
 
-          <Dialog
-            open={fbEdit.open}
-            onOpenChange={(o) => !o && setFbEdit((s) => ({ ...s, open: false }))}
-          >
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Rediger FB-annoncering</DialogTitle>
-              </DialogHeader>
-              <p className="text-xs text-muted-foreground">
-                Ret teksten her og tryk Send. Ændringer gemmes ikke — næste gang henter vi en frisk
-                auto-genereret tekst.
-              </p>
-              <Textarea
-                value={fbEdit.text}
-                onChange={(e) => setFbEdit((s) => ({ ...s, text: e.target.value }))}
-                rows={20}
-                className="min-h-[400px] font-mono text-xs"
-              />
-              <DialogFooter className="gap-2 sm:gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setFbEdit({ open: false, text: "", loading: false })}
-                  disabled={emailing}
-                >
-                  Annullér ændringer
-                </Button>
-                <Button type="button" onClick={sendFb} disabled={emailing || !fbEdit.text.trim()} className="gap-1">
-                  <Send className="h-4 w-4" /> {emailing ? "Sender…" : "Send"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
 
           <DialogFooter className="gap-2 sm:gap-2">
             <Button type="button" variant="secondary" disabled={saving} onClick={(e) => submit(e, false)} className="gap-1">

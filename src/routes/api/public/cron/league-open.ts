@@ -132,6 +132,12 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // Automatic league-open announcements are disabled — admins must send
+        // announcements manually via the Besked Hub. The cron route is kept
+        // alive so the existing pg_cron job doesn't error out.
+        return Response.json({ ok: true, disabled: true, processed: 0 })
+
+        // eslint-disable-next-line no-unreachable
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
         const cronSecret = process.env.CRON_SECRET
@@ -143,6 +149,7 @@ export const Route = createFileRoute('/api/public/cron/league-open')({
         if (!provided || provided !== cronSecret) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
+
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
