@@ -3,6 +3,7 @@ import { template as welcomeTemplate } from './welcome'
 import { template as leagueOpenTemplate } from './league-open'
 import { template as leagueSignupConfirmationTemplate } from './league-signup-confirmation'
 import { template as fbAnnouncementTemplate } from './fb-announcement'
+import { template as genericTemplate } from './generic'
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -18,4 +19,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'league-open': leagueOpenTemplate,
   'league-signup-confirmation': leagueSignupConfirmationTemplate,
   'fb-announcement': fbAnnouncementTemplate,
+  generic: genericTemplate,
 }
