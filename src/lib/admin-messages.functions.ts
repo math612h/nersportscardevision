@@ -40,6 +40,14 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
     let link: string;
     let attachWelcomeButton = false;
 
+    // Lookup Discord link early (needed for wrong_name template + DM)
+    const { data: priv } = await supabaseAdmin
+      .from("profiles_private")
+      .select("discord_user_id")
+      .eq("user_id", data.targetUserId)
+      .maybeSingle();
+    const discordUserId = (priv as { discord_user_id?: string | null } | null)?.discord_user_id ?? null;
+
     if (data.template === "wrong_name") {
       templateKey = "wrong_name_in_guild";
       const tpl = await getTemplateByKey(templateKey);
@@ -71,12 +79,6 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
 
     // 2) Discord DM (best-effort)
     let discordResult: { ok: boolean; reason?: string; status?: number } = { ok: false, reason: "not_linked" };
-    const { data: priv } = await supabaseAdmin
-      .from("profiles_private")
-      .select("discord_user_id")
-      .eq("user_id", data.targetUserId)
-      .maybeSingle();
-    const discordUserId = (priv as { discord_user_id?: string | null } | null)?.discord_user_id ?? null;
     if (discordUserId) {
       const { sendDiscordDM } = await import("./discord.server");
       const content = `**${title}**\n\n${body}\n\nhttps://lmudanmark.dk${link}`;
