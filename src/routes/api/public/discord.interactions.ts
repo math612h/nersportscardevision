@@ -205,7 +205,12 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             const { setGuildMemberNickname, addGuildRole } = await import("@/lib/discord.server");
 
             const nickRes = await setGuildMemberNickname(discordUserId, fullName);
-            if (!nickRes.ok) {
+            // Discord returnerer 403 hvis brugeren er server-ejer eller har en
+            // rolle højere end botten — det kan vi ikke omgå. Vi fortsætter
+            // alligevel (gemmer navnet i DB + tildeler rolle) og beder brugeren
+            // selv sætte sit kælenavn.
+            const nickFailedDueToHierarchy = !nickRes.ok && nickRes.status === 403;
+            if (!nickRes.ok && !nickFailedDueToHierarchy) {
               return Response.json({
                 type: CHANNEL_MESSAGE_WITH_SOURCE,
                 data: {
@@ -253,7 +258,9 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               type: CHANNEL_MESSAGE_WITH_SOURCE,
               data: {
                 flags: FLAG_EPHEMERAL,
-                content: `✅ Velkommen, **${fullName}**! Du har nu adgang til resten af serveren.`,
+                content: nickFailedDueToHierarchy
+                  ? `✅ Velkommen, **${fullName}**! Du har nu adgang til serveren.\n\nDit kælenavn kunne ikke sættes automatisk (du har en højere rolle end botten, fx ejer/admin) — opdatér det selv under serverindstillinger.`
+                  : `✅ Velkommen, **${fullName}**! Du har nu adgang til resten af serveren.`,
               },
             });
           }
