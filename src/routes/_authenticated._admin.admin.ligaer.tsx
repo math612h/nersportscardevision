@@ -314,7 +314,7 @@ function AdminLeagues() {
       return toast.error(err.message);
     }
     const first = configs[0];
-    const { error } = await supabase.from("leagues").insert({
+    const { data: inserted, error } = await supabase.from("leagues").insert({
       name: name.trim(),
       description: desc.trim() || null,
       car_class: first.car_class,
@@ -333,9 +333,44 @@ function AdminLeagues() {
       created_by: user?.id,
       car_lock_never: carLockNever,
       car_lock_at: carLockNever ? null : (carLockAt ? new Date(carLockAt).toISOString() : null),
-    } as any);
+    } as any).select("id").single();
+    if (error) {
+      setSubmitting(false);
+      return toast.error(error.message);
+    }
+    // Auto-create matching Besked Hub templates (Discord + email) for this league
+    try {
+      const leagueId = (inserted as { id: string }).id;
+      const leagueUrl = `https://www.lmudanmark.dk/ligaer/${leagueId}`;
+      const shortKey = leagueId.replace(/-/g, "").slice(0, 16);
+      const safeName = name.trim();
+      await supabase.from("message_templates").insert([
+        {
+          key: `league_${shortKey}_discord`,
+          title: `🏁 Ny liga: ${safeName}`,
+          kind: "discord",
+          is_system: false,
+          body:
+            `Vi har netop åbnet en ny liga: **${safeName}**! 🏎️💨\n\n` +
+            `Læs alt om klasser, kalender og tilmelding her:\n${leagueUrl}\n\n` +
+            `Husk: Du skal være medlem af vores Discord for at deltage — {discord_invite}`,
+        },
+        {
+          key: `league_${shortKey}_email`,
+          title: `Ny liga på LMU Danmark: ${safeName}`,
+          kind: "email",
+          is_system: false,
+          body:
+            `Hej!\n\n` +
+            `Vi har netop åbnet en ny liga: ${safeName}.\n\n` +
+            `Se klasser, kalender og tilmeld dig her:\n${leagueUrl}\n\n` +
+            `Vi ses på banen!\n\n— LMU Danmark`,
+        },
+      ] as any);
+    } catch (err) {
+      console.error("Kunne ikke oprette besked-skabeloner for liga", err);
+    }
     setSubmitting(false);
-    if (error) return toast.error(error.message);
     toast.success(publish ? (isOffseason ? "Off-season event publiceret" : "Liga publiceret") : "Gemt i arkivet");
     setCreatedLeague(true);
     setOpen(false);
