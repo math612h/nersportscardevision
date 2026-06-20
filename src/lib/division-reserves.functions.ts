@@ -145,15 +145,19 @@ async function offerNextReserveImpl(
 
   const ligaNavn = (div as any).leagues?.name ?? "ligaen";
   const afd = div.name;
+  const { reserveOfferButtonsRow } = await import("./division-reserves.server");
   await notifyAndDM(
     admin,
     nextUp.user_id,
     `Reserveplads tilbudt — ${afd}`,
     `Du er tilbudt en reserveplads til afdelingen "${afd}" i ${ligaNavn} (${carClass} \u00b7 ${driverCategory}). ` +
       `Du har ${timeLabel} til at acceptere eller afsl\u00e5 tilbuddet \u2014 ellers g\u00e5r det videre til den n\u00e6ste p\u00e5 ventelisten. ` +
-      `Bem\u00e6rk: pladsen g\u00e6lder kun denne ene afdeling. Bagefter er du tilbage p\u00e5 ventelisten med din nuv\u00e6rende plads i k\u00f8en.`,
+      `Bem\u00e6rk: pladsen g\u00e6lder kun denne ene afdeling. Bagefter er du tilbage p\u00e5 ventelisten med din nuv\u00e6rende plads i k\u00f8en.\n\n` +
+      `Du kan svare direkte her i Discord eller p\u00e5 hjemmesiden.`,
     `/ligaer/${div.league_id}/afdeling/${divisionId}`,
+    reserveOfferButtonsRow(offer.id),
   );
+
 
   return { ok: true, offerId: offer.id, offeredUserId: nextUp.user_id };
 }
