@@ -57,6 +57,7 @@ function AdminHub() {
     { to: "/admin/ligaer", title: "Ligaer & afdelinger", desc: "Opret og rediger ligaer, afdelinger, regler og entries.", icon: Flag, badge: null as number | null },
     { to: "/admin/protests", title: "Protester", desc: "Se alle indsendte protester.", icon: MessageSquareWarning, badge: openProtestsCount ?? null },
     { to: "/admin/nyhedsbrev", title: "Nyhedsbrev", desc: "Skriv nyheder der vises på forsiden.", icon: Newspaper, badge: null },
+    { to: "/admin/beskeder", title: "Besked Hub", desc: "Rediger og del alle system-beskeder (velkomst, navne-rettelse, godkendt mm.).", icon: MessageCircle, badge: null },
     { to: "/admin/afventer", title: "Afventer godkendelse", desc: "Godkend nye brugere som lige har oprettet en profil.", icon: UserCheck, badge: pendingCount ?? null },
     { to: "/admin/brugere", title: "Brugere", desc: `${membersCount ?? 0} godkendte medlemmer. Administrér brugere og roller.`, icon: Users, badge: null },
     { to: "/teams", title: "Teams", desc: "Se alle teams, opret nyt og administrér medlemmer.", icon: ShieldIcon, badge: null },

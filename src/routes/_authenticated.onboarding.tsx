@@ -29,13 +29,14 @@ function OnboardingPage() {
     enabled: !!user,
     queryFn: async () => {
       const [{ data: profile }, { data: priv }] = await Promise.all([
-        supabase.from("profiles").select("display_name, lmu_name").eq("id", user!.id).maybeSingle(),
+        supabase.from("profiles").select("display_name, lmu_name, accepts_danish").eq("id", user!.id).maybeSingle(),
         (supabase as unknown as { from: (t: string) => any }).from("profiles_private")
           .select("discord_user_id, discord_username, discord_server_nickname").eq("user_id", user!.id).maybeSingle(),
       ]);
       return {
         display_name: (profile as any)?.display_name ?? "",
         lmu_name: (profile as any)?.lmu_name ?? "",
+        accepts_danish: (profile as any)?.accepts_danish === true,
         discord_user_id: (priv as any)?.discord_user_id ?? null,
         discord_username: (priv as any)?.discord_username ?? null,
         discord_server_nickname: (priv as any)?.discord_server_nickname ?? null,
@@ -51,10 +52,10 @@ function OnboardingPage() {
 
   useEffect(() => {
     if (!state) return;
-    // Profilnavn kommer altid fra Discord-servernavnet (sat via #velkomst-knappen)
     setDisplayName(state.discord_server_nickname || state.display_name || "");
     setLmuName(state.lmu_name || "");
     setEmail((user?.email && !user.email.endsWith("@no-email.lmudanmark.dk")) ? user.email : "");
+    setAcceptsDanish(!!state.accepts_danish);
   }, [state, user]);
 
   const hasServerNickname = !!state?.discord_server_nickname;
@@ -76,7 +77,7 @@ function OnboardingPage() {
     if (!acceptsDanish) return toast.error("Bekræft venligst at du kan læse og skrive dansk.");
     setSaving(true);
     try {
-      await finish({ data: { display_name: displayName.trim(), lmu_name: lmuName.trim(), email: email.trim() } });
+      await finish({ data: { display_name: displayName.trim(), lmu_name: lmuName.trim(), email: email.trim(), accepts_danish: acceptsDanish } });
       toast.success("Profil gemt.");
       await qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] });
       navigate({ to: "/" });

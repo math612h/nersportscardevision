@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const WELCOME_TEXT = [
+const FALLBACK_WELCOME_TEXT = [
   "@everyone",
   "👋 **Velkommen til LMU Danmark!**",
   "",
@@ -16,6 +16,7 @@ export const postDiscordWelcomeMessage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { getTemplateByKey } = await import("./message-templates.server");
     const { data: roles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
@@ -28,8 +29,11 @@ export const postDiscordWelcomeMessage = createServerFn({ method: "POST" })
     const botToken = process.env.DISCORD_BOT_TOKEN;
     if (!botToken) throw new Error("DISCORD_BOT_TOKEN mangler.");
 
+    const tpl = await getTemplateByKey("discord_welcome");
+    const content = tpl ? `@everyone\n\n**${tpl.title}**\n\n${tpl.body}` : FALLBACK_WELCOME_TEXT;
+
     const body = {
-      content: WELCOME_TEXT,
+      content,
       allowed_mentions: { parse: ["everyone"] as string[] },
       components: [
         {
