@@ -6,6 +6,7 @@ const schema = z.object({
   display_name: z.string().trim().min(1).max(80),
   lmu_name: z.string().trim().min(1).max(80),
   email: z.string().trim().email().max(255),
+  accepts_danish: z.boolean(),
 });
 
 export const completeOnboarding = createServerFn({ method: "POST" })
