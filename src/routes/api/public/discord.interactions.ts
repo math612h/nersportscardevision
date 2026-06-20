@@ -83,6 +83,24 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             });
           }
 
+          // Hosted session flow: button → open modal
+          if (customId === "host_session_share") {
+            return Response.json({
+              type: MODAL,
+              data: {
+                custom_id: "host_session_share_modal",
+                title: "Del din hosted session",
+                components: [
+                  { type: 1, components: [{ type: 4, custom_id: "server_name", label: "Server-navn", style: 1, required: true, min_length: 1, max_length: 80 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "server_code", label: "Server-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "lobby_code", label: "Lobby-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "start_time", label: "Starter kl. (HH:MM)", style: 1, required: true, min_length: 4, max_length: 5, placeholder: "20:30" }] },
+                  { type: 1, components: [{ type: 4, custom_id: "end_time", label: "Slutter kl. (HH:MM)", style: 1, required: true, min_length: 4, max_length: 5, placeholder: "22:00" }] },
+                ],
+              },
+            });
+          }
+
           const [kind, invitationId] = customId.split(":");
           if (
             (kind === "team_invite_accept" || kind === "team_invite_reject") &&
