@@ -258,7 +258,9 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               type: CHANNEL_MESSAGE_WITH_SOURCE,
               data: {
                 flags: FLAG_EPHEMERAL,
-                content: `✅ Velkommen, **${fullName}**! Du har nu adgang til resten af serveren.`,
+                content: nickFailedDueToHierarchy
+                  ? `✅ Velkommen, **${fullName}**! Du har nu adgang til serveren.\n\nDit kælenavn kunne ikke sættes automatisk (du har en højere rolle end botten, fx ejer/admin) — opdatér det selv under serverindstillinger.`
+                  : `✅ Velkommen, **${fullName}**! Du har nu adgang til resten af serveren.`,
               },
             });
           }
