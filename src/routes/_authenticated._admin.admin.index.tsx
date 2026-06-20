@@ -85,7 +85,8 @@ function AdminHub() {
     setStripping(true);
     try {
       const res = await stripUnverified();
-      toast.success(`Scannede ${res.scanned}, fjernede rolle fra ${res.stripped}.`);
+      const errPart = res.errors.length > 0 ? ` · ${res.errors.length} fejl (se console)` : "";
+      toast.success(`Scannede ${res.scanned}, fjernede rolle fra ${res.stripped}${errPart}.`);
       if (res.errors.length > 0) console.warn("strip errors:", res.errors);
     } catch (e) {
       toast.error((e as Error).message || "Kunne ikke køre.");

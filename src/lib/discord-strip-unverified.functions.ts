@@ -52,6 +52,7 @@ export async function stripUnverifiedMembersImpl(): Promise<{
     } catch (e) {
       errors.push(`${m.id}: ${(e as Error).message}`);
     }
+    await new Promise((r) => setTimeout(r, 250));
   }
 
   return { scanned: members.length, stripped, errors: errors.slice(0, 20) };

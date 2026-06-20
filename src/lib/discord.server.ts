@@ -219,16 +219,29 @@ export async function setGuildMemberNickname(
 
 export async function removeGuildRole(discordUserId: string, roleId: string): Promise<{ ok: boolean; status: number; message?: string }> {
   const guildId = getEnv("DISCORD_GUILD_ID");
-  const res = await fetch(
-    `${DISCORD_API}/guilds/${guildId}/members/${discordUserId}/roles/${roleId}`,
-    {
+  const url = `${DISCORD_API}/guilds/${guildId}/members/${discordUserId}/roles/${roleId}`;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const res = await fetch(url, {
       method: "DELETE",
       headers: { Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}` },
-    },
-  );
-  if (res.status === 204 || res.status === 404) return { ok: true, status: res.status };
-  const text = await res.text().catch(() => "");
-  return { ok: false, status: res.status, message: text };
+    });
+    if (res.status === 204 || res.status === 404) return { ok: true, status: res.status };
+    if (res.status === 429) {
+      let retryMs = 1000;
+      try {
+        const j = (await res.clone().json()) as { retry_after?: number };
+        if (typeof j.retry_after === "number") retryMs = Math.ceil(j.retry_after * 1000) + 250;
+      } catch {
+        const h = res.headers.get("retry-after");
+        if (h) retryMs = Math.ceil(parseFloat(h) * 1000) + 250;
+      }
+      await new Promise((r) => setTimeout(r, Math.min(retryMs, 10_000)));
+      continue;
+    }
+    const text = await res.text().catch(() => "");
+    return { ok: false, status: res.status, message: text };
+  }
+  return { ok: false, status: 429, message: "Rate limited efter flere forsøg" };
 }
 
 export async function isUserInGuild(discordUserId: string): Promise<{ inGuild: boolean; status: number; message?: string }> {
