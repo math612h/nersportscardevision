@@ -361,14 +361,14 @@ function TemplateEditor({
           </DialogTitle>
           <DialogDescription>
             {template?.is_system
-              ? "Dette er en system-besked — du kan ændre titel og indhold, men ikke nøglen."
-              : "Brug en kort, unik nøgle som koden kan kalde på."}
+              ? "Dette er en system-besked — du kan ændre titel og indhold, men ikke hub-nøglen."
+              : "Hub-nøglen er beskedens unikke id — den bruges internt i systemet og kan ikke ændres senere. Brug fx 'efteraar_2026_info' eller 'ny_liga_invite'."}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Nøgle</Label>
-            <Input value={key} onChange={(e) => setKey(e.target.value)} disabled={!isNew} placeholder="fx custom_announcement" />
+            <Label>Besked-hub nøgle</Label>
+            <Input value={key} onChange={(e) => setKey(e.target.value)} disabled={!isNew} placeholder="fx efteraar_2026_info" />
           </div>
           <div>
             <Label>{isEmail ? "Emne (titel)" : "Titel / overskrift"}</Label>
