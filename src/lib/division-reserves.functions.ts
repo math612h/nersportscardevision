@@ -10,6 +10,7 @@ async function notifyAndDM(
   title: string,
   body: string,
   link: string,
+  discordComponents?: any[],
 ) {
   await admin.from("notifications").insert({ user_id: userId, title, body, link });
   try {
@@ -25,13 +26,18 @@ async function notifyAndDM(
   if (discordId) {
     try {
       const { sendDiscordDM } = await import("./discord.server");
-      const res = await sendDiscordDM(discordId, `**${title}**\n\n${body}\n\n${SITE}${link}`);
+      const res = await sendDiscordDM(
+        discordId,
+        `**${title}**\n\n${body}\n\n${SITE}${link}`,
+        discordComponents,
+      );
       if (!res.ok) console.error("Reserve DM failed", userId, res);
     } catch (e) {
       console.error("Reserve DM error", e);
     }
   }
 }
+
 
 /**
  * Find the next eligible waitlister and create a pending reserve offer.
