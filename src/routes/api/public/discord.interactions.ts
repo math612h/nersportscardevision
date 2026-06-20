@@ -173,11 +173,90 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             }
           }
 
+          if (
+            (kind === "reserve_accept" || kind === "reserve_decline") &&
+            invitationId &&
+            discordUserId
+          ) {
+            const offerId = invitationId;
+            const accept = kind === "reserve_accept";
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            const { data: priv } = await (supabaseAdmin as any)
+              .from("profiles_private")
+              .select("user_id")
+              .eq("discord_user_id", discordUserId)
+              .maybeSingle();
+            const appUserId = (priv as any)?.user_id as string | undefined;
+            if (!appUserId) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: {
+                  flags: FLAG_EPHEMERAL,
+                  content: "Din Discord-konto er ikke koblet til en LMU Danmark-profil.",
+                },
+              });
+            }
+
+            try {
+              const { respondReserveOfferCore } = await import("@/lib/division-reserves.server");
+              const res = await respondReserveOfferCore({
+                offerId,
+                accept,
+                actingUserId: appUserId,
+              });
+              const headline = "🏁 **Reserveplads**";
+              let text: string;
+              switch (res.status) {
+                case "accepted":
+                  text = `${headline}\n\n✅ Du har accepteret pladsen til "${res.afd}" i ${res.ligaNavn} (${res.carClass} · ${res.driverCategory}). Pladsen gælder kun denne ene afdeling.`;
+                  break;
+                case "declined":
+                  text = `${headline}\n\n❌ Du har afvist pladsen til "${res.afd}" i ${res.ligaNavn}. Tilbuddet går videre til den næste på ventelisten.`;
+                  break;
+                case "not_pending":
+                  text = `${headline}\n\nDette tilbud er ikke længere aktivt.`;
+                  break;
+                case "expired":
+                  text = `${headline}\n\nTilbuddet er udløbet og er gået videre til den næste på ventelisten.`;
+                  break;
+                case "not_found":
+                  text = `${headline}\n\nTilbuddet findes ikke længere.`;
+                  break;
+                case "not_offered_to_you":
+                  return Response.json({
+                    type: CHANNEL_MESSAGE_WITH_SOURCE,
+                    data: { flags: FLAG_EPHEMERAL, content: "Dette tilbud er ikke til dig." },
+                  });
+                case "no_league_entry":
+                  text = `${headline}\n\nDu er ikke længere tilmeldt ligaen, så pladsen kan ikke accepteres.`;
+                  break;
+                case "error":
+                  return Response.json({
+                    type: CHANNEL_MESSAGE_WITH_SOURCE,
+                    data: { flags: FLAG_EPHEMERAL, content: `Noget gik galt: ${res.message}` },
+                  });
+              }
+              return Response.json({
+                type: UPDATE_MESSAGE,
+                data: { content: text, components: [] },
+              });
+            } catch (e) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: {
+                  flags: FLAG_EPHEMERAL,
+                  content: `Noget gik galt: ${(e as Error).message}`,
+                },
+              });
+            }
+          }
+
           return Response.json({
             type: CHANNEL_MESSAGE_WITH_SOURCE,
             data: { flags: FLAG_EPHEMERAL, content: "Ukendt handling." },
           });
         }
+
 
         if (payload?.type === MODAL_SUBMIT) {
           const customId: string = payload?.data?.custom_id ?? "";
