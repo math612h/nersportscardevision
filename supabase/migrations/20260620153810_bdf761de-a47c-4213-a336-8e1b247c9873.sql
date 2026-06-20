@@ -1,0 +1,1 @@
+CREATE POLICY "discord_member_role_strips_deny_clients" ON public.discord_member_role_strips AS RESTRICTIVE FOR ALL TO anon, authenticated USING (false) WITH CHECK (false);
