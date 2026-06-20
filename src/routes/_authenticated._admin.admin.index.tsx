@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { postDiscordWelcomeMessage } from "@/lib/discord-welcome.functions";
 import { postHostSessionAnchor } from "@/lib/discord-host-session.functions";
 import { stripUnverifiedMembers } from "@/lib/discord-strip-unverified.functions";
+import { postOffseasonCalendar } from "@/lib/discord-offseason-calendar.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/")({
   component: AdminHub,
@@ -96,6 +97,22 @@ function AdminHub() {
     }
   };
 
+  const postOffseason = useServerFn(postOffseasonCalendar);
+  const [postingOffseason, setPostingOffseason] = useState(false);
+  const handlePostOffseason = async () => {
+    if (postingOffseason) return;
+    if (!confirm("Poste off-season kalenderen som baner i Discord-kanalen?")) return;
+    setPostingOffseason(true);
+    try {
+      const res = await postOffseason();
+      toast.success(`Postede ${res.posted} afdelinger fra ${res.league}.`);
+    } catch (e) {
+      toast.error((e as Error).message || "Kunne ikke sende besked.");
+    } finally {
+      setPostingOffseason(false);
+    }
+  };
+
   const stripUnverified = useServerFn(stripUnverifiedMembers);
   const [stripping, setStripping] = useState(false);
   const [roleAdminOpen, setRoleAdminOpen] = useState(false);
@@ -152,6 +169,9 @@ function AdminHub() {
               </Button>
               <Button onClick={handlePostHostAnchor} disabled={postingHost} variant="outline">
                 {postingHost ? "Sender..." : "Post hosted session-knap"}
+              </Button>
+              <Button onClick={handlePostOffseason} disabled={postingOffseason} variant="outline">
+                {postingOffseason ? "Sender..." : "Post off-season kalender"}
               </Button>
               <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
                 {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
