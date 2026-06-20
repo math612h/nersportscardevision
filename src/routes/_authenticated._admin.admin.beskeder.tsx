@@ -2,16 +2,44 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { MessageSquare, Pencil, Plus, Trash2, Send, ArrowLeft, Hash, Mail } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  MessageSquare,
+  Pencil,
+  Plus,
+  Trash2,
+  Send,
+  ArrowLeft,
+  Hash,
+  Mail,
+  Trophy,
+  Search,
+  Sparkles,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   listMessageTemplates,
   upsertMessageTemplate,
@@ -28,6 +56,8 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/beskeder")({
   head: () => ({ meta: [{ title: "Besked Hub – Admin" }] }),
   component: BeskedHub,
 });
+
+type LeagueLite = { id: string; name: string };
 
 function BeskedHub() {
   const qc = useQueryClient();
@@ -47,16 +77,57 @@ function BeskedHub() {
     queryFn: () => channelsFn(),
   });
 
+  const { data: leagues } = useQuery<LeagueLite[]>({
+    queryKey: ["beskeder-leagues"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("id, name")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as LeagueLite[];
+    },
+  });
+
+  const leagueMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (leagues ?? []).forEach((l) => m.set(l.id, l.name));
+    return m;
+  }, [leagues]);
+
   const [editing, setEditing] = useState<MessageTemplate | null>(null);
   const [creatingKind, setCreatingKind] = useState<MessageTemplateKind | null>(null);
   const [sharing, setSharing] = useState<MessageTemplate | null>(null);
   const [emailing, setEmailing] = useState<MessageTemplate | null>(null);
 
-  const { discord, email } = useMemo(() => {
-    const all = templates ?? [];
+  const [tab, setTab] = useState<"all" | "discord" | "email">("all");
+  const [search, setSearch] = useState("");
+  const [leagueFilter, setLeagueFilter] = useState<string>("all");
+
+  const filtered = useMemo(() => {
+    const all = (templates ?? []) as MessageTemplate[];
+    const q = search.trim().toLowerCase();
+    return all.filter((t) => {
+      const kind = (t.kind ?? "discord") as MessageTemplateKind;
+      if (tab !== "all" && kind !== tab) return false;
+      if (leagueFilter === "none" && t.league_id) return false;
+      if (leagueFilter !== "all" && leagueFilter !== "none" && t.league_id !== leagueFilter) return false;
+      if (!q) return true;
+      return (
+        t.title.toLowerCase().includes(q) ||
+        t.key.toLowerCase().includes(q) ||
+        t.body.toLowerCase().includes(q)
+      );
+    });
+  }, [templates, tab, search, leagueFilter]);
+
+  const counts = useMemo(() => {
+    const all = (templates ?? []) as MessageTemplate[];
     return {
-      discord: all.filter((t) => (t.kind ?? "discord") === "discord"),
-      email: all.filter((t) => t.kind === "email"),
+      all: all.length,
+      discord: all.filter((t) => (t.kind ?? "discord") === "discord").length,
+      email: all.filter((t) => t.kind === "email").length,
     };
   }, [templates]);
 
@@ -68,6 +139,7 @@ function BeskedHub() {
       body: string;
       kind?: MessageTemplateKind;
       default_channel_id: string | null;
+      league_id: string | null;
     }) => {
       await upsertFn({ data: vars });
     },
@@ -104,7 +176,7 @@ function BeskedHub() {
 
   const emailMut = useMutation({
     mutationFn: async (vars: { tpl: MessageTemplate; to: string }) => {
-      const body = vars.tpl.body; // {discord_invite} is left as-is in email body
+      const body = vars.tpl.body;
       const res = await sendTransactionalEmail({
         templateName: "generic",
         recipientEmail: vars.to,
@@ -127,60 +199,92 @@ function BeskedHub() {
           <Link to="/admin"><ArrowLeft className="h-4 w-4 mr-1" />Tilbage</Link>
         </Button>
       </div>
-      <div className="flex items-center gap-2">
-        <MessageSquare className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">Besked Hub</h1>
+
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-xl border bg-gradient-to-br from-primary/10 via-background to-background p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="rounded-lg bg-primary/15 p-2.5 text-primary">
+              <MessageSquare className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold leading-tight">Besked Hub</h1>
+              <p className="text-sm text-muted-foreground max-w-xl mt-1">
+                Alle standardbeskeder ét sted. Knyt en besked til en liga, send den i en Discord-kanal eller direkte på e-mail.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={() => setCreatingKind("discord")} className="gap-1.5">
+              <Hash className="h-4 w-4" /> Ny Discord-besked
+            </Button>
+            <Button onClick={() => setCreatingKind("email")} variant="secondary" className="gap-1.5">
+              <Mail className="h-4 w-4" /> Ny e-mail-besked
+            </Button>
+          </div>
+        </div>
       </div>
-      <p className="text-sm text-muted-foreground max-w-2xl">
-        Her finder du alle standardbeskeder — opdelt i <strong>Discord-beskeder</strong> (sendes til en kanal) og <strong>E-mail-beskeder</strong> (sendes til en modtagers indbakke). Tryk på blyanten for at redigere indholdet.
-      </p>
+
+      {/* Filters */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="w-full sm:w-auto">
+          <TabsList>
+            <TabsTrigger value="all">Alle <Badge variant="secondary" className="ml-2">{counts.all}</Badge></TabsTrigger>
+            <TabsTrigger value="discord"><Hash className="h-3.5 w-3.5 mr-1" />Discord <Badge variant="secondary" className="ml-2">{counts.discord}</Badge></TabsTrigger>
+            <TabsTrigger value="email"><Mail className="h-3.5 w-3.5 mr-1" />E-mail <Badge variant="secondary" className="ml-2">{counts.email}</Badge></TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <div className="flex-1 flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Søg i titel, nøgle eller indhold…"
+              className="pl-8"
+            />
+          </div>
+          <Select value={leagueFilter} onValueChange={setLeagueFilter}>
+            <SelectTrigger className="sm:w-56">
+              <SelectValue placeholder="Filtrer på liga" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle ligaer</SelectItem>
+              <SelectItem value="none">Uden liga</SelectItem>
+              {(leagues ?? []).map((l) => (
+                <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
       {isLoading ? (
         <div className="text-muted-foreground">Indlæser…</div>
+      ) : filtered.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            <Sparkles className="h-8 w-8 mx-auto mb-2 opacity-50" />
+            <p>Ingen beskeder matcher dine filtre.</p>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="space-y-10">
-          <Section
-            icon={<Hash className="h-5 w-5" />}
-            title="Discord-beskeder"
-            description="Beskeder der kan postes i en kanal på vores Discord-server."
-            onCreate={() => setCreatingKind("discord")}
-            createLabel="Ny Discord-besked"
-            accent="bg-indigo-500/10 border-indigo-500/20"
-          >
-            <TemplateGrid
-              templates={discord}
-              kind="discord"
-              onEdit={(t) => setEditing(t)}
-              onShare={(t) => setSharing(t)}
-              onSendEmail={() => {}}
-              onDelete={(id) => deleteMut.mutate(id)}
-            />
-          </Section>
-
-          <Section
-            icon={<Mail className="h-5 w-5" />}
-            title="E-mail-beskeder"
-            description="Beskeder der kan sendes til en bruger via e-mail. Titlen bliver brugt som emnefelt."
-            onCreate={() => setCreatingKind("email")}
-            createLabel="Ny e-mail-besked"
-            accent="bg-emerald-500/10 border-emerald-500/20"
-          >
-            <TemplateGrid
-              templates={email}
-              kind="email"
-              onEdit={(t) => setEditing(t)}
-              onShare={() => {}}
-              onSendEmail={(t) => setEmailing(t)}
-              onDelete={(id) => deleteMut.mutate(id)}
-            />
-          </Section>
-        </div>
+        <TemplateGrid
+          templates={filtered}
+          leagueMap={leagueMap}
+          onEdit={(t) => setEditing(t)}
+          onShare={(t) => setSharing(t)}
+          onSendEmail={(t) => setEmailing(t)}
+          onDelete={(id) => deleteMut.mutate(id)}
+        />
       )}
 
       <TemplateEditor
         open={!!editing || !!creatingKind}
         template={editing}
         creatingKind={creatingKind}
+        leagues={leagues ?? []}
         onClose={() => {
           setEditing(null);
           setCreatingKind(null);
@@ -209,100 +313,93 @@ function BeskedHub() {
   );
 }
 
-function Section({
-  icon,
-  title,
-  description,
-  onCreate,
-  createLabel,
-  accent,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  onCreate: () => void;
-  createLabel: string;
-  accent: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className={`rounded-lg border p-4 ${accent}`}>
-      <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-        <div className="flex items-center gap-2">
-          {icon}
-          <h2 className="text-lg font-semibold">{title}</h2>
-        </div>
-        <Button size="sm" onClick={onCreate} className="gap-1">
-          <Plus className="h-4 w-4" /> {createLabel}
-        </Button>
-      </div>
-      <p className="text-sm text-muted-foreground mb-4">{description}</p>
-      {children}
-    </section>
-  );
-}
-
 function TemplateGrid({
   templates,
-  kind,
+  leagueMap,
   onEdit,
   onShare,
   onSendEmail,
   onDelete,
 }: {
   templates: MessageTemplate[];
-  kind: MessageTemplateKind;
+  leagueMap: Map<string, string>;
   onEdit: (t: MessageTemplate) => void;
   onShare: (t: MessageTemplate) => void;
   onSendEmail: (t: MessageTemplate) => void;
   onDelete: (id: string) => void;
 }) {
-  if (templates.length === 0) {
-    return <div className="text-sm text-muted-foreground italic">Ingen beskeder endnu.</div>;
-  }
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {templates.map((t) => (
-        <Card key={t.id} className="flex flex-col bg-background">
-          <CardHeader>
-            <div className="flex items-start justify-between gap-2">
-              <CardTitle className="text-base leading-tight">{t.title}</CardTitle>
-              {t.is_system && <Badge variant="secondary">System</Badge>}
-            </div>
-            <CardDescription className="font-mono text-xs">{t.key}</CardDescription>
-          </CardHeader>
-          <CardContent className="flex-1 flex flex-col justify-between gap-3">
-            <p className="text-sm text-muted-foreground line-clamp-4 whitespace-pre-wrap">{t.body}</p>
-            <div className="flex flex-wrap gap-2 pt-2">
-              <Button size="sm" variant="outline" onClick={() => onEdit(t)} className="gap-1">
-                <Pencil className="h-3.5 w-3.5" /> Rediger
-              </Button>
-              {kind === "discord" ? (
-                <Button size="sm" variant="default" onClick={() => onShare(t)} className="gap-1">
-                  <Send className="h-3.5 w-3.5" /> Del på Discord
-                </Button>
-              ) : (
-                <Button size="sm" variant="default" onClick={() => onSendEmail(t)} className="gap-1">
-                  <Mail className="h-3.5 w-3.5" /> Send e-mail
-                </Button>
-              )}
-              {!t.is_system && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    if (confirm("Slet denne besked?")) onDelete(t.id);
-                  }}
-                  className="text-destructive"
+      {templates.map((t) => {
+        const kind = (t.kind ?? "discord") as MessageTemplateKind;
+        const isEmail = kind === "email";
+        const accent = isEmail
+          ? "border-l-emerald-500/70 from-emerald-500/5"
+          : "border-l-indigo-500/70 from-indigo-500/5";
+        const leagueName = t.league_id ? leagueMap.get(t.league_id) : null;
+        return (
+          <Card
+            key={t.id}
+            className={`group flex flex-col border-l-4 bg-gradient-to-br to-background transition-shadow hover:shadow-md ${accent}`}
+          >
+            <CardContent className="flex flex-1 flex-col gap-3 p-4">
+              <div className="flex items-center justify-between gap-2">
+                <Badge
+                  variant="outline"
+                  className={`gap-1 ${isEmail ? "text-emerald-600 border-emerald-500/30" : "text-indigo-600 border-indigo-500/30"}`}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                  {isEmail ? <Mail className="h-3 w-3" /> : <Hash className="h-3 w-3" />}
+                  {isEmail ? "E-mail" : "Discord"}
+                </Badge>
+                {t.is_system && <Badge variant="secondary" className="text-xs">System</Badge>}
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="font-semibold leading-tight">{t.title}</h3>
+                <code className="text-[11px] text-muted-foreground font-mono">{t.key}</code>
+              </div>
+
+              {leagueName && (
+                <div className="flex items-center gap-1.5 text-xs">
+                  <Trophy className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="font-medium">{leagueName}</span>
+                </div>
               )}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+
+              <p className="text-sm text-muted-foreground line-clamp-3 whitespace-pre-wrap flex-1">
+                {t.body}
+              </p>
+
+              <div className="flex flex-wrap gap-1.5 pt-1 border-t">
+                <Button size="sm" variant="ghost" onClick={() => onEdit(t)} className="gap-1 h-8">
+                  <Pencil className="h-3.5 w-3.5" /> Rediger
+                </Button>
+                {isEmail ? (
+                  <Button size="sm" onClick={() => onSendEmail(t)} className="gap-1 h-8">
+                    <Mail className="h-3.5 w-3.5" /> Send
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={() => onShare(t)} className="gap-1 h-8">
+                    <Send className="h-3.5 w-3.5" /> Del
+                  </Button>
+                )}
+                {!t.is_system && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm("Slet denne besked?")) onDelete(t.id);
+                    }}
+                    className="text-destructive h-8 ml-auto"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
@@ -311,6 +408,7 @@ function TemplateEditor({
   open,
   template,
   creatingKind,
+  leagues,
   onClose,
   onSave,
   saving,
@@ -318,6 +416,7 @@ function TemplateEditor({
   open: boolean;
   template: MessageTemplate | null;
   creatingKind: MessageTemplateKind | null;
+  leagues: LeagueLite[];
   onClose: () => void;
   onSave: (vals: {
     id?: string;
@@ -326,18 +425,24 @@ function TemplateEditor({
     body: string;
     kind?: MessageTemplateKind;
     default_channel_id: string | null;
+    league_id: string | null;
   }) => void;
   saving: boolean;
 }) {
   const [key, setKey] = useState("");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [linkLeague, setLinkLeague] = useState(false);
+  const [leagueId, setLeagueId] = useState<string>("");
 
   useEffect(() => {
     if (open) {
       setKey(template?.key ?? "");
       setTitle(template?.title ?? "");
       setBody(template?.body ?? "");
+      const lid = template?.league_id ?? null;
+      setLinkLeague(!!lid);
+      setLeagueId(lid ?? "");
     }
   }, [open, template]);
 
@@ -345,12 +450,20 @@ function TemplateEditor({
   const kind: MessageTemplateKind = (template?.kind ?? creatingKind ?? "discord") as MessageTemplateKind;
   const isEmail = kind === "email";
 
+  const canSave =
+    !!key.trim() &&
+    !!title.trim() &&
+    !!body.trim() &&
+    (!linkLeague || !!leagueId);
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            {isEmail ? <Mail className="h-5 w-5" /> : <Hash className="h-5 w-5" />}
+            <span className={`rounded-md p-1.5 ${isEmail ? "bg-emerald-500/15 text-emerald-600" : "bg-indigo-500/15 text-indigo-600"}`}>
+              {isEmail ? <Mail className="h-4 w-4" /> : <Hash className="h-4 w-4" />}
+            </span>
             {isNew
               ? isEmail
                 ? "Ny e-mail-besked"
@@ -362,18 +475,60 @@ function TemplateEditor({
           <DialogDescription>
             {template?.is_system
               ? "Dette er en system-besked — du kan ændre titel og indhold, men ikke hub-nøglen."
-              : "Hub-nøglen er beskedens unikke id — den bruges internt i systemet og kan ikke ændres senere. Brug fx 'efteraar_2026_info' eller 'ny_liga_invite'."}
+              : "Hub-nøglen er beskedens unikke id — bruges internt og kan ikke ændres senere."}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
+
+        <div className="space-y-4">
           <div>
             <Label>Besked-hub nøgle</Label>
-            <Input value={key} onChange={(e) => setKey(e.target.value)} disabled={!isNew} placeholder="fx efteraar_2026_info" />
+            <Input
+              value={key}
+              onChange={(e) => setKey(e.target.value)}
+              disabled={!isNew}
+              placeholder="fx efteraar_2026_info"
+            />
           </div>
+
           <div>
             <Label>{isEmail ? "Emne (titel)" : "Titel / overskrift"}</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} />
           </div>
+
+          {/* League link */}
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <Trophy className="h-4 w-4 text-amber-500 mt-0.5" />
+                <div>
+                  <Label className="cursor-pointer">Handler beskeden om en liga?</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Knyt beskeden til en bestemt liga, så den er nem at finde igen.
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={linkLeague}
+                onCheckedChange={(v) => {
+                  setLinkLeague(v);
+                  if (!v) setLeagueId("");
+                }}
+              />
+            </div>
+            {linkLeague && (
+              <Select value={leagueId} onValueChange={setLeagueId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Vælg liga…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {leagues.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
           <div>
             <Label>Indhold</Label>
             <Textarea
@@ -392,10 +547,11 @@ function TemplateEditor({
             </p>
           </div>
         </div>
+
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Annullér</Button>
           <Button
-            disabled={saving || !key.trim() || !title.trim() || !body.trim()}
+            disabled={saving || !canSave}
             onClick={() =>
               onSave({
                 id: template?.id,
@@ -404,6 +560,7 @@ function TemplateEditor({
                 body: body.trim(),
                 kind: isNew ? kind : undefined,
                 default_channel_id: template?.default_channel_id ?? null,
+                league_id: linkLeague && leagueId ? leagueId : null,
               })
             }
           >

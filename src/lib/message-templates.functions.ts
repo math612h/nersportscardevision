@@ -11,10 +11,12 @@ export type MessageTemplate = {
   body: string;
   kind: MessageTemplateKind;
   default_channel_id: string | null;
+  league_id: string | null;
   is_system: boolean;
   created_at: string;
   updated_at: string;
 };
+
 
 async function assertAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -47,6 +49,7 @@ const upsertSchema = z.object({
   body: z.string().trim().min(1).max(4000),
   kind: z.enum(["discord", "email"]).optional(),
   default_channel_id: z.string().trim().max(40).nullable().optional(),
+  league_id: z.string().uuid().nullable().optional(),
 });
 
 export const upsertMessageTemplate = createServerFn({ method: "POST" })
@@ -62,7 +65,8 @@ export const upsertMessageTemplate = createServerFn({ method: "POST" })
           title: data.title,
           body: data.body,
           default_channel_id: data.default_channel_id ?? null,
-        })
+          league_id: data.league_id ?? null,
+        } as any)
         .eq("id", data.id);
       if (error) throw new Error(error.message);
       return { ok: true, id: data.id };
@@ -75,13 +79,15 @@ export const upsertMessageTemplate = createServerFn({ method: "POST" })
         body: data.body,
         kind: data.kind ?? "discord",
         default_channel_id: data.default_channel_id ?? null,
+        league_id: data.league_id ?? null,
         is_system: false,
-      })
+      } as any)
       .select("id")
       .single();
     if (error) throw new Error(error.message);
     return { ok: true, id: (inserted as { id: string }).id };
   });
+
 
 export const deleteMessageTemplate = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
