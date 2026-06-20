@@ -150,6 +150,9 @@ function AdminHub() {
               <Button onClick={handlePostWelcome} disabled={posting}>
                 {posting ? "Sender..." : "Post velkomstbesked"}
               </Button>
+              <Button onClick={handlePostHostAnchor} disabled={postingHost} variant="outline">
+                {postingHost ? "Sender..." : "Post hosted session-knap"}
+              </Button>
               <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
                 {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
               </Button>
