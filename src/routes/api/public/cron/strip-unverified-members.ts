@@ -2,12 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { stripNewJoinersImpl } from "@/lib/discord-strip-unverified.functions";
 
 function authorize(request: Request): Response | null {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) {
+  const expected = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!expected) {
     return Response.json({ error: "Server misconfigured" }, { status: 500 });
   }
-  const header = request.headers.get("x-cron-secret");
-  if (!header || header !== secret) {
+  const header = request.headers.get("apikey");
+  if (!header || header !== expected) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
   return null;
