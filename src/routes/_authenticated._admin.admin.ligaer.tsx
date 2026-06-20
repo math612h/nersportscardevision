@@ -314,7 +314,7 @@ function AdminLeagues() {
       return toast.error(err.message);
     }
     const first = configs[0];
-    const { error } = await supabase.from("leagues").insert({
+    const { data: inserted, error } = await supabase.from("leagues").insert({
       name: name.trim(),
       description: desc.trim() || null,
       car_class: first.car_class,
@@ -333,9 +333,44 @@ function AdminLeagues() {
       created_by: user?.id,
       car_lock_never: carLockNever,
       car_lock_at: carLockNever ? null : (carLockAt ? new Date(carLockAt).toISOString() : null),
-    } as any);
+    } as any).select("id").single();
+    if (error) {
+      setSubmitting(false);
+      return toast.error(error.message);
+    }
+    // Auto-create matching Besked Hub templates (Discord + email) for this league
+    try {
+      const leagueId = (inserted as { id: string }).id;
+      const leagueUrl = `https://www.lmudanmark.dk/ligaer/${leagueId}`;
+      const shortKey = leagueId.replace(/-/g, "").slice(0, 16);
+      const safeName = name.trim();
+      await supabase.from("message_templates").insert([
+        {
+          key: `league_${shortKey}_discord`,
+          title: `🏁 Ny liga: ${safeName}`,
+          kind: "discord",
+          is_system: false,
+          body:
+            `Vi har netop åbnet en ny liga: **${safeName}**! 🏎️💨\n\n` +
+            `Læs alt om klasser, kalender og tilmelding her:\n${leagueUrl}\n\n` +
+            `Husk: Du skal være medlem af vores Discord for at deltage — {discord_invite}`,
+        },
+        {
+          key: `league_${shortKey}_email`,
+          title: `Ny liga på LMU Danmark: ${safeName}`,
+          kind: "email",
+          is_system: false,
+          body:
+            `Hej!\n\n` +
+            `Vi har netop åbnet en ny liga: ${safeName}.\n\n` +
+            `Se klasser, kalender og tilmeld dig her:\n${leagueUrl}\n\n` +
+            `Vi ses på banen!\n\n— LMU Danmark`,
+        },
+      ] as any);
+    } catch (err) {
+      console.error("Kunne ikke oprette besked-skabeloner for liga", err);
+    }
     setSubmitting(false);
-    if (error) return toast.error(error.message);
     toast.success(publish ? (isOffseason ? "Off-season event publiceret" : "Liga publiceret") : "Gemt i arkivet");
     setCreatedLeague(true);
     setOpen(false);
@@ -805,84 +840,15 @@ function EditLeagueDialog({ league }: { league: any }) {
             <div className="flex items-start gap-2">
               <Megaphone className="h-4 w-4 mt-0.5 text-primary shrink-0" />
               <div className="text-xs text-muted-foreground">
-                Send en Discord-annoncering nu. Hvis tilmeldingen endnu ikke er åben, sendes et hype-opslag med live-nedtælling. Er tilmeldingen allerede åben, sendes den samme besked som ved auto-åbning.
+                Annonceringer sendes ikke længere automatisk. Når ligaen er publiceret, ligger der både en Discord- og en e-mail-skabelon klar i Besked Hub som du kan redigere og selv sende ud.
               </div>
             </div>
-            <Button type="button" variant="outline" disabled={emailing || fbEdit.loading} onClick={openFbEditor} className="gap-1">
-              <Megaphone className="h-4 w-4" /> {fbEdit.loading ? "Henter…" : "Send FB annoncering til mail"}
-            </Button>
-            <Button type="button" variant="outline" disabled={announcing || discordEdit.loading} onClick={openDiscordEditor} className="gap-1">
-              <Megaphone className="h-4 w-4" /> {discordEdit.loading ? "Henter…" : "Send annoncering"}
+            <Button type="button" variant="outline" asChild className="gap-1">
+              <Link to="/admin/beskeder"><Megaphone className="h-4 w-4" /> Åbn Besked Hub</Link>
             </Button>
           </div>
 
-          <Dialog
-            open={discordEdit.open}
-            onOpenChange={(o) => !o && setDiscordEdit((s) => ({ ...s, open: false }))}
-          >
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Rediger Discord-annoncering</DialogTitle>
-              </DialogHeader>
-              <p className="text-xs text-muted-foreground">
-                Ret teksten her og tryk Send. Ændringer gemmes ikke — næste gang henter vi en frisk
-                auto-genereret tekst.
-              </p>
-              <Textarea
-                value={discordEdit.text}
-                onChange={(e) => setDiscordEdit((s) => ({ ...s, text: e.target.value }))}
-                rows={20}
-                className="min-h-[400px] font-mono text-xs"
-              />
-              <DialogFooter className="gap-2 sm:gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setDiscordEdit({ open: false, text: "", loading: false })}
-                  disabled={announcing}
-                >
-                  Annullér ændringer
-                </Button>
-                <Button type="button" onClick={sendDiscord} disabled={announcing || !discordEdit.text.trim()} className="gap-1">
-                  <Send className="h-4 w-4" /> {announcing ? "Sender…" : "Send"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
 
-          <Dialog
-            open={fbEdit.open}
-            onOpenChange={(o) => !o && setFbEdit((s) => ({ ...s, open: false }))}
-          >
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Rediger FB-annoncering</DialogTitle>
-              </DialogHeader>
-              <p className="text-xs text-muted-foreground">
-                Ret teksten her og tryk Send. Ændringer gemmes ikke — næste gang henter vi en frisk
-                auto-genereret tekst.
-              </p>
-              <Textarea
-                value={fbEdit.text}
-                onChange={(e) => setFbEdit((s) => ({ ...s, text: e.target.value }))}
-                rows={20}
-                className="min-h-[400px] font-mono text-xs"
-              />
-              <DialogFooter className="gap-2 sm:gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setFbEdit({ open: false, text: "", loading: false })}
-                  disabled={emailing}
-                >
-                  Annullér ændringer
-                </Button>
-                <Button type="button" onClick={sendFb} disabled={emailing || !fbEdit.text.trim()} className="gap-1">
-                  <Send className="h-4 w-4" /> {emailing ? "Sender…" : "Send"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
 
           <DialogFooter className="gap-2 sm:gap-2">
             <Button type="button" variant="secondary" disabled={saving} onClick={(e) => submit(e, false)} className="gap-1">
