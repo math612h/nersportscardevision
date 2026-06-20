@@ -171,6 +171,30 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_member_role_strips: {
+        Row: {
+          discord_user_id: string
+          error: string | null
+          joined_at: string
+          processed_at: string
+          removed_role: boolean
+        }
+        Insert: {
+          discord_user_id: string
+          error?: string | null
+          joined_at: string
+          processed_at?: string
+          removed_role?: boolean
+        }
+        Update: {
+          discord_user_id?: string
+          error?: string | null
+          joined_at?: string
+          processed_at?: string
+          removed_role?: boolean
+        }
+        Relationships: []
+      }
       division_absences: {
         Row: {
           created_at: string
