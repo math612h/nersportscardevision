@@ -2,11 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getTrackImageFile } from "@/lib/tracks";
 
-const CHANNEL_ID = "1515256915611881573";
-
 export const postOffseasonCalendar = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data: { leagueId: string; channelId: string }) => {
+    if (!data?.leagueId || typeof data.leagueId !== "string") throw new Error("leagueId mangler.");
+    if (!data?.channelId || !/^\d{5,25}$/.test(data.channelId.trim())) {
+      throw new Error("channelId skal være et Discord-kanal-ID (kun tal).");
+    }
+    return { leagueId: data.leagueId, channelId: data.channelId.trim() };
+  })
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: roles } = await supabaseAdmin
@@ -22,12 +27,10 @@ export const postOffseasonCalendar = createServerFn({ method: "POST" })
     const { data: league, error: lerr } = await supabaseAdmin
       .from("leagues")
       .select("id,name")
-      .eq("is_offseason", true)
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("id", data.leagueId)
       .maybeSingle();
     if (lerr) throw lerr;
-    if (!league) throw new Error("Ingen off-season liga fundet.");
+    if (!league) throw new Error("Liga ikke fundet.");
 
     const { data: divisions, error: derr } = await supabaseAdmin
       .from("divisions")
@@ -76,7 +79,7 @@ export const postOffseasonCalendar = createServerFn({ method: "POST" })
     };
 
     const res = await fetch(
-      `https://discord.com/api/v10/channels/${CHANNEL_ID}/messages`,
+      `https://discord.com/api/v10/channels/${data.channelId}/messages`,
       {
         method: "POST",
         headers: { Authorization: `Bot ${botToken}`, "Content-Type": "application/json" },

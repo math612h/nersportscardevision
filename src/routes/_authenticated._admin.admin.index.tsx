@@ -8,6 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { postDiscordWelcomeMessage } from "@/lib/discord-welcome.functions";
 import { postHostSessionAnchor } from "@/lib/discord-host-session.functions";
@@ -99,13 +103,32 @@ function AdminHub() {
 
   const postOffseason = useServerFn(postOffseasonCalendar);
   const [postingOffseason, setPostingOffseason] = useState(false);
+  const [offseasonOpen, setOffseasonOpen] = useState(false);
+  const [offseasonLeagueId, setOffseasonLeagueId] = useState<string>("");
+  const [offseasonChannelId, setOffseasonChannelId] = useState<string>("1515256915611881573");
+
+  const { data: leagueOptions = [] } = useQuery({
+    queryKey: ["admin-leagues-for-calendar"],
+    enabled: offseasonOpen,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("id,name,is_offseason")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const handlePostOffseason = async () => {
     if (postingOffseason) return;
-    if (!confirm("Poste off-season kalenderen som baner i Discord-kanalen?")) return;
+    if (!offseasonLeagueId) return toast.error("Vælg en liga.");
+    if (!/^\d{5,25}$/.test(offseasonChannelId.trim())) return toast.error("Ugyldigt kanal-ID.");
     setPostingOffseason(true);
     try {
-      const res = await postOffseason();
+      const res = await postOffseason({ data: { leagueId: offseasonLeagueId, channelId: offseasonChannelId.trim() } });
       toast.success(`Postede ${res.posted} afdelinger fra ${res.league}.`);
+      setOffseasonOpen(false);
     } catch (e) {
       toast.error((e as Error).message || "Kunne ikke sende besked.");
     } finally {
@@ -170,8 +193,8 @@ function AdminHub() {
               <Button onClick={handlePostHostAnchor} disabled={postingHost} variant="outline">
                 {postingHost ? "Sender..." : "Post hosted session-knap"}
               </Button>
-              <Button onClick={handlePostOffseason} disabled={postingOffseason} variant="outline">
-                {postingOffseason ? "Sender..." : "Post off-season kalender"}
+              <Button onClick={() => setOffseasonOpen(true)} variant="outline">
+                Post liga-kalender
               </Button>
               <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">
                 {stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}
@@ -180,6 +203,46 @@ function AdminHub() {
           </CollapsibleContent>
         </Card>
       </Collapsible>
+
+      <Dialog open={offseasonOpen} onOpenChange={setOffseasonOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Post liga-kalender til Discord</DialogTitle>
+            <DialogDescription>Vælg liga og kanal. Hver afdeling postes som et embed med banebillede.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Liga</Label>
+              <Select value={offseasonLeagueId} onValueChange={setOffseasonLeagueId}>
+                <SelectTrigger><SelectValue placeholder="Vælg liga..." /></SelectTrigger>
+                <SelectContent>
+                  {leagueOptions.map((l: any) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.name}{l.is_offseason ? " (off-season)" : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Discord kanal-ID</Label>
+              <Input
+                value={offseasonChannelId}
+                onChange={(e) => setOffseasonChannelId(e.target.value)}
+                placeholder="fx 1515256915611881573"
+                inputMode="numeric"
+              />
+              <p className="text-xs text-muted-foreground">Højreklik på kanalen i Discord → "Kopiér kanal-ID" (kræver udvikler-tilstand).</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOffseasonOpen(false)} disabled={postingOffseason}>Annullér</Button>
+            <Button onClick={handlePostOffseason} disabled={postingOffseason}>
+              {postingOffseason ? "Sender..." : "Post kalender"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
