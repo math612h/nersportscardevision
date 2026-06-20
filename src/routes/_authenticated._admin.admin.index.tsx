@@ -99,13 +99,32 @@ function AdminHub() {
 
   const postOffseason = useServerFn(postOffseasonCalendar);
   const [postingOffseason, setPostingOffseason] = useState(false);
+  const [offseasonOpen, setOffseasonOpen] = useState(false);
+  const [offseasonLeagueId, setOffseasonLeagueId] = useState<string>("");
+  const [offseasonChannelId, setOffseasonChannelId] = useState<string>("1515256915611881573");
+
+  const { data: leagueOptions = [] } = useQuery({
+    queryKey: ["admin-leagues-for-calendar"],
+    enabled: offseasonOpen,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("id,name,is_offseason")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const handlePostOffseason = async () => {
     if (postingOffseason) return;
-    if (!confirm("Poste off-season kalenderen som baner i Discord-kanalen?")) return;
+    if (!offseasonLeagueId) return toast.error("Vælg en liga.");
+    if (!/^\d{5,25}$/.test(offseasonChannelId.trim())) return toast.error("Ugyldigt kanal-ID.");
     setPostingOffseason(true);
     try {
-      const res = await postOffseason();
+      const res = await postOffseason({ data: { leagueId: offseasonLeagueId, channelId: offseasonChannelId.trim() } });
       toast.success(`Postede ${res.posted} afdelinger fra ${res.league}.`);
+      setOffseasonOpen(false);
     } catch (e) {
       toast.error((e as Error).message || "Kunne ikke sende besked.");
     } finally {
