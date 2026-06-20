@@ -10,6 +10,7 @@ async function notifyAndDM(
   title: string,
   body: string,
   link: string,
+  discordComponents?: any[],
 ) {
   await admin.from("notifications").insert({ user_id: userId, title, body, link });
   try {
@@ -25,13 +26,18 @@ async function notifyAndDM(
   if (discordId) {
     try {
       const { sendDiscordDM } = await import("./discord.server");
-      const res = await sendDiscordDM(discordId, `**${title}**\n\n${body}\n\n${SITE}${link}`);
+      const res = await sendDiscordDM(
+        discordId,
+        `**${title}**\n\n${body}\n\n${SITE}${link}`,
+        discordComponents,
+      );
       if (!res.ok) console.error("Reserve DM failed", userId, res);
     } catch (e) {
       console.error("Reserve DM error", e);
     }
   }
 }
+
 
 /**
  * Find the next eligible waitlister and create a pending reserve offer.
@@ -139,15 +145,19 @@ async function offerNextReserveImpl(
 
   const ligaNavn = (div as any).leagues?.name ?? "ligaen";
   const afd = div.name;
+  const { reserveOfferButtonsRow } = await import("./division-reserves.server");
   await notifyAndDM(
     admin,
     nextUp.user_id,
     `Reserveplads tilbudt — ${afd}`,
     `Du er tilbudt en reserveplads til afdelingen "${afd}" i ${ligaNavn} (${carClass} \u00b7 ${driverCategory}). ` +
       `Du har ${timeLabel} til at acceptere eller afsl\u00e5 tilbuddet \u2014 ellers g\u00e5r det videre til den n\u00e6ste p\u00e5 ventelisten. ` +
-      `Bem\u00e6rk: pladsen g\u00e6lder kun denne ene afdeling. Bagefter er du tilbage p\u00e5 ventelisten med din nuv\u00e6rende plads i k\u00f8en.`,
+      `Bem\u00e6rk: pladsen g\u00e6lder kun denne ene afdeling. Bagefter er du tilbage p\u00e5 ventelisten med din nuv\u00e6rende plads i k\u00f8en.\n\n` +
+      `Du kan svare direkte her i Discord eller p\u00e5 hjemmesiden.`,
     `/ligaer/${div.league_id}/afdeling/${divisionId}`,
+    reserveOfferButtonsRow(offer.id),
   );
+
 
   return { ok: true, offerId: offer.id, offeredUserId: nextUp.user_id };
 }
@@ -250,92 +260,32 @@ export const respondReserveOffer = createServerFn({ method: "POST" })
     z.object({ offerId: z.string().uuid(), accept: z.boolean() }).parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const userId = context.userId;
-
-    const { data: offer, error: oErr } = await supabaseAdmin
-      .from("division_reserve_offers")
-      .select("*")
-      .eq("id", data.offerId)
-      .maybeSingle();
-    if (oErr || !offer) throw new Error("Tilbud findes ikke");
-    if (offer.offered_user_id !== userId) throw new Error("Ikke dit tilbud");
-    if (offer.status !== "pending") throw new Error("Tilbuddet er ikke længere aktivt");
-    if (new Date(offer.expires_at) < new Date()) {
-      await supabaseAdmin
-        .from("division_reserve_offers")
-        .update({ status: "expired", responded_at: new Date().toISOString() })
-        .eq("id", offer.id);
-      throw new Error("Tilbuddet er udløbet");
-    }
-
-    const { data: div } = await supabaseAdmin
-      .from("divisions")
-      .select("id,name,league_id,leagues(name)")
-      .eq("id", offer.division_id)
-      .maybeSingle();
-    const ligaNavn = (div as any)?.leagues?.name ?? "ligaen";
-    const afd = div?.name ?? "afdelingen";
-
-    if (data.accept) {
-      // Get reserve's league entry for driver_name + car_number
-      const { data: leagueEntry } = await supabaseAdmin
-        .from("entries")
-        .select("driver_name,car_number")
-        .eq("league_id", div!.league_id)
-        .is("division_id", null)
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (!leagueEntry) throw new Error("Du er ikke længere tilmeldt ligaen");
-
-      const { error: insErr } = await supabaseAdmin.from("entries").insert({
-        division_id: offer.division_id,
-        league_id: div!.league_id,
-        user_id: userId,
-        driver_name: leagueEntry.driver_name,
-        car_class: offer.car_class,
-        driver_category: offer.driver_category,
-        car_number: leagueEntry.car_number,
-        waitlist: false,
-      });
-      if (insErr) throw new Error(insErr.message);
-
-      await supabaseAdmin
-        .from("division_reserve_offers")
-        .update({ status: "accepted", responded_at: new Date().toISOString() })
-        .eq("id", offer.id);
-
-      await notifyAndDM(
-        supabaseAdmin,
-        userId,
-        `Reserveplads bekræftet — ${afd}`,
-        `Du er nu på griddet til "${afd}" i ${ligaNavn} (${offer.car_class} · ${offer.driver_category}). Pladsen gælder kun denne ene afdeling — bagefter er du tilbage på ventelisten med din nuværende plads i køen.`,
-        `/ligaer/${div!.league_id}/afdeling/${offer.division_id}`,
-      );
-      await notifyAndDM(
-        supabaseAdmin,
-        offer.absentee_user_id,
-        `Reserve fundet til ${afd}`,
-        `En reserve har taget din plads til "${afd}" i ${ligaNavn}.`,
-        `/ligaer/${div!.league_id}/afdeling/${offer.division_id}`,
-      );
-      return { ok: true, accepted: true };
-    } else {
-      await supabaseAdmin
-        .from("division_reserve_offers")
-        .update({ status: "declined", responded_at: new Date().toISOString() })
-        .eq("id", offer.id);
-
-      // Offer to next eligible
-      await offerNextReserveImpl(supabaseAdmin, {
-        divisionId: offer.division_id,
-        absenteeUserId: offer.absentee_user_id,
-        carClass: offer.car_class,
-        driverCategory: offer.driver_category,
-      });
-      return { ok: true, accepted: false };
+    const { respondReserveOfferCore } = await import("./division-reserves.server");
+    const res = await respondReserveOfferCore({
+      offerId: data.offerId,
+      accept: data.accept,
+      actingUserId: context.userId,
+    });
+    switch (res.status) {
+      case "not_found":
+        throw new Error("Tilbud findes ikke");
+      case "not_offered_to_you":
+        throw new Error("Ikke dit tilbud");
+      case "not_pending":
+        throw new Error("Tilbuddet er ikke længere aktivt");
+      case "expired":
+        throw new Error("Tilbuddet er udløbet");
+      case "no_league_entry":
+        throw new Error("Du er ikke længere tilmeldt ligaen");
+      case "error":
+        throw new Error(res.message);
+      case "accepted":
+        return { ok: true, accepted: true };
+      case "declined":
+        return { ok: true, accepted: false };
     }
   });
+
 
 /** Cron: mark expired offers and offer the next eligible. */
 export async function expireStaleReserveOffersImpl() {
@@ -365,3 +315,15 @@ export async function expireStaleReserveOffersImpl() {
   }
   return { expired, newOffers };
 }
+
+/** Re-offer the next eligible reserve after a decline. Server-only helper used by the Discord webhook. */
+export async function offerNextReserveAfterDecline(params: {
+  divisionId: string;
+  absenteeUserId: string;
+  carClass: string;
+  driverCategory: string;
+}) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return offerNextReserveImpl(supabaseAdmin, params);
+}
+
