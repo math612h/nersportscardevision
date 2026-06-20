@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { stripNewJoinersImpl } from "@/lib/discord-strip-unverified.functions";
 
 function authorize(request: Request): Response | null {
-  const expected = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const expected =
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY;
   if (!expected) {
     return Response.json({ error: "Server misconfigured" }, { status: 500 });
   }
