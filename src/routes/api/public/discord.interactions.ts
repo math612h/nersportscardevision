@@ -402,7 +402,11 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             });
           }
 
-          if (customId === "host_session_share_modal") {
+          if (customId.startsWith("host_session_share_modal")) {
+            const trackEncoded = customId.includes(":") ? customId.split(":").slice(1).join(":") : "";
+            let track = "";
+            try { track = decodeURIComponent(trackEncoded); } catch { track = trackEncoded; }
+
             const rows = (payload?.data?.components ?? []) as Array<{
               components: Array<{ custom_id: string; value: string }>;
             }>;
@@ -414,12 +418,14 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             }
             const { HOST_SESSION_CHANNEL_ID } = await import("@/lib/discord-host-session.functions");
             const { parseCphHHMMToUnix } = await import("@/lib/discord-time.server");
-            const startUnix = parseCphHHMMToUnix(values.start_time ?? "");
-            let endUnix = parseCphHHMMToUnix(values.end_time ?? "");
+            const tw = (values.time_window ?? "").replace(/\s+/g, "");
+            const m = tw.match(/^(\d{1,2}:\d{2})[-–—to]+(\d{1,2}:\d{2})$/i);
+            const startUnix = m ? parseCphHHMMToUnix(m[1]) : null;
+            let endUnix = m ? parseCphHHMMToUnix(m[2]) : null;
             if (!startUnix || !endUnix) {
               return Response.json({
                 type: CHANNEL_MESSAGE_WITH_SOURCE,
-                data: { flags: FLAG_EPHEMERAL, content: "Tider skal være i formatet HH:MM (fx 20:30)." },
+                data: { flags: FLAG_EPHEMERAL, content: "Tidspunkt skal være i formatet HH:MM-HH:MM (fx 20:30-22:00)." },
               });
             }
             if (endUnix <= startUnix) endUnix += 86400;
@@ -432,12 +438,14 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             const content = [
               `🎮 **Hosted session af ${hosterMention}**`,
               "",
+              track ? `🏁 Bane: **${track}**` : null,
               `🖥️ Server: **${serverName}**`,
               `🔑 Server-kode: \`${serverCode}\``,
               `🎯 Lobby-kode: \`${lobbyCode}\``,
               `🕒 Starter: <t:${startUnix}:t> (<t:${startUnix}:R>)`,
               `⏱️ Slutter: <t:${endUnix}:t> (<t:${endUnix}:R>)`,
-            ].join("\n");
+            ].filter(Boolean).join("\n");
+
 
             const { sendDiscordChannelMessage } = await import("@/lib/discord.server");
             const res = await sendDiscordChannelMessage(HOST_SESSION_CHANNEL_ID, content);
