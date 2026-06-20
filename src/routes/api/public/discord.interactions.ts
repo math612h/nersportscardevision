@@ -328,9 +328,25 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
                 data: { flags: FLAG_EPHEMERAL, content: `Kunne ikke poste session (${res.status}).` },
               });
             }
+            // Planlæg automatisk sletning 1 time efter sessionen er slut.
+            if (res.messageId) {
+              try {
+                const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+                const deleteAt = new Date((endUnix + 3600) * 1000).toISOString();
+                await (supabaseAdmin as any)
+                  .from("discord_hosted_sessions")
+                  .insert({
+                    channel_id: HOST_SESSION_CHANNEL_ID,
+                    message_id: res.messageId,
+                    delete_at: deleteAt,
+                  });
+              } catch (e) {
+                console.error("schedule host session delete failed", e);
+              }
+            }
             return Response.json({
               type: CHANNEL_MESSAGE_WITH_SOURCE,
-              data: { flags: FLAG_EPHEMERAL, content: "✅ Din session er delt i kanalen." },
+              data: { flags: FLAG_EPHEMERAL, content: "✅ Din session er delt i kanalen. Beskeden slettes automatisk 1 time efter sluttid." },
             });
           }
 
