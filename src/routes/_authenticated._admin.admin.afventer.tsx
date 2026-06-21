@@ -275,6 +275,14 @@ function PendingApprovalsPage() {
                         <MessageSquareWarning className="mr-2 h-4 w-4" />
                         {wrongNameStatus?.[p.id] ? "Send navne-besked igen" : "Fejl navn — bed om for- og efternavn"}
                       </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          messageMut.mutate({ userId: p.id, template: "missing_lmu_name" })
+                        }
+                      >
+                        <IdCard className="mr-2 h-4 w-4" />
+                        {lmuNameStatus?.[p.id] ? "Send LMU-navn-besked igen" : "Mangler LMU-navn — bed om det"}
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
