@@ -796,6 +796,108 @@ export type Database = {
           },
         ]
       }
+      league_team_entries: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          locked_at: string | null
+          status: Database["public"]["Enums"]["league_team_entry_status"]
+          submitted_by: string
+          team_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          locked_at?: string | null
+          status?: Database["public"]["Enums"]["league_team_entry_status"]
+          submitted_by: string
+          team_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          locked_at?: string | null
+          status?: Database["public"]["Enums"]["league_team_entry_status"]
+          submitted_by?: string
+          team_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_team_entries_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "league_team_entries_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      league_team_lineup: {
+        Row: {
+          created_at: string
+          discord_channel_id: string | null
+          discord_message_id: string | null
+          id: string
+          league_id: string
+          league_team_entry_id: string
+          responded_at: string | null
+          status: Database["public"]["Enums"]["league_team_lineup_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          discord_channel_id?: string | null
+          discord_message_id?: string | null
+          id?: string
+          league_id: string
+          league_team_entry_id: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["league_team_lineup_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          discord_channel_id?: string | null
+          discord_message_id?: string | null
+          id?: string
+          league_id?: string
+          league_team_entry_id?: string
+          responded_at?: string | null
+          status?: Database["public"]["Enums"]["league_team_lineup_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "league_team_lineup_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "league_team_lineup_league_team_entry_id_fkey"
+            columns: ["league_team_entry_id"]
+            isOneToOne: false
+            referencedRelation: "league_team_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leagues: {
         Row: {
           approved_only: boolean
@@ -1814,6 +1916,7 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      league_is_active: { Args: { _league_id: string }; Returns: boolean }
       log_audit: {
         Args: {
           _action: string
@@ -1879,9 +1982,12 @@ export type Database = {
         }
         Returns: Json
       }
+      user_locked_team: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
       app_role: "admin" | "racer"
+      league_team_entry_status: "pending" | "confirmed" | "withdrawn"
+      league_team_lineup_status: "invited" | "accepted" | "declined"
       protest_status: "open" | "ruled"
       reserve_offer_status:
         | "pending"
@@ -2026,6 +2132,8 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "racer"],
+      league_team_entry_status: ["pending", "confirmed", "withdrawn"],
+      league_team_lineup_status: ["invited", "accepted", "declined"],
       protest_status: ["open", "ruled"],
       reserve_offer_status: [
         "pending",
