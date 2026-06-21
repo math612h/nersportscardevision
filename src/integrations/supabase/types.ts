@@ -798,6 +798,7 @@ export type Database = {
       }
       league_team_entries: {
         Row: {
+          car_class: string
           created_at: string
           id: string
           league_id: string
@@ -808,6 +809,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          car_class: string
           created_at?: string
           id?: string
           league_id: string
@@ -818,6 +820,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          car_class?: string
           created_at?: string
           id?: string
           league_id?: string
