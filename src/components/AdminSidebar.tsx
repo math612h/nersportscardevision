@@ -35,9 +35,11 @@ type Item = {
 type Section = { label: string; items: Item[] };
 
 export function AdminSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpen } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
+
+  const handleItemClick = () => setOpen(false);
 
   const { data: pendingCount } = useQuery({
     queryKey: ["admin-pending-count"],
@@ -108,7 +110,7 @@ export function AdminSidebar() {
                   return (
                     <SidebarMenuItem key={item.url}>
                       <SidebarMenuButton asChild isActive={active} tooltip={item.title}>
-                        <Link to={item.url} className="flex items-center gap-2">
+                        <Link to={item.url} className="flex items-center gap-2" onClick={handleItemClick}>
                           <item.icon className="h-4 w-4 shrink-0" />
                           {!collapsed && (
                             <>
