@@ -1,0 +1,8 @@
+ALTER TABLE public.profiles_private
+  ADD COLUMN IF NOT EXISTS address TEXT,
+  ADD COLUMN IF NOT EXISTS postal_code TEXT,
+  ADD COLUMN IF NOT EXISTS city TEXT,
+  ADD COLUMN IF NOT EXISTS country TEXT;
+
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS media_consent BOOLEAN NOT NULL DEFAULT false;

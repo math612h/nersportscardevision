@@ -29,17 +29,22 @@ function OnboardingPage() {
     enabled: !!user,
     queryFn: async () => {
       const [{ data: profile }, { data: priv }] = await Promise.all([
-        supabase.from("profiles").select("display_name, lmu_name, accepts_danish").eq("id", user!.id).maybeSingle(),
+        supabase.from("profiles").select("display_name, lmu_name, accepts_danish, media_consent").eq("id", user!.id).maybeSingle(),
         (supabase as unknown as { from: (t: string) => any }).from("profiles_private")
-          .select("discord_user_id, discord_username, discord_server_nickname").eq("user_id", user!.id).maybeSingle(),
+          .select("discord_user_id, discord_username, discord_server_nickname, address, postal_code, city, country").eq("user_id", user!.id).maybeSingle(),
       ]);
       return {
         display_name: (profile as any)?.display_name ?? "",
         lmu_name: (profile as any)?.lmu_name ?? "",
         accepts_danish: (profile as any)?.accepts_danish === true,
+        media_consent: (profile as any)?.media_consent === true,
         discord_user_id: (priv as any)?.discord_user_id ?? null,
         discord_username: (priv as any)?.discord_username ?? null,
         discord_server_nickname: (priv as any)?.discord_server_nickname ?? null,
+        address: (priv as any)?.address ?? "",
+        postal_code: (priv as any)?.postal_code ?? "",
+        city: (priv as any)?.city ?? "",
+        country: (priv as any)?.country ?? "Danmark",
       };
     },
   });
@@ -48,6 +53,11 @@ function OnboardingPage() {
   const [lmuName, setLmuName] = useState("");
   const [email, setEmail] = useState("");
   const [acceptsDanish, setAcceptsDanish] = useState(false);
+  const [mediaConsent, setMediaConsent] = useState(false);
+  const [address, setAddress] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("Danmark");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -56,7 +66,13 @@ function OnboardingPage() {
     setLmuName(state.lmu_name || "");
     setEmail((user?.email && !user.email.endsWith("@no-email.lmudanmark.dk")) ? user.email : "");
     setAcceptsDanish(!!state.accepts_danish);
+    setMediaConsent(!!state.media_consent);
+    setAddress(state.address || "");
+    setPostalCode(state.postal_code || "");
+    setCity(state.city || "");
+    setCountry(state.country || "Danmark");
   }, [state, user]);
+
 
   const hasServerNickname = !!state?.discord_server_nickname;
 
@@ -74,10 +90,22 @@ function OnboardingPage() {
     }
     if (!lmuName.trim()) return toast.error("Indtast dit LMU-navn.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return toast.error("Indtast en gyldig email.");
+    if (!address.trim() || !postalCode.trim() || !city.trim()) return toast.error("Udfyld din adresse, postnummer og by.");
     if (!acceptsDanish) return toast.error("Bekræft venligst at du kan læse og skrive dansk.");
+    if (!mediaConsent) return toast.error("Du skal acceptere brug af navn/billeder på stream og SoMe.");
     setSaving(true);
     try {
-      await finish({ data: { display_name: displayName.trim(), lmu_name: lmuName.trim(), email: email.trim(), accepts_danish: acceptsDanish } });
+      await finish({ data: {
+        display_name: displayName.trim(),
+        lmu_name: lmuName.trim(),
+        email: email.trim(),
+        accepts_danish: acceptsDanish,
+        media_consent: mediaConsent,
+        address: address.trim(),
+        postal_code: postalCode.trim(),
+        city: city.trim(),
+        country: country.trim() || "Danmark",
+      } });
       toast.success("Profil gemt.");
       await qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] });
       navigate({ to: "/" });
@@ -87,6 +115,7 @@ function OnboardingPage() {
       setSaving(false);
     }
   };
+
 
   if (isLoading) {
     return <div className="mx-auto max-w-xl px-4 py-10 text-muted-foreground">Indlæser…</div>;
@@ -166,6 +195,49 @@ function OnboardingPage() {
                 Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen — inkl. drivers briefings, regler og protester — foregår på dansk.
               </span>
             </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="sm:col-span-2">
+                <Label>Adresse</Label>
+                <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} required disabled={!discordLinked} placeholder="Vej og husnummer" />
+              </div>
+              <div>
+                <Label>Postnummer</Label>
+                <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} required disabled={!discordLinked} />
+              </div>
+              <div>
+                <Label>By</Label>
+                <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} required disabled={!discordLinked} />
+              </div>
+              <div className="sm:col-span-2">
+                <Label>Land</Label>
+                <Input value={country} onChange={(e) => setCountry(e.target.value)} maxLength={100} disabled={!discordLinked} />
+              </div>
+              <p className="sm:col-span-2 mt-1 text-xs text-muted-foreground">
+                Din adresse bruges <span className="font-medium text-foreground">kun</span> i tilfælde af, at du vinder en præmie og vi skal sende den til dig. Den er <span className="font-medium text-foreground">skjult for andre brugere</span>.
+              </p>
+            </div>
+            <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
+              <Checkbox
+                checked={acceptsDanish}
+                onCheckedChange={(v) => setAcceptsDanish(v === true)}
+                disabled={!discordLinked}
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen — inkl. drivers briefings, regler og protester — foregår på dansk.
+              </span>
+            </label>
+            <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
+              <Checkbox
+                checked={mediaConsent}
+                onCheckedChange={(v) => setMediaConsent(v === true)}
+                disabled={!discordLinked}
+                className="mt-0.5"
+              />
+              <span className="text-sm">
+                Jeg giver tilladelse til, at LMU Danmark må <span className="font-medium">anvende mit navn og eventuelle billeder/klip af mig på stream og sociale medier</span> i forbindelse med ligaens aktiviteter.
+              </span>
+            </label>
             <div className="flex items-center justify-between gap-2 pt-2">
               <Button type="button" variant="ghost" size="sm" onClick={() => { void signOut(); navigate({ to: "/login" }); }}>
                 Log ud
@@ -175,6 +247,7 @@ function OnboardingPage() {
                 Gem og fortsæt
               </Button>
             </div>
+
           </form>
         </CardContent>
       </Card>

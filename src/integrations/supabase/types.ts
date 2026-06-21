@@ -990,6 +990,7 @@ export type Database = {
           display_name: string | null
           id: string
           lmu_name: string | null
+          media_consent: boolean
           updated_at: string
         }
         Insert: {
@@ -1003,6 +1004,7 @@ export type Database = {
           display_name?: string | null
           id: string
           lmu_name?: string | null
+          media_consent?: boolean
           updated_at?: string
         }
         Update: {
@@ -1016,41 +1018,54 @@ export type Database = {
           display_name?: string | null
           id?: string
           lmu_name?: string | null
+          media_consent?: boolean
           updated_at?: string
         }
         Relationships: []
       }
       profiles_private: {
         Row: {
+          address: string | null
           age: number | null
+          city: string | null
+          country: string | null
           created_at: string
           discord_linked_at: string | null
           discord_server_nickname: string | null
           discord_user_id: string | null
           discord_username: string | null
           pending_discord_message_id: string | null
+          postal_code: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address?: string | null
           age?: number | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           discord_linked_at?: string | null
           discord_server_nickname?: string | null
           discord_user_id?: string | null
           discord_username?: string | null
           pending_discord_message_id?: string | null
+          postal_code?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address?: string | null
           age?: number | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           discord_linked_at?: string | null
           discord_server_nickname?: string | null
           discord_user_id?: string | null
           discord_username?: string | null
           pending_discord_message_id?: string | null
+          postal_code?: string | null
           updated_at?: string
           user_id?: string
         }
