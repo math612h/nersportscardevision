@@ -273,54 +273,92 @@ function LeagueDetail() {
       .sort((a: any, b: any) => new Date(a.race_date).getTime() - new Date(b.race_date).getTime())[0] as any | undefined;
   }, [divisions]);
 
+  const isOff = !!(league as any)?.is_offseason;
+
+  return (
     <div className="space-y-8">
-      <Link to="/lmu/liga" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
+      <Link
+        to="/lmu/liga"
+        className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground"
+      >
         <ArrowLeft className="h-3 w-3" /> Alle ligaer
       </Link>
 
-      <header className="space-y-3">
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-            {(league as any)?.is_offseason ? "Off-Season event" : "Liga"}
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight">{league?.name}</h1>
-          {league?.description && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{league.description}</p>}
-        </div>
-
-        <div className="flex flex-col items-start gap-2">
-          {configs.length > 0
-            ? configs.map((c, i) => {
-                const col = classColor(c.car_class);
-                return (
-                  <Badge key={i} variant="outline" className={`gap-1.5 ${col.badge}`}>
-                    <span className={`h-2 w-2 rounded-full ${col.dot}`} />
-                    {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
-                  </Badge>
-                );
-              })
-            : (<>
-                {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
-                {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
-              </>)}
-        </div>
-
-        <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
-
-        <GuestBlur active={isGuest} label="Log ind for at tilmelde">
-          <div className="space-y-2 pt-1">
-            {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} approvedOnly={!!(league as any)?.approved_only} />}
-            <div className="flex flex-wrap gap-2">
-              <RulesButton leagueId={leagueId} />
-              {league && <EditEntryDialog leagueId={leagueId} />}
-              {league && <LeaveLeagueButton leagueId={leagueId} />}
+      <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="relative aspect-[21/9] w-full overflow-hidden bg-muted sm:aspect-[24/7]">
+          {bannerUrl ? (
+            <img src={bannerUrl} alt={league?.name ?? ""} className="h-full w-full object-cover" loading="eager" />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 space-y-2 p-4 sm:p-6">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+              {isOff ? "Off-Season event" : "Liga"}
+            </p>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">{league?.name}</h1>
+            <div className="flex flex-wrap gap-1.5">
+              {configs.length > 0
+                ? configs.map((c, i) => {
+                    const col = classColor(c.car_class);
+                    return (
+                      <Badge key={i} variant="outline" className={`gap-1.5 bg-background/80 backdrop-blur ${col.badge}`}>
+                        <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+                        {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
+                      </Badge>
+                    );
+                  })
+                : (
+                  <>
+                    {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
+                    {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
+                  </>
+                )}
+              {nextDivision?.race_date && (
+                <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
+                  <Calendar className="h-3 w-3" /> Næste: {format(new Date(nextDivision.race_date), "dd MMM HH:mm")}
+                </Badge>
+              )}
+              {typeof leagueSignupCount === "number" && (
+                <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
+                  <Users className="h-3 w-3" /> {leagueSignupCount} tilmeldte
+                </Badge>
+              )}
             </div>
           </div>
-        </GuestBlur>
+        </div>
 
+        <div className="space-y-3 p-4 sm:p-6">
+          {league?.description && (
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">{league.description}</p>
+          )}
 
+          <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
+
+          <GuestBlur active={isGuest} label="Log ind for at tilmelde">
+            <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                {league && (
+                  <SignupDialog
+                    leagueId={leagueId}
+                    configs={configs}
+                    signupOpensAt={(league as any)?.signup_opens_at ?? null}
+                    approvedOnly={!!(league as any)?.approved_only}
+                  />
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <RulesButton leagueId={leagueId} />
+                {league && <EditEntryDialog leagueId={leagueId} />}
+                {league && <LeaveLeagueButton leagueId={leagueId} />}
+              </div>
+            </div>
+          </GuestBlur>
+        </div>
       </header>
 
       <QuickNav />
+
 
       <GuestBlur active={isGuest} label="Log ind for at se entrylisten">
         {league && <SignupsList leagueId={leagueId} configs={configs} />}
