@@ -1570,35 +1570,43 @@ function DriverAidsView({ settings }: { settings: EventSettings }) {
     .filter(Boolean) as { label: string; value: string }[];
 
   return (
-    <section id="driveraids" className="space-y-4">
-      <div className="flex items-center gap-2 text-primary">
-        <SettingsIcon className="h-4 w-4" />
-        <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Driver Aids</h2>
-      </div>
-      {aidRows.length === 0 ? (
+    <section id="driveraids">
+      <Collapsible defaultOpen={false}>
         <Card>
-          <CardContent className="py-6 text-center text-sm text-muted-foreground">
-            Ingen driver aids angivet endnu.
-          </CardContent>
+          <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 p-4 text-left hover:bg-muted/30">
+            <div className="flex items-center gap-2 text-primary">
+              <SettingsIcon className="h-4 w-4" />
+              <span className="text-xs font-semibold uppercase tracking-[0.18em]">Driver Aids</span>
+              {aidRows.length > 0 && (
+                <Badge variant="outline" className="ml-1 text-[10px]">{aidRows.length} regler</Badge>
+              )}
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition group-data-[state=open]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            {aidRows.length === 0 ? (
+              <CardContent className="border-t border-border py-6 text-center text-sm text-muted-foreground">
+                Ingen driver aids angivet endnu.
+              </CardContent>
+            ) : (
+              <CardContent className="border-t border-border py-4">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {aidRows.map((r) => (
+                      <tr key={r.label} className="border-t border-border first:border-t-0">
+                        <td className="py-1.5 pr-2 text-muted-foreground">{r.label}</td>
+                        <td className="py-1.5 text-right">
+                          <Badge variant={r.value === "On" ? "default" : "secondary"} className="text-[10px]">{r.value}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </CardContent>
+            )}
+          </CollapsibleContent>
         </Card>
-      ) : (
-        <Card>
-          <CardContent className="py-4">
-            <table className="w-full text-sm">
-              <tbody>
-                {aidRows.map((r) => (
-                  <tr key={r.label} className="border-t border-border first:border-t-0">
-                    <td className="py-1.5 pr-2 text-muted-foreground">{r.label}</td>
-                    <td className="py-1.5 text-right">
-                      <Badge variant={r.value === "On" ? "default" : "secondary"} className="text-[10px]">{r.value}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      )}
+      </Collapsible>
     </section>
   );
 }
