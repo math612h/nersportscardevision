@@ -169,7 +169,7 @@ function ArchivePage() {
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
                       <Tooltip formatter={(v: number) => `${v.toFixed(2)}`} />
-                      <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 2 }} name="ELO rating" />
+                      <Line type="linear" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 3, fill: "hsl(var(--primary))" }} activeDot={{ r: 5 }} connectNulls isAnimationActive={false} name="ELO rating" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
@@ -212,8 +212,8 @@ function ArchivePage() {
                       <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} reversed />
                       <Tooltip formatter={(v: number) => `${v.toFixed(3)} s`} />
-                      <Line type="monotone" dataKey="lap" stroke="hsl(var(--muted-foreground))" dot={false} name="Bedste runde i løb (s)" />
-                      <Line type="monotone" dataKey="best" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="Personlig bedste" />
+                      <Line type="linear" dataKey="lap" stroke="hsl(var(--muted-foreground))" strokeWidth={2} dot={{ r: 3, fill: "hsl(var(--muted-foreground))" }} activeDot={{ r: 5 }} connectNulls isAnimationActive={false} name="Bedste runde i løb (s)" />
+                      <Line type="linear" dataKey="best" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 3, fill: "hsl(var(--primary))" }} activeDot={{ r: 5 }} connectNulls isAnimationActive={false} name="Personlig bedste" />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
