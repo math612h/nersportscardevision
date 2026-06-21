@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Check, Loader2, Trophy, X } from "lucide-react";
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 
 
-type League = { id: string; name: string };
+type League = { id: string; name: string; class_configs: any };
 type Member = { user_id: string; display_name: string | null };
 
 export function LeagueTeamSignupCard({
@@ -43,7 +43,7 @@ export function LeagueTeamSignupCard({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("id, name, published, is_offseason, teams_allowed")
+        .select("id, name, published, is_offseason, teams_allowed, class_configs")
         .eq("published", true)
         .eq("teams_allowed", true)
         .order("name");
@@ -58,7 +58,7 @@ export function LeagueTeamSignupCard({
       const { data, error } = await (supabase as any)
         .from("league_team_entries")
         .select(
-          "id, league_id, status, leagues:league_id(name), league_team_lineup(id, user_id, status)",
+          "id, league_id, car_class, status, leagues:league_id(name), league_team_lineup(id, user_id, status)",
         )
         .eq("team_id", teamId)
         .neq("status", "withdrawn");
@@ -66,6 +66,7 @@ export function LeagueTeamSignupCard({
       return (data ?? []) as Array<{
         id: string;
         league_id: string;
+        car_class: string;
         status: string;
         leagues: { name: string } | null;
         league_team_lineup: Array<{ id: string; user_id: string; status: string }>;
@@ -73,27 +74,87 @@ export function LeagueTeamSignupCard({
     },
   });
 
-  const enrolledLeagueIds = useMemo(
-    () => new Set((entries ?? []).map((e) => e.league_id)),
-    [entries],
-  );
-
   const [open, setOpen] = useState(false);
   const [leagueId, setLeagueId] = useState<string>("");
+  const [carClass, setCarClass] = useState<string>("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const memberIds = useMemo(() => members.map((m) => m.user_id), [members]);
+
+  // Load all entries for picked league across team members
+  const { data: memberEntries } = useQuery({
+    queryKey: ["team-member-entries", leagueId, memberIds],
+    enabled: !!leagueId && memberIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("entries")
+        .select("user_id, car_class")
+        .eq("league_id", leagueId)
+        .in("user_id", memberIds);
+      if (error) throw error;
+      return (data ?? []) as Array<{ user_id: string; car_class: string }>;
+    },
+  });
+
+  const selectedLeague = (leagues ?? []).find((l) => l.id === leagueId);
+  const leagueClasses = useMemo(() => {
+    const cfgs = Array.isArray(selectedLeague?.class_configs)
+      ? (selectedLeague!.class_configs as any[])
+      : [];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const c of cfgs) {
+      const cc = c?.car_class as string | undefined;
+      if (cc && !seen.has(cc)) {
+        seen.add(cc);
+        out.push(cc);
+      }
+    }
+    return out;
+  }, [selectedLeague]);
+
+  // Reset class + selection when league changes
+  useEffect(() => {
+    setCarClass("");
+    setSelected(new Set());
+  }, [leagueId]);
+
+  // Eligible members for the picked (league, class)
+  const eligibleByMember = useMemo(() => {
+    const m = new Map<string, boolean>();
+    if (!carClass) return m;
+    const enrolled = new Set(
+      (memberEntries ?? []).filter((e) => e.car_class === carClass).map((e) => e.user_id),
+    );
+    for (const id of memberIds) m.set(id, enrolled.has(id));
+    return m;
+  }, [memberEntries, carClass, memberIds]);
+
+  // Drop ineligible from selection on class change
+  useEffect(() => {
+    setSelected((prev) => {
+      const next = new Set<string>();
+      prev.forEach((id) => {
+        if (eligibleByMember.get(id)) next.add(id);
+      });
+      return next;
+    });
+  }, [eligibleByMember]);
 
   const submit = useMutation({
     mutationFn: async () => {
       if (!leagueId) throw new Error("Vælg en liga");
+      if (!carClass) throw new Error("Vælg en bilklasse");
       const userIds = Array.from(selected);
       return await submitFn({
-        data: { leagueId, teamId, userIds },
+        data: { leagueId, teamId, carClass, userIds },
       });
     },
     onSuccess: () => {
       toast.success("Lineup sendt — kørerne får en Discord-besked");
       setOpen(false);
       setLeagueId("");
+      setCarClass("");
       setSelected(new Set());
       qc.invalidateQueries({ queryKey: ["team-league-entries", teamId] });
       refetch();
@@ -107,7 +168,27 @@ export function LeagueTeamSignupCard({
     return m;
   }, [members]);
 
-  const availableLeagues = (leagues ?? []).filter((l) => !enrolledLeagueIds.has(l.id));
+  // A (league, class) combo is "taken" when an active (non-withdrawn) entry exists
+  const takenCombos = useMemo(() => {
+    const s = new Set<string>();
+    for (const e of entries ?? []) s.add(`${e.league_id}:${e.car_class}`);
+    return s;
+  }, [entries]);
+
+  const availableLeagues = (leagues ?? []).filter((l) => {
+    const cfgs = Array.isArray(l.class_configs) ? (l.class_configs as any[]) : [];
+    const classes = new Set(cfgs.map((c) => c?.car_class).filter(Boolean));
+    if (classes.size === 0) return false;
+    // at least one class not yet taken for this team
+    for (const cc of classes) {
+      if (!takenCombos.has(`${l.id}:${cc}`)) return true;
+    }
+    return false;
+  });
+
+  const availableClasses = leagueClasses.filter(
+    (cc) => !takenCombos.has(`${leagueId}:${cc}`),
+  );
 
   return (
     <Card>
@@ -139,31 +220,61 @@ export function LeagueTeamSignupCard({
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-1.5">
+                <Label>Bilklasse</Label>
+                <Select value={carClass} onValueChange={setCarClass} disabled={!leagueId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={leagueId ? "Vælg bilklasse…" : "Vælg liga først"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableClasses.map((cc) => (
+                      <SelectItem key={cc} value={cc}>{cc}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Begge kørere skal selv være tilmeldt denne klasse i ligaen.
+                </p>
+              </div>
               <div className="space-y-2">
                 <Label>Lineup (mindst 2 kørere)</Label>
                 <ul className="divide-y divide-border rounded-md border border-border">
                   {members.map((m) => {
+                    const eligible = eligibleByMember.get(m.user_id) ?? false;
                     const checked = selected.has(m.user_id);
+                    const disabled = !carClass || !eligible;
                     return (
-                      <li key={m.user_id} className="flex items-center gap-2 px-3 py-2">
+                      <li
+                        key={m.user_id}
+                        className={`flex items-center gap-2 px-3 py-2 ${disabled ? "opacity-60" : ""}`}
+                      >
                         <Checkbox
                           id={`pick-${m.user_id}`}
                           checked={checked}
+                          disabled={disabled}
                           onCheckedChange={(v) => {
                             const next = new Set(selected);
                             if (v) next.add(m.user_id); else next.delete(m.user_id);
                             setSelected(next);
                           }}
                         />
-                        <Label htmlFor={`pick-${m.user_id}`} className="flex-1 cursor-pointer text-sm font-normal">
+                        <Label
+                          htmlFor={`pick-${m.user_id}`}
+                          className={`flex-1 text-sm font-normal ${disabled ? "" : "cursor-pointer"}`}
+                        >
                           {m.display_name ?? "Uden navn"}
                         </Label>
+                        {carClass && !eligible && (
+                          <span className="text-[10px] text-muted-foreground">
+                            ikke tilmeldt {carClass}
+                          </span>
+                        )}
                       </li>
                     );
                   })}
                 </ul>
                 <p className="text-xs text-muted-foreground">
-                  De valgte kørere får en Discord-DM og kan acceptere/afvise. Når alle har accepteret bliver tilmeldingen bekræftet.
+                  De valgte kørere får en Discord-DM og kan acceptere/afvise. Når mindst 2 har accepteret bliver tilmeldingen bekræftet.
                 </p>
               </div>
             </div>
@@ -171,7 +282,7 @@ export function LeagueTeamSignupCard({
               <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
               <Button
                 onClick={() => submit.mutate()}
-                disabled={submit.isPending || !leagueId || selected.size < 2}
+                disabled={submit.isPending || !leagueId || !carClass || selected.size < 2}
               >
                 {submit.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                 Send invitationer
@@ -195,7 +306,9 @@ export function LeagueTeamSignupCard({
                   className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{e.leagues?.name ?? "Ukendt liga"}</p>
+                    <p className="truncate text-sm font-medium">
+                      {e.leagues?.name ?? "Ukendt liga"} · {e.car_class}
+                    </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                       {accepted} accepteret · {invited} afventer · {declined} afvist
                     </p>
@@ -255,7 +368,7 @@ export function MyLineupInvitations({ teamId }: { teamId: string }) {
       const { data, error } = await (supabase as any)
         .from("league_team_lineup")
         .select(
-          "id, status, league_team_entries:league_team_entry_id(id, team_id, leagues:league_id(name))",
+          "id, status, league_team_entries:league_team_entry_id(id, team_id, car_class, leagues:league_id(name))",
         )
         .eq("user_id", user!.id)
         .eq("status", "invited");
@@ -292,7 +405,13 @@ export function MyLineupInvitations({ teamId }: { teamId: string }) {
               className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3"
             >
               <p className="text-sm">
-                Du er valgt til <strong>{inv.league_team_entries?.leagues?.name ?? "ligaen"}</strong>
+                Du er valgt til{" "}
+                <strong>
+                  {inv.league_team_entries?.leagues?.name ?? "ligaen"}
+                  {inv.league_team_entries?.car_class
+                    ? ` · ${inv.league_team_entries.car_class}`
+                    : ""}
+                </strong>
               </p>
               <div className="flex gap-2">
                 <Button
