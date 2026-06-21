@@ -20,7 +20,7 @@ import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
 import { getLeaderboardRows } from "@/lib/leaderboard.functions";
 import { classColor } from "@/lib/lmu-cars";
-import { normalizeTrackName } from "@/lib/tracks";
+import { normalizeTrackName, LMU_TRACKS } from "@/lib/tracks";
 import { GuestLock } from "@/components/GuestGate";
 
 const COMPANION_DOWNLOAD_URL =
