@@ -125,7 +125,7 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
 
 const statusSchema = z.object({
   userIds: z.array(z.string().uuid()).max(500),
-  template: z.enum(["wrong_name", "profile_approved"]),
+  template: z.enum(["wrong_name", "missing_lmu_name", "profile_approved"]),
 });
 
 export type AdminMessageStatus = {
