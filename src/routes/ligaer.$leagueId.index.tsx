@@ -1541,21 +1541,23 @@ function QuickNav() {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => scrollTo(item.id)}
-          className="group flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-left transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
-        >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-            <item.icon className="h-4 w-4" />
-          </span>
-          <span className="truncate text-xs font-medium">{item.label}</span>
-        </button>
-      ))}
-    </div>
-
+    <nav
+      aria-label="Spring til sektion"
+      className="sticky top-14 z-20 -mx-4 border-y border-border bg-background/85 px-4 py-2 backdrop-blur"
+    >
+      <div className="flex gap-1.5 overflow-x-auto">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => scrollTo(item.id)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-primary hover:bg-primary/10 hover:text-primary"
+          >
+            <item.icon className="h-3.5 w-3.5" />
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </nav>
   );
 }
 
