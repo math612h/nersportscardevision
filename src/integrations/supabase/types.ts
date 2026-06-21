@@ -1761,6 +1761,27 @@ export type Database = {
     }
     Functions: {
       admin_find_user_id_by_email: { Args: { _email: string }; Returns: string }
+      admin_list_cron_jobs: {
+        Args: never
+        Returns: {
+          active: boolean
+          command: string
+          jobid: number
+          jobname: string
+          schedule: string
+        }[]
+      }
+      admin_list_cron_runs: {
+        Args: { _limit?: number }
+        Returns: {
+          end_time: string
+          jobid: number
+          jobname: string
+          return_message: string
+          start_time: string
+          status: string
+        }[]
+      }
       allowed_categories_for_signup: {
         Args: { _car_class: string; _league_id: string; _user_id: string }
         Returns: Json
