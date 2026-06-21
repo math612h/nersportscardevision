@@ -309,6 +309,14 @@ function PendingApprovalsPage() {
                         <IdCard className="mr-2 h-4 w-4" />
                         {lmuNameStatus?.[p.id] ? "Send LMU-navn-besked igen" : "Mangler LMU-navn — bed om det"}
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeleteTarget({ id: p.id, name: p.display_name || "(uden navn)" })}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Slet bruger
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -317,6 +325,30 @@ function PendingApprovalsPage() {
           ))}
         </div>
       )}
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Slet bruger?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du er ved at slette <strong>{deleteTarget?.name}</strong> permanent. Brugerens konto, profil og tilmeldinger fjernes. Dette kan ikke fortrydes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>Annullér</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMut.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteTarget) deleteMut.mutate(deleteTarget.id);
+              }}
+            >
+              {deleteMut.isPending ? "Sletter…" : "Slet bruger"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
