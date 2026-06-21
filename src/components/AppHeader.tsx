@@ -90,11 +90,13 @@ export function AppHeader() {
         <div className="flex shrink-0 items-center gap-1">
           {user ? (
             <>
-              <NotificationsBell />
-              <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil" aria-label="Min profil">
-                <UserCircle2 className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Profil</span>
-              </Link>
+              {!gated && <NotificationsBell />}
+              {!gated && (
+                <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil" aria-label="Min profil">
+                  <UserCircle2 className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Profil</span>
+                </Link>
+              )}
               <div className="ml-1 hidden items-center gap-1 px-2 text-xs text-muted-foreground lg:flex">
                 <UserIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 <span className="max-w-[140px] truncate">{user.email}</span>
