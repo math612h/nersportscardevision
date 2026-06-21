@@ -52,11 +52,15 @@ import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/a
 import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './routes/api/public/cron/delete-expired-host-sessions'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
+import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
+import { Route as AuthenticatedAdminAdminCronRouteImport } from './routes/_authenticated._admin.admin.cron'
 import { Route as AuthenticatedAdminAdminBrugereRouteImport } from './routes/_authenticated._admin.admin.brugere'
+import { Route as AuthenticatedAdminAdminBriefingRouteImport } from './routes/_authenticated._admin.admin.briefing'
 import { Route as AuthenticatedAdminAdminBeskederRouteImport } from './routes/_authenticated._admin.admin.beskeder'
+import { Route as AuthenticatedAdminAdminAuditRouteImport } from './routes/_authenticated._admin.admin.audit'
 import { Route as AuthenticatedAdminAdminAfventerRouteImport } from './routes/_authenticated._admin.admin.afventer'
 import { Route as AuthenticatedAdminAdminProtestsIndexRouteImport } from './routes/_authenticated._admin.admin.protests.index'
 import { Route as AuthenticatedAdminAdminProtestsProtestIdRouteImport } from './routes/_authenticated._admin.admin.protests.$protestId'
@@ -297,6 +301,12 @@ const AuthenticatedBeskederGruppeGroupIdRoute =
     path: '/gruppe/$groupId',
     getParentRoute: () => AuthenticatedBeskederRoute,
   } as any)
+const AuthenticatedAdminAdminStorageRoute =
+  AuthenticatedAdminAdminStorageRouteImport.update({
+    id: '/admin/storage',
+    path: '/admin/storage',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminProtestsRoute =
   AuthenticatedAdminAdminProtestsRouteImport.update({
     id: '/admin/protests',
@@ -315,16 +325,34 @@ const AuthenticatedAdminAdminLigaerRoute =
     path: '/admin/ligaer',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminCronRoute =
+  AuthenticatedAdminAdminCronRouteImport.update({
+    id: '/admin/cron',
+    path: '/admin/cron',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminBrugereRoute =
   AuthenticatedAdminAdminBrugereRouteImport.update({
     id: '/admin/brugere',
     path: '/admin/brugere',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminBriefingRoute =
+  AuthenticatedAdminAdminBriefingRouteImport.update({
+    id: '/admin/briefing',
+    path: '/admin/briefing',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminBeskederRoute =
   AuthenticatedAdminAdminBeskederRouteImport.update({
     id: '/admin/beskeder',
     path: '/admin/beskeder',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminAuditRoute =
+  AuthenticatedAdminAdminAuditRouteImport.update({
+    id: '/admin/audit',
+    path: '/admin/audit',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAdminAfventerRoute =
@@ -396,11 +424,15 @@ export interface FileRoutesByFullPath {
   '/profil/': typeof AuthenticatedProfilIndexRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
+  '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/admin/beskeder': typeof AuthenticatedAdminAdminBeskederRoute
+  '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
+  '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
@@ -450,10 +482,14 @@ export interface FileRoutesByTo {
   '/profil': typeof AuthenticatedProfilIndexRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdIndexRoute
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
+  '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/admin/beskeder': typeof AuthenticatedAdminAdminBeskederRoute
+  '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
+  '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
@@ -507,11 +543,15 @@ export interface FileRoutesById {
   '/_authenticated/profil/': typeof AuthenticatedProfilIndexRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
   '/_authenticated/_admin/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
+  '/_authenticated/_admin/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/_authenticated/_admin/admin/beskeder': typeof AuthenticatedAdminAdminBeskederRoute
+  '/_authenticated/_admin/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/_authenticated/_admin/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
+  '/_authenticated/_admin/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
@@ -564,11 +604,15 @@ export interface FileRouteTypes {
     | '/profil/'
     | '/ligaer/$leagueId/'
     | '/admin/afventer'
+    | '/admin/audit'
     | '/admin/beskeder'
+    | '/admin/briefing'
     | '/admin/brugere'
+    | '/admin/cron'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
     | '/admin/protests'
+    | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/delete-expired-host-sessions'
@@ -618,10 +662,14 @@ export interface FileRouteTypes {
     | '/profil'
     | '/ligaer/$leagueId'
     | '/admin/afventer'
+    | '/admin/audit'
     | '/admin/beskeder'
+    | '/admin/briefing'
     | '/admin/brugere'
+    | '/admin/cron'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
+    | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/delete-expired-host-sessions'
@@ -674,11 +722,15 @@ export interface FileRouteTypes {
     | '/_authenticated/profil/'
     | '/ligaer/$leagueId/'
     | '/_authenticated/_admin/admin/afventer'
+    | '/_authenticated/_admin/admin/audit'
     | '/_authenticated/_admin/admin/beskeder'
+    | '/_authenticated/_admin/admin/briefing'
     | '/_authenticated/_admin/admin/brugere'
+    | '/_authenticated/_admin/admin/cron'
     | '/_authenticated/_admin/admin/ligaer'
     | '/_authenticated/_admin/admin/nyhedsbrev'
     | '/_authenticated/_admin/admin/protests'
+    | '/_authenticated/_admin/admin/storage'
     | '/_authenticated/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/delete-expired-host-sessions'
@@ -1039,6 +1091,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBeskederGruppeGroupIdRouteImport
       parentRoute: typeof AuthenticatedBeskederRoute
     }
+    '/_authenticated/_admin/admin/storage': {
+      id: '/_authenticated/_admin/admin/storage'
+      path: '/admin/storage'
+      fullPath: '/admin/storage'
+      preLoaderRoute: typeof AuthenticatedAdminAdminStorageRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/protests': {
       id: '/_authenticated/_admin/admin/protests'
       path: '/admin/protests'
@@ -1060,6 +1119,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminLigaerRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/cron': {
+      id: '/_authenticated/_admin/admin/cron'
+      path: '/admin/cron'
+      fullPath: '/admin/cron'
+      preLoaderRoute: typeof AuthenticatedAdminAdminCronRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/brugere': {
       id: '/_authenticated/_admin/admin/brugere'
       path: '/admin/brugere'
@@ -1067,11 +1133,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminBrugereRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/briefing': {
+      id: '/_authenticated/_admin/admin/briefing'
+      path: '/admin/briefing'
+      fullPath: '/admin/briefing'
+      preLoaderRoute: typeof AuthenticatedAdminAdminBriefingRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/beskeder': {
       id: '/_authenticated/_admin/admin/beskeder'
       path: '/admin/beskeder'
       fullPath: '/admin/beskeder'
       preLoaderRoute: typeof AuthenticatedAdminAdminBeskederRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/audit': {
+      id: '/_authenticated/_admin/admin/audit'
+      path: '/admin/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthenticatedAdminAdminAuditRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/_admin/admin/afventer': {
@@ -1170,24 +1250,32 @@ const AuthenticatedAdminAdminProtestsRouteWithChildren =
 
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminAfventerRoute: typeof AuthenticatedAdminAdminAfventerRoute
+  AuthenticatedAdminAdminAuditRoute: typeof AuthenticatedAdminAdminAuditRoute
   AuthenticatedAdminAdminBeskederRoute: typeof AuthenticatedAdminAdminBeskederRoute
+  AuthenticatedAdminAdminBriefingRoute: typeof AuthenticatedAdminAdminBriefingRoute
   AuthenticatedAdminAdminBrugereRoute: typeof AuthenticatedAdminAdminBrugereRoute
+  AuthenticatedAdminAdminCronRoute: typeof AuthenticatedAdminAdminCronRoute
   AuthenticatedAdminAdminLigaerRoute: typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   AuthenticatedAdminAdminNyhedsbrevRoute: typeof AuthenticatedAdminAdminNyhedsbrevRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminAfventerRoute: AuthenticatedAdminAdminAfventerRoute,
+  AuthenticatedAdminAdminAuditRoute: AuthenticatedAdminAdminAuditRoute,
   AuthenticatedAdminAdminBeskederRoute: AuthenticatedAdminAdminBeskederRoute,
+  AuthenticatedAdminAdminBriefingRoute: AuthenticatedAdminAdminBriefingRoute,
   AuthenticatedAdminAdminBrugereRoute: AuthenticatedAdminAdminBrugereRoute,
+  AuthenticatedAdminAdminCronRoute: AuthenticatedAdminAdminCronRoute,
   AuthenticatedAdminAdminLigaerRoute:
     AuthenticatedAdminAdminLigaerRouteWithChildren,
   AuthenticatedAdminAdminNyhedsbrevRoute:
     AuthenticatedAdminAdminNyhedsbrevRoute,
   AuthenticatedAdminAdminProtestsRoute:
     AuthenticatedAdminAdminProtestsRouteWithChildren,
+  AuthenticatedAdminAdminStorageRoute: AuthenticatedAdminAdminStorageRoute,
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
 }
 

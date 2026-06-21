@@ -67,16 +67,14 @@ export const runCronJob = createServerFn({ method: "POST" })
       body: "{}",
     });
     const text = await res.text();
-    let body: unknown = text;
-    try { body = JSON.parse(text); } catch { /* ignore */ }
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
 
     await context.supabase.rpc("log_audit" as any, {
       _action: "cron_run",
       _table: "cron",
       _row_id: allowed.key,
-      _metadata: { result: body } as any,
+      _metadata: { result: text.slice(0, 500) } as any,
     });
 
-    return { ok: true, status: res.status, body };
+    return { ok: true as const, status: res.status, body: text.slice(0, 500) };
   });

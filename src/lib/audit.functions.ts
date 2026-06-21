@@ -42,8 +42,6 @@ export const getAuditTables = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await ensureAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data } = await supabaseAdmin.rpc("pg_typeof" as any, {}).maybeSingle().then(() => ({ data: null })).catch(() => ({ data: null }));
-    void data;
     // Simple distinct via SQL
     const { data: rows } = await supabaseAdmin
       .from("audit_log")
