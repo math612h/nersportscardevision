@@ -23,6 +23,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { LeagueTeamSignupCard, MyLineupInvitations } from "@/components/LeagueTeamSignupCard";
+
 
 export const Route = createFileRoute("/teams/$teamId")({
   head: ({ params }) => ({
