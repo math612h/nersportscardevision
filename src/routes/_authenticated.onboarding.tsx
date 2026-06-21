@@ -29,17 +29,22 @@ function OnboardingPage() {
     enabled: !!user,
     queryFn: async () => {
       const [{ data: profile }, { data: priv }] = await Promise.all([
-        supabase.from("profiles").select("display_name, lmu_name, accepts_danish").eq("id", user!.id).maybeSingle(),
+        supabase.from("profiles").select("display_name, lmu_name, accepts_danish, media_consent").eq("id", user!.id).maybeSingle(),
         (supabase as unknown as { from: (t: string) => any }).from("profiles_private")
-          .select("discord_user_id, discord_username, discord_server_nickname").eq("user_id", user!.id).maybeSingle(),
+          .select("discord_user_id, discord_username, discord_server_nickname, address, postal_code, city, country").eq("user_id", user!.id).maybeSingle(),
       ]);
       return {
         display_name: (profile as any)?.display_name ?? "",
         lmu_name: (profile as any)?.lmu_name ?? "",
         accepts_danish: (profile as any)?.accepts_danish === true,
+        media_consent: (profile as any)?.media_consent === true,
         discord_user_id: (priv as any)?.discord_user_id ?? null,
         discord_username: (priv as any)?.discord_username ?? null,
         discord_server_nickname: (priv as any)?.discord_server_nickname ?? null,
+        address: (priv as any)?.address ?? "",
+        postal_code: (priv as any)?.postal_code ?? "",
+        city: (priv as any)?.city ?? "",
+        country: (priv as any)?.country ?? "Danmark",
       };
     },
   });
@@ -48,6 +53,11 @@ function OnboardingPage() {
   const [lmuName, setLmuName] = useState("");
   const [email, setEmail] = useState("");
   const [acceptsDanish, setAcceptsDanish] = useState(false);
+  const [mediaConsent, setMediaConsent] = useState(false);
+  const [address, setAddress] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+  const [country, setCountry] = useState("Danmark");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -56,7 +66,13 @@ function OnboardingPage() {
     setLmuName(state.lmu_name || "");
     setEmail((user?.email && !user.email.endsWith("@no-email.lmudanmark.dk")) ? user.email : "");
     setAcceptsDanish(!!state.accepts_danish);
+    setMediaConsent(!!state.media_consent);
+    setAddress(state.address || "");
+    setPostalCode(state.postal_code || "");
+    setCity(state.city || "");
+    setCountry(state.country || "Danmark");
   }, [state, user]);
+
 
   const hasServerNickname = !!state?.discord_server_nickname;
 
