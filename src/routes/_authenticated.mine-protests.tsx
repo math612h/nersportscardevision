@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { Gavel, Inbox, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -57,36 +58,68 @@ function MyProtests() {
   });
 
   const pendingCount = (againstMe ?? []).filter((r: any) => !r.response && r.protests?.status !== "ruled").length;
+  const submittedCount = submitted?.length ?? 0;
+  const againstCount = againstMe?.length ?? 0;
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Mine sager</h1>
-        <p className="text-sm text-muted-foreground">Dine indsendte protester og sager hvor du er indklaget.</p>
-      </div>
+    <div className="space-y-6">
+      {/* Hero header */}
+      <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="relative overflow-hidden bg-gradient-to-br from-primary/25 via-primary/5 to-transparent px-4 py-6 sm:px-6 sm:py-8">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <Gavel className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+                Stewards
+              </p>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Mine sager</h1>
+              <p className="text-sm text-muted-foreground">
+                Dine indsendte protester og sager hvor du er indklaget.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border bg-muted/30 px-4 py-2.5 text-xs sm:px-6">
+          <span className="inline-flex items-center gap-1.5 font-medium">
+            <Send className="h-3.5 w-3.5 text-primary" />
+            {submittedCount} indsendt
+          </span>
+          <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <Inbox className="h-3.5 w-3.5" />
+            {againstCount} indklaget
+          </span>
+          {pendingCount > 0 && (
+            <Badge variant="destructive" className="ml-auto">{pendingCount} svar mangler</Badge>
+          )}
+        </div>
+      </header>
 
       <Tabs defaultValue={pendingCount > 0 ? "against" : "submitted"}>
         <TabsList>
-          <TabsTrigger value="submitted">Indsendt af mig ({submitted?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="submitted">Indsendt af mig ({submittedCount})</TabsTrigger>
           <TabsTrigger value="against">
-            Indklaget ({againstMe?.length ?? 0})
-            {pendingCount > 0 && <Badge variant="destructive" className="ml-2">{pendingCount} svar mangler</Badge>}
+            Indklaget ({againstCount})
+            {pendingCount > 0 && <Badge variant="destructive" className="ml-2">{pendingCount}</Badge>}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="submitted" className="space-y-3">
-          {submitted?.length === 0 && <p className="text-sm text-muted-foreground">Du har ikke indsendt nogen protester.</p>}
+          {submittedCount === 0 && <p className="text-sm text-muted-foreground">Du har ikke indsendt nogen protester.</p>}
           {submitted?.map((p: any) => <SubmittedCard key={p.id} protest={p} />)}
         </TabsContent>
 
         <TabsContent value="against" className="space-y-3">
-          {againstMe?.length === 0 && <p className="text-sm text-muted-foreground">Du er ikke indklaget i nogen sager.</p>}
+          {againstCount === 0 && <p className="text-sm text-muted-foreground">Du er ikke indklaget i nogen sager.</p>}
           {againstMe?.map((row: any) => <AgainstMeCard key={row.id} row={row} />)}
         </TabsContent>
       </Tabs>
     </div>
   );
 }
+
 
 function ProtestHeader({ p }: { p: any }) {
   return (
