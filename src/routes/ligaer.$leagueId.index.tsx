@@ -380,6 +380,7 @@ function LeagueDetail() {
         {league && <SignupsList leagueId={leagueId} configs={configs} />}
       </GuestBlur>
 
+      {(league as any)?.teams_allowed && !isGuest && <LeagueTeamSignupEntry leagueId={leagueId} />}
       {(league as any)?.teams_allowed && <LeagueTeamsList leagueId={leagueId} />}
 
 
