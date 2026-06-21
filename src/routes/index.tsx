@@ -273,22 +273,33 @@ function NewsHome() {
                     )}
                   </div>
                   <ol className="grid gap-2 sm:grid-cols-3">
-                    {group.top.map((row) => (
-                      <li
-                        key={`${group.key}-${row.class_position}-${row.driver_name}`}
-                        className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
-                      >
-                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-background font-semibold tabular-nums">
-                          {row.class_position}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate font-medium">
-                          {row.driver_name}
-                        </span>
-                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                          {row.points ?? 0} p
-                        </span>
-                      </li>
-                    ))}
+                    {group.top.map((row) => {
+                      const pos = Number(row.class_position);
+                      const medal =
+                        pos === 1
+                          ? "bg-amber-400/20 text-amber-700 ring-1 ring-amber-400/40 dark:text-amber-300"
+                          : pos === 2
+                          ? "bg-slate-300/30 text-slate-700 ring-1 ring-slate-400/40 dark:text-slate-200"
+                          : pos === 3
+                          ? "bg-orange-500/15 text-orange-700 ring-1 ring-orange-500/30 dark:text-orange-300"
+                          : "bg-background";
+                      return (
+                        <li
+                          key={`${group.key}-${row.class_position}-${row.driver_name}`}
+                          className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
+                        >
+                          <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
+                            {row.class_position}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate font-medium">
+                            {row.driver_name}
+                          </span>
+                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {row.points ?? 0} p
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ol>
                 </div>
               ))}
