@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -35,11 +36,14 @@ type Item = {
 type Section = { label: string; items: Item[] };
 
 export function AdminSidebar() {
-  const { state, setOpen } = useSidebar();
+  const { state, setOpen, isMobile, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
   const currentPath = useRouterState({ select: (r) => r.location.pathname });
 
-  const handleItemClick = () => setOpen(false);
+  const handleItemClick = () => {
+    if (isMobile) setOpenMobile(false);
+    else setOpen(false);
+  };
 
   const { data: pendingCount } = useQuery({
     queryKey: ["admin-pending-count"],
@@ -98,7 +102,7 @@ export function AdminSidebar() {
     exact ? currentPath === url : currentPath === url || currentPath.startsWith(url + "/");
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="offcanvas">
       <SidebarContent>
         {sections.map((section) => (
           <SidebarGroup key={section.label}>
