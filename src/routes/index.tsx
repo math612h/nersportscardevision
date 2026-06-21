@@ -463,13 +463,13 @@ function ProfileCompletionGate() {
   });
   if (!status || status.complete) return null;
   return (
-    <section className="rounded-2xl border-2 border-blue-400 bg-gradient-to-br from-blue-600 to-blue-700 p-6 text-white shadow-lg sm:p-8">
+    <section className="rounded-2xl border-2 border-destructive/50 bg-destructive p-6 text-destructive-foreground shadow-lg sm:p-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
           <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
             Udfyld og færdiggør din profil for at fortsætte
           </h2>
-          <p className="text-sm text-blue-100">
+          <p className="text-sm text-destructive-foreground/80">
             Du skal udfylde alle felter på din profil, før du kan bruge platformen fuldt ud.
           </p>
         </div>
