@@ -1,0 +1,1 @@
+ALTER TABLE public.leagues ADD COLUMN teams_allowed boolean NOT NULL DEFAULT false;
