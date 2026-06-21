@@ -149,24 +149,14 @@ function NewsHome() {
           <h1 className="text-2xl font-bold tracking-tight">Nyheder</h1>
           <p className="text-sm text-muted-foreground">Seneste afviklede løb og resultater.</p>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-          <Button asChild className="w-full justify-center gap-2 sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild className="gap-2">
             <Link to="/lmu/liga">
               <Flag className="h-4 w-4" /> Ligaer
             </Link>
           </Button>
-          <Button asChild variant="outline" className="w-full justify-center gap-2 sm:w-auto">
-            <Link to="/lmu/teams">
-              <ArrowUpRight className="h-4 w-4" /> Teams
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full justify-center gap-2 sm:w-auto">
-            <Link to="/brugere">
-              <Users className="h-4 w-4" /> Brugere
-            </Link>
-          </Button>
           {user && (
-            <Button asChild variant="outline" className="relative w-full justify-center gap-2 sm:w-auto">
+            <Button asChild variant="outline" className="relative gap-2">
               <Link to="/mine-protests">
                 <MessageSquareWarning className="h-4 w-4" /> Incidents
                 {pendingIncidents > 0 && (
@@ -177,20 +167,29 @@ function NewsHome() {
               </Link>
             </Button>
           )}
-          <Button asChild variant="outline" className="w-full justify-center gap-2 sm:w-auto">
-            <a
-            href="https://discord.gg/bwVMAfrm55"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MessageCircle className="h-4 w-4" /> Discord
-            </a>
-          </Button>
-          <Button asChild variant="outline" className="w-full justify-center gap-2 sm:w-auto">
-            <Link to="/app-guide">
-              <Smartphone className="h-4 w-4" /> App guide
-            </Link>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <MoreHorizontal className="h-4 w-4" /> Mere
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link to="/lmu/teams"><ArrowUpRight className="h-4 w-4" /> Teams</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/brugere"><Users className="h-4 w-4" /> Brugere</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://discord.gg/bwVMAfrm55" target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="h-4 w-4" /> Discord
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/app-guide"><Smartphone className="h-4 w-4" /> App guide</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
