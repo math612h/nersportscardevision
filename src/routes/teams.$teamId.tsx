@@ -171,57 +171,85 @@ function TeamDetailPage() {
         <ArrowLeft className="h-3 w-3" /> Alle teams
       </Link>
 
-      <Card>
-        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-start">
-          <Avatar className="h-20 w-20">
-            {logoUrl ? <AvatarImage src={logoUrl} alt={team.name} /> : null}
-            <AvatarFallback className="text-lg">{initials}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold tracking-tight">{team.name}</h1>
-              <Badge variant="outline" className="gap-1">
-                <Users className="h-3 w-3" /> {(members ?? []).length} medlem{(members ?? []).length === 1 ? "" : "mer"}
-              </Badge>
-              {teamRating != null && (
-                <Badge variant="outline" className="gap-1" title="Teamets rating (baseret på teamets resultater)">
-                  <Star className="h-3 w-3 text-primary" /> Team-rating {teamRating}
-                </Badge>
-              )}
-            </div>
-            {team.bio && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{team.bio}</p>}
-            <div className="flex flex-wrap gap-2 pt-2">
-              {!user && (
-                <Button size="sm" onClick={() => navigate({ to: "/login" })}>Log ind for at ansøge</Button>
-              )}
-              {user && !isMember && <ApplyButton teamId={teamId} userId={user.id} />}
-              {user && isMember && !isOwner && <LeaveButton teamId={teamId} userId={user.id} onLeft={() => navigate({ to: "/teams" })} />}
-              {isOwner && <EditTeamButton team={team} />}
-              {(isOwner || isAdmin) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1 text-destructive"
-                  onClick={async () => {
-                    if (!confirm("Slet team for evigt? Denne handling kan ikke fortrydes.")) return;
-                    if (!confirm("Er du HELT sikker? Teamet og alle dets data slettes permanent.")) return;
-                    const { error } = await (supabase as any).from("teams").delete().eq("id", team.id);
-                    if (error) toastError(error.message);
-                    else {
-                      toast.success("Team slettet");
-                      qc.invalidateQueries({ queryKey: ["teams"] });
-                      qc.invalidateQueries({ queryKey: ["my-teams"] });
-                      navigate({ to: "/teams" });
-                    }
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" /> Slet team{isAdmin && !isOwner ? " (admin)" : ""}
-                </Button>
-              )}
+      <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        {/* Banner with blurred logo backdrop */}
+        <div className="relative h-28 overflow-hidden bg-gradient-to-br from-primary/25 via-primary/10 to-transparent sm:h-36">
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt=""
+              aria-hidden
+              className="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-2xl"
+            />
+          ) : null}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
+        </div>
+
+        <div className="-mt-12 px-4 pb-4 sm:-mt-14 sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <Avatar className="h-20 w-20 ring-4 ring-card sm:h-24 sm:w-24">
+              {logoUrl ? <AvatarImage src={logoUrl} alt={team.name} /> : null}
+              <AvatarFallback className="text-lg font-semibold">{initials}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1 space-y-2 sm:pb-1">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+                Team
+              </p>
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{team.name}</h1>
             </div>
           </div>
-        </CardHeader>
-      </Card>
+        </div>
+
+        {/* Meta strip */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-border bg-muted/30 px-4 py-2.5 text-xs sm:px-6">
+          <span className="inline-flex items-center gap-1.5 font-medium">
+            <Users className="h-3.5 w-3.5 text-primary" />
+            {(members ?? []).length} medlem{(members ?? []).length === 1 ? "" : "mer"}
+          </span>
+          {teamRating != null && (
+            <span className="inline-flex items-center gap-1.5 text-muted-foreground" title="Teamets rating (baseret på teamets resultater)">
+              <Star className="h-3.5 w-3.5 text-primary" />
+              Team-rating {teamRating}
+            </span>
+          )}
+        </div>
+
+        <div className="space-y-3 p-4 sm:p-6">
+          {team.bio && (
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">{team.bio}</p>
+          )}
+
+          <div className="flex flex-wrap gap-2 border-t border-border pt-3">
+            {!user && (
+              <Button size="sm" onClick={() => navigate({ to: "/login" })}>Log ind for at ansøge</Button>
+            )}
+            {user && !isMember && <ApplyButton teamId={teamId} userId={user.id} />}
+            {user && isMember && !isOwner && <LeaveButton teamId={teamId} userId={user.id} onLeft={() => navigate({ to: "/teams" })} />}
+            {isOwner && <EditTeamButton team={team} />}
+            {(isOwner || isAdmin) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1 text-destructive"
+                onClick={async () => {
+                  if (!confirm("Slet team for evigt? Denne handling kan ikke fortrydes.")) return;
+                  if (!confirm("Er du HELT sikker? Teamet og alle dets data slettes permanent.")) return;
+                  const { error } = await (supabase as any).from("teams").delete().eq("id", team.id);
+                  if (error) toastError(error.message);
+                  else {
+                    toast.success("Team slettet");
+                    qc.invalidateQueries({ queryKey: ["teams"] });
+                    qc.invalidateQueries({ queryKey: ["my-teams"] });
+                    navigate({ to: "/teams" });
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4" /> Slet team{isAdmin && !isOwner ? " (admin)" : ""}
+              </Button>
+            )}
+          </div>
+        </div>
+      </header>
 
       <Card>
         <CardHeader className="pb-2">
