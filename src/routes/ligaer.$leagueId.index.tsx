@@ -291,42 +291,55 @@ function LeagueDetail() {
           ) : (
             <div className="h-full w-full bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 space-y-2 p-4 sm:p-6">
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/70 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 space-y-1 p-4 sm:p-6">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
               {isOff ? "Off-Season event" : "Liga"}
             </p>
             <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">{league?.name}</h1>
-            <div className="flex flex-wrap gap-1.5">
-              {configs.length > 0
-                ? configs.map((c, i) => {
-                    const col = classColor(c.car_class);
-                    return (
-                      <Badge key={i} variant="outline" className={`gap-1.5 bg-background/80 backdrop-blur ${col.badge}`}>
-                        <span className={`h-2 w-2 rounded-full ${col.dot}`} />
-                        {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
-                      </Badge>
-                    );
-                  })
-                : (
-                  <>
-                    {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
-                    {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
-                  </>
-                )}
-              {nextDivision?.race_date && (
-                <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
-                  <Calendar className="h-3 w-3" /> Næste: {format(new Date(nextDivision.race_date), "dd MMM HH:mm")}
-                </Badge>
-              )}
-              {typeof leagueSignupCount === "number" && (
-                <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
-                  <Users className="h-3 w-3" /> {leagueSignupCount} tilmeldte
-                </Badge>
-              )}
-            </div>
           </div>
         </div>
+
+        {/* Meta strip: next race + signup count, clean and readable */}
+        {(nextDivision?.race_date || typeof leagueSignupCount === "number") && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-muted/30 px-4 py-2.5 text-xs sm:px-6">
+            {nextDivision?.race_date && (
+              <span className="inline-flex items-center gap-1.5 font-medium">
+                <Calendar className="h-3.5 w-3.5 text-primary" />
+                Næste: {format(new Date(nextDivision.race_date), "dd MMM HH:mm")}
+              </span>
+            )}
+            {typeof leagueSignupCount === "number" && (
+              <span className="inline-flex items-center gap-1.5 text-muted-foreground">
+                <Users className="h-3.5 w-3.5" />
+                {leagueSignupCount} tilmeldte
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Class badges in their own row — easier to scan on mobile */}
+        {(configs.length > 0 || (league as any)?.car_class) && (
+          <div className="flex flex-wrap gap-1.5 px-4 pt-3 sm:px-6">
+            {configs.length > 0
+              ? configs.map((c, i) => {
+                  const col = classColor(c.car_class);
+                  return (
+                    <Badge key={i} variant="outline" className={`gap-1.5 ${col.badge}`}>
+                      <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+                      {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
+                    </Badge>
+                  );
+                })
+              : (
+                <>
+                  {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
+                  {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
+                </>
+              )}
+          </div>
+        )}
+
 
         <div className="space-y-3 p-4 sm:p-6">
           {league?.description && (
