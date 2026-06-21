@@ -44,6 +44,8 @@ export const Route = createFileRoute("/")({
 
 function NewsHome() {
   const { isAdmin, user } = useAuth();
+  const { complete: profileComplete, signedIn } = useProfileComplete();
+  const gated = signedIn && !profileComplete;
   const qc = useQueryClient();
 
   const { data: pendingIncidents = 0 } = useQuery({
