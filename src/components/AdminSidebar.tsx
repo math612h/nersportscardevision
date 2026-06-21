@@ -10,6 +10,10 @@ import {
   MessageSquareWarning,
   Newspaper,
   MessageCircle,
+  History,
+  Clock,
+  FolderOpen,
+  Headphones,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -94,6 +98,15 @@ export function AdminSidebar() {
       items: [
         { title: "Nyhedsbrev", url: "/admin/nyhedsbrev", icon: Newspaper },
         { title: "Besked Hub", url: "/admin/beskeder", icon: MessageCircle },
+        { title: "Briefing-rum", url: "/admin/briefing", icon: Headphones },
+      ],
+    },
+    {
+      label: "System",
+      items: [
+        { title: "Audit log", url: "/admin/audit", icon: History },
+        { title: "Cron-jobs", url: "/admin/cron", icon: Clock },
+        { title: "Storage", url: "/admin/storage", icon: FolderOpen },
       ],
     },
   ];

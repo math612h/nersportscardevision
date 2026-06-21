@@ -38,6 +38,45 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_label: string | null
+          created_at: string
+          id: number
+          metadata: Json | null
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          id?: number
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          id?: number
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       briefing_raised_hands: {
         Row: {
           division_id: string
@@ -1722,6 +1761,27 @@ export type Database = {
     }
     Functions: {
       admin_find_user_id_by_email: { Args: { _email: string }; Returns: string }
+      admin_list_cron_jobs: {
+        Args: never
+        Returns: {
+          active: boolean
+          command: string
+          jobid: number
+          jobname: string
+          schedule: string
+        }[]
+      }
+      admin_list_cron_runs: {
+        Args: { _limit?: number }
+        Returns: {
+          end_time: string
+          jobid: number
+          jobname: string
+          return_message: string
+          start_time: string
+          status: string
+        }[]
+      }
       allowed_categories_for_signup: {
         Args: { _car_class: string; _league_id: string; _user_id: string }
         Returns: Json
@@ -1753,6 +1813,17 @@ export type Database = {
       is_chat_group_member: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_audit: {
+        Args: {
+          _action: string
+          _metadata?: Json
+          _new?: Json
+          _old?: Json
+          _row_id?: string
+          _table: string
+        }
+        Returns: undefined
       }
       move_to_dlq: {
         Args: {
