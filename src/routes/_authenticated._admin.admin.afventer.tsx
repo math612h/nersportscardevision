@@ -228,6 +228,12 @@ function PendingApprovalsPage() {
                         Navne-besked sendt {formatRelativeDk(wrongNameStatus[p.id])}
                       </Badge>
                     )}
+                    {lmuNameStatus?.[p.id] && (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">
+                        <IdCard className="h-3 w-3" />
+                        LMU-navn-besked sendt {formatRelativeDk(lmuNameStatus[p.id])}
+                      </Badge>
+                    )}
                     {guildStatus?.[p.id] === "in_guild" && (
                       <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2 className="h-3 w-3" /> På Discord-server
