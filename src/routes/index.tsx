@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTrackImageFile } from "@/lib/tracks";
@@ -44,6 +45,8 @@ export const Route = createFileRoute("/")({
 
 function NewsHome() {
   const { isAdmin, user } = useAuth();
+  const { complete: profileComplete, signedIn } = useProfileComplete();
+  const gated = signedIn && !profileComplete;
   const qc = useQueryClient();
 
   const { data: pendingIncidents = 0 } = useQuery({
@@ -119,6 +122,14 @@ function NewsHome() {
   });
 
   const groupedResults = groupTopThree((latest?.settings?.results ?? []) as ResultRow[]);
+
+  if (gated) {
+    return (
+      <div className="space-y-10">
+        <ProfileCompletionGate />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-10">

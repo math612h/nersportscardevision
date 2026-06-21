@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Flag, Gauge, Home, LayoutGrid, LogOut, Menu, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import {
@@ -15,6 +16,8 @@ import logoAsset from "@/assets/lmu-logo.png.asset.json";
 
 export function AppHeader() {
   const { user, isAdmin, signOut, loading } = useAuth();
+  const { complete: profileComplete, signedIn } = useProfileComplete();
+  const gated = signedIn && !profileComplete;
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -30,7 +33,7 @@ export function AppHeader() {
     { to: "/admin", label: "Kontrolpanel", icon: <Gauge className="h-4 w-4" />, show: !!isAdmin && !isAdminRoute, highlight: true },
   ];
 
-  const visibleItems = navItems.filter((i) => i.show);
+  const visibleItems = navItems.filter((i) => i.show && (!gated || (i.to === "/" && i.exact)));
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
@@ -87,11 +90,13 @@ export function AppHeader() {
         <div className="flex shrink-0 items-center gap-1">
           {user ? (
             <>
-              <NotificationsBell />
-              <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil" aria-label="Min profil">
-                <UserCircle2 className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Profil</span>
-              </Link>
+              {!gated && <NotificationsBell />}
+              {!gated && (
+                <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil" aria-label="Min profil">
+                  <UserCircle2 className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">Profil</span>
+                </Link>
+              )}
               <div className="ml-1 hidden items-center gap-1 px-2 text-xs text-muted-foreground lg:flex">
                 <UserIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 <span className="max-w-[140px] truncate">{user.email}</span>
