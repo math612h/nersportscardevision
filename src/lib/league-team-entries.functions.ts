@@ -5,6 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const submitSchema = z.object({
   leagueId: z.string().uuid(),
   teamId: z.string().uuid(),
+  carClass: z.string().min(1, "Vælg en bilklasse"),
   userIds: z.array(z.string().uuid()).min(2, "Et team-lineup skal indeholde mindst 2 kørere"),
 });
 
