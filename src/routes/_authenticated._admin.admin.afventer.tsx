@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle, RefreshCw, IdCard } from "lucide-react";
+import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle, RefreshCw, IdCard, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,9 +11,21 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { setProfileApproval } from "@/lib/leagues.functions";
+import { deleteUser } from "@/lib/users.functions";
 import { sendAdminTemplateMessage, getAdminMessageStatus } from "@/lib/admin-messages.functions";
 import { refreshPendingDiscordNicknames } from "@/lib/discord-refresh.functions";
 import { checkPendingGuildMembership } from "@/lib/discord-guild.functions";
