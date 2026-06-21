@@ -23,6 +23,8 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { LeagueTeamSignupCard, MyLineupInvitations } from "@/components/LeagueTeamSignupCard";
+
 
 export const Route = createFileRoute("/teams/$teamId")({
   head: ({ params }) => ({
@@ -302,12 +304,24 @@ function TeamDetailPage() {
 
       <RecentResultsCard members={members ?? []} profiles={profiles ?? {}} />
 
+      {isMember && <MyLineupInvitations teamId={teamId} />}
+      {isOwner && (
+        <LeagueTeamSignupCard
+          teamId={teamId}
+          members={(members ?? []).map((m) => ({
+            user_id: m.user_id,
+            display_name: profiles?.[m.user_id]?.display_name ?? null,
+          }))}
+        />
+      )}
+
       {isOwner && <OwnerInbox teamId={teamId} />}
       {isOwner && <InviteCard teamId={teamId} userId={user!.id} existingMemberIds={memberIds} />}
 
     </div>
   );
 }
+
 
 
 // --- Recent results per member ---
@@ -496,11 +510,21 @@ function ApplyButton({ teamId, userId }: { teamId: string; userId: string }) {
 }
 
 function LeaveButton({ teamId, userId, onLeft }: { teamId: string; userId: string; onLeft: () => void }) {
+  const { data: lockedTeam } = useQuery({
+    queryKey: ["user-locked-team", userId],
+    queryFn: async () => {
+      const { data } = await (supabase as any).rpc("user_locked_team", { _user_id: userId });
+      return (data ?? null) as string | null;
+    },
+  });
+  const locked = lockedTeam === teamId;
   return (
     <Button
       variant="outline"
       size="sm"
       className="gap-1"
+      disabled={locked}
+      title={locked ? "Du er bekræftet på et lineup i en aktiv liga — du kan ikke forlade teamet før ligaen er færdig" : undefined}
       onClick={async () => {
         if (!confirm("Forlad teamet?")) return;
         const { error } = await (supabase as any).from("team_members").delete().eq("team_id", teamId).eq("user_id", userId);
@@ -508,10 +532,11 @@ function LeaveButton({ teamId, userId, onLeft }: { teamId: string; userId: strin
         else { toast.success("Du har forladt teamet"); onLeft(); }
       }}
     >
-      <LogOut className="h-4 w-4" /> Forlad team
+      <LogOut className="h-4 w-4" /> {locked ? "Låst til team" : "Forlad team"}
     </Button>
   );
 }
+
 
 // --- Edit team ---
 function EditTeamButton({ team }: { team: Team }) {

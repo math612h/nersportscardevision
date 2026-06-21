@@ -214,6 +214,73 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
           }
 
           if (
+            (kind === "team_lineup_accept" || kind === "team_lineup_decline") &&
+            invitationId &&
+            discordUserId
+          ) {
+            const lineupId = invitationId;
+            const action = kind === "team_lineup_accept" ? "accept" : "decline";
+            const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+            const { data: priv } = await (supabaseAdmin as any)
+              .from("profiles_private")
+              .select("user_id")
+              .eq("discord_user_id", discordUserId)
+              .maybeSingle();
+            const appUserId = (priv as any)?.user_id as string | undefined;
+            if (!appUserId) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: {
+                  flags: FLAG_EPHEMERAL,
+                  content: "Din Discord-konto er ikke koblet til en LMU Danmark-profil.",
+                },
+              });
+            }
+
+            try {
+              const { respondLeagueLineupCore } = await import("@/lib/league-team-lineup.server");
+              const res = await respondLeagueLineupCore({
+                lineupId,
+                action,
+                actingUserId: appUserId,
+              });
+              const teamName = res.teamName || "teamet";
+              const leagueName = res.leagueName || "ligaen";
+              const headline = `🏁 **Lineup-invitation — "${teamName}" i ${leagueName}**`;
+              if (res.status === "ok") {
+                const text =
+                  action === "accept"
+                    ? `${headline}\n\n✅ Du har accepteret pladsen på lineup.${res.allAccepted ? " Hele lineup er nu bekræftet!" : ""}`
+                    : `${headline}\n\n❌ Du har afvist pladsen på lineup.`;
+                return Response.json({ type: UPDATE_MESSAGE, data: { content: text, components: [] } });
+              }
+              if (res.status === "already") {
+                return Response.json({
+                  type: UPDATE_MESSAGE,
+                  data: { content: `${headline}\n\nDenne invitation er allerede besvaret.`, components: [] },
+                });
+              }
+              if (res.status === "missing") {
+                return Response.json({
+                  type: UPDATE_MESSAGE,
+                  data: { content: "Lineup-invitationen findes ikke længere.", components: [] },
+                });
+              }
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: "Du har ikke adgang til denne invitation." },
+              });
+            } catch (e) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: `Noget gik galt: ${(e as Error).message}` },
+              });
+            }
+          }
+
+
+
+          if (
             (kind === "reserve_accept" || kind === "reserve_decline") &&
             invitationId &&
             discordUserId
