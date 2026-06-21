@@ -551,9 +551,32 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
           }
 
           if (customId.startsWith("host_session_share_modal")) {
-            const trackEncoded = customId.includes(":") ? customId.split(":").slice(1).join(":") : "";
+            // Format: host_session_share_modal:<trackEnc>[:<sponsor>]
+            const segments = customId.split(":");
+            const trackEncoded = segments[1] ?? "";
+            const sponsorRaw = segments[2] ?? "self";
             let track = "";
             try { track = decodeURIComponent(trackEncoded); } catch { track = trackEncoded; }
+
+            // Resolve sponsor team name if applicable
+            let sponsorTeamName: string | null = null;
+            if (sponsorRaw.startsWith("t_")) {
+              const hex = sponsorRaw.slice(2);
+              if (hex.length === 32) {
+                const teamId = `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}`;
+                try {
+                  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+                  const { data: team } = await (supabaseAdmin as any)
+                    .from("teams")
+                    .select("name")
+                    .eq("id", teamId)
+                    .maybeSingle();
+                  sponsorTeamName = (team as any)?.name ?? null;
+                } catch (e) {
+                  console.error("host_session lookup sponsor team failed", e);
+                }
+              }
+            }
 
             const rows = (payload?.data?.components ?? []) as Array<{
               components: Array<{ custom_id: string; value: string }>;
@@ -585,6 +608,7 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
 
             const content = [
               `🎮 **Hosted session af ${hosterMention}**`,
+              sponsorTeamName ? `🏷️ Sponsoreret af team **${sponsorTeamName}**` : null,
               "",
               track ? `🏁 Bane: **${track}**` : null,
               `🖥️ Server: **${serverName}**`,
