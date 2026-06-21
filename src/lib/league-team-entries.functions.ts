@@ -183,7 +183,7 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
     try {
       const rows = data.userIds.map((uid) => ({
         user_id: uid,
-        title: `Du er valgt til "${(team as any).name}" lineup i ${(league as any).name}`,
+        title: `Du er valgt til "${(team as any).name}" lineup i ${(league as any).name} (${data.carClass})`,
         body: "Åbn team-siden for at acceptere eller afvise pladsen.",
         link: `/teams/${data.teamId}`,
       }));
