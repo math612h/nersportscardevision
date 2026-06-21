@@ -38,6 +38,45 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_label: string | null
+          created_at: string
+          id: number
+          metadata: Json | null
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          id?: number
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          id?: number
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       briefing_raised_hands: {
         Row: {
           division_id: string
@@ -1753,6 +1792,17 @@ export type Database = {
       is_chat_group_member: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
+      }
+      log_audit: {
+        Args: {
+          _action: string
+          _metadata?: Json
+          _new?: Json
+          _old?: Json
+          _row_id?: string
+          _table: string
+        }
+        Returns: undefined
       }
       move_to_dlq: {
         Args: {
