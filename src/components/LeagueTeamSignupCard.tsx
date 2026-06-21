@@ -39,12 +39,13 @@ export function LeagueTeamSignupCard({
   const withdrawFn = useServerFn(withdrawTeamFromLeague);
 
   const { data: leagues } = useQuery({
-    queryKey: ["leagues-published"],
+    queryKey: ["leagues-published", "teams-allowed"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("id, name, published, is_offseason")
+        .select("id, name, published, is_offseason, teams_allowed")
         .eq("published", true)
+        .eq("teams_allowed", true)
         .order("name");
       if (error) throw error;
       return ((data ?? []) as any[]).filter((l) => !l.is_offseason) as League[];

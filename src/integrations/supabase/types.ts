@@ -924,6 +924,7 @@ export type Database = {
           signup_open_notified_at: string | null
           signup_opens_at: string | null
           sort_order: number
+          teams_allowed: boolean
         }
         Insert: {
           approved_only?: boolean
@@ -950,6 +951,7 @@ export type Database = {
           signup_open_notified_at?: string | null
           signup_opens_at?: string | null
           sort_order?: number
+          teams_allowed?: boolean
         }
         Update: {
           approved_only?: boolean
@@ -976,6 +978,7 @@ export type Database = {
           signup_open_notified_at?: string | null
           signup_opens_at?: string | null
           sort_order?: number
+          teams_allowed?: boolean
         }
         Relationships: []
       }
