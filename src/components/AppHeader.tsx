@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Flag, Gauge, Home, LayoutGrid, LogOut, Menu, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
 import {
