@@ -7,17 +7,19 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // edit them via the Besked Hub.
 export const ADMIN_MESSAGE_TEMPLATE_KEYS = {
   wrong_name_in_guild: "wrong_name_in_guild",
+  missing_lmu_name: "missing_lmu_name",
   profile_approved: "profile_approved",
 } as const;
 
 export const ADMIN_MESSAGE_LINKS: Record<string, string> = {
   wrong_name_in_guild: "/profil",
+  missing_lmu_name: "/profil",
   profile_approved: "/ligaer",
 };
 
 const schema = z.object({
   targetUserId: z.string().uuid(),
-  template: z.enum(["wrong_name", "profile_approved"]),
+  template: z.enum(["wrong_name", "missing_lmu_name", "profile_approved"]),
 });
 
 export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
