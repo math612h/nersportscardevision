@@ -9,7 +9,7 @@ const ANCHOR_TEXT = [
   "Hoster du en session lige nu eller snart? Klik på knappen herunder og udfyld:",
   "• Server-navn",
   "• Server-kode",
-  "• Lobby-kode",
+  "• Lobby-kode (valgfri)",
   "• Starter kl. (fx 20:30)",
   "• Slutter kl. (fx 22:00)",
   "",
