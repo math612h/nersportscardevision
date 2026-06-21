@@ -122,21 +122,29 @@ function MyProtests() {
 
 
 function ProtestHeader({ p }: { p: any }) {
+  const ruled = p.status === "ruled";
   return (
-    <CardHeader>
+    <CardHeader className="space-y-2 pb-3">
       <div className="flex items-start justify-between gap-2">
-        <div>
-          <CardTitle className="text-base">{p.divisions?.leagues?.name} · {p.divisions?.name}</CardTitle>
-          <CardDescription>{format(new Date(p.created_at), "dd MMM yyyy HH:mm")}</CardDescription>
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">
+            {p.divisions?.leagues?.name ?? "Liga"}
+          </p>
+          <CardTitle className="text-base">{p.divisions?.name ?? "Afdeling"}</CardTitle>
+          <CardDescription className="text-xs">{format(new Date(p.created_at), "dd MMM yyyy HH:mm")}</CardDescription>
         </div>
-        <div className="flex flex-wrap gap-1">
-          {p.lap_number != null && <Badge variant="outline">Omg. {p.lap_number}</Badge>}
-          {p.corner && <Badge variant="outline">{p.corner}</Badge>}
-          {p.status === "ruled"
-            ? <Badge>Afgjort</Badge>
-            : <Badge variant="secondary">Åben</Badge>}
-        </div>
+        {ruled ? (
+          <Badge className="shrink-0">Afgjort</Badge>
+        ) : (
+          <Badge variant="secondary" className="shrink-0">Åben</Badge>
+        )}
       </div>
+      {(p.lap_number != null || p.corner) && (
+        <div className="flex flex-wrap gap-1">
+          {p.lap_number != null && <Badge variant="outline" className="text-[10px]">Omg. {p.lap_number}</Badge>}
+          {p.corner && <Badge variant="outline" className="text-[10px]">{p.corner}</Badge>}
+        </div>
+      )}
     </CardHeader>
   );
 }
@@ -145,20 +153,29 @@ function VerdictBlock({ p }: { p: any }) {
   if (p.status !== "ruled") return null;
   const details = (p.verdict_details ?? {}) as Record<string, any>;
   return (
-    <div className="rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
-      <div className="mb-1 flex items-center gap-2">
-        <span className="font-semibold">Afgørelse:</span>
-        <Badge>{OUTCOME_LABEL[p.verdict_outcome] ?? p.verdict_outcome}</Badge>
-        {p.verdict_outcome === "time_penalty" && details.seconds != null && (
-          <span className="text-muted-foreground">+{details.seconds} sek.</span>
-        )}
-        {p.verdict_outcome === "position_penalty" && details.positions != null && (
-          <span className="text-muted-foreground">–{details.positions} placering(er)</span>
-        )}
+    <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
+      <div className="mb-1.5 flex items-center gap-2">
+        <Gavel className="h-4 w-4 text-primary" />
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary">Afgørelse</span>
+        <Badge className="ml-auto">{OUTCOME_LABEL[p.verdict_outcome] ?? p.verdict_outcome}</Badge>
       </div>
-      {p.verdict_reason && <p className="whitespace-pre-wrap">{p.verdict_reason}</p>}
-      {p.ruled_at && <p className="mt-1 text-xs text-muted-foreground">Afgjort {format(new Date(p.ruled_at), "dd MMM yyyy HH:mm")}</p>}
+      {(p.verdict_outcome === "time_penalty" && details.seconds != null) && (
+        <p className="text-xs text-muted-foreground">+{details.seconds} sek.</p>
+      )}
+      {(p.verdict_outcome === "position_penalty" && details.positions != null) && (
+        <p className="text-xs text-muted-foreground">–{details.positions} placering(er)</p>
+      )}
+      {p.verdict_reason && <p className="mt-2 whitespace-pre-wrap">{p.verdict_reason}</p>}
+      {p.ruled_at && <p className="mt-2 text-xs text-muted-foreground">Afgjort {format(new Date(p.ruled_at), "dd MMM yyyy HH:mm")}</p>}
     </div>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+      {children}
+    </p>
   );
 }
 
@@ -167,24 +184,42 @@ function SubmittedCard({ protest }: { protest: any }) {
   return (
     <Card>
       <ProtestHeader p={protest} />
-      <CardContent className="space-y-3 text-sm">
-        {protest.involved_drivers && <p><span className="text-muted-foreground">Indklaget:</span> {protest.involved_drivers}</p>}
-        <p className="whitespace-pre-wrap">{protest.description}</p>
-        {protest.video_url && <a href={protest.video_url} target="_blank" rel="noopener noreferrer" className="text-primary underline">Video</a>}
+      <CardContent className="space-y-4 border-t border-border pt-4 text-sm">
+        {protest.involved_drivers && (
+          <div className="space-y-1">
+            <SectionLabel>Indklaget</SectionLabel>
+            <p>{protest.involved_drivers}</p>
+          </div>
+        )}
 
-        <div>
-          <p className="mb-1 font-semibold">Svar fra indklagede:</p>
-          {involved.length === 0 && <p className="text-muted-foreground">Ingen indklagede koblet.</p>}
-          <ul className="space-y-2">
-            {involved.map((r: any) => (
-              <li key={r.id} className="rounded border border-border p-2">
-                <p className="text-xs font-medium"><UserAvatar userId={r.user_id} name={r.driver_name} size="xs" /></p>
-                {r.response
-                  ? <p className="mt-1 whitespace-pre-wrap">{r.response}</p>
-                  : <p className="mt-1 text-xs italic text-muted-foreground">Har endnu ikke svaret</p>}
-              </li>
-            ))}
-          </ul>
+        <div className="space-y-1">
+          <SectionLabel>Din beskrivelse</SectionLabel>
+          <p className="whitespace-pre-wrap">{protest.description}</p>
+          {protest.video_url && (
+            <a href={protest.video_url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-primary underline">
+              Se video
+            </a>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <SectionLabel>Svar fra indklagede</SectionLabel>
+          {involved.length === 0 ? (
+            <p className="text-xs italic text-muted-foreground">Ingen indklagede koblet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {involved.map((r: any) => (
+                <li key={r.id} className="rounded-lg border border-border bg-muted/30 p-3">
+                  <UserAvatar userId={r.user_id} name={r.driver_name} size="xs" />
+                  {r.response ? (
+                    <p className="mt-2 whitespace-pre-wrap text-sm">{r.response}</p>
+                  ) : (
+                    <p className="mt-2 text-xs italic text-muted-foreground">Har endnu ikke svaret</p>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <VerdictBlock p={protest} />
@@ -217,15 +252,19 @@ function AgainstMeCard({ row }: { row: any }) {
   return (
     <Card>
       <ProtestHeader p={p} />
-      <CardContent className="space-y-3 text-sm">
-        <div>
-          <p className="text-muted-foreground">Klager beskriver:</p>
+      <CardContent className="space-y-4 border-t border-border pt-4 text-sm">
+        <div className="space-y-1 rounded-lg border border-border bg-muted/30 p-3">
+          <SectionLabel>Klager beskriver</SectionLabel>
           <p className="whitespace-pre-wrap">{p.description}</p>
-          {p.video_url && <a href={p.video_url} target="_blank" rel="noopener noreferrer" className="text-primary underline">Video</a>}
+          {p.video_url && (
+            <a href={p.video_url} target="_blank" rel="noopener noreferrer" className="inline-block text-xs text-primary underline">
+              Se video
+            </a>
+          )}
         </div>
 
-        <div>
-          <p className="mb-1 font-semibold">Din version af hændelsen</p>
+        <div className="space-y-2">
+          <SectionLabel>Din version af hændelsen</SectionLabel>
           <Textarea
             value={response}
             onChange={(e) => setResponse(e.target.value)}
@@ -234,12 +273,18 @@ function AgainstMeCard({ row }: { row: any }) {
             disabled={locked}
             placeholder="Uddyb hændelsen fra din synsvinkel…"
           />
-          {!locked && (
-            <Button className="mt-2" size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
-              {row.response ? "Opdater svar" : "Send svar"}
-            </Button>
-          )}
-          {row.responded_at && <p className="mt-1 text-xs text-muted-foreground">Sidst opdateret {format(new Date(row.responded_at), "dd MMM yyyy HH:mm")}</p>}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            {!locked ? (
+              <Button size="sm" onClick={() => save.mutate()} disabled={save.isPending}>
+                {row.response ? "Opdater svar" : "Send svar"}
+              </Button>
+            ) : <span />}
+            {row.responded_at && (
+              <p className="text-xs text-muted-foreground">
+                Sidst opdateret {format(new Date(row.responded_at), "dd MMM yyyy HH:mm")}
+              </p>
+            )}
+          </div>
         </div>
 
         <VerdictBlock p={p} />
@@ -247,3 +292,4 @@ function AgainstMeCard({ row }: { row: any }) {
     </Card>
   );
 }
+
