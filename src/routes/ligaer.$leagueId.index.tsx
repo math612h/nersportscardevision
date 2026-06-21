@@ -230,6 +230,24 @@ function LeagueDetail() {
 
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
 
+  const bannerUrlRaw: string | null = ((league as any)?.banner_url ?? null) as string | null;
+  const { data: bannerSignedUrl } = useQuery({
+    queryKey: ["league-banner-signed", bannerUrlRaw ?? "none"],
+    enabled: !!bannerUrlRaw && !/^https?:\/\//.test(bannerUrlRaw),
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from("league-banners")
+        .createSignedUrl(bannerUrlRaw!, 60 * 60 * 24 * 7);
+      if (error) throw error;
+      return data?.signedUrl ?? null;
+    },
+  });
+  const bannerUrl = bannerUrlRaw
+    ? /^https?:\/\//.test(bannerUrlRaw)
+      ? bannerUrlRaw
+      : bannerSignedUrl ?? null
+    : null;
+
   const trackFiles = useMemo(() => {
     const set = new Set<string>();
     (divisions ?? []).forEach((d: any) => { const f = getTrackImageFile(d.track); if (f) set.add(f); });
@@ -248,7 +266,13 @@ function LeagueDetail() {
     },
   });
 
-  return (
+  const nextDivision = useMemo(() => {
+    const now = Date.now();
+    return (divisions ?? [])
+      .filter((d: any) => !d.settings?.completed && d.race_date && new Date(d.race_date).getTime() > now)
+      .sort((a: any, b: any) => new Date(a.race_date).getTime() - new Date(b.race_date).getTime())[0] as any | undefined;
+  }, [divisions]);
+
     <div className="space-y-8">
       <Link to="/lmu/liga" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Alle ligaer
