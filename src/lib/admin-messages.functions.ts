@@ -58,6 +58,12 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
       link = ADMIN_MESSAGE_LINKS[templateKey];
       // Attach the same "Skriv dit navn" button as #velkomst — only if linked to Discord
       attachWelcomeButton = !!discordUserId;
+    } else if (data.template === "missing_lmu_name") {
+      templateKey = "missing_lmu_name";
+      const tpl = await getTemplateByKey(templateKey);
+      title = tpl?.title ?? "Tilføj dit LMU-navn";
+      body = tpl?.body ?? "";
+      link = ADMIN_MESSAGE_LINKS[templateKey];
     } else {
       templateKey = "profile_approved";
       const tpl = await getTemplateByKey(templateKey);
