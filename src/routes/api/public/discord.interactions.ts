@@ -133,7 +133,7 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
                 components: [
                   { type: 1, components: [{ type: 4, custom_id: "server_name", label: "Server-navn", style: 1, required: true, min_length: 1, max_length: 80 }] },
                   { type: 1, components: [{ type: 4, custom_id: "server_code", label: "Server-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
-                  { type: 1, components: [{ type: 4, custom_id: "lobby_code", label: "Lobby-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "lobby_code", label: "Lobby-kode (valgfri)", style: 1, required: false, min_length: 0, max_length: 40 }] },
                   { type: 1, components: [{ type: 4, custom_id: "time_window", label: "Tidspunkt (HH:MM-HH:MM)", style: 1, required: true, min_length: 9, max_length: 13, placeholder: "20:30-22:00" }] },
                 ],
               },
