@@ -7,17 +7,19 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 // edit them via the Besked Hub.
 export const ADMIN_MESSAGE_TEMPLATE_KEYS = {
   wrong_name_in_guild: "wrong_name_in_guild",
+  missing_lmu_name: "missing_lmu_name",
   profile_approved: "profile_approved",
 } as const;
 
 export const ADMIN_MESSAGE_LINKS: Record<string, string> = {
   wrong_name_in_guild: "/profil",
+  missing_lmu_name: "/profil",
   profile_approved: "/ligaer",
 };
 
 const schema = z.object({
   targetUserId: z.string().uuid(),
-  template: z.enum(["wrong_name", "profile_approved"]),
+  template: z.enum(["wrong_name", "missing_lmu_name", "profile_approved"]),
 });
 
 export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
@@ -56,6 +58,12 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
       link = ADMIN_MESSAGE_LINKS[templateKey];
       // Attach the same "Skriv dit navn" button as #velkomst — only if linked to Discord
       attachWelcomeButton = !!discordUserId;
+    } else if (data.template === "missing_lmu_name") {
+      templateKey = "missing_lmu_name";
+      const tpl = await getTemplateByKey(templateKey);
+      title = tpl?.title ?? "Tilføj dit LMU-navn";
+      body = tpl?.body ?? "";
+      link = ADMIN_MESSAGE_LINKS[templateKey];
     } else {
       templateKey = "profile_approved";
       const tpl = await getTemplateByKey(templateKey);
@@ -117,7 +125,7 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
 
 const statusSchema = z.object({
   userIds: z.array(z.string().uuid()).max(500),
-  template: z.enum(["wrong_name", "profile_approved"]),
+  template: z.enum(["wrong_name", "missing_lmu_name", "profile_approved"]),
 });
 
 export type AdminMessageStatus = {

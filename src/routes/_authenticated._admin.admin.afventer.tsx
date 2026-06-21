@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle, RefreshCw } from "lucide-react";
+import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle, RefreshCw, IdCard } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -119,6 +119,17 @@ function PendingApprovalsPage() {
     },
   });
 
+  const { data: lmuNameStatus } = useQuery({
+    queryKey: ["admin-msg-status", "missing_lmu_name", userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const rows = await fetchStatus({ data: { userIds, template: "missing_lmu_name" } });
+      const map: Record<string, string> = {};
+      for (const r of rows) map[r.user_id] = r.sent_at;
+      return map;
+    },
+  });
+
   const { data: guildStatus } = useQuery({
     queryKey: ["admin-guild-status", userIds.sort().join(",")],
     enabled: userIds.length > 0,
@@ -147,10 +158,10 @@ function PendingApprovalsPage() {
   });
 
   const messageMut = useMutation({
-    mutationFn: async (vars: { userId: string; template: "wrong_name" }) => {
+    mutationFn: async (vars: { userId: string; template: "wrong_name" | "missing_lmu_name" }) => {
       return await sendMessageFn({ data: { targetUserId: vars.userId, template: vars.template } });
     },
-    onSuccess: (res) => {
+    onSuccess: (res, vars) => {
       if (res?.discord?.ok) {
         toast.success("Besked sendt på hjemmesiden og Discord");
       } else if (res?.discord?.reason === "not_linked") {
@@ -158,7 +169,7 @@ function PendingApprovalsPage() {
       } else {
         toast.success("Besked sendt på hjemmesiden (Discord DM fejlede)");
       }
-      qc.invalidateQueries({ queryKey: ["admin-msg-status", "wrong_name"] });
+      qc.invalidateQueries({ queryKey: ["admin-msg-status", vars.template] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -217,6 +228,12 @@ function PendingApprovalsPage() {
                         Navne-besked sendt {formatRelativeDk(wrongNameStatus[p.id])}
                       </Badge>
                     )}
+                    {lmuNameStatus?.[p.id] && (
+                      <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">
+                        <IdCard className="h-3 w-3" />
+                        LMU-navn-besked sendt {formatRelativeDk(lmuNameStatus[p.id])}
+                      </Badge>
+                    )}
                     {guildStatus?.[p.id] === "in_guild" && (
                       <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/50 text-emerald-600 dark:text-emerald-400">
                         <CheckCircle2 className="h-3 w-3" /> På Discord-server
@@ -257,6 +274,14 @@ function PendingApprovalsPage() {
                       >
                         <MessageSquareWarning className="mr-2 h-4 w-4" />
                         {wrongNameStatus?.[p.id] ? "Send navne-besked igen" : "Fejl navn — bed om for- og efternavn"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          messageMut.mutate({ userId: p.id, template: "missing_lmu_name" })
+                        }
+                      >
+                        <IdCard className="mr-2 h-4 w-4" />
+                        {lmuNameStatus?.[p.id] ? "Send LMU-navn-besked igen" : "Mangler LMU-navn — bed om det"}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
