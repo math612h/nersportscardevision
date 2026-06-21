@@ -114,7 +114,7 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             });
           }
 
-          // Track picked → open modal with remaining fields
+          // Track picked → either show sponsor selector (if user owns teams) or open modal
           if (customId === "host_session_track_select") {
             const track = (payload?.data?.values?.[0] ?? "").toString().slice(0, 80);
             if (!track) {
@@ -123,8 +123,89 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
                 data: { flags: FLAG_EPHEMERAL, content: "Ingen bane valgt." },
               });
             }
-            // Encode track into modal custom_id so we can read it on submit.
-            const modalId = `host_session_share_modal:${encodeURIComponent(track)}`.slice(0, 100);
+
+            // Find teams owned by this Discord user (if linked)
+            let ownedTeams: Array<{ id: string; name: string }> = [];
+            if (discordUserId) {
+              try {
+                const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+                const { data: priv } = await (supabaseAdmin as any)
+                  .from("profiles_private")
+                  .select("user_id")
+                  .eq("discord_user_id", discordUserId)
+                  .maybeSingle();
+                const appUserId = (priv as any)?.user_id as string | undefined;
+                if (appUserId) {
+                  const { data: teams } = await (supabaseAdmin as any)
+                    .from("teams")
+                    .select("id, name")
+                    .eq("owner_id", appUserId)
+                    .order("name", { ascending: true });
+                  ownedTeams = (teams ?? []).slice(0, 24);
+                }
+              } catch (e) {
+                console.error("host_session lookup teams failed", e);
+              }
+            }
+
+            const trackEnc = encodeURIComponent(track);
+
+            if (ownedTeams.length > 0) {
+              const options = [
+                { label: "Mig selv", value: "self", description: "Du sponsorerer serveren" },
+                ...ownedTeams.map((t) => ({
+                  label: `Team ${t.name}`.slice(0, 100),
+                  value: `t_${t.id.replace(/-/g, "")}`,
+                  description: "Team sponsorerer serveren",
+                })),
+              ];
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: {
+                  flags: FLAG_EPHEMERAL,
+                  content: `Bane: **${track}**\n\nHvem sponsorerer serveren?`,
+                  components: [
+                    {
+                      type: 1,
+                      components: [
+                        {
+                          type: 3,
+                          custom_id: `hss_sponsor:${trackEnc}`.slice(0, 100),
+                          placeholder: "Vælg sponsor",
+                          min_values: 1,
+                          max_values: 1,
+                          options,
+                        },
+                      ],
+                    },
+                  ],
+                },
+              });
+            }
+
+            const modalId = `host_session_share_modal:${trackEnc}:self`.slice(0, 100);
+            return Response.json({
+              type: MODAL,
+              data: {
+                custom_id: modalId,
+                title: `Hosted session — ${track}`.slice(0, 45),
+                components: [
+                  { type: 1, components: [{ type: 4, custom_id: "server_name", label: "Server-navn", style: 1, required: true, min_length: 1, max_length: 80 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "server_code", label: "Server-kode", style: 1, required: true, min_length: 1, max_length: 40 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "lobby_code", label: "Lobby-kode (valgfri)", style: 1, required: false, min_length: 0, max_length: 40 }] },
+                  { type: 1, components: [{ type: 4, custom_id: "time_window", label: "Tidspunkt (HH:MM-HH:MM)", style: 1, required: true, min_length: 9, max_length: 13, placeholder: "20:30-22:00" }] },
+                ],
+              },
+            });
+          }
+
+          // Sponsor picked → open modal
+          if (customId.startsWith("hss_sponsor:")) {
+            const trackEnc = customId.slice("hss_sponsor:".length);
+            let track = "";
+            try { track = decodeURIComponent(trackEnc); } catch { track = trackEnc; }
+            const sponsor = (payload?.data?.values?.[0] ?? "self").toString().slice(0, 40);
+            const modalId = `host_session_share_modal:${trackEnc}:${sponsor}`.slice(0, 100);
             return Response.json({
               type: MODAL,
               data: {
@@ -470,9 +551,32 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
           }
 
           if (customId.startsWith("host_session_share_modal")) {
-            const trackEncoded = customId.includes(":") ? customId.split(":").slice(1).join(":") : "";
+            // Format: host_session_share_modal:<trackEnc>[:<sponsor>]
+            const segments = customId.split(":");
+            const trackEncoded = segments[1] ?? "";
+            const sponsorRaw = segments[2] ?? "self";
             let track = "";
             try { track = decodeURIComponent(trackEncoded); } catch { track = trackEncoded; }
+
+            // Resolve sponsor team name if applicable
+            let sponsorTeamName: string | null = null;
+            if (sponsorRaw.startsWith("t_")) {
+              const hex = sponsorRaw.slice(2);
+              if (hex.length === 32) {
+                const teamId = `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}`;
+                try {
+                  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+                  const { data: team } = await (supabaseAdmin as any)
+                    .from("teams")
+                    .select("name")
+                    .eq("id", teamId)
+                    .maybeSingle();
+                  sponsorTeamName = (team as any)?.name ?? null;
+                } catch (e) {
+                  console.error("host_session lookup sponsor team failed", e);
+                }
+              }
+            }
 
             const rows = (payload?.data?.components ?? []) as Array<{
               components: Array<{ custom_id: string; value: string }>;
@@ -504,6 +608,7 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
 
             const content = [
               `🎮 **Hosted session af ${hosterMention}**`,
+              sponsorTeamName ? `🏷️ Sponsoreret af team **${sponsorTeamName}**` : null,
               "",
               track ? `🏁 Bane: **${track}**` : null,
               `🖥️ Server: **${serverName}**`,
