@@ -417,71 +417,83 @@ function AdminLeagues() {
 
   if (!isLeagueList) return <Outlet />;
 
+  const activeCount = leagues?.length ?? 0;
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">{showArchive ? "Ligaer (arkiv)" : "Ligaer"}</h1>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild variant="outline" className="gap-1"><Link to="/admin"><ArrowLeft className="h-4 w-4" /> Kontrolpanel</Link></Button>
-          <Button variant="outline" className="gap-1" onClick={() => setShowArchive((v) => !v)}>
-            {showArchive ? (<><ArchiveRestore className="h-4 w-4" /> Aktive ligaer</>) : (<><Archive className="h-4 w-4" /> Arkiv</>)}
-          </Button>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild><Button className="gap-1"><Plus className="h-4 w-4" /> Ny liga</Button></DialogTrigger>
-            <DialogContent className="max-h-[90vh] overflow-y-auto">
-              <DialogHeader><DialogTitle>Opret liga eller off-season event</DialogTitle></DialogHeader>
-              <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
-                <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
-                <div><Label>Beskrivelse</Label><Textarea rows={8} className="min-h-[200px]" placeholder="Brug tomme linjer for at adskille afsnit." maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
-                <BannerPicker pathOrUrl={null} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerFile(null)} />
-                <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
-                  <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
-                  <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
-                </label>
-                <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
-                  <Checkbox checked={approvedOnly} onCheckedChange={(v) => setApprovedOnly(v === true)} />
-                  <span className="text-sm">Kun godkendte profiler kan tilmelde sig</span>
-                </label>
-                <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
-                  <Checkbox checked={briefingRequired} onCheckedChange={(v) => setBriefingRequired(v === true)} />
-                  <span className="text-sm">Drivers Briefing er obligatorisk (knap vises på afdelinger)</span>
-                </label>
-                <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} disabled={!briefingRequired} />
-                <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
-                  <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
-                  <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
-                </label>
-                <div className="space-y-1 rounded-md border border-border p-2">
-                  <Label>Protest-billetter pr. deltager</Label>
-                  <Input type="number" min={0} max={50} value={protestTickets} onChange={(e) => setProtestTickets(Number(e.target.value))} />
-                  <p className="text-xs text-muted-foreground">Antal protester en deltager har til rådighed i hele sæsonen. Får man medhold, koster det ingen billet — ellers koster en protest 1 billet.</p>
-                </div>
-                <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
+      <div className="rounded-xl border border-border bg-gradient-to-br from-card via-card to-muted/30 p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold tracking-tight">{showArchive ? "Ligaer · arkiv" : "Ligaer"}</h1>
+              <Badge variant="secondary" className="rounded-full">{activeCount}</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {showArchive ? "Arkiverede ligaer og off-season events." : "Administrer aktive ligaer, afdelinger og stillinger."}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm" className="gap-1"><Link to="/admin"><ArrowLeft className="h-4 w-4" /> Kontrolpanel</Link></Button>
+            <Button variant="outline" size="sm" className="gap-1" onClick={() => setShowArchive((v) => !v)}>
+              {showArchive ? (<><ArchiveRestore className="h-4 w-4" /> Aktive</>) : (<><Archive className="h-4 w-4" /> Arkiv</>)}
+            </Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild><Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> Ny liga</Button></DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogHeader><DialogTitle>Opret liga eller off-season event</DialogTitle></DialogHeader>
+                <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
+                  <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} /></div>
+                  <div><Label>Beskrivelse</Label><Textarea rows={8} className="min-h-[200px]" placeholder="Brug tomme linjer for at adskille afsnit." maxLength={1000} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
+                  <BannerPicker pathOrUrl={null} file={bannerFile} onFile={setBannerFile} onClear={() => setBannerFile(null)} />
+                  <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+                    <Checkbox checked={isOffseason} onCheckedChange={(v) => setIsOffseason(v === true)} />
+                    <span className="text-sm">Off-season event (enkeltløb, vises i separat sektion)</span>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+                    <Checkbox checked={approvedOnly} onCheckedChange={(v) => setApprovedOnly(v === true)} />
+                    <span className="text-sm">Kun godkendte profiler kan tilmelde sig</span>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+                    <Checkbox checked={briefingRequired} onCheckedChange={(v) => setBriefingRequired(v === true)} />
+                    <span className="text-sm">Drivers Briefing er obligatorisk (knap vises på afdelinger)</span>
+                  </label>
+                  <BriefingOpenEditor value={eventSettings} onChange={setEventSettings} disabled={!briefingRequired} />
+                  <label className="flex items-center gap-2 rounded-md border border-border p-2 cursor-pointer">
+                    <Checkbox checked={separateDivisionStandings} onCheckedChange={(v) => setSeparateDivisionStandings(v === true)} />
+                    <span className="text-sm">Hver afdeling er sin egen serie (stillinger vises pr. afdeling og klasse, ingen samlet liga-stilling)</span>
+                  </label>
+                  <div className="space-y-1 rounded-md border border-border p-2">
+                    <Label>Protest-billetter pr. deltager</Label>
+                    <Input type="number" min={0} max={50} value={protestTickets} onChange={(e) => setProtestTickets(Number(e.target.value))} />
+                    <p className="text-xs text-muted-foreground">Antal protester en deltager har til rådighed i hele sæsonen. Får man medhold, koster det ingen billet — ellers koster en protest 1 billet.</p>
+                  </div>
+                  <ClassConfigsEditor configs={configs} setConfigs={setConfigs} />
 
-                <div className="space-y-1 rounded-md border border-border p-2">
-                  <Label>Tilmelding åbner</Label>
-                  <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
-                  <p className="text-xs text-muted-foreground">Lad være tom for at holde tilmelding lukket. En nedtælling vises på ligasiden indtil tidspunktet.</p>
-                </div>
-                <CarLockEditor
-                  never={carLockNever}
-                  at={carLockAt}
-                  onNever={setCarLockNever}
-                  onAt={setCarLockAt}
-                />
-                <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
-                <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
-                <DialogFooter className="gap-2 sm:gap-2">
-                  <Button type="button" variant="secondary" disabled={submitting} onClick={(e) => create(e as any, false)} className="gap-1">
-                    <Archive className="h-4 w-4" /> {submitting ? "Gemmer…" : "Arkiver"}
-                  </Button>
-                  <Button type="button" disabled={submitting} onClick={(e) => create(e as any, true)} className="gap-1">
-                    <Send className="h-4 w-4" /> {submitting ? "Publicerer…" : "Publicer"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+                  <div className="space-y-1 rounded-md border border-border p-2">
+                    <Label>Tilmelding åbner</Label>
+                    <Input type="datetime-local" value={signupOpensAt} onChange={(e) => setSignupOpensAt(e.target.value)} />
+                    <p className="text-xs text-muted-foreground">Lad være tom for at holde tilmelding lukket. En nedtælling vises på ligasiden indtil tidspunktet.</p>
+                  </div>
+                  <CarLockEditor
+                    never={carLockNever}
+                    at={carLockAt}
+                    onNever={setCarLockNever}
+                    onAt={setCarLockAt}
+                  />
+                  <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
+                  <PointsSystemEditor value={pointsSystem} onChange={setPointsSystem} />
+                  <DialogFooter className="gap-2 sm:gap-2">
+                    <Button type="button" variant="secondary" disabled={submitting} onClick={(e) => create(e as any, false)} className="gap-1">
+                      <Archive className="h-4 w-4" /> {submitting ? "Gemmer…" : "Arkiver"}
+                    </Button>
+                    <Button type="button" disabled={submitting} onClick={(e) => create(e as any, true)} className="gap-1">
+                      <Send className="h-4 w-4" /> {submitting ? "Publicerer…" : "Publicer"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </div>
 
@@ -492,8 +504,12 @@ function AdminLeagues() {
         </div>
       )}
 
-      <div className="space-y-3">
-        {leagues?.length === 0 && <p className="text-muted-foreground">{showArchive ? "Arkivet er tomt." : "Ingen ligaer endnu."}</p>}
+      <div className="grid gap-4">
+        {leagues?.length === 0 && (
+          <div className="rounded-xl border border-dashed border-border bg-card/40 p-10 text-center text-sm text-muted-foreground">
+            {showArchive ? "Arkivet er tomt." : "Ingen ligaer endnu — opret den første med \"Ny liga\"."}
+          </div>
+        )}
         {leagues?.map((l: any, idx: number) => {
           const cfgs: ClassConfig[] = Array.isArray(l.class_configs) ? l.class_configs : [];
           const canMoveUp = idx > 0;
@@ -503,79 +519,95 @@ function AdminLeagues() {
             reorder.mutate({ id: l.id, dir });
           };
           return (
-          <Card key={l.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <CardTitle className="flex items-center gap-2">
-                      {l.name}
-                      {l.is_offseason && <Badge variant="secondary" className="text-[10px]">Off-season</Badge>}
-                      {!l.published && <Badge variant="outline" className="text-[10px]">Kladde</Badge>}
-                    </CardTitle>
-                    {l.description && <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">{l.description}</p>}
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {cfgs.length > 0
-                        ? cfgs.map((c, i) => (
-                            <Badge key={i} variant="outline">
-                              {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
-                              {c.max_drivers ? ` · maks ${c.max_drivers}` : ""}
-                              {c.dns_limit ? ` · DNS ${c.dns_limit}` : ""}
-                            </Badge>
-                          ))
-                        : (<>
-                            {l.car_class && <Badge>{l.car_class}</Badge>}
-                            {l.driver_category && <Badge variant="secondary">{l.driver_category}</Badge>}
-                          </>)}
+            <Card key={l.id} className="overflow-hidden transition-shadow hover:shadow-md">
+              <div className="flex flex-col sm:flex-row">
+                <LeagueBannerThumb pathOrUrl={l.banner_url} />
+                <div className="flex-1 p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-lg font-semibold leading-tight">{l.name}</h3>
+                        {l.is_offseason && <Badge variant="secondary" className="text-[10px]">Off-season</Badge>}
+                        {!l.published && <Badge variant="outline" className="text-[10px]">Kladde</Badge>}
+                      </div>
+                      {l.description && (
+                        <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{l.description}</p>
+                      )}
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {cfgs.length > 0
+                          ? cfgs.map((c, i) => (
+                              <Badge key={i} variant="outline" className="font-normal">
+                                {c.car_class} · {c.driver_category} · #{c.number_from}-{c.number_to}
+                                {c.max_drivers ? ` · maks ${c.max_drivers}` : ""}
+                              </Badge>
+                            ))
+                          : (<>
+                              {l.car_class && <Badge>{l.car_class}</Badge>}
+                              {l.driver_category && <Badge variant="secondary">{l.driver_category}</Badge>}
+                            </>)}
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-center gap-0.5 rounded-md border border-border/60 bg-muted/30 p-0.5">
+                      <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canMoveUp || reorder.isPending} onClick={() => handleMove("up")} title="Flyt op">
+                        <ArrowUp className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-6 w-6" disabled={!canMoveDown || reorder.isPending} onClick={() => handleMove("down")} title="Flyt ned">
+                        <ArrowDown className="h-3.5 w-3.5" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex flex-col items-center gap-0.5">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      disabled={!canMoveUp || reorder.isPending}
-                      onClick={() => handleMove("up")}
-                      title="Flyt op"
-                    >
-                      <ArrowUp className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      disabled={!canMoveDown || reorder.isPending}
-                      onClick={() => handleMove("down")}
-                      title="Flyt ned"
-                    >
-                      <ArrowDown className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                  <div className="flex gap-1">
-                    <EditLeagueDialog league={l} />
-                    {l.published ? (
-                      <Button variant="ghost" size="sm" title="Arkiver" onClick={() => { if (confirm("Arkiver liga? Den vil ikke længere være synlig for offentligheden.")) togglePublish.mutate({ id: l.id, publish: false }); }}>
-                        <Archive className="h-4 w-4" />
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3">
+                    <div className="flex flex-wrap gap-1.5">
+                      <Button asChild variant="secondary" size="sm" className="gap-1"><Link to="/admin/ligaer/$leagueId/afdelinger" params={{ leagueId: l.id }}><Settings className="h-3.5 w-3.5" /> Afdelinger</Link></Button>
+                      <Button asChild variant="ghost" size="sm"><Link to="/admin/ligaer/$leagueId/stillinger" params={{ leagueId: l.id }}>Stillinger</Link></Button>
+                      <Button asChild variant="ghost" size="sm"><Link to="/admin/ligaer/$leagueId/regler" params={{ leagueId: l.id }}>Regler</Link></Button>
+                      <Button asChild variant="ghost" size="sm"><Link to="/admin/ligaer/$leagueId/entries" params={{ leagueId: l.id }}>Entries</Link></Button>
+                      {l.discord_role_id && <SyncDiscordRolesButton leagueId={l.id} />}
+                    </div>
+                    <div className="flex gap-0.5">
+                      <EditLeagueDialog league={l} />
+                      {l.published ? (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Arkiver" onClick={() => { if (confirm("Arkiver liga? Den vil ikke længere være synlig for offentligheden.")) togglePublish.mutate({ id: l.id, publish: false }); }}>
+                          <Archive className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <Button variant="ghost" size="icon" className="h-8 w-8" title="Publicer" onClick={() => togglePublish.mutate({ id: l.id, publish: true })}>
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" title="Slet" onClick={() => { if (confirm("Slet liga?")) del.mutate(l.id); }}>
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-                    ) : (
-                      <Button variant="ghost" size="sm" title="Publicer" onClick={() => togglePublish.mutate({ id: l.id, publish: true })}>
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet liga?")) del.mutate(l.id); }}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                <Button asChild variant="outline" size="sm" className="gap-1"><Link to="/admin/ligaer/$leagueId/afdelinger" params={{ leagueId: l.id }}><Settings className="h-4 w-4" /> Afdelinger</Link></Button>
-                <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/stillinger" params={{ leagueId: l.id }}>Stillinger</Link></Button>
-                <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/regler" params={{ leagueId: l.id }}>Regler</Link></Button>
-                <Button asChild variant="outline" size="sm"><Link to="/admin/ligaer/$leagueId/entries" params={{ leagueId: l.id }}>Entries</Link></Button>
-                {l.discord_role_id && <SyncDiscordRolesButton leagueId={l.id} />}
-              </CardContent>
+              </div>
             </Card>
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function LeagueBannerThumb({ pathOrUrl }: { pathOrUrl: string | null }) {
+  const { data: signedUrl } = useQuery({
+    queryKey: ["league-thumb", pathOrUrl],
+    enabled: !!pathOrUrl && !pathOrUrl.startsWith("http"),
+    queryFn: async () => {
+      const { data } = await supabase.storage.from("league-banners").createSignedUrl(pathOrUrl!, 60 * 60);
+      return data?.signedUrl ?? null;
+    },
+  });
+  const src = pathOrUrl?.startsWith("http") ? pathOrUrl : signedUrl;
+  return (
+    <div className="relative h-32 w-full shrink-0 overflow-hidden bg-gradient-to-br from-muted to-muted/50 sm:h-auto sm:w-48">
+      {src ? (
+        <img src={src} alt="" className="h-full w-full object-cover" />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">Intet billede</div>
+      )}
     </div>
   );
 }
