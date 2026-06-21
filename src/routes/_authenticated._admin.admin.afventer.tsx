@@ -119,6 +119,17 @@ function PendingApprovalsPage() {
     },
   });
 
+  const { data: lmuNameStatus } = useQuery({
+    queryKey: ["admin-msg-status", "missing_lmu_name", userIds.sort().join(",")],
+    enabled: userIds.length > 0,
+    queryFn: async () => {
+      const rows = await fetchStatus({ data: { userIds, template: "missing_lmu_name" } });
+      const map: Record<string, string> = {};
+      for (const r of rows) map[r.user_id] = r.sent_at;
+      return map;
+    },
+  });
+
   const { data: guildStatus } = useQuery({
     queryKey: ["admin-guild-status", userIds.sort().join(",")],
     enabled: userIds.length > 0,
