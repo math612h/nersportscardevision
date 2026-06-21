@@ -32,6 +32,8 @@ import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
 import { GuestBlur } from "@/components/GuestGate";
 import { PracticeSessionsList } from "@/components/PracticeSessionsList";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { LeagueTeamsList } from "@/components/LeagueTeamsList";
+
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
   component: LeagueDetail,
