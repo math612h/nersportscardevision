@@ -123,6 +123,14 @@ function NewsHome() {
 
   const groupedResults = groupTopThree((latest?.settings?.results ?? []) as ResultRow[]);
 
+  if (gated) {
+    return (
+      <div className="space-y-10">
+        <ProfileCompletionGate />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-10">
       {user && <ProfileCompletionGate />}
