@@ -33,7 +33,7 @@ export function AppHeader() {
     { to: "/admin", label: "Kontrolpanel", icon: <Gauge className="h-4 w-4" />, show: !!isAdmin && !isAdminRoute, highlight: true },
   ];
 
-  const visibleItems = navItems.filter((i) => i.show);
+  const visibleItems = navItems.filter((i) => i.show && (!gated || (i.to === "/" && i.exact)));
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
