@@ -43,12 +43,12 @@ export function LeagueTeamSignupCard({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("id, name, published, is_offseason, teams_allowed, class_configs")
+        .select("id, name, published, teams_allowed, class_configs")
         .eq("published", true)
         .eq("teams_allowed", true)
         .order("name");
       if (error) throw error;
-      return ((data ?? []) as any[]).filter((l) => !l.is_offseason) as League[];
+      return (data ?? []) as League[];
     },
   });
 
