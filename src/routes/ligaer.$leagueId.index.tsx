@@ -33,6 +33,7 @@ import { GuestBlur } from "@/components/GuestGate";
 import { PracticeSessionsList } from "@/components/PracticeSessionsList";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { LeagueTeamsList } from "@/components/LeagueTeamsList";
+import { LeagueTeamSignupEntry } from "@/components/LeagueTeamSignupEntry";
 
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
@@ -379,6 +380,7 @@ function LeagueDetail() {
         {league && <SignupsList leagueId={leagueId} configs={configs} />}
       </GuestBlur>
 
+      {(league as any)?.teams_allowed && !isGuest && <LeagueTeamSignupEntry leagueId={leagueId} />}
       {(league as any)?.teams_allowed && <LeagueTeamsList leagueId={leagueId} />}
 
 
