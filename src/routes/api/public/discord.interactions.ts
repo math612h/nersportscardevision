@@ -508,7 +508,7 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               track ? `🏁 Bane: **${track}**` : null,
               `🖥️ Server: **${serverName}**`,
               `🔑 Server-kode: \`${serverCode}\``,
-              `🎯 Lobby-kode: \`${lobbyCode}\``,
+              lobbyCode ? `🎯 Lobby-kode: \`${lobbyCode}\`` : null,
               `🕒 Starter: <t:${startUnix}:t> (<t:${startUnix}:R>)`,
               `⏱️ Slutter: <t:${endUnix}:t> (<t:${endUnix}:R>)`,
             ].filter(Boolean).join("\n");
