@@ -151,9 +151,9 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
         if (!discordUserId) continue;
 
         const content = [
-          `🏁 **Lineup-invitation — "${(team as any).name}" i ${(league as any).name}**`,
+          `🏁 **Lineup-invitation — "${(team as any).name}" i ${(league as any).name} · ${data.carClass}**`,
           "",
-          `Du er valgt til teamets lineup i ligaen.`,
+          `Du er valgt til teamets lineup i ${data.carClass}.`,
           `Tryk Accepter for at bekræfte, eller Afvis for at takke nej.`,
           "",
           `Eller svar på hjemmesiden: https://lmudanmark.dk/teams/${data.teamId}`,
