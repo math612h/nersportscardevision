@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle, RefreshCw, IdCard } from "lucide-react";
+import { ArrowLeft, UserCheck, ThumbsUp, MoreVertical, MessageSquareWarning, CheckCircle2, XCircle, HelpCircle, RefreshCw, IdCard, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,9 +11,21 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { setProfileApproval } from "@/lib/leagues.functions";
+import { deleteUser } from "@/lib/users.functions";
 import { sendAdminTemplateMessage, getAdminMessageStatus } from "@/lib/admin-messages.functions";
 import { refreshPendingDiscordNicknames } from "@/lib/discord-refresh.functions";
 import { checkPendingGuildMembership } from "@/lib/discord-guild.functions";
@@ -44,9 +56,10 @@ function PendingApprovalsPage() {
   const fetchStatus = useServerFn(getAdminMessageStatus);
   const refreshNicks = useServerFn(refreshPendingDiscordNicknames);
   const checkGuildFn = useServerFn(checkPendingGuildMembership);
-
+  const deleteUserFn = useServerFn(deleteUser);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const runRefresh = async (silent = true) => {
     if (refreshing) return;
@@ -174,6 +187,19 @@ function PendingApprovalsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: async (userId: string) => {
+      await deleteUserFn({ data: { userId } });
+    },
+    onSuccess: () => {
+      toast.success("Brugeren er slettet");
+      setDeleteTarget(null);
+      qc.invalidateQueries({ queryKey: ["admin-pending-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -283,6 +309,14 @@ function PendingApprovalsPage() {
                         <IdCard className="mr-2 h-4 w-4" />
                         {lmuNameStatus?.[p.id] ? "Send LMU-navn-besked igen" : "Mangler LMU-navn — bed om det"}
                       </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeleteTarget({ id: p.id, name: p.display_name || "(uden navn)" })}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Slet bruger
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -291,6 +325,30 @@ function PendingApprovalsPage() {
           ))}
         </div>
       )}
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Slet bruger?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Du er ved at slette <strong>{deleteTarget?.name}</strong> permanent. Brugerens konto, profil og tilmeldinger fjernes. Dette kan ikke fortrydes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMut.isPending}>Annullér</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteMut.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteTarget) deleteMut.mutate(deleteTarget.id);
+              }}
+            >
+              {deleteMut.isPending ? "Sletter…" : "Slet bruger"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
