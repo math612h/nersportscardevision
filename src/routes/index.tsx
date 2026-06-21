@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, Smartphone, Trophy, Users } from "lucide-react";
+import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,12 @@ import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTrackImageFile } from "@/lib/tracks";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import DOMPurify from "isomorphic-dompurify";
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
@@ -143,24 +149,14 @@ function NewsHome() {
           <h1 className="text-2xl font-bold tracking-tight">Nyheder</h1>
           <p className="text-sm text-muted-foreground">Seneste afviklede løb og resultater.</p>
         </div>
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
-          <Button asChild className="w-full justify-center gap-2 sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button asChild className="gap-2">
             <Link to="/lmu/liga">
               <Flag className="h-4 w-4" /> Ligaer
             </Link>
           </Button>
-          <Button asChild variant="outline" className="w-full justify-center gap-2 sm:w-auto">
-            <Link to="/lmu/teams">
-              <ArrowUpRight className="h-4 w-4" /> Teams
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="w-full justify-center gap-2 sm:w-auto">
-            <Link to="/brugere">
-              <Users className="h-4 w-4" /> Brugere
-            </Link>
-          </Button>
           {user && (
-            <Button asChild variant="outline" className="relative w-full justify-center gap-2 sm:w-auto">
+            <Button asChild variant="outline" className="relative gap-2">
               <Link to="/mine-protests">
                 <MessageSquareWarning className="h-4 w-4" /> Incidents
                 {pendingIncidents > 0 && (
@@ -171,20 +167,29 @@ function NewsHome() {
               </Link>
             </Button>
           )}
-          <Button asChild variant="outline" className="w-full justify-center gap-2 sm:w-auto">
-            <a
-            href="https://discord.gg/bwVMAfrm55"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MessageCircle className="h-4 w-4" /> Discord
-            </a>
-          </Button>
-          <Button asChild variant="outline" className="w-full justify-center gap-2 sm:w-auto">
-            <Link to="/app-guide">
-              <Smartphone className="h-4 w-4" /> App guide
-            </Link>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="gap-2">
+                <MoreHorizontal className="h-4 w-4" /> Mere
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link to="/lmu/teams"><ArrowUpRight className="h-4 w-4" /> Teams</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/brugere"><Users className="h-4 w-4" /> Brugere</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <a href="https://discord.gg/bwVMAfrm55" target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="h-4 w-4" /> Discord
+                </a>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/app-guide"><Smartphone className="h-4 w-4" /> App guide</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
@@ -268,22 +273,33 @@ function NewsHome() {
                     )}
                   </div>
                   <ol className="grid gap-2 sm:grid-cols-3">
-                    {group.top.map((row) => (
-                      <li
-                        key={`${group.key}-${row.class_position}-${row.driver_name}`}
-                        className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
-                      >
-                        <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded bg-background font-semibold tabular-nums">
-                          {row.class_position}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate font-medium">
-                          {row.driver_name}
-                        </span>
-                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                          {row.points ?? 0} p
-                        </span>
-                      </li>
-                    ))}
+                    {group.top.map((row) => {
+                      const pos = Number(row.class_position);
+                      const medal =
+                        pos === 1
+                          ? "bg-amber-400/20 text-amber-700 ring-1 ring-amber-400/40 dark:text-amber-300"
+                          : pos === 2
+                          ? "bg-slate-300/30 text-slate-700 ring-1 ring-slate-400/40 dark:text-slate-200"
+                          : pos === 3
+                          ? "bg-orange-500/15 text-orange-700 ring-1 ring-orange-500/30 dark:text-orange-300"
+                          : "bg-background";
+                      return (
+                        <li
+                          key={`${group.key}-${row.class_position}-${row.driver_name}`}
+                          className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
+                        >
+                          <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
+                            {row.class_position}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate font-medium">
+                            {row.driver_name}
+                          </span>
+                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {row.points ?? 0} p
+                          </span>
+                        </li>
+                      );
+                    })}
                   </ol>
                 </div>
               ))}

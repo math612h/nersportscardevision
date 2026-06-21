@@ -15,6 +15,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/hooks/use-auth";
 import { AppHeader } from "@/components/AppHeader";
 import { BackBar } from "@/components/BackBar";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Toaster } from "@/components/ui/sonner";
 import { SplashScreen } from "@/components/SplashScreen";
 
@@ -169,9 +170,10 @@ function Shell() {
     <div className="min-h-screen bg-background">
       <AppHeader />
       <BackBar />
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      <main className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:pb-6">
         <Outlet />
       </main>
+      <MobileBottomNav />
     </div>
   );
 }

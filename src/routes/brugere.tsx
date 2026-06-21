@@ -7,6 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/brugere")({
   head: () => ({
@@ -38,6 +45,8 @@ async function signed(path: string) {
 
 function UsersPage() {
   const [q, setQ] = useState("");
+  const [approval, setApproval] = useState<"all" | "approved" | "pending">("all");
+  const [sort, setSort] = useState<"name" | "elo_desc" | "elo_asc">("name");
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["all-profiles"],
@@ -88,13 +97,29 @@ function UsersPage() {
 
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return profiles ?? [];
-    return (profiles ?? []).filter(
-      (p) =>
+    let rows = (profiles ?? []).filter((p) => {
+      if (approval === "approved" && !p.approved) return false;
+      if (approval === "pending" && p.approved) return false;
+      if (!needle) return true;
+      return (
         (p.display_name ?? "").toLowerCase().includes(needle) ||
-        (p.lmu_name ?? "").toLowerCase().includes(needle),
-    );
-  }, [profiles, q]);
+        (p.lmu_name ?? "").toLowerCase().includes(needle)
+      );
+    });
+    if (sort === "name") {
+      rows = [...rows].sort((a, b) =>
+        (a.display_name ?? "").localeCompare(b.display_name ?? "", "da"),
+      );
+    } else {
+      const dir = sort === "elo_desc" ? -1 : 1;
+      rows = [...rows].sort((a, b) => {
+        const sa = ratings?.[a.id]?.score ?? -Infinity * dir;
+        const sb = ratings?.[b.id]?.score ?? -Infinity * dir;
+        return dir * ((sa as number) - (sb as number));
+      });
+    }
+    return rows;
+  }, [profiles, q, approval, sort, ratings]);
 
   const totalCount = profiles?.length ?? 0;
 
@@ -110,9 +135,27 @@ function UsersPage() {
         </p>
       </header>
 
-      <div className="relative max-w-sm">
-        <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Søg navn eller LMU-navn…" className="pl-8" />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative flex-1 sm:max-w-sm">
+          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Søg navn eller LMU-navn…" className="pl-8" />
+        </div>
+        <Select value={approval} onValueChange={(v) => setApproval(v as typeof approval)}>
+          <SelectTrigger className="sm:w-40"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle brugere</SelectItem>
+            <SelectItem value="approved">Kun godkendte</SelectItem>
+            <SelectItem value="pending">Afventer godkendelse</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sort} onValueChange={(v) => setSort(v as typeof sort)}>
+          <SelectTrigger className="sm:w-44"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="name">Sortér: Navn</SelectItem>
+            <SelectItem value="elo_desc">Sortér: Elo (højest)</SelectItem>
+            <SelectItem value="elo_asc">Sortér: Elo (lavest)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading ? (
