@@ -20,7 +20,7 @@ import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
 import { getLeaderboardRows } from "@/lib/leaderboard.functions";
 import { classColor } from "@/lib/lmu-cars";
-import { normalizeTrackName } from "@/lib/tracks";
+import { normalizeTrackName, LMU_TRACKS } from "@/lib/tracks";
 import { GuestLock } from "@/components/GuestGate";
 
 const COMPANION_DOWNLOAD_URL =
@@ -103,6 +103,13 @@ function LeaderboardPage() {
 
   const trackLayoutMap = useMemo(() => {
     const m = new Map<string, Set<string>>();
+    // Seed with canonical tracks/layouts so alle definerede layouts (fx Fuji Classic)
+    // altid kan vælges, også uden uploadede tider endnu.
+    for (const t of LMU_TRACKS) {
+      const set = new Set<string>();
+      for (const l of t.layouts) set.add(l);
+      m.set(t.name, set);
+    }
     for (const r of rows ?? []) {
       if (!m.has(r.track)) m.set(r.track, new Set());
       if (r.layout) m.get(r.track)!.add(r.layout);
