@@ -227,6 +227,32 @@ function ProfilePage() {
                 <Input value={user?.email ?? ""} disabled />
               </div>
             </div>
+            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
+              <div>
+                <Label className="text-sm font-semibold">Adresse (kun synlig for admins)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Bruges <span className="font-medium">kun</span> hvis du vinder en præmie og vi skal sende den til dig. Skjult for andre brugere.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Label>Adresse</Label>
+                  <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} required placeholder="Vej og husnummer" />
+                </div>
+                <div>
+                  <Label>Postnummer</Label>
+                  <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} required />
+                </div>
+                <div>
+                  <Label>By</Label>
+                  <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} required />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Land</Label>
+                  <Input value={country} onChange={(e) => setCountry(e.target.value)} maxLength={100} />
+                </div>
+              </div>
+            </div>
             <div>
               <Label>Bio</Label>
               <Textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} placeholder="Lidt om dig selv…" />
@@ -235,10 +261,33 @@ function ProfilePage() {
               <Label>Achievements</Label>
               <Textarea value={achievements} onChange={(e) => setAchievements(e.target.value)} maxLength={1000} placeholder="Mesterskaber, pole positions, podier…" />
             </div>
+            <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptsDanish}
+                onChange={(e) => setAcceptsDanish(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-primary"
+              />
+              <span className="text-sm">
+                Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen foregår på dansk.
+              </span>
+            </label>
+            <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={mediaConsent}
+                onChange={(e) => setMediaConsent(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-primary"
+              />
+              <span className="text-sm">
+                Jeg giver tilladelse til, at LMU Danmark må <span className="font-medium">anvende mit navn og eventuelle billeder/klip af mig på stream og sociale medier</span> i forbindelse med ligaens aktiviteter.
+              </span>
+            </label>
             <Button type="submit" disabled={saving}>
               {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Gem ændringer
             </Button>
+
           </form>
         </CardContent>
       </Card>
