@@ -7,6 +7,11 @@ const schema = z.object({
   lmu_name: z.string().trim().min(1).max(80),
   email: z.string().trim().email().max(255),
   accepts_danish: z.boolean(),
+  address: z.string().trim().min(1).max(200),
+  postal_code: z.string().trim().min(1).max(20),
+  city: z.string().trim().min(1).max(100),
+  country: z.string().trim().min(1).max(100).default("Danmark"),
+  media_consent: z.boolean(),
 });
 
 export const completeOnboarding = createServerFn({ method: "POST" })
@@ -36,6 +41,7 @@ export const completeOnboarding = createServerFn({ method: "POST" })
     }
 
     if (!data.accepts_danish) throw new Error("Du skal bekræfte at du kan læse og skrive dansk.");
+    if (!data.media_consent) throw new Error("Du skal acceptere brug af navn/billeder på stream og SoMe.");
 
     const { error } = await supabaseAdmin
       .from("profiles")
@@ -43,9 +49,21 @@ export const completeOnboarding = createServerFn({ method: "POST" })
         display_name: data.display_name,
         lmu_name: data.lmu_name,
         accepts_danish: true,
-      })
+        media_consent: true,
+      } as never)
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
+
+    const { error: privUpdErr } = await supabaseAdmin
+      .from("profiles_private")
+      .update({
+        address: data.address,
+        postal_code: data.postal_code,
+        city: data.city,
+        country: data.country,
+      } as never)
+      .eq("user_id", context.userId);
+    if (privUpdErr) throw new Error(privUpdErr.message);
 
     // Check current approval status to decide which notifications to send
     const { data: currentProfile } = await supabaseAdmin
@@ -64,7 +82,6 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       const member = await fetchDiscordGuildMember(discordId);
       liveServerNick = member?.nick ?? null;
       liveUsername = member?.user?.global_name || member?.user?.username || null;
-      // Persist the fresh values so the rest of the app sees them too.
       await supabaseAdmin
         .from("profiles_private")
         .update({
@@ -85,7 +102,6 @@ export const completeOnboarding = createServerFn({ method: "POST" })
     }
     const discordName = liveServerNick || liveUsername || "(intet Discord-navn)";
 
-    // If admin had previously asked the user to fix their name, notify the admin channel
     const ADMIN_ROLE_ID = "1336285632066097233";
     try {
       const { data: notifs } = await supabaseAdmin
@@ -111,7 +127,6 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       console.error("admin name-update notify failed", e);
     }
 
-    // Notify the pending-approval admin channel for brand-new (unapproved) users
     if (!isApproved) {
       try {
         const content =

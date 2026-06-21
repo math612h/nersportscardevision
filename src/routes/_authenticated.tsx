@@ -20,22 +20,29 @@ function Gate() {
     enabled: !!user,
     queryFn: async () => {
       const [{ data: profile }, { data: priv }] = await Promise.all([
-        supabase.from("profiles").select("display_name, lmu_name, accepts_danish").eq("id", user!.id).maybeSingle(),
+        supabase.from("profiles").select("display_name, lmu_name, accepts_danish, media_consent").eq("id", user!.id).maybeSingle(),
         (supabase as unknown as { from: (t: string) => any }).from("profiles_private")
-          .select("discord_user_id").eq("user_id", user!.id).maybeSingle(),
+          .select("discord_user_id, address, postal_code, city").eq("user_id", user!.id).maybeSingle(),
       ]);
-      const discordLinked = !!(priv as { discord_user_id?: string | null } | null)?.discord_user_id;
-      const lmu = (profile as { lmu_name?: string | null } | null)?.lmu_name?.trim() ?? "";
-      const name = (profile as { display_name?: string | null } | null)?.display_name?.trim() ?? "";
-      const accepts = (profile as { accepts_danish?: boolean | null } | null)?.accepts_danish === true;
+      const p = (priv ?? {}) as { discord_user_id?: string | null; address?: string | null; postal_code?: string | null; city?: string | null };
+      const pr = (profile ?? {}) as { display_name?: string | null; lmu_name?: string | null; accepts_danish?: boolean | null; media_consent?: boolean | null };
+      const discordLinked = !!p.discord_user_id;
+      const lmu = (pr.lmu_name ?? "").trim();
+      const name = (pr.display_name ?? "").trim();
+      const accepts = pr.accepts_danish === true;
+      const mediaConsent = pr.media_consent === true;
+      const address = (p.address ?? "").trim();
+      const postal = (p.postal_code ?? "").trim();
+      const city = (p.city ?? "").trim();
       const email = (user?.email ?? "").trim();
       const hasRealEmail = !!email && !email.endsWith("@no-email.lmudanmark.dk");
       return {
         discordLinked,
-        complete: discordLinked && !!lmu && !!name && hasRealEmail && accepts,
+        complete: discordLinked && !!lmu && !!name && hasRealEmail && accepts && mediaConsent && !!address && !!postal && !!city,
       };
     },
   });
+
 
   // Refresh own Discord avatar højst hvert 10. minut.
   useEffect(() => {
@@ -61,10 +68,22 @@ function Gate() {
       return;
     }
     if (statusLoading || !status) return;
-    const onOnboarding = location.pathname === "/onboarding";
-    if (!status.complete && !onOnboarding) {
+    const path = location.pathname;
+    const onOnboarding = path === "/onboarding";
+    const onProfile = path.startsWith("/profil");
+    const onHome = path === "/";
+    // If Discord isn't linked, force onboarding (initial Discord OAuth step).
+    if (!status.discordLinked && !onOnboarding) {
       navigate({ to: "/onboarding" });
-    } else if (status.complete && onOnboarding) {
+      return;
+    }
+    // If complete and still on onboarding, send to home.
+    if (status.complete && onOnboarding) {
+      navigate({ to: "/" });
+      return;
+    }
+    // If profile is incomplete (but Discord linked), only allow home, profile and onboarding.
+    if (status.discordLinked && !status.complete && !onHome && !onProfile && !onOnboarding) {
       navigate({ to: "/" });
     }
   }, [loading, user, status, statusLoading, location.pathname, navigate]);
@@ -74,11 +93,11 @@ function Gate() {
   }
   if (!user) return null;
 
-  // BLOCK rendering the rest of the app until onboarding is complete.
-  // The user must finish their profile (all fields + Danish confirmation) first.
+  // While Discord is not linked we still hard-redirect to /onboarding.
   const onOnboarding = location.pathname === "/onboarding";
-  if (status && !status.complete && !onOnboarding) {
+  if (status && !status.discordLinked && !onOnboarding) {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">Sender dig til profil-opsætning…</div>;
   }
   return <Outlet />;
 }
+
