@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, Settings as SettingsIcon, Timer } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, ChevronDown, ChevronRight, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, KeyRound, Settings as SettingsIcon, Timer } from "lucide-react";
 import { useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -31,6 +31,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
 import { GuestBlur } from "@/components/GuestGate";
 import { PracticeSessionsList } from "@/components/PracticeSessionsList";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 export const Route = createFileRoute("/ligaer/$leagueId/")({
   component: LeagueDetail,
@@ -229,6 +230,24 @@ function LeagueDetail() {
 
   const configs: ClassConfig[] = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
 
+  const bannerUrlRaw: string | null = ((league as any)?.banner_url ?? null) as string | null;
+  const { data: bannerSignedUrl } = useQuery({
+    queryKey: ["league-banner-signed", bannerUrlRaw ?? "none"],
+    enabled: !!bannerUrlRaw && !/^https?:\/\//.test(bannerUrlRaw),
+    queryFn: async () => {
+      const { data, error } = await supabase.storage
+        .from("league-banners")
+        .createSignedUrl(bannerUrlRaw!, 60 * 60 * 24 * 7);
+      if (error) throw error;
+      return data?.signedUrl ?? null;
+    },
+  });
+  const bannerUrl = bannerUrlRaw
+    ? /^https?:\/\//.test(bannerUrlRaw)
+      ? bannerUrlRaw
+      : bannerSignedUrl ?? null
+    : null;
+
   const trackFiles = useMemo(() => {
     const set = new Set<string>();
     (divisions ?? []).forEach((d: any) => { const f = getTrackImageFile(d.track); if (f) set.add(f); });
@@ -247,55 +266,99 @@ function LeagueDetail() {
     },
   });
 
+  const nextDivision = useMemo(() => {
+    const now = Date.now();
+    return (divisions ?? [])
+      .filter((d: any) => !d.settings?.completed && d.race_date && new Date(d.race_date).getTime() > now)
+      .sort((a: any, b: any) => new Date(a.race_date).getTime() - new Date(b.race_date).getTime())[0] as any | undefined;
+  }, [divisions]);
+
+  const isOff = !!(league as any)?.is_offseason;
+
   return (
     <div className="space-y-8">
-      <Link to="/lmu/liga" className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground">
+      <Link
+        to="/lmu/liga"
+        className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground"
+      >
         <ArrowLeft className="h-3 w-3" /> Alle ligaer
       </Link>
 
-      <header className="space-y-3">
-        <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-            {(league as any)?.is_offseason ? "Off-Season event" : "Liga"}
-          </p>
-          <h1 className="text-2xl font-bold tracking-tight">{league?.name}</h1>
-          {league?.description && <p className="whitespace-pre-wrap text-sm text-muted-foreground">{league.description}</p>}
-        </div>
-
-        <div className="flex flex-col items-start gap-2">
-          {configs.length > 0
-            ? configs.map((c, i) => {
-                const col = classColor(c.car_class);
-                return (
-                  <Badge key={i} variant="outline" className={`gap-1.5 ${col.badge}`}>
-                    <span className={`h-2 w-2 rounded-full ${col.dot}`} />
-                    {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
-                  </Badge>
-                );
-              })
-            : (<>
-                {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
-                {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
-              </>)}
-        </div>
-
-        <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
-
-        <GuestBlur active={isGuest} label="Log ind for at tilmelde">
-          <div className="space-y-2 pt-1">
-            {league && <SignupDialog leagueId={leagueId} configs={configs} signupOpensAt={(league as any)?.signup_opens_at ?? null} approvedOnly={!!(league as any)?.approved_only} />}
-            <div className="flex flex-wrap gap-2">
-              <RulesButton leagueId={leagueId} />
-              {league && <EditEntryDialog leagueId={leagueId} />}
-              {league && <LeaveLeagueButton leagueId={leagueId} />}
+      <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="relative aspect-[21/9] w-full overflow-hidden bg-muted sm:aspect-[24/7]">
+          {bannerUrl ? (
+            <img src={bannerUrl} alt={league?.name ?? ""} className="h-full w-full object-cover" loading="eager" />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-primary/30 via-primary/10 to-transparent" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 space-y-2 p-4 sm:p-6">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+              {isOff ? "Off-Season event" : "Liga"}
+            </p>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-4xl">{league?.name}</h1>
+            <div className="flex flex-wrap gap-1.5">
+              {configs.length > 0
+                ? configs.map((c, i) => {
+                    const col = classColor(c.car_class);
+                    return (
+                      <Badge key={i} variant="outline" className={`gap-1.5 bg-background/80 backdrop-blur ${col.badge}`}>
+                        <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+                        {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
+                      </Badge>
+                    );
+                  })
+                : (
+                  <>
+                    {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
+                    {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
+                  </>
+                )}
+              {nextDivision?.race_date && (
+                <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
+                  <Calendar className="h-3 w-3" /> Næste: {format(new Date(nextDivision.race_date), "dd MMM HH:mm")}
+                </Badge>
+              )}
+              {typeof leagueSignupCount === "number" && (
+                <Badge variant="outline" className="gap-1 bg-background/80 backdrop-blur">
+                  <Users className="h-3 w-3" /> {leagueSignupCount} tilmeldte
+                </Badge>
+              )}
             </div>
           </div>
-        </GuestBlur>
+        </div>
 
+        <div className="space-y-3 p-4 sm:p-6">
+          {league?.description && (
+            <p className="whitespace-pre-wrap text-sm text-muted-foreground">{league.description}</p>
+          )}
 
+          <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
+
+          <GuestBlur active={isGuest} label="Log ind for at tilmelde">
+            <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                {league && (
+                  <SignupDialog
+                    leagueId={leagueId}
+                    configs={configs}
+                    signupOpensAt={(league as any)?.signup_opens_at ?? null}
+                    approvedOnly={!!(league as any)?.approved_only}
+                  />
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <RulesButton leagueId={leagueId} />
+                {league && <EditEntryDialog leagueId={leagueId} />}
+                {league && <LeaveLeagueButton leagueId={leagueId} />}
+              </div>
+            </div>
+          </GuestBlur>
+        </div>
       </header>
 
       <QuickNav />
+
 
       <GuestBlur active={isGuest} label="Log ind for at se entrylisten">
         {league && <SignupsList leagueId={leagueId} configs={configs} />}
@@ -381,27 +444,34 @@ function LeagueDetail() {
                     </div>
                   )}
                   {hasLobby && !completed && (
-                    <ul className="mt-1 space-y-0.5 rounded border border-border/60 bg-muted/30 p-2 text-xs">
-                      {lobby?.server_name && (
-                        <li className="flex justify-between gap-2">
-                          <span className="text-muted-foreground">Server Navn</span>
-                          <span className="font-mono font-medium truncate">{lobby.server_name}</span>
-                        </li>
-                      )}
-                      {lobby?.lobby_code && (
-                        <li className="flex justify-between gap-2">
-                          <span className="text-muted-foreground">Lobby Code</span>
-                          <span className="font-mono font-medium truncate">{lobby.lobby_code}</span>
-                        </li>
-                      )}
-                  {lobby?.lobby_password && (
-                    <li className="flex justify-between gap-2">
-                      <span className="text-muted-foreground">Password</span>
-                      <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
-                    </li>
+                    <details className="group/lobby mt-1 rounded border border-border/60 bg-muted/30 text-xs">
+                      <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2 py-1.5 font-medium text-muted-foreground hover:text-foreground">
+                        <KeyRound className="h-3 w-3" />
+                        Vis lobby-info
+                        <ChevronDown className="ml-auto h-3 w-3 transition group-open/lobby:rotate-180" />
+                      </summary>
+                      <ul className="space-y-0.5 px-2 pb-2">
+                        {lobby?.server_name && (
+                          <li className="flex justify-between gap-2">
+                            <span className="text-muted-foreground">Server Navn</span>
+                            <span className="font-mono font-medium truncate">{lobby.server_name}</span>
+                          </li>
+                        )}
+                        {lobby?.lobby_code && (
+                          <li className="flex justify-between gap-2">
+                            <span className="text-muted-foreground">Lobby Code</span>
+                            <span className="font-mono font-medium truncate">{lobby.lobby_code}</span>
+                          </li>
+                        )}
+                        {lobby?.lobby_password && (
+                          <li className="flex justify-between gap-2">
+                            <span className="text-muted-foreground">Password</span>
+                            <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
+                          </li>
+                        )}
+                      </ul>
+                    </details>
                   )}
-                </ul>
-              )}
               <PracticeSessionsList divisionId={d.id} />
             </CardContent>
           </Card>
@@ -1471,21 +1541,23 @@ function QuickNav() {
   };
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-      {items.map((item) => (
-        <button
-          key={item.id}
-          onClick={() => scrollTo(item.id)}
-          className="group flex items-center gap-2 rounded-lg border border-border bg-card p-3 text-left transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
-        >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
-            <item.icon className="h-4 w-4" />
-          </span>
-          <span className="truncate text-xs font-medium">{item.label}</span>
-        </button>
-      ))}
-    </div>
-
+    <nav
+      aria-label="Spring til sektion"
+      className="sticky top-14 z-20 -mx-4 border-y border-border bg-background/85 px-4 py-2 backdrop-blur"
+    >
+      <div className="flex gap-1.5 overflow-x-auto">
+        {items.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => scrollTo(item.id)}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-primary hover:bg-primary/10 hover:text-primary"
+          >
+            <item.icon className="h-3.5 w-3.5" />
+            {item.label}
+          </button>
+        ))}
+      </div>
+    </nav>
   );
 }
 
@@ -1498,35 +1570,43 @@ function DriverAidsView({ settings }: { settings: EventSettings }) {
     .filter(Boolean) as { label: string; value: string }[];
 
   return (
-    <section id="driveraids" className="space-y-4">
-      <div className="flex items-center gap-2 text-primary">
-        <SettingsIcon className="h-4 w-4" />
-        <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Driver Aids</h2>
-      </div>
-      {aidRows.length === 0 ? (
+    <section id="driveraids">
+      <Collapsible defaultOpen={false}>
         <Card>
-          <CardContent className="py-6 text-center text-sm text-muted-foreground">
-            Ingen driver aids angivet endnu.
-          </CardContent>
+          <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 p-4 text-left hover:bg-muted/30">
+            <div className="flex items-center gap-2 text-primary">
+              <SettingsIcon className="h-4 w-4" />
+              <span className="text-xs font-semibold uppercase tracking-[0.18em]">Driver Aids</span>
+              {aidRows.length > 0 && (
+                <Badge variant="outline" className="ml-1 text-[10px]">{aidRows.length} regler</Badge>
+              )}
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition group-data-[state=open]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            {aidRows.length === 0 ? (
+              <CardContent className="border-t border-border py-6 text-center text-sm text-muted-foreground">
+                Ingen driver aids angivet endnu.
+              </CardContent>
+            ) : (
+              <CardContent className="border-t border-border py-4">
+                <table className="w-full text-sm">
+                  <tbody>
+                    {aidRows.map((r) => (
+                      <tr key={r.label} className="border-t border-border first:border-t-0">
+                        <td className="py-1.5 pr-2 text-muted-foreground">{r.label}</td>
+                        <td className="py-1.5 text-right">
+                          <Badge variant={r.value === "On" ? "default" : "secondary"} className="text-[10px]">{r.value}</Badge>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </CardContent>
+            )}
+          </CollapsibleContent>
         </Card>
-      ) : (
-        <Card>
-          <CardContent className="py-4">
-            <table className="w-full text-sm">
-              <tbody>
-                {aidRows.map((r) => (
-                  <tr key={r.label} className="border-t border-border first:border-t-0">
-                    <td className="py-1.5 pr-2 text-muted-foreground">{r.label}</td>
-                    <td className="py-1.5 text-right">
-                      <Badge variant={r.value === "On" ? "default" : "secondary"} className="text-[10px]">{r.value}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
-      )}
+      </Collapsible>
     </section>
   );
 }
