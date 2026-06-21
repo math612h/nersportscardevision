@@ -31,13 +31,21 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       throw new Error("Kun teamejeren kan tilmelde teamet til en liga");
     }
 
-    // Verify league exists
+    // Verify league exists and has the requested car_class
     const { data: league } = await (supabaseAdmin as any)
       .from("leagues")
-      .select("id, name")
+      .select("id, name, class_configs")
       .eq("id", data.leagueId)
       .maybeSingle();
     if (!league) throw new Error("Ligaen findes ikke");
+    const classes = new Set(
+      (Array.isArray((league as any).class_configs) ? (league as any).class_configs : [])
+        .map((c: any) => c?.car_class)
+        .filter(Boolean),
+    );
+    if (!classes.has(data.carClass)) {
+      throw new Error("Den valgte bilklasse findes ikke i ligaen");
+    }
 
     // Verify all selected users are members of the team
     const { data: members } = await (supabaseAdmin as any)
@@ -47,6 +55,22 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
     const memberIds = new Set(((members ?? []) as any[]).map((m) => m.user_id));
     for (const uid of data.userIds) {
       if (!memberIds.has(uid)) throw new Error("En valgt kører er ikke medlem af teamet");
+    }
+
+    // Verify every selected user is signed up in this league + class
+    const { data: entries } = await (supabaseAdmin as any)
+      .from("entries")
+      .select("user_id")
+      .eq("league_id", data.leagueId)
+      .eq("car_class", data.carClass)
+      .in("user_id", data.userIds);
+    const enrolled = new Set(((entries ?? []) as any[]).map((e) => e.user_id));
+    for (const uid of data.userIds) {
+      if (!enrolled.has(uid)) {
+        throw new Error(
+          `Alle valgte kørere skal være tilmeldt ${data.carClass} i ligaen før de kan sættes på lineupet`,
+        );
+      }
     }
 
     // Block users locked to another team in another active league
@@ -59,12 +83,13 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       }
     }
 
-    // Insert / fetch the entry (unique on league_id+team_id)
+    // Insert / fetch the entry (unique on league_id+team_id+car_class)
     const { data: existing } = await (supabaseAdmin as any)
       .from("league_team_entries")
       .select("id, status")
       .eq("league_id", data.leagueId)
       .eq("team_id", data.teamId)
+      .eq("car_class", data.carClass)
       .maybeSingle();
 
     let entryId: string;
@@ -82,6 +107,7 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
         .insert({
           league_id: data.leagueId,
           team_id: data.teamId,
+          car_class: data.carClass,
           submitted_by: context.userId,
           status: "pending",
         })
