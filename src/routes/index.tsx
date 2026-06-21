@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, Smartphone, Trophy, Users } from "lucide-react";
+import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +10,12 @@ import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTrackImageFile } from "@/lib/tracks";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import DOMPurify from "isomorphic-dompurify";
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
