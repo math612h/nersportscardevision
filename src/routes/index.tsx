@@ -423,3 +423,51 @@ function NewsPostsSection() {
   );
 }
 
+function ProfileCompletionGate() {
+  const { user } = useAuth();
+  const { data: status } = useQuery({
+    queryKey: ["onboarding-status", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [{ data: profile }, { data: priv }] = await Promise.all([
+        supabase.from("profiles").select("display_name, lmu_name, accepts_danish, media_consent").eq("id", user!.id).maybeSingle(),
+        (supabase as unknown as { from: (t: string) => any }).from("profiles_private")
+          .select("discord_user_id, address, postal_code, city").eq("user_id", user!.id).maybeSingle(),
+      ]);
+      const p = (priv ?? {}) as any;
+      const pr = (profile ?? {}) as any;
+      const email = (user?.email ?? "").trim();
+      const hasRealEmail = !!email && !email.endsWith("@no-email.lmudanmark.dk");
+      const complete = !!p.discord_user_id
+        && !!(pr.lmu_name ?? "").trim()
+        && !!(pr.display_name ?? "").trim()
+        && hasRealEmail
+        && pr.accepts_danish === true
+        && pr.media_consent === true
+        && !!(p.address ?? "").trim()
+        && !!(p.postal_code ?? "").trim()
+        && !!(p.city ?? "").trim();
+      return { complete };
+    },
+  });
+  if (!status || status.complete) return null;
+  return (
+    <section className="rounded-2xl border-2 border-blue-400 bg-gradient-to-br from-blue-600 to-blue-700 p-6 text-white shadow-lg sm:p-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">
+            Udfyld og færdiggør din profil for at fortsætte
+          </h2>
+          <p className="text-sm text-blue-100">
+            Du skal udfylde alle felter på din profil, før du kan bruge platformen fuldt ud.
+          </p>
+        </div>
+        <Button asChild size="lg" variant="secondary" className="shrink-0 font-semibold">
+          <Link to="/profil">Gå til min profil</Link>
+        </Button>
+      </div>
+    </section>
+  );
+}
+
+
