@@ -56,9 +56,10 @@ function PendingApprovalsPage() {
   const fetchStatus = useServerFn(getAdminMessageStatus);
   const refreshNicks = useServerFn(refreshPendingDiscordNicknames);
   const checkGuildFn = useServerFn(checkPendingGuildMembership);
-
+  const deleteUserFn = useServerFn(deleteUser);
 
   const [refreshing, setRefreshing] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const runRefresh = async (silent = true) => {
     if (refreshing) return;
