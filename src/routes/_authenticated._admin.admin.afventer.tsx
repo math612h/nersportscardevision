@@ -187,6 +187,19 @@ function PendingApprovalsPage() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const deleteMut = useMutation({
+    mutationFn: async (userId: string) => {
+      await deleteUserFn({ data: { userId } });
+    },
+    onSuccess: () => {
+      toast.success("Brugeren er slettet");
+      setDeleteTarget(null);
+      qc.invalidateQueries({ queryKey: ["admin-pending-users"] });
+      qc.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
