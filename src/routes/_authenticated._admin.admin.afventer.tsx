@@ -158,10 +158,10 @@ function PendingApprovalsPage() {
   });
 
   const messageMut = useMutation({
-    mutationFn: async (vars: { userId: string; template: "wrong_name" }) => {
+    mutationFn: async (vars: { userId: string; template: "wrong_name" | "missing_lmu_name" }) => {
       return await sendMessageFn({ data: { targetUserId: vars.userId, template: vars.template } });
     },
-    onSuccess: (res) => {
+    onSuccess: (res, vars) => {
       if (res?.discord?.ok) {
         toast.success("Besked sendt på hjemmesiden og Discord");
       } else if (res?.discord?.reason === "not_linked") {
@@ -169,7 +169,7 @@ function PendingApprovalsPage() {
       } else {
         toast.success("Besked sendt på hjemmesiden (Discord DM fejlede)");
       }
-      qc.invalidateQueries({ queryKey: ["admin-msg-status", "wrong_name"] });
+      qc.invalidateQueries({ queryKey: ["admin-msg-status", vars.template] });
     },
     onError: (e: Error) => toast.error(e.message),
   });
