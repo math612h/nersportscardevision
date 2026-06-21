@@ -173,133 +173,147 @@ function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle>Min profil</CardTitle>
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm">
-                <Link to="/arkiv">Mit arkiv</Link>
-              </Button>
-              {profile?.approved ? (
-                <Badge variant="secondary" className="gap-1 text-green-700 dark:text-green-400">
-                  <CheckCircle2 className="h-3 w-3" /> Godkendt kører
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="text-muted-foreground">Afventer godkendelse</Badge>
-              )}
-            </div>
-          </div>
-          <CardDescription>Opdater dine oplysninger – LMU-navnet bruges til at koble løbsresultater til dig.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-20 w-20">
-              {avatarUrl ? <AvatarImage src={avatarUrl} alt="Profilbillede" /> : null}
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
-            <div className="text-xs text-muted-foreground">
-              Dit profilbillede hentes automatisk fra Discord. Skift billedet i Discord for at opdatere det her.
-            </div>
-          </div>
-
-          <form onSubmit={onSave} className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <Label>Visningsnavn</Label>
-                <Input value={displayName} readOnly disabled />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Synkroniseres fra dit Discord-servernavn. Skift det via <span className="font-medium text-foreground">"Skriv dit navn"</span> i #velkomst-kanalen.
-                </p>
-              </div>
-              <div>
-                <Label>LMU-navn</Label>
-                <Input value={lmuName} onChange={(e) => setLmuName(e.target.value)} maxLength={80} required />
-              </div>
-              <div>
-                <Label>Alder</Label>
-                <Input type="number" min={0} max={120} value={age} onChange={(e) => setAge(e.target.value)} />
-              </div>
-              <div>
-                <Label>Discord-brugernavn</Label>
-                <Input value={discord} onChange={(e) => setDiscord(e.target.value)} maxLength={80} placeholder="dit_discord_navn" />
-              </div>
-              <div>
-                <Label>Email</Label>
-                <Input value={user?.email ?? ""} disabled />
-              </div>
-            </div>
-            <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
-              <div>
-                <Label className="text-sm font-semibold">Adresse (kun synlig for admins)</Label>
-                <p className="text-xs text-muted-foreground">
-                  Bruges <span className="font-medium">kun</span> hvis du vinder en præmie og vi skal sende den til dig. Skjult for andre brugere.
-                </p>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="sm:col-span-2">
-                  <Label>Adresse</Label>
-                  <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} required placeholder="Vej og husnummer" />
-                </div>
-                <div>
-                  <Label>Postnummer</Label>
-                  <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} required />
-                </div>
-                <div>
-                  <Label>By</Label>
-                  <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} required />
-                </div>
-                <div className="sm:col-span-2">
-                  <Label>Land</Label>
-                  <Input value={country} onChange={(e) => setCountry(e.target.value)} maxLength={100} />
-                </div>
-              </div>
-            </div>
-            <div>
-              <Label>Bio</Label>
-              <Textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} placeholder="Lidt om dig selv…" />
-            </div>
-            <div>
-              <Label>Achievements</Label>
-              <Textarea value={achievements} onChange={(e) => setAchievements(e.target.value)} maxLength={1000} placeholder="Mesterskaber, pole positions, podier…" />
-            </div>
-            <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={acceptsDanish}
-                onChange={(e) => setAcceptsDanish(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-primary"
-              />
-              <span className="text-sm">
-                Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen foregår på dansk.
-              </span>
-            </label>
-            <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={mediaConsent}
-                onChange={(e) => setMediaConsent(e.target.checked)}
-                className="mt-1 h-4 w-4 rounded border-primary"
-              />
-              <span className="text-sm">
-                Jeg giver tilladelse til, at LMU Danmark må <span className="font-medium">anvende mit navn og eventuelle billeder/klip af mig på stream og sociale medier</span> i forbindelse med ligaens aktiviteter.
-              </span>
-            </label>
-            <Button type="submit" disabled={saving}>
-              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Gem ændringer
+      {/* Hero header: avatar + navn + status — altid synlig */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:p-6">
+        <Avatar className="h-20 w-20 shrink-0">
+          {avatarUrl ? <AvatarImage src={avatarUrl} alt="Profilbillede" /> : null}
+          <AvatarFallback>{initials}</AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <h1 className="truncate text-xl font-bold sm:text-2xl">{displayName || "Min profil"}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            {profile?.approved ? (
+              <Badge variant="secondary" className="gap-1 text-green-700 dark:text-green-400">
+                <CheckCircle2 className="h-3 w-3" /> Godkendt kører
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="text-muted-foreground">Afventer godkendelse</Badge>
+            )}
+            <Button asChild variant="outline" size="sm" className="h-7">
+              <Link to="/arkiv">Mit arkiv</Link>
             </Button>
+          </div>
+        </div>
+      </div>
 
-          </form>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="oversigt" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="oversigt">Oversigt</TabsTrigger>
+          <TabsTrigger value="profil">Profil</TabsTrigger>
+          <TabsTrigger value="forbindelser">Forbindelser</TabsTrigger>
+        </TabsList>
 
-      <DiscordLinkCard />
-      <MyRatingsCard userId={user?.id ?? null} />
-      <MyTeamsCard userId={user?.id ?? null} />
-      <DeviceTokensCard />
+        <TabsContent value="oversigt" className="mt-4 space-y-6">
+          <MyRatingsCard userId={user?.id ?? null} />
+          <MyTeamsCard userId={user?.id ?? null} />
+        </TabsContent>
+
+        <TabsContent value="profil" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Mine oplysninger</CardTitle>
+              <CardDescription>LMU-navnet bruges til at koble løbsresultater til dig.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={onSave} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label>Visningsnavn</Label>
+                    <Input value={displayName} readOnly disabled />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Synkroniseres fra dit Discord-servernavn. Skift det via <span className="font-medium text-foreground">"Skriv dit navn"</span> i #velkomst-kanalen.
+                    </p>
+                  </div>
+                  <div>
+                    <Label>LMU-navn</Label>
+                    <Input value={lmuName} onChange={(e) => setLmuName(e.target.value)} maxLength={80} required />
+                  </div>
+                  <div>
+                    <Label>Alder</Label>
+                    <Input type="number" min={0} max={120} value={age} onChange={(e) => setAge(e.target.value)} />
+                  </div>
+                  <div>
+                    <Label>Discord-brugernavn</Label>
+                    <Input value={discord} onChange={(e) => setDiscord(e.target.value)} maxLength={80} placeholder="dit_discord_navn" />
+                  </div>
+                  <div>
+                    <Label>Email</Label>
+                    <Input value={user?.email ?? ""} disabled />
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
+                  <div>
+                    <Label className="text-sm font-semibold">Adresse (kun synlig for admins)</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Bruges <span className="font-medium">kun</span> hvis du vinder en præmie og vi skal sende den til dig. Skjult for andre brugere.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="sm:col-span-2">
+                      <Label>Adresse</Label>
+                      <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} required placeholder="Vej og husnummer" />
+                    </div>
+                    <div>
+                      <Label>Postnummer</Label>
+                      <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} required />
+                    </div>
+                    <div>
+                      <Label>By</Label>
+                      <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} required />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <Label>Land</Label>
+                      <Input value={country} onChange={(e) => setCountry(e.target.value)} maxLength={100} />
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <Label>Bio</Label>
+                  <Textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} placeholder="Lidt om dig selv…" />
+                </div>
+                <div>
+                  <Label>Achievements</Label>
+                  <Textarea value={achievements} onChange={(e) => setAchievements(e.target.value)} maxLength={1000} placeholder="Mesterskaber, pole positions, podier…" />
+                </div>
+                <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={acceptsDanish}
+                    onChange={(e) => setAcceptsDanish(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-primary"
+                  />
+                  <span className="text-sm">
+                    Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen foregår på dansk.
+                  </span>
+                </label>
+                <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={mediaConsent}
+                    onChange={(e) => setMediaConsent(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-primary"
+                  />
+                  <span className="text-sm">
+                    Jeg giver tilladelse til, at LMU Danmark må <span className="font-medium">anvende mit navn og eventuelle billeder/klip af mig på stream og sociale medier</span> i forbindelse med ligaens aktiviteter.
+                  </span>
+                </label>
+                <Button type="submit" disabled={saving}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Gem ændringer
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="forbindelser" className="mt-4 space-y-6">
+          <DiscordLinkCard />
+          <DeviceTokensCard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
+
 }
 
 function DiscordLinkCard() {
