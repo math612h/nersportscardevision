@@ -241,3 +241,79 @@ export function LeagueTeamSignupCard({
     </Card>
   );
 }
+
+export function MyLineupInvitations({ teamId }: { teamId: string }) {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  const respondFn = useServerFn(respondLeagueLineup);
+
+  const { data: invites } = useQuery({
+    queryKey: ["my-lineup-invites", user?.id, teamId],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("league_team_lineup")
+        .select(
+          "id, status, league_team_entries:league_team_entry_id(id, team_id, leagues:league_id(name))",
+        )
+        .eq("user_id", user!.id)
+        .eq("status", "invited");
+      if (error) throw error;
+      return ((data ?? []) as any[]).filter(
+        (r) => r.league_team_entries?.team_id === teamId,
+      );
+    },
+  });
+
+  const respond = useMutation({
+    mutationFn: async (v: { lineupId: string; action: "accept" | "decline" }) =>
+      await respondFn({ data: v }),
+    onSuccess: (_d, v) => {
+      toast.success(v.action === "accept" ? "Accepteret" : "Afvist");
+      qc.invalidateQueries({ queryKey: ["my-lineup-invites"] });
+      qc.invalidateQueries({ queryKey: ["team-league-entries", teamId] });
+    },
+    onError: (e) => toastError((e as Error).message),
+  });
+
+  if (!invites || invites.length === 0) return null;
+
+  return (
+    <Card className="border-primary/40">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Lineup-invitationer til dig</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2">
+          {invites.map((inv) => (
+            <li
+              key={inv.id}
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3"
+            >
+              <p className="text-sm">
+                Du er valgt til <strong>{inv.league_team_entries?.leagues?.name ?? "ligaen"}</strong>
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => respond.mutate({ lineupId: inv.id, action: "decline" })}
+                  disabled={respond.isPending}
+                >
+                  <X className="h-4 w-4" /> Afvis
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => respond.mutate({ lineupId: inv.id, action: "accept" })}
+                  disabled={respond.isPending}
+                >
+                  <Check className="h-4 w-4" /> Accepter
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
