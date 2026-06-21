@@ -115,7 +115,7 @@ export function AdminSidebar() {
     exact ? currentPath === url : currentPath === url || currentPath.startsWith(url + "/");
 
   return (
-    <Sidebar collapsible="offcanvas">
+    <Sidebar collapsible="offcanvas" className="top-14 h-[calc(100vh-3.5rem)]">
       <SidebarContent>
         {sections.map((section) => (
           <SidebarGroup key={section.label}>
