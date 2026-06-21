@@ -379,7 +379,7 @@ function LeagueDetail() {
         {league && <SignupsList leagueId={leagueId} configs={configs} />}
       </GuestBlur>
 
-      <LeagueTeamsList leagueId={leagueId} />
+      {(league as any)?.teams_allowed && <LeagueTeamsList leagueId={leagueId} />}
 
 
       <DriverAidsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
