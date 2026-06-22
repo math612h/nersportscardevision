@@ -58,6 +58,7 @@ function OnboardingPage() {
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
   const [country, setCountry] = useState("Danmark");
+  const [addressConsent, setAddressConsent] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
