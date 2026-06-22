@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import DOMPurify from "isomorphic-dompurify";
+import { AddressConsentBanner } from "@/components/AddressConsentBanner";
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
 const PAGE_DESC =
