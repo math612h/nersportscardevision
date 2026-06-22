@@ -111,6 +111,23 @@ function LoginPage() {
             Nye konti skal oprettes med Discord. Du skal være medlem af LMU Danmark Discord-serveren. Bagefter udfylder du email, navn og LMU-navn.
           </p>
 
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">eller</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => setGuestOpen(true)}
+          >
+            <KeyRound className="h-4 w-4" />
+            Log ind som gæst
+          </Button>
+
 
           <div className="pt-2">
             {!showLegacy ? (
