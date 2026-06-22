@@ -135,9 +135,9 @@ function ParticipantDashboard() {
   return (
     <div className="space-y-10">
       <header className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Ligaer</p>
-        <h1 className="text-2xl font-bold tracking-tight">Ligaer & løb</h1>
-        <p className="text-sm text-muted-foreground">Vælg en liga for at se afdelinger, regler og tilmelde dig.</p>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">{t("leagues.kicker")}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("leagues.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("leagues.subtitle")}</p>
       </header>
 
       <LeaderboardTeaser />
@@ -152,7 +152,7 @@ function ParticipantDashboard() {
 
       {!isLoading && leagues?.length === 0 && (
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Ingen ligaer endnu. En administrator skal oprette en liga først.
+          {t("leagues.empty")}
         </div>
       )}
 
