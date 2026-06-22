@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { deleteUser } from "@/lib/users.functions";
 import { setProfileApproval } from "@/lib/leagues.functions";
 
-export const Route = createFileRoute("/_authenticated/_admin/admin/brugere")({
+export const Route = createFileRoute("/_authenticated/_admin/admin/brugere/")({
   component: AdminUsersPage,
 });
 
