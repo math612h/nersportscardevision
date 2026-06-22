@@ -91,7 +91,15 @@ function OnboardingPage() {
     }
     if (!lmuName.trim()) return toast.error("Indtast dit LMU-navn.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return toast.error("Indtast en gyldig email.");
-    if (!address.trim() || !postalCode.trim() || !city.trim()) return toast.error("Udfyld din adresse, postnummer og by.");
+    const hasAnyAddress = !!(address.trim() || postalCode.trim() || city.trim());
+    if (hasAnyAddress) {
+      if (!address.trim() || !postalCode.trim() || !city.trim()) {
+        return toast.error("Hvis du udfylder adresse, skal vej, postnummer og by alle udfyldes.");
+      }
+      if (!addressConsent) {
+        return toast.error("Du skal give samtykke til opbevaring af din adresse.");
+      }
+    }
     if (!acceptsDanish) return toast.error("Bekræft venligst at du kan læse og skrive dansk.");
     if (!mediaConsent) return toast.error("Du skal acceptere brug af navn/billeder på stream og SoMe.");
     setSaving(true);
@@ -106,6 +114,7 @@ function OnboardingPage() {
         postal_code: postalCode.trim(),
         city: city.trim(),
         country: country.trim() || "Danmark",
+        address_consent: addressConsent,
       } });
       toast.success("Profil gemt.");
       await qc.invalidateQueries({ queryKey: ["onboarding-status", user?.id] });
