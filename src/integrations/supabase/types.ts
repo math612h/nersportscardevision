@@ -1995,7 +1995,7 @@ export type Database = {
       user_locked_team: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "racer"
+      app_role: "admin" | "racer" | "guest"
       league_team_entry_status: "pending" | "confirmed" | "withdrawn"
       league_team_lineup_status: "invited" | "accepted" | "declined"
       protest_status: "open" | "ruled"
@@ -2141,7 +2141,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "racer"],
+      app_role: ["admin", "racer", "guest"],
       league_team_entry_status: ["pending", "confirmed", "withdrawn"],
       league_team_lineup_status: ["invited", "accepted", "declined"],
       protest_status: ["open", "ruled"],
