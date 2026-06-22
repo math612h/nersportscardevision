@@ -51,9 +51,9 @@ export const Route = createFileRoute("/")({
 });
 
 function NewsHome() {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, isGuest } = useAuth();
   const { complete: profileComplete, signedIn } = useProfileComplete();
-  const gated = signedIn && !profileComplete;
+  const gated = signedIn && !profileComplete && !isGuest;
   const qc = useQueryClient();
 
   const { data: pendingIncidents = 0 } = useQuery({
@@ -140,8 +140,8 @@ function NewsHome() {
 
   return (
     <div className="space-y-10">
-      {user && <ProfileCompletionGate />}
-      {user && <AddressConsentBanner />}
+      {user && !isGuest && <ProfileCompletionGate />}
+      {user && !isGuest && <AddressConsentBanner />}
       <header className="space-y-3">
 
         <div className="space-y-1">
