@@ -56,6 +56,7 @@ import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
+import { Route as AuthenticatedAdminAdminFejlRouteImport } from './routes/_authenticated._admin.admin.fejl'
 import { Route as AuthenticatedAdminAdminCronRouteImport } from './routes/_authenticated._admin.admin.cron'
 import { Route as AuthenticatedAdminAdminBrugereRouteImport } from './routes/_authenticated._admin.admin.brugere'
 import { Route as AuthenticatedAdminAdminBriefingRouteImport } from './routes/_authenticated._admin.admin.briefing'
@@ -325,6 +326,12 @@ const AuthenticatedAdminAdminLigaerRoute =
     path: '/admin/ligaer',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminFejlRoute =
+  AuthenticatedAdminAdminFejlRouteImport.update({
+    id: '/admin/fejl',
+    path: '/admin/fejl',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminCronRoute =
   AuthenticatedAdminAdminCronRouteImport.update({
     id: '/admin/cron',
@@ -429,6 +436,7 @@ export interface FileRoutesByFullPath {
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
+  '/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
@@ -487,6 +495,7 @@ export interface FileRoutesByTo {
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
+  '/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
@@ -548,6 +557,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/_authenticated/_admin/admin/brugere': typeof AuthenticatedAdminAdminBrugereRoute
   '/_authenticated/_admin/admin/cron': typeof AuthenticatedAdminAdminCronRoute
+  '/_authenticated/_admin/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
@@ -609,6 +619,7 @@ export interface FileRouteTypes {
     | '/admin/briefing'
     | '/admin/brugere'
     | '/admin/cron'
+    | '/admin/fejl'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
     | '/admin/protests'
@@ -667,6 +678,7 @@ export interface FileRouteTypes {
     | '/admin/briefing'
     | '/admin/brugere'
     | '/admin/cron'
+    | '/admin/fejl'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
     | '/admin/storage'
@@ -727,6 +739,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/briefing'
     | '/_authenticated/_admin/admin/brugere'
     | '/_authenticated/_admin/admin/cron'
+    | '/_authenticated/_admin/admin/fejl'
     | '/_authenticated/_admin/admin/ligaer'
     | '/_authenticated/_admin/admin/nyhedsbrev'
     | '/_authenticated/_admin/admin/protests'
@@ -1119,6 +1132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminLigaerRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/fejl': {
+      id: '/_authenticated/_admin/admin/fejl'
+      path: '/admin/fejl'
+      fullPath: '/admin/fejl'
+      preLoaderRoute: typeof AuthenticatedAdminAdminFejlRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/cron': {
       id: '/_authenticated/_admin/admin/cron'
       path: '/admin/cron'
@@ -1255,6 +1275,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminBriefingRoute: typeof AuthenticatedAdminAdminBriefingRoute
   AuthenticatedAdminAdminBrugereRoute: typeof AuthenticatedAdminAdminBrugereRoute
   AuthenticatedAdminAdminCronRoute: typeof AuthenticatedAdminAdminCronRoute
+  AuthenticatedAdminAdminFejlRoute: typeof AuthenticatedAdminAdminFejlRoute
   AuthenticatedAdminAdminLigaerRoute: typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   AuthenticatedAdminAdminNyhedsbrevRoute: typeof AuthenticatedAdminAdminNyhedsbrevRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
@@ -1269,6 +1290,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminBriefingRoute: AuthenticatedAdminAdminBriefingRoute,
   AuthenticatedAdminAdminBrugereRoute: AuthenticatedAdminAdminBrugereRoute,
   AuthenticatedAdminAdminCronRoute: AuthenticatedAdminAdminCronRoute,
+  AuthenticatedAdminAdminFejlRoute: AuthenticatedAdminAdminFejlRoute,
   AuthenticatedAdminAdminLigaerRoute:
     AuthenticatedAdminAdminLigaerRouteWithChildren,
   AuthenticatedAdminAdminNyhedsbrevRoute:
