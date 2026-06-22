@@ -19,6 +19,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RatingBadge } from "@/components/RatingBadge";
 import { startDiscordLink, unlinkDiscord } from "@/lib/discord.functions";
 import { notifyAdminNameUpdated } from "@/lib/admin-name-notify.functions";
+import { deleteMyAccount } from "@/lib/account.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/profil/")({
   head: () => ({ meta: [{ title: "Min profil – LMU Danmark" }] }),
