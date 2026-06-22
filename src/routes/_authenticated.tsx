@@ -67,6 +67,7 @@ function Gate() {
       navigate({ to: "/login" });
       return;
     }
+    if (isGuest) return; // Gæster har fuld læseadgang — spring onboarding over
     if (statusLoading || !status) return;
     const path = location.pathname;
     const onOnboarding = path === "/onboarding";
