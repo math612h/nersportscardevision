@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MessageSquare, KeyRound } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import logoAsset from "@/assets/lmu-logo.png.asset.json";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
@@ -14,6 +15,12 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { resolveGuestCode } from "@/lib/guest-codes.functions";
+import { LoginLanguageSelector } from "@/components/GuestLanguageSwitcher";
+import {
+  SUPPORTED_LANGUAGES,
+  GUEST_LANG_STORAGE_KEY,
+  type LanguageCode,
+} from "@/i18n";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Log ind – LMU Danmark" }] }),
@@ -22,6 +29,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,7 +38,15 @@ function LoginPage() {
   const [guestOpen, setGuestOpen] = useState(false);
   const [guestCode, setGuestCode] = useState("");
   const [guestLoading, setGuestLoading] = useState(false);
+  const [guestLang, setGuestLang] = useState<LanguageCode>("en");
   const resolveGuestFn = useServerFn(resolveGuestCode);
+
+  // Initialize from any previously stored guest language
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stored = window.localStorage.getItem(GUEST_LANG_STORAGE_KEY) as LanguageCode | null;
+    if (stored && SUPPORTED_LANGUAGES.some((l) => l.code === stored)) setGuestLang(stored);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -42,7 +58,6 @@ function LoginPage() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  // Surface error returned by Discord callback
   useEffect(() => {
     if (typeof window === "undefined") return;
     const sp = new URLSearchParams(window.location.search);
@@ -54,7 +69,7 @@ function LoginPage() {
       const newUrl = window.location.pathname + (sp.toString() ? `?${sp}` : "");
       window.history.replaceState({}, "", newUrl);
     } else if (status === "error") {
-      toast.error(`Discord login fejlede: ${sp.get("discord_msg") ?? "ukendt fejl"}`);
+      toast.error(`Discord login: ${sp.get("discord_msg") ?? "error"}`);
       sp.delete("discord");
       sp.delete("discord_msg");
       const newUrl = window.location.pathname + (sp.toString() ? `?${sp}` : "");
@@ -82,19 +97,17 @@ function LoginPage() {
           <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center">
             <img src={logoAsset.url} alt="LMU Danmark" className="h-16 w-16 object-contain" />
           </div>
-          <CardTitle>LMU Danmark</CardTitle>
-          <CardDescription>Log ind eller opret konto med Discord</CardDescription>
+          <CardTitle>{t("login.title")}</CardTitle>
+          <CardDescription>{t("login.subtitle")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {notMemberInvite ? (
             <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-              <p className="font-medium text-foreground">Du er ikke medlem af LMU Danmark Discord</p>
-              <p className="text-muted-foreground">
-                For at oprette en konto skal du først være medlem af LMU Danmark Discord-serveren. Brug invitationen herunder, accepter, og prøv så at oprette konto igen.
-              </p>
+              <p className="font-medium text-foreground">{t("login.notMemberTitle")}</p>
+              <p className="text-muted-foreground">{t("login.notMemberDesc")}</p>
               <Button asChild className="w-full gap-2 bg-[#5865F2] text-white hover:bg-[#4752C4]">
                 <a href={notMemberInvite} target="_blank" rel="noopener noreferrer">
-                  <MessageSquare className="h-4 w-4" /> Tilmeld dig Discord-serveren
+                  <MessageSquare className="h-4 w-4" /> {t("login.joinDiscord")}
                 </a>
               </Button>
             </div>
@@ -105,16 +118,16 @@ function LoginPage() {
             size="lg"
           >
             <MessageSquare className="h-5 w-5" />
-            Fortsæt med Discord
+            {t("login.continueDiscord")}
           </Button>
           <p className="text-center text-xs text-muted-foreground">
-            Nye konti skal oprettes med Discord. Du skal være medlem af LMU Danmark Discord-serveren. Bagefter udfylder du email, navn og LMU-navn.
+            {t("login.discordHint")}
           </p>
 
           <div className="relative">
             <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">eller</span>
+              <span className="bg-card px-2 text-muted-foreground">{t("login.or")}</span>
             </div>
           </div>
 
@@ -125,7 +138,7 @@ function LoginPage() {
             onClick={() => setGuestOpen(true)}
           >
             <KeyRound className="h-4 w-4" />
-            Log ind som gæst
+            {t("login.guestLogin")}
           </Button>
 
 
@@ -136,17 +149,17 @@ function LoginPage() {
                 onClick={() => setShowLegacy(true)}
                 className="block w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline"
               >
-                Eksisterende bruger uden Discord? Log ind med email
+                {t("login.legacyToggle")}
               </button>
             ) : (
               <div className="space-y-3 rounded-md border border-border p-3">
                 <p className="text-xs text-muted-foreground">
-                  Du skal stadig tilknytte Discord bagefter for at bruge siden.
+                  {t("login.legacyHint")}
                 </p>
                 <form onSubmit={onLogin} className="space-y-3">
-                  <div><Label>Email</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
-                  <div><Label>Adgangskode</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
-                  <Button type="submit" className="w-full" disabled={loading} variant="outline">Log ind</Button>
+                  <div><Label>{t("login.email")}</Label><Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
+                  <div><Label>{t("login.password")}</Label><Input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
+                  <Button type="submit" className="w-full" disabled={loading} variant="outline">{t("login.signIn")}</Button>
                 </form>
               </div>
             )}
@@ -157,9 +170,9 @@ function LoginPage() {
       <Dialog open={guestOpen} onOpenChange={(v) => { setGuestOpen(v); if (!v) setGuestCode(""); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Log ind som gæst</DialogTitle>
+            <DialogTitle>{t("login.guestDialogTitle")}</DialogTitle>
             <DialogDescription>
-              Indtast gæstekoden du har fået af LMU Danmark. Gæster kan se alt på siden, men kan ikke tilmelde sig løb.
+              {t("login.guestDialogDesc")}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -169,12 +182,17 @@ function LoginPage() {
               if (!code) return;
               setGuestLoading(true);
               try {
+                // Persist chosen guest language BEFORE auth-driven navigation
+                if (typeof window !== "undefined") {
+                  window.localStorage.setItem(GUEST_LANG_STORAGE_KEY, guestLang);
+                }
+                void i18n.changeLanguage(guestLang);
                 const { email: guestEmail } = await resolveGuestFn({ data: { code } });
                 const { error } = await supabase.auth.signInWithPassword({ email: guestEmail, password: code });
                 if (error) throw error;
                 setGuestOpen(false);
               } catch (err) {
-                toast.error(err instanceof Error ? err.message : "Kunne ikke logge ind");
+                toast.error(err instanceof Error ? err.message : t("login.loginFailed"));
               } finally {
                 setGuestLoading(false);
               }
@@ -182,7 +200,13 @@ function LoginPage() {
             className="space-y-3"
           >
             <div>
-              <Label>Gæstekode</Label>
+              <Label>{t("login.language")}</Label>
+              <div className="mt-1.5">
+                <LoginLanguageSelector value={guestLang} onChange={setGuestLang} />
+              </div>
+            </div>
+            <div>
+              <Label>{t("login.guestCodeLabel")}</Label>
               <Input
                 value={guestCode}
                 onChange={(e) => setGuestCode(e.target.value.toUpperCase())}
@@ -192,9 +216,9 @@ function LoginPage() {
               />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setGuestOpen(false)}>Annuller</Button>
+              <Button type="button" variant="outline" onClick={() => setGuestOpen(false)}>{t("login.cancel")}</Button>
               <Button type="submit" disabled={guestLoading || !guestCode.trim()}>
-                {guestLoading ? "Logger ind…" : "Log ind"}
+                {guestLoading ? t("login.signingIn") : t("login.signIn")}
               </Button>
             </DialogFooter>
           </form>

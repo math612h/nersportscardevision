@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfileComplete } from "@/hooks/use-profile-complete";
@@ -53,6 +54,7 @@ export const Route = createFileRoute("/")({
 function NewsHome() {
   const { isAdmin, user, isGuest } = useAuth();
   const { complete: profileComplete, signedIn } = useProfileComplete();
+  const { t } = useTranslation();
   const gated = signedIn && !profileComplete && !isGuest;
   const qc = useQueryClient();
 
@@ -146,21 +148,21 @@ function NewsHome() {
 
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
-            LMU Danmark
+            {t("home.kicker")}
           </p>
-          <h1 className="text-2xl font-bold tracking-tight">Nyheder</h1>
-          <p className="text-sm text-muted-foreground">Seneste afviklede løb og resultater.</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("home.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("home.subtitle")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild className="gap-2">
             <Link to="/lmu/liga">
-              <Flag className="h-4 w-4" /> Ligaer
+              <Flag className="h-4 w-4" /> {t("home.leagues")}
             </Link>
           </Button>
           {user && (
             <Button asChild variant="outline" className="relative gap-2">
               <Link to="/mine-protests">
-                <MessageSquareWarning className="h-4 w-4" /> Incidents
+                <MessageSquareWarning className="h-4 w-4" /> {t("home.incidents")}
                 {pendingIncidents > 0 && (
                   <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground">
                     {pendingIncidents}
@@ -172,23 +174,23 @@ function NewsHome() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2">
-                <MoreHorizontal className="h-4 w-4" /> Mere
+                <MoreHorizontal className="h-4 w-4" /> {t("home.more")}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
               <DropdownMenuItem asChild>
-                <Link to="/lmu/teams"><ArrowUpRight className="h-4 w-4" /> Teams</Link>
+                <Link to="/lmu/teams"><ArrowUpRight className="h-4 w-4" /> {t("home.teams")}</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/brugere"><Users className="h-4 w-4" /> Brugere</Link>
+                <Link to="/brugere"><Users className="h-4 w-4" /> {t("home.users")}</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <a href="https://discord.gg/bwVMAfrm55" target="_blank" rel="noopener noreferrer">
-                  <MessageCircle className="h-4 w-4" /> Discord
+                  <MessageCircle className="h-4 w-4" /> {t("home.discord")}
                 </a>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link to="/app-guide"><Smartphone className="h-4 w-4" /> App guide</Link>
+                <Link to="/app-guide"><Smartphone className="h-4 w-4" /> {t("home.appGuide")}</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -203,7 +205,7 @@ function NewsHome() {
 
       {!isLoading && !latest && (
         <section className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Der vises nyheder her, når første afdeling er markeret som afsluttet med resultater.
+          {t("home.emptyState")}
         </section>
       )}
 

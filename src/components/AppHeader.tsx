@@ -1,10 +1,12 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Flag, Gauge, Home, LayoutGrid, LogOut, Menu, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import { GuestLanguageSwitcher } from "@/components/GuestLanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +19,7 @@ import logoAsset from "@/assets/lmu-logo.png.asset.json";
 export function AppHeader() {
   const { user, isAdmin, signOut, loading, isGuest } = useAuth();
   const { complete: profileComplete, signedIn } = useProfileComplete();
+  const { t } = useTranslation();
   const gated = signedIn && !profileComplete && !isGuest;
   const location = useLocation();
   const navigate = useNavigate();
@@ -24,13 +27,13 @@ export function AppHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems: { to: string; label: string; icon: React.ReactNode; show: boolean; exact?: boolean; highlight?: boolean }[] = [
-    { to: "/", label: "Forside", icon: <Home className="h-4 w-4" />, show: !isAdminRoute, exact: true },
-    { to: "/lmu/liga", label: "Ligaer", icon: <Flag className="h-4 w-4" />, show: !isAdminRoute },
-    { to: "/leaderboard", label: "Leaderboard", icon: <Trophy className="h-4 w-4" />, show: !isAdminRoute },
-    { to: "/teams", label: "Teams", icon: <Shield className="h-4 w-4" />, show: !isAdminRoute },
-    { to: "/brugere", label: "Brugere", icon: <Users className="h-4 w-4" />, show: !isAdminRoute },
-    { to: "/", label: "Deltagerside", icon: <LayoutGrid className="h-4 w-4" />, show: !!isAdmin && isAdminRoute },
-    { to: "/admin", label: "Kontrolpanel", icon: <Gauge className="h-4 w-4" />, show: !!isAdmin && !isAdminRoute, highlight: true },
+    { to: "/", label: t("nav.home"), icon: <Home className="h-4 w-4" />, show: !isAdminRoute, exact: true },
+    { to: "/lmu/liga", label: t("nav.leagues"), icon: <Flag className="h-4 w-4" />, show: !isAdminRoute },
+    { to: "/leaderboard", label: t("nav.leaderboard"), icon: <Trophy className="h-4 w-4" />, show: !isAdminRoute },
+    { to: "/teams", label: t("nav.teams"), icon: <Shield className="h-4 w-4" />, show: !isAdminRoute },
+    { to: "/brugere", label: t("nav.users"), icon: <Users className="h-4 w-4" />, show: !isAdminRoute },
+    { to: "/", label: t("nav.participantPage"), icon: <LayoutGrid className="h-4 w-4" />, show: !!isAdmin && isAdminRoute },
+    { to: "/admin", label: t("nav.controlPanel"), icon: <Gauge className="h-4 w-4" />, show: !!isAdmin && !isAdminRoute, highlight: true },
   ];
 
   const visibleItems = navItems.filter((i) => i.show && (!gated || (i.to === "/" && i.exact)));
@@ -42,7 +45,7 @@ export function AppHeader() {
         <div className="sm:hidden">
           <DropdownMenu open={mobileOpen} onOpenChange={setMobileOpen}>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label="Åbn menu">
+              <Button variant="ghost" size="icon" aria-label={t("nav.openMenu")}>
                 <Menu className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
@@ -64,7 +67,7 @@ export function AppHeader() {
           </DropdownMenu>
         </div>
 
-        <Link to="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight" aria-label="LMU Danmark – forside">
+        <Link to="/" className="flex shrink-0 items-center gap-2 font-bold tracking-tight" aria-label="LMU Danmark">
           <img src={logoAsset.url} alt="LMU Danmark" className="h-8 w-8 object-contain" />
         </Link>
 
@@ -88,27 +91,28 @@ export function AppHeader() {
         <div className="flex-1 sm:hidden" />
 
         <div className="flex shrink-0 items-center gap-1">
+          {isGuest && <GuestLanguageSwitcher compact />}
           {user ? (
             <>
-              {!gated && <NotificationsBell />}
-              {!gated && (
-                <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title="Min profil" aria-label="Min profil">
+              {!gated && !isGuest && <NotificationsBell />}
+              {!gated && !isGuest && (
+                <Link to="/profil" className="flex items-center gap-1 rounded px-2 py-1 hover:bg-accent" title={t("nav.myProfile")} aria-label={t("nav.myProfile")}>
                   <UserCircle2 className="h-4 w-4" aria-hidden="true" />
-                  <span className="hidden sm:inline">Profil</span>
+                  <span className="hidden sm:inline">{t("nav.profile")}</span>
                 </Link>
               )}
               <div className="ml-1 hidden items-center gap-1 px-2 text-xs text-muted-foreground lg:flex">
                 <UserIcon className="h-3.5 w-3.5" aria-hidden="true" />
                 <span className="max-w-[140px] truncate">{user.email}</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={signOut} title="Log ud" aria-label="Log ud">
+              <Button variant="ghost" size="sm" onClick={signOut} title={t("nav.logout")} aria-label={t("nav.logout")}>
                 <LogOut className="h-4 w-4" aria-hidden="true" />
               </Button>
             </>
           ) : (
             !loading && (
               <Button size="sm" onClick={() => navigate({ to: "/login" })}>
-                Log ind
+                {t("nav.login")}
               </Button>
             )
           )}

@@ -18,6 +18,8 @@ import { BackBar } from "@/components/BackBar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { Toaster } from "@/components/ui/sonner";
 import { SplashScreen } from "@/components/SplashScreen";
+import "@/i18n";
+import { useApplyGuestLanguage } from "@/components/GuestLanguageSwitcher";
 
 function NotFoundComponent() {
   return (
@@ -163,6 +165,7 @@ function RootComponent() {
 }
 
 function Shell() {
+  useApplyGuestLanguage();
   const location = useLocation();
   const isLogin = location.pathname.startsWith("/login");
   if (isLogin) return <Outlet />;

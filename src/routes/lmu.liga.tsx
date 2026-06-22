@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { reorderLeaguesSwap } from "@/lib/league-order";
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/lmu/liga")({
 
 function ParticipantDashboard() {
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
 
@@ -133,9 +135,9 @@ function ParticipantDashboard() {
   return (
     <div className="space-y-10">
       <header className="space-y-1">
-        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">Ligaer</p>
-        <h1 className="text-2xl font-bold tracking-tight">Ligaer & løb</h1>
-        <p className="text-sm text-muted-foreground">Vælg en liga for at se afdelinger, regler og tilmelde dig.</p>
+        <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">{t("leagues.kicker")}</p>
+        <h1 className="text-2xl font-bold tracking-tight">{t("leagues.title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("leagues.subtitle")}</p>
       </header>
 
       <LeaderboardTeaser />
@@ -150,7 +152,7 @@ function ParticipantDashboard() {
 
       {!isLoading && leagues?.length === 0 && (
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-          Ingen ligaer endnu. En administrator skal oprette en liga først.
+          {t("leagues.empty")}
         </div>
       )}
 
