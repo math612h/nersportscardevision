@@ -199,8 +199,8 @@ export function LeagueTeamSignupCard({
         </CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" disabled={availableLeagues.length === 0}>
-              Tilmeld team i liga
+            <Button size="sm" disabled={isGuest || availableLeagues.length === 0} title={isGuest ? "Gæstebrugere kan ikke tilmelde teams" : undefined}>
+              {isGuest ? "Kun for kørere" : "Tilmeld team i liga"}
             </Button>
           </DialogTrigger>
           <DialogContent>
