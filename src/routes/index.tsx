@@ -140,8 +140,8 @@ function NewsHome() {
 
   return (
     <div className="space-y-10">
-      {user && <ProfileCompletionGate />}
-      {user && <AddressConsentBanner />}
+      {user && !isGuest && <ProfileCompletionGate />}
+      {user && !isGuest && <AddressConsentBanner />}
       <header className="space-y-3">
 
         <div className="space-y-1">
