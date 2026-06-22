@@ -153,6 +153,53 @@ function LoginPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={guestOpen} onOpenChange={(v) => { setGuestOpen(v); if (!v) setGuestCode(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Log ind som gæst</DialogTitle>
+            <DialogDescription>
+              Indtast gæstekoden du har fået af LMU Danmark. Gæster kan se alt på siden, men kan ikke tilmelde sig løb.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const code = guestCode.trim().toUpperCase();
+              if (!code) return;
+              setGuestLoading(true);
+              try {
+                const { email: guestEmail } = await resolveGuestFn({ data: { code } });
+                const { error } = await supabase.auth.signInWithPassword({ email: guestEmail, password: code });
+                if (error) throw error;
+                setGuestOpen(false);
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Kunne ikke logge ind");
+              } finally {
+                setGuestLoading(false);
+              }
+            }}
+            className="space-y-3"
+          >
+            <div>
+              <Label>Gæstekode</Label>
+              <Input
+                value={guestCode}
+                onChange={(e) => setGuestCode(e.target.value.toUpperCase())}
+                placeholder="ABCD-EFGH-IJKL"
+                autoFocus
+                className="font-mono tracking-wider"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setGuestOpen(false)}>Annuller</Button>
+              <Button type="submit" disabled={guestLoading || !guestCode.trim()}>
+                {guestLoading ? "Logger ind…" : "Log ind"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
