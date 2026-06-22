@@ -647,6 +647,39 @@ export type Database = {
           },
         ]
       }
+      guest_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          last_used_at: string | null
+          revoked: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          last_used_at?: string | null
+          revoked?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          last_used_at?: string | null
+          revoked?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       leaderboard_times: {
         Row: {
           best_lap_ms: number
