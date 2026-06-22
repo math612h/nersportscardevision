@@ -1198,7 +1198,7 @@ function TeamStandings({
 
 
 function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leagueId: string; configs: ClassConfig[]; signupOpensAt: string | null; approvedOnly: boolean }) {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
   const assignDiscord = useServerFn(assignDiscordRoleForEntry);
@@ -1367,6 +1367,13 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
 
   if (!user) {
     return <Button asChild size="sm" className="gap-2"><Link to="/login">Log ind for at tilmelde</Link></Button>;
+  }
+  if (isGuest) {
+    return (
+      <Button size="lg" className="gap-2 px-6 text-base font-semibold" disabled title="Gæstebrugere kan ikke tilmelde sig ligaer">
+        <UserPlus className="h-5 w-5" /> Kun for kørere
+      </Button>
+    );
   }
   if (configs.length === 0) return null;
 
