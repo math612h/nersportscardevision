@@ -17,7 +17,7 @@ function Gate() {
 
   const { data: status, isLoading: statusLoading } = useQuery({
     queryKey: ["onboarding-status", user?.id],
-    enabled: !!user,
+    enabled: !!user && !isGuest,
     queryFn: async () => {
       const [{ data: profile }, { data: priv }] = await Promise.all([
         supabase.from("profiles").select("display_name, lmu_name, accepts_danish, media_consent").eq("id", user!.id).maybeSingle(),
