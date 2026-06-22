@@ -96,7 +96,7 @@ export const updateGuestCode = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch: Record<string, unknown> = {};
+    const patch: { label?: string; revoked?: boolean } = {};
     if (typeof data.label === "string") patch.label = data.label.trim();
     if (typeof data.revoked === "boolean") patch.revoked = data.revoked;
     const { error } = await supabaseAdmin.from("guest_codes").update(patch).eq("id", data.id);
