@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Flag, ArrowUpRight, Sparkles, Trophy, Timer, MapPin, Users, ArrowUp, ArrowDown } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { reorderLeaguesSwap } from "@/lib/league-order";
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/lmu/liga")({
 
 function ParticipantDashboard() {
   const { isAdmin } = useAuth();
+  const { t } = useTranslation();
   const qc = useQueryClient();
 
 
