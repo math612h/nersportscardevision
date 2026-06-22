@@ -316,6 +316,8 @@ function ProfilePage() {
           <DeviceTokensCard />
         </TabsContent>
       </Tabs>
+
+      <DeleteAccountCard />
     </div>
   );
 
