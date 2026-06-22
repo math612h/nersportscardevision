@@ -705,3 +705,72 @@ function DeviceTokensCard() {
   );
 }
 
+
+function DeleteAccountCard() {
+  const router = useRouter();
+  const { signOut } = useAuth();
+  const deleteFn = useServerFn(deleteMyAccount);
+  const [confirmText, setConfirmText] = useState("");
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const onDelete = async () => {
+    setBusy(true);
+    try {
+      await deleteFn({ data: undefined });
+      toast.success("Din konto er slettet.");
+      try { await signOut(); } catch { /* ignore */ }
+      router.navigate({ to: "/" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Kunne ikke slette konto.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="border-destructive/40">
+      <CardHeader>
+        <CardTitle className="text-destructive">Slet min konto</CardTitle>
+        <CardDescription>
+          Sletter din konto og <span className="font-medium">alle</span> tilknyttede data permanent —
+          profil, adresse, race-resultater, ratings, tilmeldinger, teams osv. Handlingen kan ikke fortrydes.
+          Se <Link to="/privatlivspolitik" className="underline">privatlivspolitikken</Link>.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AlertDialog open={open} onOpenChange={setOpen}>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">Slet min konto…</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Er du helt sikker?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Dette sletter <span className="font-medium">permanent</span> din konto og alle tilknyttede data.
+                Skriv <span className="font-mono font-semibold">SLET</span> for at bekræfte.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Input
+              autoFocus
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="SLET"
+            />
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy}>Annuller</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={busy || confirmText !== "SLET"}
+                onClick={(e) => { e.preventDefault(); void onDelete(); }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Slet konto permanent
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
+  );
+}
