@@ -15,9 +15,9 @@ import logoAsset from "@/assets/lmu-logo.png.asset.json";
 
 
 export function AppHeader() {
-  const { user, isAdmin, signOut, loading } = useAuth();
+  const { user, isAdmin, signOut, loading, isGuest } = useAuth();
   const { complete: profileComplete, signedIn } = useProfileComplete();
-  const gated = signedIn && !profileComplete;
+  const gated = signedIn && !profileComplete && !isGuest;
   const location = useLocation();
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
