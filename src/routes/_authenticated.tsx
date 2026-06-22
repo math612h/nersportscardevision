@@ -87,12 +87,13 @@ function Gate() {
     if (status.discordLinked && !status.complete && !onHome && !onProfile && !onOnboarding) {
       navigate({ to: "/" });
     }
-  }, [loading, user, status, statusLoading, location.pathname, navigate]);
+  }, [loading, user, status, statusLoading, isGuest, location.pathname, navigate]);
 
-  if (loading || (user && statusLoading)) {
+  if (loading || (user && !isGuest && statusLoading)) {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">Indlæser…</div>;
   }
   if (!user) return null;
+  if (isGuest) return <Outlet />;
 
   // While Discord is not linked we still hard-redirect to /onboarding.
   const onOnboarding = location.pathname === "/onboarding";
