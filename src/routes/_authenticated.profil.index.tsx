@@ -246,23 +246,25 @@ function ProfilePage() {
                 </div>
                 <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
                   <div>
-                    <Label className="text-sm font-semibold">Adresse (kun synlig for admins)</Label>
+                    <Label className="text-sm font-semibold">Adresse <span className="text-xs font-normal text-muted-foreground">(valgfri — kun synlig for admins)</span></Label>
                     <p className="text-xs text-muted-foreground">
-                      Bruges <span className="font-medium">kun</span> hvis du vinder en præmie og vi skal sende den til dig. Skjult for andre brugere.
+                      Helt valgfri. Bruges <span className="font-medium">kun</span> hvis du vinder en præmie og vi skal sende den til dig.
+                      Slettes automatisk hvis din konto er inaktiv i mere end 1 år. Lad alle felter være tomme for at fjerne den.
+                      Se <Link to="/privatlivspolitik" className="underline">privatlivspolitikken</Link>.
                     </p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <Label>Adresse</Label>
-                      <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} required placeholder="Vej og husnummer" />
+                      <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} placeholder="Vej og husnummer" />
                     </div>
                     <div>
                       <Label>Postnummer</Label>
-                      <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} required />
+                      <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} />
                     </div>
                     <div>
                       <Label>By</Label>
-                      <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} required />
+                      <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} />
                     </div>
                     <div className="sm:col-span-2">
                       <Label>Land</Label>
