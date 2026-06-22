@@ -10,10 +10,13 @@ export const adminGetUserData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { data: isAdmin, error: roleErr } = await context.supabase
-      .rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const { data: roleRows, error: roleErr } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin");
     if (roleErr) throw new Error(roleErr.message);
-    if (!isAdmin) throw new Error("Forbidden");
+    if (!roleRows || roleRows.length === 0) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const uid = data.userId;
