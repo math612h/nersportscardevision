@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import DOMPurify from "isomorphic-dompurify";
+import { AddressConsentBanner } from "@/components/AddressConsentBanner";
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
 const PAGE_DESC =
@@ -140,6 +141,7 @@ function NewsHome() {
   return (
     <div className="space-y-10">
       {user && <ProfileCompletionGate />}
+      {user && <AddressConsentBanner />}
       <header className="space-y-3">
 
         <div className="space-y-1">
