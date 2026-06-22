@@ -27,6 +27,10 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showLegacy, setShowLegacy] = useState(false);
   const [notMemberInvite, setNotMemberInvite] = useState<string | null>(null);
+  const [guestOpen, setGuestOpen] = useState(false);
+  const [guestCode, setGuestCode] = useState("");
+  const [guestLoading, setGuestLoading] = useState(false);
+  const resolveGuestFn = useServerFn(resolveGuestCode);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
