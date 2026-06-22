@@ -1242,8 +1242,9 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
 
   const { taken, available } = useMemo(() => {
     if (!selected) return { taken: [] as number[], available: [] as number[] };
+    // Et nummer er optaget hvis nogen i ligaen bruger det — uanset klasse/kategori
     const t = (signups ?? [])
-      .filter((s) => s.car_class === selected.car_class && s.driver_category === selected.driver_category && s.car_number != null)
+      .filter((s) => s.car_number != null)
       .map((s) => s.car_number as number);
     const a: number[] = [];
     for (let n = selected.number_from; n <= selected.number_to; n++) if (!t.includes(n)) a.push(n);
