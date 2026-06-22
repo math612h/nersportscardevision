@@ -34,6 +34,7 @@ export function LeagueTeamSignupCard({
   teamId: string;
   members: Member[];
 }) {
+  const { isGuest } = useAuth();
   const qc = useQueryClient();
   const submitFn = useServerFn(submitTeamForLeague);
   const withdrawFn = useServerFn(withdrawTeamFromLeague);
