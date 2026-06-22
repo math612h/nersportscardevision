@@ -14,6 +14,7 @@ import {
   Clock,
   FolderOpen,
   Headphones,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -107,6 +108,7 @@ export function AdminSidebar() {
         { title: "Audit log", url: "/admin/audit", icon: History },
         { title: "Cron-jobs", url: "/admin/cron", icon: Clock },
         { title: "Storage", url: "/admin/storage", icon: FolderOpen },
+        { title: "Fejlmeddelelser", url: "/admin/fejl", icon: AlertTriangle },
       ],
     },
   ];
