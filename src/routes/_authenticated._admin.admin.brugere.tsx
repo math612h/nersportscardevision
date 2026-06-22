@@ -137,6 +137,11 @@ function AdminUsersPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
+                    <Link to="/admin/brugere/$userId" params={{ userId: p.id }}>
+                      <Button variant="ghost" size="icon" aria-label="Se brugerdata">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
                     <Button
                       variant={p.approved ? "ghost" : "default"}
                       size="icon"
