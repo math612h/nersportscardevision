@@ -1198,7 +1198,7 @@ function TeamStandings({
 
 
 function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leagueId: string; configs: ClassConfig[]; signupOpensAt: string | null; approvedOnly: boolean }) {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const qc = useQueryClient();
   const { data: signups } = useLeagueSignups(leagueId);
   const assignDiscord = useServerFn(assignDiscordRoleForEntry);
