@@ -112,8 +112,9 @@ function ProfilePage() {
     const lmu = lmuName.trim();
     if (!name) return toast.error("Visningsnavn er påkrævet.");
     if (!lmu) return toast.error("LMU-navn er påkrævet.");
-    if (!address.trim() || !postalCode.trim() || !city.trim()) {
-      return toast.error("Udfyld adresse, postnummer og by.");
+    const hasAnyAddress = !!(address.trim() || postalCode.trim() || city.trim());
+    if (hasAnyAddress && (!address.trim() || !postalCode.trim() || !city.trim())) {
+      return toast.error("Hvis du udfylder adresse, skal vej, postnummer og by alle udfyldes — eller lad alle felter være tomme.");
     }
     if (!acceptsDanish) return toast.error("Bekræft venligst at du kan læse og skrive dansk.");
     if (!mediaConsent) return toast.error("Du skal acceptere brug af navn/billeder på stream og SoMe.");
