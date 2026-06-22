@@ -1,14 +1,19 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, KeyRound } from "lucide-react";
 import logoAsset from "@/assets/lmu-logo.png.asset.json";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Toaster } from "@/components/ui/sonner";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { resolveGuestCode } from "@/lib/guest-codes.functions";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Log ind – LMU Danmark" }] }),
@@ -22,6 +27,10 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showLegacy, setShowLegacy] = useState(false);
   const [notMemberInvite, setNotMemberInvite] = useState<string | null>(null);
+  const [guestOpen, setGuestOpen] = useState(false);
+  const [guestCode, setGuestCode] = useState("");
+  const [guestLoading, setGuestLoading] = useState(false);
+  const resolveGuestFn = useServerFn(resolveGuestCode);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -102,6 +111,23 @@ function LoginPage() {
             Nye konti skal oprettes med Discord. Du skal være medlem af LMU Danmark Discord-serveren. Bagefter udfylder du email, navn og LMU-navn.
           </p>
 
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">eller</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => setGuestOpen(true)}
+          >
+            <KeyRound className="h-4 w-4" />
+            Log ind som gæst
+          </Button>
+
 
           <div className="pt-2">
             {!showLegacy ? (
@@ -127,6 +153,53 @@ function LoginPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={guestOpen} onOpenChange={(v) => { setGuestOpen(v); if (!v) setGuestCode(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Log ind som gæst</DialogTitle>
+            <DialogDescription>
+              Indtast gæstekoden du har fået af LMU Danmark. Gæster kan se alt på siden, men kan ikke tilmelde sig løb.
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const code = guestCode.trim().toUpperCase();
+              if (!code) return;
+              setGuestLoading(true);
+              try {
+                const { email: guestEmail } = await resolveGuestFn({ data: { code } });
+                const { error } = await supabase.auth.signInWithPassword({ email: guestEmail, password: code });
+                if (error) throw error;
+                setGuestOpen(false);
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Kunne ikke logge ind");
+              } finally {
+                setGuestLoading(false);
+              }
+            }}
+            className="space-y-3"
+          >
+            <div>
+              <Label>Gæstekode</Label>
+              <Input
+                value={guestCode}
+                onChange={(e) => setGuestCode(e.target.value.toUpperCase())}
+                placeholder="ABCD-EFGH-IJKL"
+                autoFocus
+                className="font-mono tracking-wider"
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setGuestOpen(false)}>Annuller</Button>
+              <Button type="submit" disabled={guestLoading || !guestCode.trim()}>
+                {guestLoading ? "Logger ind…" : "Log ind"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

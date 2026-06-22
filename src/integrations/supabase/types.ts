@@ -647,6 +647,39 @@ export type Database = {
           },
         ]
       }
+      guest_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          last_used_at: string | null
+          revoked: boolean
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          last_used_at?: string | null
+          revoked?: boolean
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          last_used_at?: string | null
+          revoked?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       leaderboard_times: {
         Row: {
           best_lap_ms: number
@@ -1995,7 +2028,7 @@ export type Database = {
       user_locked_team: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "racer"
+      app_role: "admin" | "racer" | "guest"
       league_team_entry_status: "pending" | "confirmed" | "withdrawn"
       league_team_lineup_status: "invited" | "accepted" | "declined"
       protest_status: "open" | "ruled"
@@ -2141,7 +2174,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "racer"],
+      app_role: ["admin", "racer", "guest"],
       league_team_entry_status: ["pending", "confirmed", "withdrawn"],
       league_team_lineup_status: ["invited", "accepted", "declined"],
       protest_status: ["open", "ruled"],

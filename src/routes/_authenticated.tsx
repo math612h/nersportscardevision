@@ -10,14 +10,14 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function Gate() {
-  const { user, loading } = useAuth();
+  const { user, loading, isGuest } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
 
   const { data: status, isLoading: statusLoading } = useQuery({
     queryKey: ["onboarding-status", user?.id],
-    enabled: !!user,
+    enabled: !!user && !isGuest,
     queryFn: async () => {
       const [{ data: profile }, { data: priv }] = await Promise.all([
         supabase.from("profiles").select("display_name, lmu_name, accepts_danish, media_consent").eq("id", user!.id).maybeSingle(),
@@ -67,6 +67,7 @@ function Gate() {
       navigate({ to: "/login" });
       return;
     }
+    if (isGuest) return; // Gæster har fuld læseadgang — spring onboarding over
     if (statusLoading || !status) return;
     const path = location.pathname;
     const onOnboarding = path === "/onboarding";
@@ -86,12 +87,13 @@ function Gate() {
     if (status.discordLinked && !status.complete && !onHome && !onProfile && !onOnboarding) {
       navigate({ to: "/" });
     }
-  }, [loading, user, status, statusLoading, location.pathname, navigate]);
+  }, [loading, user, status, statusLoading, isGuest, location.pathname, navigate]);
 
-  if (loading || (user && statusLoading)) {
+  if (loading || (user && !isGuest && statusLoading)) {
     return <div className="flex items-center justify-center py-20 text-muted-foreground">Indlæser…</div>;
   }
   if (!user) return null;
+  if (isGuest) return <Outlet />;
 
   // While Discord is not linked we still hard-redirect to /onboarding.
   const onOnboarding = location.pathname === "/onboarding";
