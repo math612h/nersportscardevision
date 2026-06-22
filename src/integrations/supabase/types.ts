@@ -1173,6 +1173,7 @@ export type Database = {
       profiles_private: {
         Row: {
           address: string | null
+          address_consent_at: string | null
           age: number | null
           city: string | null
           country: string | null
@@ -1188,6 +1189,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          address_consent_at?: string | null
           age?: number | null
           city?: string | null
           country?: string | null
@@ -1203,6 +1205,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          address_consent_at?: string | null
           age?: number | null
           city?: string | null
           country?: string | null
@@ -1894,6 +1897,7 @@ export type Database = {
         Args: { _car_class: string; _league_id: string; _user_id: string }
         Returns: Json
       }
+      cleanup_inactive_addresses: { Args: never; Returns: number }
       compute_team_score: { Args: { _team_id: string }; Returns: Json }
       compute_user_class_score: {
         Args: { _car_class: string; _user_id: string }

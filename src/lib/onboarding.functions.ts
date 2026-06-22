@@ -7,10 +7,11 @@ const schema = z.object({
   lmu_name: z.string().trim().min(1).max(80),
   email: z.string().trim().email().max(255),
   accepts_danish: z.boolean(),
-  address: z.string().trim().min(1).max(200),
-  postal_code: z.string().trim().min(1).max(20),
-  city: z.string().trim().min(1).max(100),
-  country: z.string().trim().min(1).max(100).default("Danmark"),
+  address: z.string().trim().max(200).optional().default(""),
+  postal_code: z.string().trim().max(20).optional().default(""),
+  city: z.string().trim().max(100).optional().default(""),
+  country: z.string().trim().max(100).optional().default("Danmark"),
+  address_consent: z.boolean().optional().default(false),
   media_consent: z.boolean(),
 });
 
@@ -54,13 +55,15 @@ export const completeOnboarding = createServerFn({ method: "POST" })
       .eq("id", context.userId);
     if (error) throw new Error(error.message);
 
+    const hasAddress = !!(data.address && data.address.length > 0);
     const { error: privUpdErr } = await supabaseAdmin
       .from("profiles_private")
       .update({
-        address: data.address,
-        postal_code: data.postal_code,
-        city: data.city,
-        country: data.country,
+        address: hasAddress ? data.address : null,
+        postal_code: hasAddress ? (data.postal_code || null) : null,
+        city: hasAddress ? (data.city || null) : null,
+        country: hasAddress ? (data.country || "Danmark") : null,
+        address_consent_at: hasAddress && data.address_consent ? new Date().toISOString() : null,
       } as never)
       .eq("user_id", context.userId);
     if (privUpdErr) throw new Error(privUpdErr.message);

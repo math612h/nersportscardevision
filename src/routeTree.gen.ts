@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PrivatlivspolitikRouteImport } from './routes/privatlivspolitik'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as BrugereRouteImport } from './routes/brugere'
@@ -73,6 +74,11 @@ import { Route as AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport } f
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivatlivspolitikRoute = PrivatlivspolitikRouteImport.update({
+  id: '/privatlivspolitik',
+  path: '/privatlivspolitik',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -411,6 +417,7 @@ export interface FileRoutesByFullPath {
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
@@ -471,6 +478,7 @@ export interface FileRoutesByTo {
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
@@ -531,6 +539,7 @@ export interface FileRoutesById {
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/arkiv': typeof AuthenticatedArkivRoute
@@ -594,6 +603,7 @@ export interface FileRouteTypes {
     | '/brugere'
     | '/leaderboard'
     | '/login'
+    | '/privatlivspolitik'
     | '/sitemap.xml'
     | '/arkiv'
     | '/beskeder'
@@ -654,6 +664,7 @@ export interface FileRouteTypes {
     | '/brugere'
     | '/leaderboard'
     | '/login'
+    | '/privatlivspolitik'
     | '/sitemap.xml'
     | '/arkiv'
     | '/beskeder'
@@ -713,6 +724,7 @@ export interface FileRouteTypes {
     | '/brugere'
     | '/leaderboard'
     | '/login'
+    | '/privatlivspolitik'
     | '/sitemap.xml'
     | '/_authenticated/_admin'
     | '/_authenticated/arkiv'
@@ -776,6 +788,7 @@ export interface RootRouteChildren {
   BrugereRoute: typeof BrugereRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
+  PrivatlivspolitikRoute: typeof PrivatlivspolitikRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
@@ -808,6 +821,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privatlivspolitik': {
+      id: '/privatlivspolitik'
+      path: '/privatlivspolitik'
+      fullPath: '/privatlivspolitik'
+      preLoaderRoute: typeof PrivatlivspolitikRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1369,6 +1389,7 @@ const rootRouteChildren: RootRouteChildren = {
   BrugereRoute: BrugereRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
+  PrivatlivspolitikRoute: PrivatlivspolitikRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
@@ -1398,13 +1419,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

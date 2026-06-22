@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.cleanup_inactive_addresses() FROM PUBLIC, anon, authenticated;

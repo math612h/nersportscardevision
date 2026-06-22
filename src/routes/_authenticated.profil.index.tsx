@@ -19,6 +19,18 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RatingBadge } from "@/components/RatingBadge";
 import { startDiscordLink, unlinkDiscord } from "@/lib/discord.functions";
 import { notifyAdminNameUpdated } from "@/lib/admin-name-notify.functions";
+import { deleteMyAccount } from "@/lib/account.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/profil/")({
   head: () => ({ meta: [{ title: "Min profil – LMU Danmark" }] }),
@@ -112,8 +124,9 @@ function ProfilePage() {
     const lmu = lmuName.trim();
     if (!name) return toast.error("Visningsnavn er påkrævet.");
     if (!lmu) return toast.error("LMU-navn er påkrævet.");
-    if (!address.trim() || !postalCode.trim() || !city.trim()) {
-      return toast.error("Udfyld adresse, postnummer og by.");
+    const hasAnyAddress = !!(address.trim() || postalCode.trim() || city.trim());
+    if (hasAnyAddress && (!address.trim() || !postalCode.trim() || !city.trim())) {
+      return toast.error("Hvis du udfylder adresse, skal vej, postnummer og by alle udfyldes — eller lad alle felter være tomme.");
     }
     if (!acceptsDanish) return toast.error("Bekræft venligst at du kan læse og skrive dansk.");
     if (!mediaConsent) return toast.error("Du skal acceptere brug af navn/billeder på stream og SoMe.");
@@ -137,16 +150,18 @@ function ProfilePage() {
       setSaving(false);
       return toast.error(error.message);
     }
+    const hasAddress = !!(address.trim() && postalCode.trim() && city.trim());
     const { error: privErr } = await (supabase as any)
       .from("profiles_private")
       .upsert({
         user_id: user.id,
         age: ageNum,
         discord_username: discord.trim() || null,
-        address: address.trim(),
-        postal_code: postalCode.trim(),
-        city: city.trim(),
-        country: country.trim() || "Danmark",
+        address: hasAddress ? address.trim() : null,
+        postal_code: hasAddress ? postalCode.trim() : null,
+        city: hasAddress ? city.trim() : null,
+        country: hasAddress ? (country.trim() || "Danmark") : null,
+        address_consent_at: hasAddress ? new Date().toISOString() : null,
       }, { onConflict: "user_id" });
     setSaving(false);
     if (privErr) return toast.error(privErr.message);
@@ -243,23 +258,25 @@ function ProfilePage() {
                 </div>
                 <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
                   <div>
-                    <Label className="text-sm font-semibold">Adresse (kun synlig for admins)</Label>
+                    <Label className="text-sm font-semibold">Adresse <span className="text-xs font-normal text-muted-foreground">(valgfri — kun synlig for admins)</span></Label>
                     <p className="text-xs text-muted-foreground">
-                      Bruges <span className="font-medium">kun</span> hvis du vinder en præmie og vi skal sende den til dig. Skjult for andre brugere.
+                      Helt valgfri. Bruges <span className="font-medium">kun</span> hvis du vinder en præmie og vi skal sende den til dig.
+                      Slettes automatisk hvis din konto er inaktiv i mere end 1 år. Lad alle felter være tomme for at fjerne den.
+                      Se <Link to="/privatlivspolitik" className="underline">privatlivspolitikken</Link>.
                     </p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="sm:col-span-2">
                       <Label>Adresse</Label>
-                      <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} required placeholder="Vej og husnummer" />
+                      <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} placeholder="Vej og husnummer" />
                     </div>
                     <div>
                       <Label>Postnummer</Label>
-                      <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} required />
+                      <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} />
                     </div>
                     <div>
                       <Label>By</Label>
-                      <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} required />
+                      <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} />
                     </div>
                     <div className="sm:col-span-2">
                       <Label>Land</Label>
@@ -311,6 +328,8 @@ function ProfilePage() {
           <DeviceTokensCard />
         </TabsContent>
       </Tabs>
+
+      <DeleteAccountCard />
     </div>
   );
 
@@ -698,3 +717,72 @@ function DeviceTokensCard() {
   );
 }
 
+
+function DeleteAccountCard() {
+  const router = useRouter();
+  const { signOut } = useAuth();
+  const deleteFn = useServerFn(deleteMyAccount);
+  const [confirmText, setConfirmText] = useState("");
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const onDelete = async () => {
+    setBusy(true);
+    try {
+      await deleteFn({ data: undefined });
+      toast.success("Din konto er slettet.");
+      try { await signOut(); } catch { /* ignore */ }
+      router.navigate({ to: "/" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Kunne ikke slette konto.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="border-destructive/40">
+      <CardHeader>
+        <CardTitle className="text-destructive">Slet min konto</CardTitle>
+        <CardDescription>
+          Sletter din konto og <span className="font-medium">alle</span> tilknyttede data permanent —
+          profil, adresse, race-resultater, ratings, tilmeldinger, teams osv. Handlingen kan ikke fortrydes.
+          Se <Link to="/privatlivspolitik" className="underline">privatlivspolitikken</Link>.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AlertDialog open={open} onOpenChange={setOpen}>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">Slet min konto…</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Er du helt sikker?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Dette sletter <span className="font-medium">permanent</span> din konto og alle tilknyttede data.
+                Skriv <span className="font-mono font-semibold">SLET</span> for at bekræfte.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <Input
+              autoFocus
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="SLET"
+            />
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={busy}>Annuller</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={busy || confirmText !== "SLET"}
+                onClick={(e) => { e.preventDefault(); void onDelete(); }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Slet konto permanent
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </CardContent>
+    </Card>
+  );
+}
