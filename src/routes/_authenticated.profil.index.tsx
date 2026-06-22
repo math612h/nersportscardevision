@@ -138,16 +138,18 @@ function ProfilePage() {
       setSaving(false);
       return toast.error(error.message);
     }
+    const hasAddress = !!(address.trim() && postalCode.trim() && city.trim());
     const { error: privErr } = await (supabase as any)
       .from("profiles_private")
       .upsert({
         user_id: user.id,
         age: ageNum,
         discord_username: discord.trim() || null,
-        address: address.trim(),
-        postal_code: postalCode.trim(),
-        city: city.trim(),
-        country: country.trim() || "Danmark",
+        address: hasAddress ? address.trim() : null,
+        postal_code: hasAddress ? postalCode.trim() : null,
+        city: hasAddress ? city.trim() : null,
+        country: hasAddress ? (country.trim() || "Danmark") : null,
+        address_consent_at: hasAddress ? new Date().toISOString() : null,
       }, { onConflict: "user_id" });
     setSaving(false);
     if (privErr) return toast.error(privErr.message);
