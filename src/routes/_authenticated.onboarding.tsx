@@ -205,26 +205,46 @@ function OnboardingPage() {
                 Jeg bekræfter, at jeg kan <span className="font-medium">læse og skrive dansk</span>. Al kommunikation i ligaen — inkl. drivers briefings, regler og protester — foregår på dansk.
               </span>
             </label>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <Label>Adresse</Label>
-                <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} required disabled={!discordLinked} placeholder="Vej og husnummer" />
-              </div>
+            <div className="space-y-3 rounded-md border border-border bg-muted/30 p-3">
               <div>
-                <Label>Postnummer</Label>
-                <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} required disabled={!discordLinked} />
+                <p className="text-sm font-medium">Adresse <span className="text-xs font-normal text-muted-foreground">(valgfri)</span></p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Helt valgfri. Bruges <span className="font-medium text-foreground">kun</span> hvis du vinder en præmie og vi skal sende den til dig.
+                  Skjult for andre brugere, slettes automatisk hvis din konto er inaktiv i mere end 1 år, og du kan til enhver tid fjerne den igen.
+                </p>
               </div>
-              <div>
-                <Label>By</Label>
-                <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} required disabled={!discordLinked} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Label>Adresse</Label>
+                  <Input value={address} onChange={(e) => setAddress(e.target.value)} maxLength={200} disabled={!discordLinked} placeholder="Vej og husnummer" />
+                </div>
+                <div>
+                  <Label>Postnummer</Label>
+                  <Input value={postalCode} onChange={(e) => setPostalCode(e.target.value)} maxLength={20} disabled={!discordLinked} />
+                </div>
+                <div>
+                  <Label>By</Label>
+                  <Input value={city} onChange={(e) => setCity(e.target.value)} maxLength={100} disabled={!discordLinked} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Land</Label>
+                  <Input value={country} onChange={(e) => setCountry(e.target.value)} maxLength={100} disabled={!discordLinked} />
+                </div>
               </div>
-              <div className="sm:col-span-2">
-                <Label>Land</Label>
-                <Input value={country} onChange={(e) => setCountry(e.target.value)} maxLength={100} disabled={!discordLinked} />
-              </div>
-              <p className="sm:col-span-2 mt-1 text-xs text-muted-foreground">
-                Din adresse bruges <span className="font-medium text-foreground">kun</span> i tilfælde af, at du vinder en præmie og vi skal sende den til dig. Den er <span className="font-medium text-foreground">skjult for andre brugere</span>.
-              </p>
+              {(address.trim() || postalCode.trim() || city.trim()) ? (
+                <label className="flex items-start gap-2 rounded-md border border-border bg-background p-2 cursor-pointer">
+                  <Checkbox
+                    checked={addressConsent}
+                    onCheckedChange={(v) => setAddressConsent(v === true)}
+                    disabled={!discordLinked}
+                    className="mt-0.5"
+                  />
+                  <span className="text-xs">
+                    Jeg giver samtykke til, at LMU Danmark må opbevare min adresse mhp. forsendelse af eventuelle præmier. Jeg kan til enhver tid trække samtykket tilbage. Se{" "}
+                    <a href="/privatlivspolitik" target="_blank" rel="noreferrer" className="underline font-medium text-foreground">privatlivspolitikken</a>.
+                  </span>
+                </label>
+              ) : null}
             </div>
             <label className="flex items-start gap-2 rounded-md border border-border bg-muted/30 p-3 cursor-pointer">
               <Checkbox
