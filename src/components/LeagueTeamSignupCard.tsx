@@ -25,7 +25,7 @@ import {
 
 
 type League = { id: string; name: string; class_configs: any };
-type Member = { user_id: string; display_name: string | null };
+type Member = { user_id: string; display_name: string | null; car_class: string | null };
 
 export function LeagueTeamSignupCard({
   teamId,
