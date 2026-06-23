@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { TeamLeagueSignupDialog } from "./TeamLeagueSignupDialog";
 
 export function LeagueTeamSignupEntry({ leagueId }: { leagueId: string }) {
   const { user } = useAuth();
@@ -41,43 +42,60 @@ export function LeagueTeamSignupEntry({ leagueId }: { leagueId: string }) {
 
   if (!user || !ownedTeams || ownedTeams.length === 0) return null;
 
+  const teamsWithEntries = ownedTeams.filter((t) =>
+    (entries ?? []).some((e) => e.team_id === t.id)
+  );
+
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Shield className="h-4 w-4" /> Tilmeld team i denne liga
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Som team-ejer kan du tilmelde dit team og vælge lineup. De valgte kørere får en Discord-DM og skal selv acceptere.
-        </p>
-        <ul className="space-y-2">
-          {ownedTeams.map((t) => {
-            const teamEntries = (entries ?? []).filter((e) => e.team_id === t.id);
-            return (
-              <li
-                key={t.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{t.name}</p>
-                  {teamEntries.length > 0 && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Tilmeldt: {teamEntries.map((e) => `${e.car_class} (${e.status === "confirmed" ? "bekræftet" : "afventer"})`).join(", ")}
-                    </p>
-                  )}
-                </div>
-                <Button asChild size="sm" variant="outline">
-                  <Link to="/teams/$teamId" params={{ teamId: t.id }}>
-                    Administrér tilmelding <ArrowUpRight className="h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              </li>
-            );
-          })}
-        </ul>
-      </CardContent>
-    </Card>
+    <>
+      {teamsWithEntries.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {teamsWithEntries.map((t) => (
+            <TeamLeagueSignupDialog
+              key={t.id}
+              teamId={t.id}
+              initialLeagueId={leagueId}
+            />
+          ))}
+        </div>
+      )}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Shield className="h-4 w-4" /> Tilmeld team i denne liga
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Som team-ejer kan du tilmelde dit team og vælge lineup. De valgte kørere får en Discord-DM og skal selv acceptere.
+          </p>
+          <ul className="space-y-2">
+            {ownedTeams.map((t) => {
+              const teamEntries = (entries ?? []).filter((e) => e.team_id === t.id);
+              return (
+                <li
+                  key={t.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{t.name}</p>
+                    {teamEntries.length > 0 && (
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        Tilmeldt: {teamEntries.map((e) => `${e.car_class} (${e.status === "confirmed" ? "bekræftet" : "afventer"})`).join(", ")}
+                      </p>
+                    )}
+                  </div>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/teams/$teamId" params={{ teamId: t.id }}>
+                      Administrér tilmelding <ArrowUpRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        </CardContent>
+      </Card>
+    </>
   );
 }
