@@ -120,16 +120,25 @@ export function LeagueTeamSignupCard({
     setSelected(new Set());
   }, [leagueId]);
 
-  // Eligible members for the picked (league, class)
+  // Eligible members for the picked (league, class):
+  // must (a) be assigned to this class in the team AND (b) be signed up in the league for this class.
   const eligibleByMember = useMemo(() => {
     const m = new Map<string, boolean>();
     if (!carClass) return m;
     const enrolled = new Set(
       (memberEntries ?? []).filter((e) => e.car_class === carClass).map((e) => e.user_id),
     );
-    for (const id of memberIds) m.set(id, enrolled.has(id));
+    const classMembers = new Set(
+      members.filter((mem) => mem.car_class === carClass).map((mem) => mem.user_id),
+    );
+    for (const id of memberIds) m.set(id, enrolled.has(id) && classMembers.has(id));
     return m;
-  }, [memberEntries, carClass, memberIds]);
+  }, [memberEntries, carClass, memberIds, members]);
+
+  const membersWithClassCount = useMemo(
+    () => (carClass ? members.filter((m) => m.car_class === carClass).length : 0),
+    [members, carClass],
+  );
 
   // Drop ineligible from selection on class change
   useEffect(() => {
