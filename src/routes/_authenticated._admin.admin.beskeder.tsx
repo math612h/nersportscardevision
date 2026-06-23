@@ -67,6 +67,7 @@ function BeskedHub() {
   const upsertFn = useServerFn(upsertMessageTemplate);
   const deleteFn = useServerFn(deleteMessageTemplate);
   const channelsFn = useServerFn(listDiscordChannels);
+  const rolesFn = useServerFn(listDiscordRoles);
   const postFn = useServerFn(postTemplateToDiscord);
 
   const { data: templates, isLoading } = useQuery({
