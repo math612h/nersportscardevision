@@ -687,17 +687,38 @@ function OwnerInbox({ teamId }: { teamId: string }) {
       <CardContent>
         <ul className="divide-y divide-border">
           {apps.map((a) => (
-            <li key={a.id} className="flex items-center gap-3 py-2">
+            <li key={a.id} className="flex flex-wrap items-center gap-3 py-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{profileMap?.[a.user_id] ?? "Bruger"}</p>
                 {a.message && <p className="line-clamp-2 text-xs text-muted-foreground">{a.message}</p>}
               </div>
-              <Button size="sm" variant="outline" className="gap-1" onClick={() => accept(a)}>
-                <Check className="h-4 w-4" /> Godkend
-              </Button>
-              <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground" onClick={() => reject(a)}>
-                <X className="h-4 w-4" /> Afvis
-              </Button>
+              {acceptingId === a.id ? (
+                <>
+                  <Select value={acceptClass} onValueChange={setAcceptClass}>
+                    <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="Klasse…" /></SelectTrigger>
+                    <SelectContent>
+                      {TEAM_CAR_CLASSES.map((cc) => (
+                        <SelectItem key={cc} value={cc}>{cc}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" className="gap-1" disabled={!acceptClass} onClick={() => accept(a)}>
+                    <Check className="h-4 w-4" /> Bekræft
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setAcceptingId(null); setAcceptClass(""); }}>
+                    Annullér
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" className="gap-1" onClick={() => { setAcceptingId(a.id); setAcceptClass(""); }}>
+                    <Check className="h-4 w-4" /> Godkend
+                  </Button>
+                  <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground" onClick={() => reject(a)}>
+                    <X className="h-4 w-4" /> Afvis
+                  </Button>
+                </>
+              )}
             </li>
           ))}
         </ul>
