@@ -561,6 +561,7 @@ function TemplateEditor({
           <div>
             <Label>Indhold</Label>
             <Textarea
+              ref={bodyRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={10}
@@ -571,8 +572,38 @@ function TemplateEditor({
                   : "Skriv Discord-beskeden her."
               }
             />
+            {!isEmail && roles.length > 0 && (
+              <div className="mt-2 rounded-md border bg-muted/30 p-2">
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                  Tagge en rolle — klik for at indsætte ved markøren:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {roles.map((r) => {
+                    const hex = r.color
+                      ? `#${r.color.toString(16).padStart(6, "0")}`
+                      : undefined;
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => insertAtCursor(`<@&${r.id}>`)}
+                        className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 text-xs hover:bg-accent"
+                        title={`Indsæt @${r.name}`}
+                      >
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: hex ?? "hsl(var(--muted-foreground))" }}
+                        />
+                        @{r.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <p className="mt-1 text-xs text-muted-foreground">
               Du kan bruge <code>{"{discord_invite}"}</code> som placeholder — den erstattes automatisk med Discord-invitationslinket når beskeden bliver postet på Discord.
+              {!isEmail && " Rolle-tags vises som @rolle på Discord og pinger medlemmerne."}
             </p>
           </div>
         </div>
