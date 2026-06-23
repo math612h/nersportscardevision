@@ -243,9 +243,14 @@ export function LeagueTeamSignupCard({
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Begge kørere skal selv være tilmeldt denne klasse i ligaen.
+                  Begge kørere skal være tildelt {carClass || "klassen"} på team-siden OG selv være tilmeldt klassen i ligaen.
                 </p>
               </div>
+              {carClass && membersWithClassCount < 2 && (
+                <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-100">
+                  Du har kun {membersWithClassCount} medlem{membersWithClassCount === 1 ? "" : "mer"} tildelt <strong>{carClass}</strong> i teamet. Tildel klassen til mindst 2 medlemmer på team-siden før du kan sende et lineup. Eksisterende medlemmer har ingen klasse som standard — du skal selv vælge.
+                </div>
+              )}
               <div className="space-y-2">
                 <Label>Lineup (mindst 2 kørere)</Label>
                 <ul className="divide-y divide-border rounded-md border border-border">
@@ -253,6 +258,14 @@ export function LeagueTeamSignupCard({
                     const eligible = eligibleByMember.get(m.user_id) ?? false;
                     const checked = selected.has(m.user_id);
                     const disabled = !carClass || !eligible;
+                    const reason =
+                      !carClass
+                        ? null
+                        : m.car_class !== carClass
+                          ? `ikke tildelt ${carClass} i teamet`
+                          : !(memberEntries ?? []).some((e) => e.user_id === m.user_id && e.car_class === carClass)
+                            ? `ikke selv tilmeldt ${carClass} i ligaen`
+                            : null;
                     return (
                       <li
                         key={m.user_id}
@@ -273,18 +286,19 @@ export function LeagueTeamSignupCard({
                           className={`flex-1 text-sm font-normal ${disabled ? "" : "cursor-pointer"}`}
                         >
                           {m.display_name ?? "Uden navn"}
+                          {m.car_class && (
+                            <span className="ml-2 text-[10px] text-muted-foreground">· {m.car_class}</span>
+                          )}
                         </Label>
-                        {carClass && !eligible && (
-                          <span className="text-[10px] text-muted-foreground">
-                            ikke tilmeldt {carClass}
-                          </span>
+                        {reason && (
+                          <span className="text-[10px] text-muted-foreground">{reason}</span>
                         )}
                       </li>
                     );
                   })}
                 </ul>
                 <p className="text-xs text-muted-foreground">
-                  De valgte kørere får en Discord-DM og kan acceptere/afvise. Når mindst 2 har accepteret bliver tilmeldingen bekræftet.
+                  De valgte kørere får en Discord-DM og kan acceptere/afvise. Når mindst 2 har accepteret bliver tilmeldingen bekræftet. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling.
                 </p>
               </div>
             </div>
