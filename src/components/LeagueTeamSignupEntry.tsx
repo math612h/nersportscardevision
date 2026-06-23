@@ -50,10 +50,9 @@ export function LeagueTeamSignupEntry({ leagueId }: { leagueId: string }) {
             key={t.id}
             teamId={t.id}
             initialLeagueId={leagueId}
-            />
-          ))}
-        </div>
-      )}
+          />
+        ))}
+      </div>
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
