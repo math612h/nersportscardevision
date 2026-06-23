@@ -50,8 +50,11 @@ type Member = {
   id: string;
   user_id: string;
   role: "owner" | "member";
+  car_class: string | null;
   created_at: string;
 };
+
+const TEAM_CAR_CLASSES = ["Hypercar", "LMP2", "LMGT3"] as const;
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
@@ -86,7 +89,7 @@ function TeamDetailPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("team_members")
-        .select("id, user_id, role, created_at")
+        .select("id, user_id, role, car_class, created_at")
         .eq("team_id", teamId)
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -269,9 +272,14 @@ function TeamDetailPage() {
                     {av ? <AvatarImage src={av} alt="" /> : null}
                     <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <Link to="/profil/$userId" params={{ userId: m.user_id }} className="flex-1 truncate text-sm hover:underline">
+                  <Link to="/profil/$userId" params={{ userId: m.user_id }} className="min-w-0 flex-1 truncate text-sm hover:underline">
                     {name}
                   </Link>
+                  <MemberClassBadge
+                    teamId={teamId}
+                    member={m}
+                    canEdit={!!(isOwner || isAdmin)}
+                  />
                   {m.role === "owner" && (
                     <Badge variant="secondary" className="gap-1 text-[10px]">
                       <Crown className="h-3 w-3" /> Ejer
@@ -311,6 +319,7 @@ function TeamDetailPage() {
           members={(members ?? []).map((m) => ({
             user_id: m.user_id,
             display_name: profiles?.[m.user_id]?.display_name ?? null,
+            car_class: m.car_class ?? null,
           }))}
         />
       )}
@@ -640,11 +649,25 @@ function OwnerInbox({ teamId }: { teamId: string }) {
     },
   });
 
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [acceptClass, setAcceptClass] = useState<string>("");
+
   const accept = async (a: { id: string; user_id: string }) => {
-    const { error: insErr } = await (supabase as any).from("team_members").insert({ team_id: teamId, user_id: a.user_id, role: "member" });
+    if (!acceptClass) return toastError("Vælg en klasse for køreren først");
+    // Persist class on application so the trigger copies it to team_members on insert
+    const { error: aErr } = await (supabase as any)
+      .from("team_applications")
+      .update({ car_class: acceptClass })
+      .eq("id", a.id);
+    if (aErr) return toastError(aErr.message);
+    const { error: insErr } = await (supabase as any)
+      .from("team_members")
+      .insert({ team_id: teamId, user_id: a.user_id, role: "member", car_class: acceptClass });
     if (insErr) return toastError(insErr.message);
     await (supabase as any).from("team_applications").update({ status: "accepted", responded_at: new Date().toISOString() }).eq("id", a.id);
-    toast.success("Optaget i teamet");
+    toast.success(`Optaget i teamet (${acceptClass})`);
+    setAcceptingId(null);
+    setAcceptClass("");
     qc.invalidateQueries({ queryKey: ["team-applications", teamId] });
     qc.invalidateQueries({ queryKey: ["team-members", teamId] });
   };
@@ -664,17 +687,38 @@ function OwnerInbox({ teamId }: { teamId: string }) {
       <CardContent>
         <ul className="divide-y divide-border">
           {apps.map((a) => (
-            <li key={a.id} className="flex items-center gap-3 py-2">
+            <li key={a.id} className="flex flex-wrap items-center gap-3 py-2">
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{profileMap?.[a.user_id] ?? "Bruger"}</p>
                 {a.message && <p className="line-clamp-2 text-xs text-muted-foreground">{a.message}</p>}
               </div>
-              <Button size="sm" variant="outline" className="gap-1" onClick={() => accept(a)}>
-                <Check className="h-4 w-4" /> Godkend
-              </Button>
-              <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground" onClick={() => reject(a)}>
-                <X className="h-4 w-4" /> Afvis
-              </Button>
+              {acceptingId === a.id ? (
+                <>
+                  <Select value={acceptClass} onValueChange={setAcceptClass}>
+                    <SelectTrigger className="h-8 w-[140px]"><SelectValue placeholder="Klasse…" /></SelectTrigger>
+                    <SelectContent>
+                      {TEAM_CAR_CLASSES.map((cc) => (
+                        <SelectItem key={cc} value={cc}>{cc}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" className="gap-1" disabled={!acceptClass} onClick={() => accept(a)}>
+                    <Check className="h-4 w-4" /> Bekræft
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setAcceptingId(null); setAcceptClass(""); }}>
+                    Annullér
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" className="gap-1" onClick={() => { setAcceptingId(a.id); setAcceptClass(""); }}>
+                    <Check className="h-4 w-4" /> Godkend
+                  </Button>
+                  <Button size="sm" variant="ghost" className="gap-1 text-muted-foreground" onClick={() => reject(a)}>
+                    <X className="h-4 w-4" /> Afvis
+                  </Button>
+                </>
+              )}
             </li>
           ))}
         </ul>
@@ -687,6 +731,7 @@ function OwnerInbox({ teamId }: { teamId: string }) {
 function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; userId: string; existingMemberIds: string[] }) {
   const qc = useQueryClient();
   const [selected, setSelected] = useState<string>("");
+  const [carClass, setCarClass] = useState<string>("");
 
   const { data: candidates } = useQuery({
     queryKey: ["invite-candidates", teamId, existingMemberIds.sort().join(",")],
@@ -703,7 +748,7 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
 
   const send = async () => {
     if (!selected) return;
-    // Check for an existing pending invitation to avoid the unique constraint error.
+    if (!carClass) return toastError("Vælg en klasse for køreren først");
     const { data: existing } = await (supabase as any)
       .from("team_invitations")
       .select("id")
@@ -715,7 +760,7 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
       return toastError("Denne bruger har allerede en afventende invitation til teamet.");
     }
     const { error } = await (supabase as any).from("team_invitations").insert({
-      team_id: teamId, user_id: selected, invited_by: userId,
+      team_id: teamId, user_id: selected, invited_by: userId, car_class: carClass,
     });
     if (error) {
       if ((error as any).code === "23505") {
@@ -729,8 +774,9 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
     } catch (e) {
       console.error("notifyTeamInvitation failed", e);
     }
-    toast.success("Invitation sendt");
+    toast.success(`Invitation sendt (${carClass})`);
     setSelected("");
+    setCarClass("");
     qc.invalidateQueries({ queryKey: ["team-invitations-out", teamId] });
   };
 
@@ -739,20 +785,108 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2"><UserPlus className="h-4 w-4" /> Inviter bruger</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-wrap gap-2">
-        <div className="flex-1 min-w-[200px]">
-          <Select value={selected} onValueChange={setSelected}>
-            <SelectTrigger><SelectValue placeholder="Vælg bruger…" /></SelectTrigger>
-            <SelectContent>
-              {(candidates ?? []).map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.display_name ?? "Uden navn"}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <CardContent className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <div className="flex-1 min-w-[180px]">
+            <Select value={selected} onValueChange={setSelected}>
+              <SelectTrigger><SelectValue placeholder="Vælg bruger…" /></SelectTrigger>
+              <SelectContent>
+                {(candidates ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.display_name ?? "Uden navn"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-[140px]">
+            <Select value={carClass} onValueChange={setCarClass}>
+              <SelectTrigger><SelectValue placeholder="Klasse…" /></SelectTrigger>
+              <SelectContent>
+                {TEAM_CAR_CLASSES.map((cc) => (
+                  <SelectItem key={cc} value={cc}>{cc}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={send} disabled={!selected || !carClass}>Send invitation</Button>
         </div>
-        <Button onClick={send} disabled={!selected}>Send invitation</Button>
+        <p className="text-xs text-muted-foreground">
+          Vælg hvilken klasse køreren skal repræsentere teamet i. Klassen kan ændres bagefter på medlemslisten.
+        </p>
       </CardContent>
     </Card>
+  );
+}
+
+// --- Member class badge / inline editor ---
+function MemberClassBadge({
+  teamId,
+  member,
+  canEdit,
+}: {
+  teamId: string;
+  member: Member;
+  canEdit: boolean;
+}) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState<string>(member.car_class ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const save = async (next: string) => {
+    setSaving(true);
+    const { error } = await (supabase as any)
+      .from("team_members")
+      .update({ car_class: next || null })
+      .eq("id", member.id);
+    setSaving(false);
+    if (error) return toastError(error.message);
+    toast.success("Klasse opdateret");
+    setEditing(false);
+    qc.invalidateQueries({ queryKey: ["team-members", teamId] });
+  };
+
+  if (editing && canEdit) {
+    return (
+      <div className="flex items-center gap-1">
+        <Select value={value} onValueChange={(v) => { setValue(v); save(v); }} disabled={saving}>
+          <SelectTrigger className="h-7 w-[120px] text-xs"><SelectValue placeholder="Klasse…" /></SelectTrigger>
+          <SelectContent>
+            {TEAM_CAR_CLASSES.map((cc) => (
+              <SelectItem key={cc} value={cc}>{cc}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditing(false)}>
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    );
+  }
+
+  if (!member.car_class) {
+    return canEdit ? (
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-6 gap-1 px-2 text-[10px]"
+        onClick={() => setEditing(true)}
+      >
+        <Pencil className="h-3 w-3" /> Vælg klasse
+      </Button>
+    ) : (
+      <Badge variant="outline" className="text-[10px]">Ingen klasse</Badge>
+    );
+  }
+
+  return (
+    <Badge
+      variant="outline"
+      className={`gap-1 text-[10px] ${canEdit ? "cursor-pointer hover:bg-accent" : ""}`}
+      onClick={canEdit ? () => setEditing(true) : undefined}
+    >
+      {member.car_class}
+      {canEdit && <Pencil className="h-3 w-3 opacity-60" />}
+    </Badge>
   );
 }
 
