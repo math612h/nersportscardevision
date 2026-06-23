@@ -293,6 +293,7 @@ function BeskedHub() {
         template={editing}
         creatingKind={creatingKind}
         leagues={leagues ?? []}
+        roles={roles ?? []}
         onClose={() => {
           setEditing(null);
           setCreatingKind(null);
