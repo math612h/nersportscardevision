@@ -379,6 +379,16 @@ export function LeagueTeamSignupCard({
             })}
           </ul>
         )}
+        {!isGuest && availableLeagues.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => setOpen(true)}
+          >
+            + Tilmeld endnu et team lineup
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
