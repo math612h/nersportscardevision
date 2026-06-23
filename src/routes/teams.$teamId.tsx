@@ -89,7 +89,7 @@ function TeamDetailPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("team_members")
-        .select("id, user_id, role, created_at")
+        .select("id, user_id, role, car_class, created_at")
         .eq("team_id", teamId)
         .order("created_at", { ascending: true });
       if (error) throw error;
