@@ -690,10 +690,15 @@ function OwnerInbox({ teamId }: { teamId: string }) {
         <ul className="divide-y divide-border">
           {apps.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center gap-3 py-2">
-              <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => setViewingId(a.id)}
+                className="min-w-0 flex-1 text-left hover:opacity-80"
+              >
                 <p className="truncate text-sm font-medium">{profileMap?.[a.user_id] ?? "Bruger"}</p>
                 {a.message && <p className="line-clamp-2 text-xs text-muted-foreground">{a.message}</p>}
-              </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground/70">Klik for at se ansøgningen</p>
+              </button>
               {acceptingId === a.id ? (
                 <>
                   <Select value={acceptClass} onValueChange={setAcceptClass}>
