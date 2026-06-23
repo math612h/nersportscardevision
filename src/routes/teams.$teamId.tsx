@@ -649,11 +649,25 @@ function OwnerInbox({ teamId }: { teamId: string }) {
     },
   });
 
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [acceptClass, setAcceptClass] = useState<string>("");
+
   const accept = async (a: { id: string; user_id: string }) => {
-    const { error: insErr } = await (supabase as any).from("team_members").insert({ team_id: teamId, user_id: a.user_id, role: "member" });
+    if (!acceptClass) return toastError("Vælg en klasse for køreren først");
+    // Persist class on application so the trigger copies it to team_members on insert
+    const { error: aErr } = await (supabase as any)
+      .from("team_applications")
+      .update({ car_class: acceptClass })
+      .eq("id", a.id);
+    if (aErr) return toastError(aErr.message);
+    const { error: insErr } = await (supabase as any)
+      .from("team_members")
+      .insert({ team_id: teamId, user_id: a.user_id, role: "member", car_class: acceptClass });
     if (insErr) return toastError(insErr.message);
     await (supabase as any).from("team_applications").update({ status: "accepted", responded_at: new Date().toISOString() }).eq("id", a.id);
-    toast.success("Optaget i teamet");
+    toast.success(`Optaget i teamet (${acceptClass})`);
+    setAcceptingId(null);
+    setAcceptClass("");
     qc.invalidateQueries({ queryKey: ["team-applications", teamId] });
     qc.invalidateQueries({ queryKey: ["team-members", teamId] });
   };
