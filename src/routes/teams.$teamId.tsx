@@ -272,9 +272,14 @@ function TeamDetailPage() {
                     {av ? <AvatarImage src={av} alt="" /> : null}
                     <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
                   </Avatar>
-                  <Link to="/profil/$userId" params={{ userId: m.user_id }} className="flex-1 truncate text-sm hover:underline">
+                  <Link to="/profil/$userId" params={{ userId: m.user_id }} className="min-w-0 flex-1 truncate text-sm hover:underline">
                     {name}
                   </Link>
+                  <MemberClassBadge
+                    teamId={teamId}
+                    member={m}
+                    canEdit={!!(isOwner || isAdmin)}
+                  />
                   {m.role === "owner" && (
                     <Badge variant="secondary" className="gap-1 text-[10px]">
                       <Crown className="h-3 w-3" /> Ejer
@@ -314,6 +319,7 @@ function TeamDetailPage() {
           members={(members ?? []).map((m) => ({
             user_id: m.user_id,
             display_name: profiles?.[m.user_id]?.display_name ?? null,
+            car_class: m.car_class ?? null,
           }))}
         />
       )}
