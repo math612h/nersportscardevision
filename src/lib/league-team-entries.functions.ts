@@ -47,14 +47,22 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       throw new Error("Den valgte bilklasse findes ikke i ligaen");
     }
 
-    // Verify all selected users are members of the team
+    // Verify all selected users are members of the team AND assigned to this car_class
     const { data: members } = await (supabaseAdmin as any)
       .from("team_members")
-      .select("user_id")
+      .select("user_id, car_class")
       .eq("team_id", data.teamId);
-    const memberIds = new Set(((members ?? []) as any[]).map((m) => m.user_id));
+    const memberMap = new Map<string, string | null>(
+      ((members ?? []) as any[]).map((m) => [m.user_id, m.car_class ?? null]),
+    );
     for (const uid of data.userIds) {
-      if (!memberIds.has(uid)) throw new Error("En valgt kører er ikke medlem af teamet");
+      if (!memberMap.has(uid)) throw new Error("En valgt kører er ikke medlem af teamet");
+      const cc = memberMap.get(uid);
+      if (cc !== data.carClass) {
+        throw new Error(
+          `En valgt kører er ikke tilknyttet ${data.carClass} i teamet. Team-ejeren skal først tildele kørerens klasse på team-siden.`,
+        );
+      }
     }
 
     // Verify every selected user is signed up in this league + class
