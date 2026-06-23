@@ -730,6 +730,34 @@ function OwnerInbox({ teamId }: { teamId: string }) {
           ))}
         </ul>
       </CardContent>
+      <Dialog open={!!viewingId} onOpenChange={(o) => !o && setViewingId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ansøgning fra {viewing ? (profileMap?.[viewing.user_id] ?? "Bruger") : ""}</DialogTitle>
+          </DialogHeader>
+          {viewing && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Sendt {new Date(viewing.created_at).toLocaleString("da-DK")}
+              </p>
+              <div className="rounded-md border border-border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
+                {viewing.message?.trim() || <span className="text-muted-foreground italic">Ingen besked</span>}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setViewingId(null)}>Luk</Button>
+            {viewing && (
+              <Button
+                variant="outline"
+                onClick={async () => { await reject(viewing); setViewingId(null); }}
+              >
+                <X className="h-4 w-4" /> Afvis
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
