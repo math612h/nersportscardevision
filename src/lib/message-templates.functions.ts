@@ -128,6 +128,35 @@ export const listDiscordChannels = createServerFn({ method: "GET" })
       .map((c) => ({ id: c.id, name: c.name, type: c.type, position: c.position }));
   });
 
+export type DiscordRole = { id: string; name: string; color: number; position: number };
+
+export const listDiscordRoles = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<DiscordRole[]> => {
+    await assertAdmin(context.userId);
+    const guildId = process.env.DISCORD_GUILD_ID;
+    const botToken = process.env.DISCORD_BOT_TOKEN;
+    if (!guildId || !botToken) throw new Error("Discord bot ikke konfigureret.");
+    const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}/roles`, {
+      headers: { Authorization: `Bot ${botToken}` },
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => "");
+      throw new Error(`Discord ${res.status}: ${t}`);
+    }
+    const all = (await res.json()) as Array<{
+      id: string;
+      name: string;
+      color: number;
+      position: number;
+      managed: boolean;
+    }>;
+    return all
+      .filter((r) => r.name !== "@everyone" && !r.managed)
+      .sort((a, b) => b.position - a.position)
+      .map((r) => ({ id: r.id, name: r.name, color: r.color, position: r.position }));
+  });
+
 const postSchema = z.object({
   templateId: z.string().uuid(),
   channelId: z.string().trim().min(5),
