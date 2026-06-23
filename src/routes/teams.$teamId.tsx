@@ -50,8 +50,11 @@ type Member = {
   id: string;
   user_id: string;
   role: "owner" | "member";
+  car_class: string | null;
   created_at: string;
 };
+
+const TEAM_CAR_CLASSES = ["Hypercar", "LMP2", "LMGT3"] as const;
 
 type Profile = { id: string; display_name: string | null; avatar_url: string | null };
 
