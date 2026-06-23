@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, ChevronDown, ChevronRight, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, KeyRound, Settings as SettingsIcon, Timer } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, ChevronDown, ChevronRight, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, KeyRound, Settings as SettingsIcon, Timer, Shield } from "lucide-react";
 import { useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
