@@ -651,6 +651,8 @@ function OwnerInbox({ teamId }: { teamId: string }) {
 
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [acceptClass, setAcceptClass] = useState<string>("");
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const viewing = (apps ?? []).find((a) => a.id === viewingId) ?? null;
 
   const accept = async (a: { id: string; user_id: string }) => {
     if (!acceptClass) return toastError("Vælg en klasse for køreren først");
@@ -688,10 +690,15 @@ function OwnerInbox({ teamId }: { teamId: string }) {
         <ul className="divide-y divide-border">
           {apps.map((a) => (
             <li key={a.id} className="flex flex-wrap items-center gap-3 py-2">
-              <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => setViewingId(a.id)}
+                className="min-w-0 flex-1 text-left hover:opacity-80"
+              >
                 <p className="truncate text-sm font-medium">{profileMap?.[a.user_id] ?? "Bruger"}</p>
                 {a.message && <p className="line-clamp-2 text-xs text-muted-foreground">{a.message}</p>}
-              </div>
+                <p className="mt-0.5 text-[10px] text-muted-foreground/70">Klik for at se ansøgningen</p>
+              </button>
               {acceptingId === a.id ? (
                 <>
                   <Select value={acceptClass} onValueChange={setAcceptClass}>
@@ -723,6 +730,34 @@ function OwnerInbox({ teamId }: { teamId: string }) {
           ))}
         </ul>
       </CardContent>
+      <Dialog open={!!viewingId} onOpenChange={(o) => !o && setViewingId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Ansøgning fra {viewing ? (profileMap?.[viewing.user_id] ?? "Bruger") : ""}</DialogTitle>
+          </DialogHeader>
+          {viewing && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                Sendt {new Date(viewing.created_at).toLocaleString("da-DK")}
+              </p>
+              <div className="rounded-md border border-border bg-muted/30 p-3 text-sm whitespace-pre-wrap">
+                {viewing.message?.trim() || <span className="text-muted-foreground italic">Ingen besked</span>}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setViewingId(null)}>Luk</Button>
+            {viewing && (
+              <Button
+                variant="outline"
+                onClick={async () => { await reject(viewing); setViewingId(null); }}
+              >
+                <X className="h-4 w-4" /> Afvis
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

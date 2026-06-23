@@ -42,23 +42,17 @@ export function LeagueTeamSignupEntry({ leagueId }: { leagueId: string }) {
 
   if (!user || !ownedTeams || ownedTeams.length === 0) return null;
 
-  const teamsWithEntries = ownedTeams.filter((t) =>
-    (entries ?? []).some((e) => e.team_id === t.id)
-  );
-
   return (
     <>
-      {teamsWithEntries.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          {teamsWithEntries.map((t) => (
-            <TeamLeagueSignupDialog
-              key={t.id}
-              teamId={t.id}
-              initialLeagueId={leagueId}
-            />
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        {ownedTeams.map((t) => (
+          <TeamLeagueSignupDialog
+            key={t.id}
+            teamId={t.id}
+            initialLeagueId={leagueId}
+          />
+        ))}
+      </div>
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
