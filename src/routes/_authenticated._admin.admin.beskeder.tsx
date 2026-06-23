@@ -418,6 +418,7 @@ function TemplateEditor({
   template,
   creatingKind,
   leagues,
+  roles,
   onClose,
   onSave,
   saving,
@@ -426,6 +427,7 @@ function TemplateEditor({
   template: MessageTemplate | null;
   creatingKind: MessageTemplateKind | null;
   leagues: LeagueLite[];
+  roles: DiscordRole[];
   onClose: () => void;
   onSave: (vals: {
     id?: string;
@@ -443,6 +445,24 @@ function TemplateEditor({
   const [body, setBody] = useState("");
   const [linkLeague, setLinkLeague] = useState(false);
   const [leagueId, setLeagueId] = useState<string>("");
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertAtCursor = (text: string) => {
+    const el = bodyRef.current;
+    if (!el) {
+      setBody((b) => b + text);
+      return;
+    }
+    const start = el.selectionStart ?? body.length;
+    const end = el.selectionEnd ?? body.length;
+    const next = body.slice(0, start) + text + body.slice(end);
+    setBody(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + text.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
 
   useEffect(() => {
     if (open) {
