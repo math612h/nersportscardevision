@@ -1517,6 +1517,7 @@ export type Database = {
       }
       team_applications: {
         Row: {
+          car_class: string | null
           created_at: string
           id: string
           message: string | null
@@ -1526,6 +1527,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          car_class?: string | null
           created_at?: string
           id?: string
           message?: string | null
@@ -1535,6 +1537,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          car_class?: string | null
           created_at?: string
           id?: string
           message?: string | null
@@ -1555,6 +1558,7 @@ export type Database = {
       }
       team_invitations: {
         Row: {
+          car_class: string | null
           created_at: string
           discord_channel_id: string | null
           discord_message_id: string | null
@@ -1566,6 +1570,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          car_class?: string | null
           created_at?: string
           discord_channel_id?: string | null
           discord_message_id?: string | null
@@ -1577,6 +1582,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          car_class?: string | null
           created_at?: string
           discord_channel_id?: string | null
           discord_message_id?: string | null
@@ -1599,6 +1605,7 @@ export type Database = {
       }
       team_members: {
         Row: {
+          car_class: string | null
           created_at: string
           id: string
           role: Database["public"]["Enums"]["team_member_role"]
@@ -1606,6 +1613,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          car_class?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["team_member_role"]
@@ -1613,6 +1621,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          car_class?: string | null
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["team_member_role"]
