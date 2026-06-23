@@ -731,6 +731,7 @@ function OwnerInbox({ teamId }: { teamId: string }) {
 function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; userId: string; existingMemberIds: string[] }) {
   const qc = useQueryClient();
   const [selected, setSelected] = useState<string>("");
+  const [carClass, setCarClass] = useState<string>("");
 
   const { data: candidates } = useQuery({
     queryKey: ["invite-candidates", teamId, existingMemberIds.sort().join(",")],
@@ -747,7 +748,7 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
 
   const send = async () => {
     if (!selected) return;
-    // Check for an existing pending invitation to avoid the unique constraint error.
+    if (!carClass) return toastError("Vælg en klasse for køreren først");
     const { data: existing } = await (supabase as any)
       .from("team_invitations")
       .select("id")
@@ -759,7 +760,7 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
       return toastError("Denne bruger har allerede en afventende invitation til teamet.");
     }
     const { error } = await (supabase as any).from("team_invitations").insert({
-      team_id: teamId, user_id: selected, invited_by: userId,
+      team_id: teamId, user_id: selected, invited_by: userId, car_class: carClass,
     });
     if (error) {
       if ((error as any).code === "23505") {
@@ -773,8 +774,9 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
     } catch (e) {
       console.error("notifyTeamInvitation failed", e);
     }
-    toast.success("Invitation sendt");
+    toast.success(`Invitation sendt (${carClass})`);
     setSelected("");
+    setCarClass("");
     qc.invalidateQueries({ queryKey: ["team-invitations-out", teamId] });
   };
 
@@ -783,20 +785,108 @@ function InviteCard({ teamId, userId, existingMemberIds }: { teamId: string; use
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2"><UserPlus className="h-4 w-4" /> Inviter bruger</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-wrap gap-2">
-        <div className="flex-1 min-w-[200px]">
-          <Select value={selected} onValueChange={setSelected}>
-            <SelectTrigger><SelectValue placeholder="Vælg bruger…" /></SelectTrigger>
-            <SelectContent>
-              {(candidates ?? []).map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.display_name ?? "Uden navn"}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <CardContent className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <div className="flex-1 min-w-[180px]">
+            <Select value={selected} onValueChange={setSelected}>
+              <SelectTrigger><SelectValue placeholder="Vælg bruger…" /></SelectTrigger>
+              <SelectContent>
+                {(candidates ?? []).map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.display_name ?? "Uden navn"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="w-[140px]">
+            <Select value={carClass} onValueChange={setCarClass}>
+              <SelectTrigger><SelectValue placeholder="Klasse…" /></SelectTrigger>
+              <SelectContent>
+                {TEAM_CAR_CLASSES.map((cc) => (
+                  <SelectItem key={cc} value={cc}>{cc}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={send} disabled={!selected || !carClass}>Send invitation</Button>
         </div>
-        <Button onClick={send} disabled={!selected}>Send invitation</Button>
+        <p className="text-xs text-muted-foreground">
+          Vælg hvilken klasse køreren skal repræsentere teamet i. Klassen kan ændres bagefter på medlemslisten.
+        </p>
       </CardContent>
     </Card>
+  );
+}
+
+// --- Member class badge / inline editor ---
+function MemberClassBadge({
+  teamId,
+  member,
+  canEdit,
+}: {
+  teamId: string;
+  member: Member;
+  canEdit: boolean;
+}) {
+  const qc = useQueryClient();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState<string>(member.car_class ?? "");
+  const [saving, setSaving] = useState(false);
+
+  const save = async (next: string) => {
+    setSaving(true);
+    const { error } = await (supabase as any)
+      .from("team_members")
+      .update({ car_class: next || null })
+      .eq("id", member.id);
+    setSaving(false);
+    if (error) return toastError(error.message);
+    toast.success("Klasse opdateret");
+    setEditing(false);
+    qc.invalidateQueries({ queryKey: ["team-members", teamId] });
+  };
+
+  if (editing && canEdit) {
+    return (
+      <div className="flex items-center gap-1">
+        <Select value={value} onValueChange={(v) => { setValue(v); save(v); }} disabled={saving}>
+          <SelectTrigger className="h-7 w-[120px] text-xs"><SelectValue placeholder="Klasse…" /></SelectTrigger>
+          <SelectContent>
+            {TEAM_CAR_CLASSES.map((cc) => (
+              <SelectItem key={cc} value={cc}>{cc}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setEditing(false)}>
+          <X className="h-3 w-3" />
+        </Button>
+      </div>
+    );
+  }
+
+  if (!member.car_class) {
+    return canEdit ? (
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-6 gap-1 px-2 text-[10px]"
+        onClick={() => setEditing(true)}
+      >
+        <Pencil className="h-3 w-3" /> Vælg klasse
+      </Button>
+    ) : (
+      <Badge variant="outline" className="text-[10px]">Ingen klasse</Badge>
+    );
+  }
+
+  return (
+    <Badge
+      variant="outline"
+      className={`gap-1 text-[10px] ${canEdit ? "cursor-pointer hover:bg-accent" : ""}`}
+      onClick={canEdit ? () => setEditing(true) : undefined}
+    >
+      {member.car_class}
+      {canEdit && <Pencil className="h-3 w-3 opacity-60" />}
+    </Badge>
   );
 }
 
