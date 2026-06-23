@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MessageSquare,
   Pencil,
@@ -45,10 +45,12 @@ import {
   upsertMessageTemplate,
   deleteMessageTemplate,
   listDiscordChannels,
+  listDiscordRoles,
   postTemplateToDiscord,
   type MessageTemplate,
   type MessageTemplateKind,
   type DiscordChannel,
+  type DiscordRole,
 } from "@/lib/message-templates.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 
@@ -65,6 +67,7 @@ function BeskedHub() {
   const upsertFn = useServerFn(upsertMessageTemplate);
   const deleteFn = useServerFn(deleteMessageTemplate);
   const channelsFn = useServerFn(listDiscordChannels);
+  const rolesFn = useServerFn(listDiscordRoles);
   const postFn = useServerFn(postTemplateToDiscord);
 
   const { data: templates, isLoading } = useQuery({
@@ -75,6 +78,11 @@ function BeskedHub() {
   const { data: channels } = useQuery({
     queryKey: ["discord-channels"],
     queryFn: () => channelsFn(),
+  });
+
+  const { data: roles } = useQuery({
+    queryKey: ["discord-roles"],
+    queryFn: () => rolesFn(),
   });
 
   const { data: leagues } = useQuery<LeagueLite[]>({
@@ -285,6 +293,7 @@ function BeskedHub() {
         template={editing}
         creatingKind={creatingKind}
         leagues={leagues ?? []}
+        roles={roles ?? []}
         onClose={() => {
           setEditing(null);
           setCreatingKind(null);
@@ -409,6 +418,7 @@ function TemplateEditor({
   template,
   creatingKind,
   leagues,
+  roles,
   onClose,
   onSave,
   saving,
@@ -417,6 +427,7 @@ function TemplateEditor({
   template: MessageTemplate | null;
   creatingKind: MessageTemplateKind | null;
   leagues: LeagueLite[];
+  roles: DiscordRole[];
   onClose: () => void;
   onSave: (vals: {
     id?: string;
@@ -434,6 +445,24 @@ function TemplateEditor({
   const [body, setBody] = useState("");
   const [linkLeague, setLinkLeague] = useState(false);
   const [leagueId, setLeagueId] = useState<string>("");
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertAtCursor = (text: string) => {
+    const el = bodyRef.current;
+    if (!el) {
+      setBody((b) => b + text);
+      return;
+    }
+    const start = el.selectionStart ?? body.length;
+    const end = el.selectionEnd ?? body.length;
+    const next = body.slice(0, start) + text + body.slice(end);
+    setBody(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + text.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
 
   useEffect(() => {
     if (open) {
@@ -532,6 +561,7 @@ function TemplateEditor({
           <div>
             <Label>Indhold</Label>
             <Textarea
+              ref={bodyRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={10}
@@ -542,8 +572,38 @@ function TemplateEditor({
                   : "Skriv Discord-beskeden her."
               }
             />
+            {!isEmail && roles.length > 0 && (
+              <div className="mt-2 rounded-md border bg-muted/30 p-2">
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                  Tagge en rolle — klik for at indsætte ved markøren:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {roles.map((r) => {
+                    const hex = r.color
+                      ? `#${r.color.toString(16).padStart(6, "0")}`
+                      : undefined;
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => insertAtCursor(`<@&${r.id}>`)}
+                        className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 text-xs hover:bg-accent"
+                        title={`Indsæt @${r.name}`}
+                      >
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: hex ?? "hsl(var(--muted-foreground))" }}
+                        />
+                        @{r.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <p className="mt-1 text-xs text-muted-foreground">
               Du kan bruge <code>{"{discord_invite}"}</code> som placeholder — den erstattes automatisk med Discord-invitationslinket når beskeden bliver postet på Discord.
+              {!isEmail && " Rolle-tags vises som @rolle på Discord og pinger medlemmerne."}
             </p>
           </div>
         </div>
