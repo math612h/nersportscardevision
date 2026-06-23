@@ -45,10 +45,12 @@ import {
   upsertMessageTemplate,
   deleteMessageTemplate,
   listDiscordChannels,
+  listDiscordRoles,
   postTemplateToDiscord,
   type MessageTemplate,
   type MessageTemplateKind,
   type DiscordChannel,
+  type DiscordRole,
 } from "@/lib/message-templates.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 
