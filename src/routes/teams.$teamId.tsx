@@ -651,6 +651,8 @@ function OwnerInbox({ teamId }: { teamId: string }) {
 
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [acceptClass, setAcceptClass] = useState<string>("");
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const viewing = (apps ?? []).find((a) => a.id === viewingId) ?? null;
 
   const accept = async (a: { id: string; user_id: string }) => {
     if (!acceptClass) return toastError("Vælg en klasse for køreren først");
