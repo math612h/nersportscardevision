@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, ChevronDown, ChevronRight, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, KeyRound, Settings as SettingsIcon, Timer } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, ChevronDown, ChevronRight, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, KeyRound, Settings as SettingsIcon, Timer, Shield } from "lucide-react";
 import { useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -373,7 +373,7 @@ function LeagueDetail() {
         </div>
       </header>
 
-      <QuickNav />
+      <QuickNav teamsAllowed={!!(league as any)?.teams_allowed} />
 
 
       <GuestBlur active={isGuest} label="Log ind for at se entrylisten">
@@ -1555,9 +1555,10 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   );
 }
 
-function QuickNav() {
+function QuickNav({ teamsAllowed = false }: { teamsAllowed?: boolean }) {
   const items = [
     { id: "entryliste", label: "Entryliste", icon: Users },
+    ...(teamsAllowed ? [{ id: "teams", label: "Teams", icon: Shield }] : []),
     { id: "kalender", label: "Kalender", icon: Calendar },
     { id: "driveraids", label: "Driver Aids", icon: SettingsIcon },
     { id: "stillinger", label: "Stillinger", icon: Trophy },
