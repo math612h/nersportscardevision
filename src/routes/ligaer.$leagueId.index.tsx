@@ -373,7 +373,7 @@ function LeagueDetail() {
         </div>
       </header>
 
-      <QuickNav />
+      <QuickNav teamsAllowed={!!(league as any)?.teams_allowed} />
 
 
       <GuestBlur active={isGuest} label="Log ind for at se entrylisten">
