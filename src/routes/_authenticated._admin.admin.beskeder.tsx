@@ -80,6 +80,11 @@ function BeskedHub() {
     queryFn: () => channelsFn(),
   });
 
+  const { data: roles } = useQuery({
+    queryKey: ["discord-roles"],
+    queryFn: () => rolesFn(),
+  });
+
   const { data: leagues } = useQuery<LeagueLite[]>({
     queryKey: ["beskeder-leagues"],
     queryFn: async () => {
