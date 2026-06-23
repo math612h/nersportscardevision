@@ -1555,9 +1555,10 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   );
 }
 
-function QuickNav() {
+function QuickNav({ teamsAllowed = false }: { teamsAllowed?: boolean }) {
   const items = [
     { id: "entryliste", label: "Entryliste", icon: Users },
+    ...(teamsAllowed ? [{ id: "teams", label: "Teams", icon: Shield }] : []),
     { id: "kalender", label: "Kalender", icon: Calendar },
     { id: "driveraids", label: "Driver Aids", icon: SettingsIcon },
     { id: "stillinger", label: "Stillinger", icon: Trophy },
