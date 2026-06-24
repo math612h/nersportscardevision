@@ -38,7 +38,7 @@ function Gate() {
       const hasRealEmail = !!email && !email.endsWith("@no-email.lmudanmark.dk");
       return {
         discordLinked,
-        complete: discordLinked && !!lmu && !!name && hasRealEmail && accepts && mediaConsent && !!address && !!postal && !!city,
+        complete: discordLinked && !!lmu && !!name && hasRealEmail && accepts && mediaConsent,
       };
     },
   });
