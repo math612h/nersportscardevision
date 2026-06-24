@@ -23,10 +23,7 @@ export function useProfileComplete() {
         && !!(pr.display_name ?? "").trim()
         && hasRealEmail
         && pr.accepts_danish === true
-        && pr.media_consent === true
-        && !!(p.address ?? "").trim()
-        && !!(p.postal_code ?? "").trim()
-        && !!(p.city ?? "").trim();
+        && pr.media_consent === true;
       return { complete, discordLinked };
     },
   });
