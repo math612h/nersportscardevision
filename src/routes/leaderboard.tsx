@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2, Monitor, User as UserIcon, ChevronRight, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
@@ -79,6 +79,16 @@ type Row = {
 const ALL = "__all__";
 const UNKNOWN_VERSION = "__unknown__";
 
+// Normaliser version: dropper sidste segment (hotfix). 1.3.3.4 → 1.3.3.
+// Versioner med 1-2 segmenter bevares som de er.
+function normalizeVersion(raw: string | null | undefined): string {
+  const v = (raw ?? "").trim();
+  if (!v) return UNKNOWN_VERSION;
+  const parts = v.split(".");
+  if (parts.length <= 2) return v;
+  return parts.slice(0, -1).join(".");
+}
+
 // Sortér patch-versioner nyest først (numerisk pr. dot-segment, ukendt sidst).
 function compareVersionsDesc(a: string, b: string): number {
   if (a === UNKNOWN_VERSION) return 1;
@@ -147,11 +157,21 @@ function LeaderboardPage() {
 
   const versions = useMemo(() => {
     const set = new Set<string>();
-    for (const r of rows ?? []) set.add(r.game_version ?? UNKNOWN_VERSION);
+    for (const r of rows ?? []) set.add(normalizeVersion(r.game_version));
     return Array.from(set).sort(compareVersionsDesc);
   }, [rows]);
 
   const versionLabel = (v: string) => (v === UNKNOWN_VERSION ? "Ukendt" : v);
+
+  // Default: kun nyeste patch valgt. Sættes når versions er hentet første gang.
+  const versionDefaultsApplied = useRef(false);
+  useEffect(() => {
+    if (versionDefaultsApplied.current) return;
+    if (versions.length === 0) return;
+    const newest = versions.find((v) => v !== UNKNOWN_VERSION) ?? versions[0];
+    setExcludedVersions(new Set(versions.filter((v) => v !== newest)));
+    versionDefaultsApplied.current = true;
+  }, [versions]);
 
   const toggleVersion = (v: string) => {
     setExcludedVersions((prev) => {
@@ -166,7 +186,7 @@ function LeaderboardPage() {
       if (carClass !== ALL && r.car_class !== carClass) return false;
       if (track !== ALL && r.track !== track) return false;
       if (layout !== ALL && (r.layout ?? "") !== layout) return false;
-      const v = r.game_version ?? UNKNOWN_VERSION;
+      const v = normalizeVersion(r.game_version);
       if (excludedVersions.has(v)) return false;
       return true;
     });
