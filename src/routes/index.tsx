@@ -184,7 +184,6 @@ function NewsHome() {
       const groups: { car_class: string; teams: { teamId: string; name: string; points: number; drivers: number }[] }[] = [];
       for (const [cls, m] of byClass.entries()) {
         const teamsList = Array.from(m.entries())
-          .filter(([, s]) => s.count >= 2) // lineup-kravet: min 2 deltagere skal have kørt
           .map(([teamId, s]) => ({ teamId, name: s.name, points: s.sum, drivers: s.count }))
           .sort((a, b) => b.points - a.points)
           .slice(0, 3);
@@ -193,6 +192,7 @@ function NewsHome() {
       return groups;
     },
   });
+
 
 
   if (gated) {
