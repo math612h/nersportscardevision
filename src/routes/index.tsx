@@ -132,7 +132,7 @@ function NewsHome() {
 
   const groupedResults = groupTopThree((latest?.settings?.results ?? []) as ResultRow[]);
 
-  // Team-stilling for seneste løb: map car_number+car_class -> team via league_team_entries/lineup
+  // Team-stilling for seneste løb: kun bekræftede team-tilmeldinger med ≥2 accepterede lineup-kørere
   const { data: latestTeamStandings } = useQuery({
     queryKey: ["home-latest-team-standings", latest?.id, latest?.league_id],
     enabled: !!latest?.id && !!latest?.league_id,
@@ -140,53 +140,50 @@ function NewsHome() {
       const results = (latest?.settings?.results ?? []) as ResultRow[];
       if (results.length === 0) return [] as { car_class: string; teams: { teamId: string; name: string; points: number; drivers: number }[] }[];
 
-      // Get all entries for this league (single-driver class signups)
-      const { data: entries } = await supabase
-        .from("entries")
-        .select("user_id,car_class,car_number,team_id")
-        .eq("league_id", latest.league_id);
-      // Get team lineups (multi-driver team entries per class)
-      const { data: lineups } = await (supabase as any)
-        .from("league_team_lineup")
-        .select("user_id,car_class,car_number,team_id,league_id")
-        .eq("league_id", latest.league_id);
+      const { data: entries } = await (supabase as any)
+        .from("league_team_entries")
+        .select("id, team_id, car_class, status, teams:team_id(name), league_team_lineup(user_id, status)")
+        .eq("league_id", latest.league_id)
+        .eq("status", "confirmed");
 
-      const driverTeam = new Map<string, string>(); // key: class|car_number -> teamId
+      // For each (class, team) collect accepted lineup user_ids; require ≥2
+      type Info = { teamId: string; name: string; carClass: string; userIds: Set<string> };
+      const teamInfos: Info[] = [];
       for (const e of (entries ?? []) as any[]) {
-        if (e.team_id && e.car_number != null) driverTeam.set(`${e.car_class}|${e.car_number}`, e.team_id);
+        const accepted = ((e.league_team_lineup ?? []) as any[])
+          .filter((l) => l.status === "accepted")
+          .map((l) => l.user_id as string);
+        if (accepted.length < 2) continue;
+        teamInfos.push({
+          teamId: e.team_id,
+          name: e.teams?.name ?? "Team",
+          carClass: e.car_class,
+          userIds: new Set(accepted),
+        });
       }
-      for (const l of (lineups ?? []) as any[]) {
-        if (l.team_id && l.car_number != null) driverTeam.set(`${l.car_class}|${l.car_number}`, l.team_id);
-      }
+      if (teamInfos.length === 0) return [];
 
-      const teamIds = Array.from(new Set(Array.from(driverTeam.values())));
-      if (teamIds.length === 0) return [];
-      const { data: teams } = await supabase.from("teams").select("id,name").in("id", teamIds);
-      const teamNames = new Map<string, string>((teams ?? []).map((t: any) => [t.id, t.name]));
-
-      // Group results by class then by team
-      const byClass = new Map<string, Map<string, { sum: number; count: number }>>();
+      // Sum points per (class, team), counting only drivers from accepted lineup who actually scored
+      const byClass = new Map<string, Map<string, { sum: number; count: number; name: string }>>();
       for (const r of results) {
-        if (r.dns || r.car_number == null) continue;
-        const tId = driverTeam.get(`${r.car_class}|${r.car_number}`);
-        if (!tId) continue;
-        if (!byClass.has(r.car_class)) byClass.set(r.car_class, new Map());
-        const m = byClass.get(r.car_class)!;
-        const slot = m.get(tId) ?? { sum: 0, count: 0 };
-        slot.sum += Number(r.points ?? 0);
-        slot.count += 1;
-        m.set(tId, slot);
+        if (r.dns || !r.user_id) continue;
+        for (const info of teamInfos) {
+          if (info.carClass !== r.car_class) continue;
+          if (!info.userIds.has(r.user_id as string)) continue;
+          if (!byClass.has(r.car_class)) byClass.set(r.car_class, new Map());
+          const m = byClass.get(r.car_class)!;
+          const slot = m.get(info.teamId) ?? { sum: 0, count: 0, name: info.name };
+          slot.sum += Number(r.points ?? 0);
+          slot.count += 1;
+          m.set(info.teamId, slot);
+        }
       }
 
       const groups: { car_class: string; teams: { teamId: string; name: string; points: number; drivers: number }[] }[] = [];
       for (const [cls, m] of byClass.entries()) {
         const teamsList = Array.from(m.entries())
-          .map(([teamId, s]) => ({
-            teamId,
-            name: teamNames.get(teamId) ?? "Team",
-            points: s.count > 0 ? s.sum / s.count : 0,
-            drivers: s.count,
-          }))
+          .filter(([, s]) => s.count >= 2) // lineup-kravet: min 2 deltagere skal have kørt
+          .map(([teamId, s]) => ({ teamId, name: s.name, points: s.sum, drivers: s.count }))
           .sort((a, b) => b.points - a.points)
           .slice(0, 3);
         if (teamsList.length > 0) groups.push({ car_class: cls, teams: teamsList });
@@ -194,6 +191,7 @@ function NewsHome() {
       return groups;
     },
   });
+
 
   if (gated) {
     return (
