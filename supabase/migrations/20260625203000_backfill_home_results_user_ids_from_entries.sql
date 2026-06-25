@@ -10,7 +10,7 @@ WITH enriched AS (
         ELSE row_data
           || jsonb_build_object(
             'user_id', COALESCE(row_data->>'user_id', e.user_id::text),
-            'car_number', COALESCE((row_data->>'car_number')::int, e.car_number),
+            'car_number', COALESCE(NULLIF(row_data->>'car_number', '')::int, e.car_number),
             'driver_category', COALESCE(row_data->>'driver_category', e.driver_category)
           )
       END
