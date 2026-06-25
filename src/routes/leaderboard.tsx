@@ -157,11 +157,21 @@ function LeaderboardPage() {
 
   const versions = useMemo(() => {
     const set = new Set<string>();
-    for (const r of rows ?? []) set.add(r.game_version ?? UNKNOWN_VERSION);
+    for (const r of rows ?? []) set.add(normalizeVersion(r.game_version));
     return Array.from(set).sort(compareVersionsDesc);
   }, [rows]);
 
   const versionLabel = (v: string) => (v === UNKNOWN_VERSION ? "Ukendt" : v);
+
+  // Default: kun nyeste patch valgt. Sættes når versions er hentet første gang.
+  const versionDefaultsApplied = useRef(false);
+  useEffect(() => {
+    if (versionDefaultsApplied.current) return;
+    if (versions.length === 0) return;
+    const newest = versions.find((v) => v !== UNKNOWN_VERSION) ?? versions[0];
+    setExcludedVersions(new Set(versions.filter((v) => v !== newest)));
+    versionDefaultsApplied.current = true;
+  }, [versions]);
 
   const toggleVersion = (v: string) => {
     setExcludedVersions((prev) => {
@@ -176,7 +186,7 @@ function LeaderboardPage() {
       if (carClass !== ALL && r.car_class !== carClass) return false;
       if (track !== ALL && r.track !== track) return false;
       if (layout !== ALL && (r.layout ?? "") !== layout) return false;
-      const v = r.game_version ?? UNKNOWN_VERSION;
+      const v = normalizeVersion(r.game_version);
       if (excludedVersions.has(v)) return false;
       return true;
     });
