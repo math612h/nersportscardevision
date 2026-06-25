@@ -27,6 +27,8 @@ const PAGE_URL = "https://danishenduranceseries.dk/";
 
 type ResultRow = {
   car_number?: number;
+  user_id?: string;
+
   driver_name: string;
   car_class: string;
   driver_category?: string;
@@ -132,7 +134,7 @@ function NewsHome() {
 
   const groupedResults = groupTopThree((latest?.settings?.results ?? []) as ResultRow[]);
 
-  // Team-stilling for seneste løb: map car_number+car_class -> team via league_team_entries/lineup
+  // Team-stilling for seneste løb: kun bekræftede team-tilmeldinger med ≥2 accepterede lineup-kørere
   const { data: latestTeamStandings } = useQuery({
     queryKey: ["home-latest-team-standings", latest?.id, latest?.league_id],
     enabled: !!latest?.id && !!latest?.league_id,
@@ -140,53 +142,50 @@ function NewsHome() {
       const results = (latest?.settings?.results ?? []) as ResultRow[];
       if (results.length === 0) return [] as { car_class: string; teams: { teamId: string; name: string; points: number; drivers: number }[] }[];
 
-      // Get all entries for this league (single-driver class signups)
-      const { data: entries } = await supabase
-        .from("entries")
-        .select("user_id,car_class,car_number,team_id")
-        .eq("league_id", latest.league_id);
-      // Get team lineups (multi-driver team entries per class)
-      const { data: lineups } = await (supabase as any)
-        .from("league_team_lineup")
-        .select("user_id,car_class,car_number,team_id,league_id")
-        .eq("league_id", latest.league_id);
+      const { data: entries } = await (supabase as any)
+        .from("league_team_entries")
+        .select("id, team_id, car_class, status, teams:team_id(name), league_team_lineup(user_id, status)")
+        .eq("league_id", latest.league_id)
+        .eq("status", "confirmed");
 
-      const driverTeam = new Map<string, string>(); // key: class|car_number -> teamId
+      // For each (class, team) collect accepted lineup user_ids; require ≥2
+      type Info = { teamId: string; name: string; carClass: string; userIds: Set<string> };
+      const teamInfos: Info[] = [];
       for (const e of (entries ?? []) as any[]) {
-        if (e.team_id && e.car_number != null) driverTeam.set(`${e.car_class}|${e.car_number}`, e.team_id);
+        const accepted = ((e.league_team_lineup ?? []) as any[])
+          .filter((l) => l.status === "accepted")
+          .map((l) => l.user_id as string);
+        if (accepted.length < 2) continue;
+        teamInfos.push({
+          teamId: e.team_id,
+          name: e.teams?.name ?? "Team",
+          carClass: e.car_class,
+          userIds: new Set(accepted),
+        });
       }
-      for (const l of (lineups ?? []) as any[]) {
-        if (l.team_id && l.car_number != null) driverTeam.set(`${l.car_class}|${l.car_number}`, l.team_id);
-      }
+      if (teamInfos.length === 0) return [];
 
-      const teamIds = Array.from(new Set(Array.from(driverTeam.values())));
-      if (teamIds.length === 0) return [];
-      const { data: teams } = await supabase.from("teams").select("id,name").in("id", teamIds);
-      const teamNames = new Map<string, string>((teams ?? []).map((t: any) => [t.id, t.name]));
-
-      // Group results by class then by team
-      const byClass = new Map<string, Map<string, { sum: number; count: number }>>();
+      // Sum points per (class, team), counting only drivers from accepted lineup who actually scored
+      const byClass = new Map<string, Map<string, { sum: number; count: number; name: string }>>();
       for (const r of results) {
-        if (r.dns || r.car_number == null) continue;
-        const tId = driverTeam.get(`${r.car_class}|${r.car_number}`);
-        if (!tId) continue;
-        if (!byClass.has(r.car_class)) byClass.set(r.car_class, new Map());
-        const m = byClass.get(r.car_class)!;
-        const slot = m.get(tId) ?? { sum: 0, count: 0 };
-        slot.sum += Number(r.points ?? 0);
-        slot.count += 1;
-        m.set(tId, slot);
+        if (r.dns || !r.user_id) continue;
+        for (const info of teamInfos) {
+          if (info.carClass !== r.car_class) continue;
+          if (!info.userIds.has(r.user_id as string)) continue;
+          if (!byClass.has(r.car_class)) byClass.set(r.car_class, new Map());
+          const m = byClass.get(r.car_class)!;
+          const slot = m.get(info.teamId) ?? { sum: 0, count: 0, name: info.name };
+          slot.sum += Number(r.points ?? 0);
+          slot.count += 1;
+          m.set(info.teamId, slot);
+        }
       }
 
       const groups: { car_class: string; teams: { teamId: string; name: string; points: number; drivers: number }[] }[] = [];
       for (const [cls, m] of byClass.entries()) {
         const teamsList = Array.from(m.entries())
-          .map(([teamId, s]) => ({
-            teamId,
-            name: teamNames.get(teamId) ?? "Team",
-            points: s.count > 0 ? s.sum / s.count : 0,
-            drivers: s.count,
-          }))
+          .filter(([, s]) => s.count >= 2) // lineup-kravet: min 2 deltagere skal have kørt
+          .map(([teamId, s]) => ({ teamId, name: s.name, points: s.sum, drivers: s.count }))
           .sort((a, b) => b.points - a.points)
           .slice(0, 3);
         if (teamsList.length > 0) groups.push({ car_class: cls, teams: teamsList });
@@ -194,6 +193,7 @@ function NewsHome() {
       return groups;
     },
   });
+
 
   if (gated) {
     return (
@@ -381,42 +381,54 @@ function NewsHome() {
             <Users className="h-4 w-4" />
             <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Team-stilling (seneste løb)</h2>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {latestTeamStandings.map((g) => (
-              <div key={g.car_class} className="space-y-2 rounded-xl border border-border bg-card p-4">
-                <h3 className="text-sm font-semibold">{g.car_class}</h3>
-                <ol className="space-y-1.5">
-                  {g.teams.map((t, i) => {
-                    const medal =
-                      i === 0
-                        ? "bg-amber-400/20 text-amber-700 ring-1 ring-amber-400/40 dark:text-amber-300"
-                        : i === 1
-                        ? "bg-slate-300/30 text-slate-700 ring-1 ring-slate-400/40 dark:text-slate-200"
-                        : "bg-orange-500/15 text-orange-700 ring-1 ring-orange-500/30 dark:text-orange-300";
-                    return (
-                      <li key={t.teamId} className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
-                        <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
-                          {i + 1}
-                        </span>
-                        <span className="min-w-0 flex-1 truncate font-medium">{t.name}</span>
-                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                          {t.drivers} {t.drivers === 1 ? "kører" : "kørere"}
-                        </span>
-                        <span className="shrink-0 text-xs font-semibold tabular-nums">
-                          {Math.floor(t.points)} p
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ol>
-              </div>
-            ))}
-          </div>
+          <article className="overflow-hidden rounded-xl border border-border bg-card">
+            <div className="space-y-5 p-4 sm:p-6">
+              {latestTeamStandings.map((g) => (
+                <div key={g.car_class} className="space-y-2 rounded-md border border-border p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold">{g.car_class}</h3>
+                    {g.teams[0] && (
+                      <Badge className="gap-1">
+                        <Trophy className="h-3 w-3" />
+                        {g.teams[0].name}
+                      </Badge>
+                    )}
+                  </div>
+                  <ol className="grid gap-2 sm:grid-cols-3">
+                    {g.teams.map((t, i) => {
+                      const pos = i + 1;
+                      const medal =
+                        pos === 1
+                          ? "bg-amber-400/20 text-amber-700 ring-1 ring-amber-400/40 dark:text-amber-300"
+                          : pos === 2
+                          ? "bg-slate-300/30 text-slate-700 ring-1 ring-slate-400/40 dark:text-slate-200"
+                          : "bg-orange-500/15 text-orange-700 ring-1 ring-orange-500/30 dark:text-orange-300";
+                      return (
+                        <li
+                          key={t.teamId}
+                          className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
+                        >
+                          <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
+                            {pos}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate font-medium">{t.name}</span>
+                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {t.points} p
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              ))}
+            </div>
+          </article>
           <p className="text-[11px] text-muted-foreground">
-            Team-point = gennemsnit af medlemmernes opnåede point i løbet.
+            Team-point = sum af lineup-kørernes point. Kræver mindst 2 deltagere fra teamet i klassen.
           </p>
         </section>
       )}
+
 
 
 
