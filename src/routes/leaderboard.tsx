@@ -161,7 +161,16 @@ function LeaderboardPage() {
     return Array.from(set).sort(compareVersionsDesc);
   }, [rows]);
 
-  const versionLabel = (v: string) => (v === UNKNOWN_VERSION ? "Ukendt" : v);
+  // Pæne labels for LMU's gamle Early Access-build-numre (de 4-cifrede versioner).
+  const EA_BUILD_LABELS: Record<string, string> = {
+    "0.1000": "EA v0.1",
+    "1.0000": "EA v1.0",
+    "1.0110": "EA v1.0.1",
+    "1.0200": "EA v1.0.2",
+    "1.2000": "EA v1.2",
+    "1.3000": "EA v1.3",
+  };
+  const versionLabel = (v: string) => (v === UNKNOWN_VERSION ? "Ukendt" : (EA_BUILD_LABELS[v] ?? v));
 
   // Default: kun nyeste patch valgt. Sættes når versions er hentet første gang.
   const versionDefaultsApplied = useRef(false);
