@@ -1131,6 +1131,45 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_benefits: {
+        Row: {
+          active: boolean
+          body: string | null
+          created_at: string
+          created_by: string | null
+          hero_image_path: string | null
+          id: string
+          logo_path: string | null
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          hero_image_path?: string | null
+          id?: string
+          logo_path?: string | null
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          hero_image_path?: string | null
+          id?: string
+          logo_path?: string | null
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       points_system_templates: {
         Row: {
           created_at: string

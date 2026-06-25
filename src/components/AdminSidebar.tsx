@@ -16,6 +16,7 @@ import {
   Headphones,
   AlertTriangle,
   KeyRound,
+  Handshake,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -100,6 +101,7 @@ export function AdminSidebar() {
       label: "Kommunikation",
       items: [
         { title: "Nyhedsbrev", url: "/admin/nyhedsbrev", icon: Newspaper },
+        { title: "Partnerfordele", url: "/admin/partnerfordele", icon: Handshake },
         { title: "Besked Hub", url: "/admin/beskeder", icon: MessageCircle },
         { title: "Briefing-rum", url: "/admin/briefing", icon: Headphones },
       ],
