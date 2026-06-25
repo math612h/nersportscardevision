@@ -123,6 +123,7 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
   if (!track) throw new Error("Kunne ikke finde banens navn i filen");
 
   const layout = parseLayoutFromTrackData(trackData || doc.querySelector("TrackData")?.textContent?.trim());
+  const gameVersion = childValue(raceResults, "GameVersion") || null;
 
   const sessionNode = findSessionElement(raceResults);
 
