@@ -142,39 +142,13 @@ function NewsHome() {
       const results = (latest?.settings?.results ?? []) as ResultRow[];
       if (results.length === 0) return [] as { car_class: string; teams: { teamId: string; name: string; points: number; drivers: number }[] }[];
 
-      const [{ data: teamEntries, error: teamEntriesError }, { data: driverEntries, error: driverEntriesError }] = await Promise.all([
-        (supabase as any)
+      const { data: teamEntries, error: teamEntriesError } = await (supabase as any)
         .from("league_team_entries")
         .select("id, team_id, car_class, status, teams:team_id(name), league_team_lineup(user_id, status)")
         .eq("league_id", latest.league_id)
-          .eq("status", "confirmed"),
-        (supabase as any)
-          .from("entries")
-          .select("user_id,driver_name,car_class,car_number,team_id")
-          .eq("league_id", latest.league_id),
-      ]);
+        .eq("status", "confirmed");
 
       if (teamEntriesError) throw teamEntriesError;
-      if (driverEntriesError) throw driverEntriesError;
-
-      const normalizeName = (name?: string | null) =>
-        (name ?? "")
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "")
-          .replace(/\s+/g, " ")
-          .trim();
-
-      const entryByNumber = new Map<string, string>();
-      const entryByName = new Map<string, string>();
-      for (const entry of (driverEntries ?? []) as any[]) {
-        if (!entry.user_id || !entry.car_class) continue;
-        if (entry.car_number != null) {
-          entryByNumber.set(`${entry.car_class}:${entry.car_number}`, entry.user_id);
-        }
-        const normalized = normalizeName(entry.driver_name);
-        if (normalized) entryByName.set(`${entry.car_class}:${normalized}`, entry.user_id);
-      }
 
       // For each (class, team) collect accepted lineup user_ids; require ≥2
       type Info = { teamId: string; name: string; carClass: string; userIds: Set<string> };
@@ -196,21 +170,16 @@ function NewsHome() {
       // Sum points per (class, team), counting only drivers from accepted lineup who actually scored
       const byClass = new Map<string, Map<string, { sum: number; userIds: Set<string>; name: string }>>();
       for (const r of results) {
-        if (r.dns || !r.car_class) continue;
-        const resolvedUserId =
-          r.user_id ??
-          (r.car_number != null ? entryByNumber.get(`${r.car_class}:${r.car_number}`) : undefined) ??
-          entryByName.get(`${r.car_class}:${normalizeName(r.driver_name)}`);
-        if (!resolvedUserId) continue;
+        if (r.dns || !r.user_id || !r.car_class) continue;
         for (const info of teamInfos) {
           if (info.carClass !== r.car_class) continue;
-          if (!info.userIds.has(resolvedUserId)) continue;
+          if (!info.userIds.has(r.user_id)) continue;
           if (!byClass.has(r.car_class)) byClass.set(r.car_class, new Map());
           const m = byClass.get(r.car_class)!;
           const slot = m.get(info.teamId) ?? { sum: 0, userIds: new Set<string>(), name: info.name };
-          if (slot.userIds.has(resolvedUserId)) continue;
+          if (slot.userIds.has(r.user_id)) continue;
           slot.sum += Number(r.points ?? 0);
-          slot.userIds.add(resolvedUserId);
+          slot.userIds.add(r.user_id);
           m.set(info.teamId, slot);
         }
       }
