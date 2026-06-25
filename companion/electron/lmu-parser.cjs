@@ -161,6 +161,7 @@ function parseLmuRaceFile(xml) {
 
   const race = findSessionNode(rr);
   if (!race) throw new Error("Missing session node (Race/Qualify/Practice)");
+  const gameVersion = childValue(rr, "GameVersion") || null;
 
   let recordedAt = null;
   const ts = childValue(race, "DateTime") || childValue(rr, "DateTime");
@@ -206,7 +207,7 @@ function parseLmuRaceFile(xml) {
   });
 
   if (drivers.length === 0) throw new Error("Ingen kørere fundet i filen");
-  return { track, layout, recordedAt, drivers };
+  return { track, layout, recordedAt, gameVersion, drivers };
 }
 
 function nameSimilarity(a, b) {

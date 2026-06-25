@@ -141,6 +141,7 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
   if (!track) throw new Error("Kunne ikke finde banens navn i filen");
 
   const layout = parseLayoutFromTrackData(trackData);
+  const gameVersion = childValue(rr, "GameVersion") || null;
 
   const sessionNode = findSessionNode(rr);
 
@@ -191,5 +192,5 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
   });
 
   if (drivers.length === 0) throw new Error("Ingen kørere fundet i filen");
-  return { track, layout, recordedAt, drivers };
+  return { track, layout, recordedAt, gameVersion, drivers };
 }

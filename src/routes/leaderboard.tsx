@@ -73,9 +73,26 @@ type Row = {
   source: "admin" | "user" | "league";
   recorded_at: string | null;
   created_at: string;
+  game_version: string | null;
 };
 
 const ALL = "__all__";
+const UNKNOWN_VERSION = "__unknown__";
+
+// Sortér patch-versioner nyest først (numerisk pr. dot-segment, ukendt sidst).
+function compareVersionsDesc(a: string, b: string): number {
+  if (a === UNKNOWN_VERSION) return 1;
+  if (b === UNKNOWN_VERSION) return -1;
+  const pa = a.split(".").map((n) => parseInt(n, 10));
+  const pb = b.split(".").map((n) => parseInt(n, 10));
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const x = pa[i] ?? 0;
+    const y = pb[i] ?? 0;
+    if (x !== y) return y - x;
+  }
+  return 0;
+}
 
 function LeaderboardPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -100,6 +117,9 @@ function LeaderboardPage() {
   const [carClass, setCarClass] = useState<string>(ALL);
   const [track, setTrack] = useState<string>(ALL);
   const [layout, setLayout] = useState<string>(ALL);
+  // Patch-versioner: tomt sæt = "alle". Brugeren kan til-/fravælge enkelte versioner.
+  const [excludedVersions, setExcludedVersions] = useState<Set<string>>(new Set());
+  const [versionPickerOpen, setVersionPickerOpen] = useState(false);
 
   const trackLayoutMap = useMemo(() => {
     const m = new Map<string, Set<string>>();
@@ -125,11 +145,29 @@ function LeaderboardPage() {
     [rows],
   );
 
+  const versions = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rows ?? []) set.add(r.game_version ?? UNKNOWN_VERSION);
+    return Array.from(set).sort(compareVersionsDesc);
+  }, [rows]);
+
+  const versionLabel = (v: string) => (v === UNKNOWN_VERSION ? "Ukendt" : v);
+
+  const toggleVersion = (v: string) => {
+    setExcludedVersions((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v); else next.add(v);
+      return next;
+    });
+  };
+
   const filtered = useMemo(() => {
     const list = (rows ?? []).filter((r) => {
       if (carClass !== ALL && r.car_class !== carClass) return false;
       if (track !== ALL && r.track !== track) return false;
       if (layout !== ALL && (r.layout ?? "") !== layout) return false;
+      const v = r.game_version ?? UNKNOWN_VERSION;
+      if (excludedVersions.has(v)) return false;
       return true;
     });
     // Best lap per driver pr. bilklasse + bane + layout (uanset bil-model)
@@ -148,7 +186,7 @@ function LeaderboardPage() {
       countByGroup.set(g, n);
       return n <= 10;
     });
-  }, [rows, carClass, track, layout]);
+  }, [rows, carClass, track, layout, excludedVersions]);
 
   const handleFiles = async (files: FileList) => {
     if (!user) { toast.error("Log ind for at uploade din egen tid."); return; }
@@ -226,6 +264,7 @@ function LeaderboardPage() {
                 source: "user" as const,
                 uploaded_by: user.id,
                 recorded_at: parsed.recordedAt,
+                game_version: parsed.gameVersion,
               };
             })
             .filter((r): r is NonNullable<typeof r> => r !== null);
@@ -511,8 +550,61 @@ function LeaderboardPage() {
               </PopoverContent>
             </Popover>
           </div>
+          {versions.length > 0 && (
+            <div className="sm:col-span-2">
+              <Label className="text-xs">Patch-version</Label>
+              <Popover open={versionPickerOpen} onOpenChange={setVersionPickerOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-left text-sm shadow-sm transition hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <span className="truncate">
+                      {excludedVersions.size === 0
+                        ? "Alle versioner"
+                        : versions.filter((v) => !excludedVersions.has(v)).length === 0
+                          ? "Ingen valgt"
+                          : versions
+                              .filter((v) => !excludedVersions.has(v))
+                              .map(versionLabel)
+                              .join(", ")}
+                    </span>
+                    <ChevronRight className="ml-2 h-4 w-4 shrink-0 rotate-90 text-muted-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[--radix-popover-trigger-width] max-h-[60vh] overflow-y-auto p-1">
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => setExcludedVersions(new Set())}
+                      className="flex items-center justify-between rounded-sm px-2 py-2 text-sm hover:bg-accent"
+                    >
+                      <span>Vælg alle</span>
+                      {excludedVersions.size === 0 && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                    <div className="my-1 h-px bg-border" />
+                    {versions.map((v) => {
+                      const selected = !excludedVersions.has(v);
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => toggleVersion(v)}
+                          className="flex items-center justify-between rounded-sm px-2 py-2 text-sm hover:bg-accent"
+                        >
+                          <span className="truncate">{versionLabel(v)}</span>
+                          {selected && <Check className="h-4 w-4 text-primary" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
         </div>
       </section>
+
 
       <section className="space-y-4">
         <div className="flex items-center gap-2 text-primary">

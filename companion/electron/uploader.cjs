@@ -174,6 +174,7 @@ async function uploadParsedResultsViaToken({ token, parsed, lmuName }) {
     _car_model: me.carModel,
     _best_lap_ms: me.bestLapMs,
     _recorded_at: parsed.recordedAt,
+    _game_version: parsed.gameVersion ?? null,
   });
   if (error) throw error;
   if (data && data.ok === false) throw new Error(data.error || "Upload blev afvist af backend");
