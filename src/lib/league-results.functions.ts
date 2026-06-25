@@ -171,9 +171,28 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
     const lbInserted = 0;
 
 
-    // Mark division as completed when race file uploaded
+    // Mark division as completed when race file uploaded + populate settings.results
+    // (so the front page "Seneste løb" card can render top-3 per class).
     if (data.sessionType === "race") {
-      const newSettings = { ...(division.settings as any ?? {}), completed: true };
+      const raceRows = resultRows.filter((r) => r.session_type === "race");
+      const driverNameById = new Map<string, string>();
+      for (const m of matched) driverNameById.set(m.user_id, m.driver_name);
+      const settingsResults = raceRows.map((r) => ({
+        driver_name: driverNameById.get(r.user_id) ?? "",
+        car_class: r.car_class,
+        car_model: r.car_model,
+        class_position: r.position,
+        position: r.position,
+        best_lap_ms: r.best_lap_ms,
+        points: r.points,
+        dns: false,
+        dnf: false,
+      }));
+      const newSettings = {
+        ...(division.settings as any ?? {}),
+        completed: true,
+        results: settingsResults,
+      };
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
 
