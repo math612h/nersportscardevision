@@ -342,7 +342,7 @@ function groupTopThree(results: ResultRow[]) {
   const groups = new Map<string, ResultRow[]>();
   for (const r of results) {
     if (r.dns || r.dnf || !r.driver_name) continue;
-    const key = `${r.car_class}${r.driver_category ? ` · ${r.driver_category}` : ""}`;
+    const key = r.car_class ?? "Ukendt klasse";
     (groups.get(key) ?? groups.set(key, []).get(key)!).push(r);
   }
   return Array.from(groups.entries())
