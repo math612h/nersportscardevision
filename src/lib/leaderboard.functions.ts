@@ -25,7 +25,7 @@ export const getLeaderboardRows = createServerFn({ method: "GET" }).handler(asyn
     const to = from + PAGE_SIZE - 1;
     const { data, error } = await supabaseAdmin
       .from("leaderboard_times")
-      .select("id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at")
+      .select("id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at,game_version")
       .order("best_lap_ms", { ascending: true })
       .range(from, to);
 
