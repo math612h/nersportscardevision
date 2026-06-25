@@ -12,6 +12,7 @@ export type LeaderboardRow = {
   source: "admin" | "user" | "league";
   recorded_at: string | null;
   created_at: string;
+  game_version: string | null;
 };
 
 const PAGE_SIZE = 1000;
