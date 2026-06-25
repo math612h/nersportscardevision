@@ -107,6 +107,7 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
             source: "user" as const,
             uploaded_by: tokenRow.user_id,
             recorded_at: parsed.recordedAt,
+            game_version: parsed.gameVersion,
           }] : [];
           for (const d of parsed.drivers) {
             if (d !== me) skipped.push(d.name);
