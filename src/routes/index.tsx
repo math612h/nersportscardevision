@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import DOMPurify from "isomorphic-dompurify";
 import { AddressConsentBanner } from "@/components/AddressConsentBanner";
+import { UserAvatarOnly } from "@/components/UserAvatar";
+import { TeamAvatarOnly } from "@/components/TeamAvatar";
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
 const PAGE_DESC =
