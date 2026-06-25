@@ -199,7 +199,8 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       .eq("session_type", data.sessionType);
     if (delErr) throw new Error(delErr.message);
 
-    const { error: insErr } = await supabaseAdmin.from("league_results").insert(resultRows);
+    const dbRows = resultRows.map(({ _dnf, ...rest }) => rest);
+    const { error: insErr } = await supabaseAdmin.from("league_results").insert(dbRows);
     if (insErr) throw new Error(insErr.message);
 
     // Leaderboard upload removed for league results to avoid unique constraint
