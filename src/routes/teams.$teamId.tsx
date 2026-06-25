@@ -342,17 +342,18 @@ function RecentResultsCard({
   profiles: Record<string, Profile>;
 }) {
   const userIds = members.map((m) => m.user_id);
-  const { data: entries } = useQuery({
-    queryKey: ["team-recent-entries", userIds.sort().join(",")],
+  const { data: results } = useQuery({
+    queryKey: ["team-recent-results", userIds.sort().join(",")],
     enabled: userIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("entries")
-        .select("id, user_id, division_id, league_id, created_at, divisions(name, track, race_date), leagues(name)")
+        .from("league_results")
+        .select("id, user_id, division_id, league_id, position, car_class, session_type, created_at, divisions(name, track, race_date), leagues(name)")
         .in("user_id", userIds)
+        .eq("session_type", "race")
         .not("division_id", "is", null)
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(300);
       if (error) throw error;
       return (data ?? []) as any[];
     },
@@ -360,18 +361,14 @@ function RecentResultsCard({
 
   const byUser = useMemo(() => {
     const map: Record<string, any[]> = {};
-    const now = Date.now();
-    for (const e of entries ?? []) {
-      const raceDate = e.divisions?.race_date ? new Date(e.divisions.race_date).getTime() : null;
-      // Only finished races
-      if (!raceDate || raceDate > now) continue;
-      (map[e.user_id] ??= []).push(e);
+    for (const r of results ?? []) {
+      (map[r.user_id] ??= []).push(r);
     }
     for (const uid of Object.keys(map)) {
       map[uid] = map[uid].slice(0, 3);
     }
     return map;
-  }, [entries]);
+  }, [results]);
 
   if (userIds.length === 0) return null;
 
