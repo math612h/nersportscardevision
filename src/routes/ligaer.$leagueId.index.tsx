@@ -1077,11 +1077,10 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         </TabsContent>
         <TabsContent value="teams" className="space-y-4">
           <TeamStandings
+            leagueId={leagueId}
             completed={completed}
-            groupKeys={groupKeys}
             allRows={allRows}
-            entryTeamMap={entryTeamMap}
-            teamMap={teamMap ?? {}}
+            entryUserMap={entryUserMap}
           />
         </TabsContent>
       </Tabs>
