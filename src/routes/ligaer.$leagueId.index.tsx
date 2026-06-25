@@ -1888,6 +1888,7 @@ function RaceDataResults({ leagueId }: { leagueId: string }) {
         .from("league_results")
         .select("id,division_id,car_class,car_model,best_lap_ms,position,session_type,user_id")
         .eq("league_id", leagueId)
+        .not("division_id", "is", null)
         .order("position", { ascending: true });
       if (error) throw error;
       return (data ?? []) as RaceResultRow[];
