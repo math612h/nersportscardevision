@@ -177,17 +177,40 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       const raceRows = resultRows.filter((r) => r.session_type === "race");
       const driverNameById = new Map<string, string>();
       for (const m of matched) driverNameById.set(m.user_id, m.driver_name);
-      const settingsResults = raceRows.map((r) => ({
-        driver_name: driverNameById.get(r.user_id) ?? "",
-        car_class: r.car_class,
-        car_model: r.car_model,
-        class_position: r.position,
-        position: r.position,
-        best_lap_ms: r.best_lap_ms,
-        points: r.points,
-        dns: false,
-        dnf: false,
-      }));
+
+      // Lookup car_number + driver_category from entries for this league so the
+      // standings (especially team standings) can group rows correctly.
+      const userIds = Array.from(new Set(raceRows.map((r) => r.user_id)));
+      const { data: leagueEntries } = await supabaseAdmin
+        .from("entries")
+        .select("user_id,car_class,car_number,driver_category")
+        .eq("league_id", data.leagueId)
+        .in("user_id", userIds);
+      const entryByKey = new Map<string, { car_number: number | null; driver_category: string | null }>();
+      for (const e of leagueEntries ?? []) {
+        entryByKey.set(`${e.user_id}|${e.car_class}`, {
+          car_number: (e as any).car_number ?? null,
+          driver_category: (e as any).driver_category ?? null,
+        });
+      }
+
+      const settingsResults = raceRows.map((r) => {
+        const ent = entryByKey.get(`${r.user_id}|${r.car_class}`);
+        return {
+          driver_name: driverNameById.get(r.user_id) ?? "",
+          user_id: r.user_id,
+          car_class: r.car_class,
+          car_model: r.car_model,
+          car_number: ent?.car_number ?? null,
+          driver_category: ent?.driver_category ?? null,
+          class_position: r.position,
+          position: r.position,
+          best_lap_ms: r.best_lap_ms,
+          points: r.points,
+          dns: false,
+          dnf: false,
+        };
+      });
       const newSettings = {
         ...(division.settings as any ?? {}),
         completed: true,
