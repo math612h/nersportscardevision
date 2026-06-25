@@ -32,7 +32,7 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
     const [{ data: league, error: lErr }, { data: division, error: dErr }, { data: entries, error: eErr }] = await Promise.all([
       supabaseAdmin.from("leagues").select("id,points_system").eq("id", data.leagueId).maybeSingle(),
       supabaseAdmin.from("divisions").select("id,league_id,track,layout,settings").eq("id", data.divisionId).maybeSingle(),
-      supabaseAdmin.from("entries").select("user_id,car_class,waitlist").eq("league_id", data.leagueId),
+      supabaseAdmin.from("entries").select("user_id,driver_name,car_class,waitlist").eq("league_id", data.leagueId),
     ]);
     if (lErr) throw new Error(lErr.message);
     if (dErr) throw new Error(dErr.message);
@@ -40,9 +40,20 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
     if (!league) throw new Error("Liga findes ikke.");
     if (!division || division.league_id !== data.leagueId) throw new Error("Afdeling tilhører ikke ligaen.");
 
-    const entryUserIds = new Set(
-      (entries ?? []).filter((e: any) => !e.waitlist).map((e: any) => e.user_id as string)
-    );
+    const validEntries = (entries ?? []).filter((e: any) => !e.waitlist);
+    const entryUserIds = new Set(validEntries.map((e: any) => e.user_id as string));
+    const normalizeDriverName = (name?: string | null) =>
+      (name ?? "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    const entryByDriverAndClass = new Map<string, string>();
+    for (const e of validEntries as any[]) {
+      const key = `${normalizeDriverName(e.driver_name)}|${normalizeCarClass(e.car_class)}`;
+      if (e.driver_name && e.user_id && !entryByDriverAndClass.has(key)) entryByDriverAndClass.set(key, e.user_id);
+    }
 
     // Parse XML
     let parsed;
@@ -85,11 +96,15 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
           if (s >= 0.85 && s > best) { best = s; matchId = p.id; }
         }
       }
+      const normalizedClass = normalizeCarClass(d.carClass);
+      if (!matchId || !entryUserIds.has(matchId)) {
+        matchId = entryByDriverAndClass.get(`${normalizeDriverName(d.name)}|${normalizedClass}`) ?? null;
+      }
       if (!matchId || !entryUserIds.has(matchId)) { unmatched.push(d.name); continue; }
       matched.push({
         user_id: matchId,
         driver_name: d.name,
-        car_class: normalizeCarClass(d.carClass),
+        car_class: normalizedClass,
         car_model: d.carModel,
         best_lap_ms: d.bestLapMs,
         finish_ms: d.finishMs,
