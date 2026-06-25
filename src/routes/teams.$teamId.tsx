@@ -393,7 +393,8 @@ function RecentResultsCard({
                       <span className="truncate">
                         <span className="text-foreground">{e.leagues?.name ?? "Liga"}</span>
                         {" · "}{e.divisions?.name ?? "Afdeling"}
-                        {e.divisions?.track ? ` · ${e.divisions.track}` : ""}
+                        {e.car_class ? ` · ${e.car_class}` : ""}
+                        {e.position ? ` · P${e.position}` : ""}
                       </span>
                       {e.divisions?.race_date && (
                         <span className="shrink-0 tabular-nums">
