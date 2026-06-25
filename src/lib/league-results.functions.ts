@@ -122,11 +122,24 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
     const pointsTable: number[] = Array.isArray((league.points_system as any)?.points_per_position)
       ? (league.points_system as any).points_per_position
       : [];
+    const minFinishPct = Math.max(0, Math.min(100, Number((league.points_system as any)?.min_finish_percent ?? 0))) / 100;
 
     const byClass = new Map<string, Matched[]>();
     for (const m of matched) {
       if (!byClass.has(m.car_class)) byClass.set(m.car_class, []);
       byClass.get(m.car_class)!.push(m);
+    }
+
+    const dnfFlag = new Map<Matched, boolean>();
+    if (minFinishPct > 0 && data.sessionType === "race") {
+      for (const [, arr] of byClass) {
+        const maxLaps = arr.reduce((mx, d) => Math.max(mx, d.laps ?? 0), 0);
+        if (maxLaps <= 0) continue;
+        const threshold = minFinishPct * maxLaps;
+        for (const d of arr) {
+          if ((d.laps ?? 0) < threshold) dnfFlag.set(d, true);
+        }
+      }
     }
 
     const resultRows: any[] = [];
@@ -137,7 +150,6 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       if (allHavePos) {
         ordered = [...arr].sort((a, b) => (a.position! - b.position!));
       } else {
-        // Fallback: rank by laps desc, then finish time asc, then best lap asc.
         const finished = arr.filter((d) => d.finished && d.finish_ms != null)
           .sort((a, b) =>
             ((b.laps ?? 0) - (a.laps ?? 0)) ||
@@ -150,9 +162,16 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
           );
         ordered = [...finished, ...unfinished];
       }
+
+      // Move DNFs to the bottom of the class so points are assigned only to qualifying finishers.
+      const nonDnf = ordered.filter((d) => !dnfFlag.get(d));
+      const dnfs = ordered.filter((d) => dnfFlag.get(d));
+      ordered = [...nonDnf, ...dnfs];
+
       ordered.forEach((d, idx) => {
         const position = idx + 1;
-        const points = pointsTable[idx] ?? 0;
+        const isDnf = !!dnfFlag.get(d);
+        const points = isDnf ? 0 : (pointsTable[idx] ?? 0);
         resultRows.push({
           user_id: d.user_id,
           league_id: data.leagueId,
@@ -166,9 +185,11 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
           position,
           points: data.sessionType === "qualifying" ? 0 : points,
           session_type: data.sessionType,
+          _dnf: isDnf,
         });
       });
     }
+
 
     // Replace existing results for this division+session_type (idempotent re-upload)
     const { error: delErr } = await supabaseAdmin
@@ -178,7 +199,8 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       .eq("session_type", data.sessionType);
     if (delErr) throw new Error(delErr.message);
 
-    const { error: insErr } = await supabaseAdmin.from("league_results").insert(resultRows);
+    const dbRows = resultRows.map(({ _dnf, ...rest }) => rest);
+    const { error: insErr } = await supabaseAdmin.from("league_results").insert(dbRows);
     if (insErr) throw new Error(insErr.message);
 
     // Leaderboard upload removed for league results to avoid unique constraint

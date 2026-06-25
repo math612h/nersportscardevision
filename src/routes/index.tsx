@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import DOMPurify from "isomorphic-dompurify";
 import { AddressConsentBanner } from "@/components/AddressConsentBanner";
+import { UserAvatarOnly } from "@/components/UserAvatar";
+import { TeamAvatarOnly } from "@/components/TeamAvatar";
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
 const PAGE_DESC =
@@ -365,6 +367,7 @@ function NewsHome() {
                           <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
                             {row.class_position}
                           </span>
+                          <UserAvatarOnly userId={row.user_id ?? null} fallbackName={row.driver_name} size="sm" />
                           <span className="min-w-0 flex-1 truncate font-medium">
                             {row.driver_name}
                           </span>
@@ -399,6 +402,7 @@ function NewsHome() {
                               <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
                                 {pos}
                               </span>
+                              <TeamAvatarOnly teamId={tm.teamId} fallbackName={tm.name} size="sm" />
                               <span className="min-w-0 flex-1 truncate font-medium">{tm.name}</span>
                               <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                                 {tm.points} p
