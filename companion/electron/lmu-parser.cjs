@@ -161,6 +161,7 @@ function parseLmuRaceFile(xml) {
 
   const race = findSessionNode(rr);
   if (!race) throw new Error("Missing session node (Race/Qualify/Practice)");
+  const gameVersion = childValue(rr, "GameVersion") || null;
 
   let recordedAt = null;
   const ts = childValue(race, "DateTime") || childValue(rr, "DateTime");
