@@ -141,6 +141,7 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
   if (!track) throw new Error("Kunne ikke finde banens navn i filen");
 
   const layout = parseLayoutFromTrackData(trackData);
+  const gameVersion = childValue(rr, "GameVersion") || null;
 
   const sessionNode = findSessionNode(rr);
 
