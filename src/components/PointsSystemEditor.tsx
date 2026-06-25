@@ -27,6 +27,7 @@ import {
 export type PointsSystem = {
   points_per_position?: number[];
   fastest_lap_points?: number;
+  min_finish_percent?: number; // % af vinderens omgange — under denne tærskel = DNF (0 point). 0 = deaktiveret.
 };
 
 export const DEFAULT_POINTS: number[] = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
