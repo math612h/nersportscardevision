@@ -207,7 +207,7 @@ function parseLmuRaceFile(xml) {
   });
 
   if (drivers.length === 0) throw new Error("Ingen kørere fundet i filen");
-  return { track, layout, recordedAt, drivers };
+  return { track, layout, recordedAt, gameVersion, drivers };
 }
 
 function nameSimilarity(a, b) {
