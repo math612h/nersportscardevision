@@ -117,6 +117,9 @@ function LeaderboardPage() {
   const [carClass, setCarClass] = useState<string>(ALL);
   const [track, setTrack] = useState<string>(ALL);
   const [layout, setLayout] = useState<string>(ALL);
+  // Patch-versioner: tomt sæt = "alle". Brugeren kan til-/fravælge enkelte versioner.
+  const [excludedVersions, setExcludedVersions] = useState<Set<string>>(new Set());
+  const [versionPickerOpen, setVersionPickerOpen] = useState(false);
 
   const trackLayoutMap = useMemo(() => {
     const m = new Map<string, Set<string>>();
