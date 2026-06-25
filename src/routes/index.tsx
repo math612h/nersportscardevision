@@ -402,6 +402,7 @@ function NewsHome() {
                               <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
                                 {pos}
                               </span>
+                              <TeamAvatarOnly teamId={tm.teamId} fallbackName={tm.name} size="sm" />
                               <span className="min-w-0 flex-1 truncate font-medium">{tm.name}</span>
                               <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                                 {tm.points} p
