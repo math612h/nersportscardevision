@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Bold, Italic } from "lucide-react";
+import { Bold, Italic, Link as LinkIcon, Heading2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -26,7 +26,6 @@ const SIZE_OPTIONS: { label: string; value: string; px: string }[] = [
 export function RichTextEditor({ value, onChange, placeholder, minHeight = 140 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
-  // Initialize / sync external value when it changes from outside
   useEffect(() => {
     if (ref.current && ref.current.innerHTML !== value) {
       ref.current.innerHTML = value || "";
@@ -43,10 +42,8 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = 140 }
     const opt = SIZE_OPTIONS.find((o) => o.value === val);
     if (!opt) return;
     ref.current?.focus();
-    // Use CSS font-size via styleWithCSS
     document.execCommand("styleWithCSS", false, "true");
     document.execCommand("fontSize", false, "7");
-    // Replace generated <font size="7"> with span style
     if (ref.current) {
       ref.current.querySelectorAll('font[size="7"]').forEach((el) => {
         const span = document.createElement("span");
@@ -58,32 +55,50 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = 140 }
     }
   };
 
+  const insertLink = () => {
+    const url = window.prompt("Indtast URL (fx https://example.com):");
+    if (!url) return;
+    const safe = /^(https?:|mailto:|tel:)/i.test(url) ? url : `https://${url}`;
+    exec("createLink", safe);
+    // Make links open in new tab
+    if (ref.current) {
+      ref.current.querySelectorAll("a").forEach((a) => {
+        a.setAttribute("target", "_blank");
+        a.setAttribute("rel", "noopener noreferrer");
+      });
+      onChange(ref.current.innerHTML);
+    }
+  };
+
+  const applyBlock = (val: string) => {
+    // val: "p" or "h2" or "h3"
+    exec("formatBlock", val.toUpperCase());
+  };
+
   return (
     <div className="rounded-md border border-input bg-background">
       <div className="flex flex-wrap items-center gap-1 border-b border-border p-1.5">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => exec("bold")}
-          className="h-8 w-8 p-0"
-          aria-label="Fed"
-          title="Fed (Ctrl+B)"
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={() => exec("bold")} className="h-8 w-8 p-0" aria-label="Fed" title="Fed (Ctrl+B)">
           <Bold className="h-4 w-4" />
         </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => exec("italic")}
-          className="h-8 w-8 p-0"
-          aria-label="Kursiv"
-          title="Kursiv (Ctrl+I)"
-        >
+        <Button type="button" variant="ghost" size="sm" onClick={() => exec("italic")} className="h-8 w-8 p-0" aria-label="Kursiv" title="Kursiv (Ctrl+I)">
           <Italic className="h-4 w-4" />
         </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={insertLink} className="h-8 w-8 p-0" aria-label="Indsæt link" title="Indsæt link">
+          <LinkIcon className="h-4 w-4" />
+        </Button>
         <div className="mx-1 h-5 w-px bg-border" />
+        <Select onValueChange={applyBlock}>
+          <SelectTrigger className="h-8 w-28 text-xs" aria-label="Overskrift">
+            <Heading2 className="h-3.5 w-3.5" />
+            <SelectValue placeholder="Stil" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="p" className="text-xs">Brødtekst</SelectItem>
+            <SelectItem value="h2" className="text-xs">Overskrift</SelectItem>
+            <SelectItem value="h3" className="text-xs">Underoverskrift</SelectItem>
+          </SelectContent>
+        </Select>
         <Select onValueChange={applySize}>
           <SelectTrigger className="h-8 w-32 text-xs">
             <SelectValue placeholder="Skriftstørrelse" />
