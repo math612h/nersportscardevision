@@ -79,6 +79,16 @@ type Row = {
 const ALL = "__all__";
 const UNKNOWN_VERSION = "__unknown__";
 
+// Normaliser version: dropper sidste segment (hotfix). 1.3.3.4 → 1.3.3.
+// Versioner med 1-2 segmenter bevares som de er.
+function normalizeVersion(raw: string | null | undefined): string {
+  const v = (raw ?? "").trim();
+  if (!v) return UNKNOWN_VERSION;
+  const parts = v.split(".");
+  if (parts.length <= 2) return v;
+  return parts.slice(0, -1).join(".");
+}
+
 // Sortér patch-versioner nyest først (numerisk pr. dot-segment, ukendt sidst).
 function compareVersionsDesc(a: string, b: string): number {
   if (a === UNKNOWN_VERSION) return 1;
