@@ -27,6 +27,8 @@ const PAGE_URL = "https://danishenduranceseries.dk/";
 
 type ResultRow = {
   car_number?: number;
+  user_id?: string;
+
   driver_name: string;
   car_class: string;
   driver_category?: string;
