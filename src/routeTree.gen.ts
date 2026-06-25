@@ -18,7 +18,9 @@ import { Route as AppGuideRouteImport } from './routes/app-guide'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeamsIndexRouteImport } from './routes/teams.index'
+import { Route as PartnerfordeleIndexRouteImport } from './routes/partnerfordele.index'
 import { Route as TeamsTeamIdRouteImport } from './routes/teams.$teamId'
+import { Route as PartnerfordeleBenefitIdRouteImport } from './routes/partnerfordele.$benefitId'
 import { Route as LmuTeamsRouteImport } from './routes/lmu.teams'
 import { Route as LmuLigaRouteImport } from './routes/lmu.liga'
 import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
@@ -55,6 +57,7 @@ import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
+import { Route as AuthenticatedAdminAdminPartnerfordeleRouteImport } from './routes/_authenticated._admin.admin.partnerfordele'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
 import { Route as AuthenticatedAdminAdminGaesterRouteImport } from './routes/_authenticated._admin.admin.gaester'
@@ -117,9 +120,19 @@ const TeamsIndexRoute = TeamsIndexRouteImport.update({
   path: '/teams/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PartnerfordeleIndexRoute = PartnerfordeleIndexRouteImport.update({
+  id: '/partnerfordele/',
+  path: '/partnerfordele/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamsTeamIdRoute = TeamsTeamIdRouteImport.update({
   id: '/teams/$teamId',
   path: '/teams/$teamId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerfordeleBenefitIdRoute = PartnerfordeleBenefitIdRouteImport.update({
+  id: '/partnerfordele/$benefitId',
+  path: '/partnerfordele/$benefitId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LmuTeamsRoute = LmuTeamsRouteImport.update({
@@ -322,6 +335,12 @@ const AuthenticatedAdminAdminProtestsRoute =
     path: '/admin/protests',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminPartnerfordeleRoute =
+  AuthenticatedAdminAdminPartnerfordeleRouteImport.update({
+    id: '/admin/partnerfordele',
+    path: '/admin/partnerfordele',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminNyhedsbrevRoute =
   AuthenticatedAdminAdminNyhedsbrevRouteImport.update({
     id: '/admin/nyhedsbrev',
@@ -441,7 +460,9 @@ export interface FileRoutesByFullPath {
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
+  '/partnerfordele/$benefitId': typeof PartnerfordeleBenefitIdRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/partnerfordele/': typeof PartnerfordeleIndexRoute
   '/teams/': typeof TeamsIndexRoute
   '/beskeder/$threadId': typeof AuthenticatedBeskederThreadIdRoute
   '/beskeder/system': typeof AuthenticatedBeskederSystemRoute
@@ -460,6 +481,7 @@ export interface FileRoutesByFullPath {
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
@@ -503,7 +525,9 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
+  '/partnerfordele/$benefitId': typeof PartnerfordeleBenefitIdRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/partnerfordele': typeof PartnerfordeleIndexRoute
   '/teams': typeof TeamsIndexRoute
   '/beskeder/$threadId': typeof AuthenticatedBeskederThreadIdRoute
   '/beskeder/system': typeof AuthenticatedBeskederSystemRoute
@@ -522,6 +546,7 @@ export interface FileRoutesByTo {
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
@@ -568,7 +593,9 @@ export interface FileRoutesById {
   '/ligaer/$leagueId': typeof LigaerLeagueIdRouteWithChildren
   '/lmu/liga': typeof LmuLigaRoute
   '/lmu/teams': typeof LmuTeamsRoute
+  '/partnerfordele/$benefitId': typeof PartnerfordeleBenefitIdRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/partnerfordele/': typeof PartnerfordeleIndexRoute
   '/teams/': typeof TeamsIndexRoute
   '/_authenticated/beskeder/$threadId': typeof AuthenticatedBeskederThreadIdRoute
   '/_authenticated/beskeder/system': typeof AuthenticatedBeskederSystemRoute
@@ -587,6 +614,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/_authenticated/_admin/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
@@ -633,7 +661,9 @@ export interface FileRouteTypes {
     | '/ligaer/$leagueId'
     | '/lmu/liga'
     | '/lmu/teams'
+    | '/partnerfordele/$benefitId'
     | '/teams/$teamId'
+    | '/partnerfordele/'
     | '/teams/'
     | '/beskeder/$threadId'
     | '/beskeder/system'
@@ -652,6 +682,7 @@ export interface FileRouteTypes {
     | '/admin/gaester'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
+    | '/admin/partnerfordele'
     | '/admin/protests'
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
@@ -695,7 +726,9 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/lmu/liga'
     | '/lmu/teams'
+    | '/partnerfordele/$benefitId'
     | '/teams/$teamId'
+    | '/partnerfordele'
     | '/teams'
     | '/beskeder/$threadId'
     | '/beskeder/system'
@@ -714,6 +747,7 @@ export interface FileRouteTypes {
     | '/admin/gaester'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
+    | '/admin/partnerfordele'
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
@@ -759,7 +793,9 @@ export interface FileRouteTypes {
     | '/ligaer/$leagueId'
     | '/lmu/liga'
     | '/lmu/teams'
+    | '/partnerfordele/$benefitId'
     | '/teams/$teamId'
+    | '/partnerfordele/'
     | '/teams/'
     | '/_authenticated/beskeder/$threadId'
     | '/_authenticated/beskeder/system'
@@ -778,6 +814,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/gaester'
     | '/_authenticated/_admin/admin/ligaer'
     | '/_authenticated/_admin/admin/nyhedsbrev'
+    | '/_authenticated/_admin/admin/partnerfordele'
     | '/_authenticated/_admin/admin/protests'
     | '/_authenticated/_admin/admin/storage'
     | '/_authenticated/beskeder/gruppe/$groupId'
@@ -820,7 +857,9 @@ export interface RootRouteChildren {
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
   LmuLigaRoute: typeof LmuLigaRoute
   LmuTeamsRoute: typeof LmuTeamsRoute
+  PartnerfordeleBenefitIdRoute: typeof PartnerfordeleBenefitIdRoute
   TeamsTeamIdRoute: typeof TeamsTeamIdRoute
+  PartnerfordeleIndexRoute: typeof PartnerfordeleIndexRoute
   TeamsIndexRoute: typeof TeamsIndexRoute
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
@@ -905,11 +944,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/partnerfordele/': {
+      id: '/partnerfordele/'
+      path: '/partnerfordele'
+      fullPath: '/partnerfordele/'
+      preLoaderRoute: typeof PartnerfordeleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/teams/$teamId': {
       id: '/teams/$teamId'
       path: '/teams/$teamId'
       fullPath: '/teams/$teamId'
       preLoaderRoute: typeof TeamsTeamIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partnerfordele/$benefitId': {
+      id: '/partnerfordele/$benefitId'
+      path: '/partnerfordele/$benefitId'
+      fullPath: '/partnerfordele/$benefitId'
+      preLoaderRoute: typeof PartnerfordeleBenefitIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lmu/teams': {
@@ -1164,6 +1217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminProtestsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/partnerfordele': {
+      id: '/_authenticated/_admin/admin/partnerfordele'
+      path: '/admin/partnerfordele'
+      fullPath: '/admin/partnerfordele'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPartnerfordeleRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/nyhedsbrev': {
       id: '/_authenticated/_admin/admin/nyhedsbrev'
       path: '/admin/nyhedsbrev'
@@ -1338,6 +1398,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminGaesterRoute: typeof AuthenticatedAdminAdminGaesterRoute
   AuthenticatedAdminAdminLigaerRoute: typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   AuthenticatedAdminAdminNyhedsbrevRoute: typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  AuthenticatedAdminAdminPartnerfordeleRoute: typeof AuthenticatedAdminAdminPartnerfordeleRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
@@ -1357,6 +1418,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminAdminLigaerRouteWithChildren,
   AuthenticatedAdminAdminNyhedsbrevRoute:
     AuthenticatedAdminAdminNyhedsbrevRoute,
+  AuthenticatedAdminAdminPartnerfordeleRoute:
+    AuthenticatedAdminAdminPartnerfordeleRoute,
   AuthenticatedAdminAdminProtestsRoute:
     AuthenticatedAdminAdminProtestsRouteWithChildren,
   AuthenticatedAdminAdminStorageRoute: AuthenticatedAdminAdminStorageRoute,
@@ -1441,7 +1504,9 @@ const rootRouteChildren: RootRouteChildren = {
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
   LmuLigaRoute: LmuLigaRoute,
   LmuTeamsRoute: LmuTeamsRoute,
+  PartnerfordeleBenefitIdRoute: PartnerfordeleBenefitIdRoute,
   TeamsTeamIdRoute: TeamsTeamIdRoute,
+  PartnerfordeleIndexRoute: PartnerfordeleIndexRoute,
   TeamsIndexRoute: TeamsIndexRoute,
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
