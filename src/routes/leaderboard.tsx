@@ -264,6 +264,7 @@ function LeaderboardPage() {
                 source: "user" as const,
                 uploaded_by: user.id,
                 recorded_at: parsed.recordedAt,
+                game_version: parsed.gameVersion,
               };
             })
             .filter((r): r is NonNullable<typeof r> => r !== null);
