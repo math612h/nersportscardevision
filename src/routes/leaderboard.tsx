@@ -186,7 +186,7 @@ function LeaderboardPage() {
       countByGroup.set(g, n);
       return n <= 10;
     });
-  }, [rows, carClass, track, layout]);
+  }, [rows, carClass, track, layout, excludedVersions]);
 
   const handleFiles = async (files: FileList) => {
     if (!user) { toast.error("Log ind for at uploade din egen tid."); return; }
