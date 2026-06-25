@@ -1089,70 +1089,116 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
 }
 
 function TeamStandings({
+  leagueId,
   completed,
-  groupKeys,
   allRows,
-  entryTeamMap,
-  teamMap,
+  entryUserMap,
 }: {
+  leagueId: string;
   completed: any[];
-  groupKeys: string[];
   allRows: Array<{ car_number: number; car_class: string; driver_category: string; rounds: Record<string, { points: number; flPts: number; pointPenalty: number; dns: boolean }> }>;
-  entryTeamMap: Record<string, string | null>;
-  teamMap: Record<string, string>;
+  entryUserMap: Record<string, string>;
 }) {
-  // For each (class·cat) group, compute per-round team points as the AVERAGE
-  // points earned by team members in that round. Total team score = sum of
-  // per-round averages. This keeps things fair when teams have different
-  // numbers of drivers.
+  // Team-stillinger: kun bekræftede team-tilmeldinger pr. klasse med ≥2 accepterede
+  // lineup-kørere. Pr. løb tæller team-point KUN hvis ≥2 lineup-kørere faktisk har
+  // kørt (ikke DNS). Pointene SUMMERES (ikke gennemsnit).
+  const { data: teamData } = useQuery({
+    queryKey: ["league-team-standings-v2", leagueId],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("league_team_entries")
+        .select("id, team_id, car_class, status, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status)")
+        .eq("league_id", leagueId)
+        .eq("status", "confirmed");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  type Info = { teamId: string; name: string; carClass: string; userIds: Set<string> };
+  const teamInfos: Info[] = [];
+  for (const e of (teamData ?? []) as any[]) {
+    const accepted = ((e.league_team_lineup ?? []) as any[])
+      .filter((l) => l.status === "accepted")
+      .map((l) => l.user_id as string);
+    if (accepted.length < 2) continue;
+    teamInfos.push({
+      teamId: e.team_id,
+      name: e.teams?.name ?? "Team",
+      carClass: e.car_class,
+      userIds: new Set(accepted),
+    });
+  }
+
+  const carClasses = Array.from(new Set(teamInfos.map((t) => t.carClass)));
+
+  // Build user_id per row for matching
+  const rowUserId = (r: { car_class: string; driver_category: string; car_number: number }) =>
+    entryUserMap[`${r.car_class}|${r.driver_category}|${r.car_number}`];
+
   return (
     <>
       <Card>
         <CardContent className="py-3 text-xs text-muted-foreground">
-          Team-point pr. løb = gennemsnit af medlemmernes opnåede point i det løb. Samlet team-stilling = sum af runde-gennemsnit. På den måde får et mindre team ikke ulempe af at have færre kørere på banen.
+          Team-point pr. løb summeres for de accepterede lineup-kørere. Et team får
+          kun point i et løb, hvis mindst 2 lineup-kørere fra teamet faktisk har kørt løbet.
         </CardContent>
       </Card>
-      {groupKeys.map((k) => {
-        const [cls, cat] = k.split(" · ");
-        const groupRows = allRows.filter((r) => r.car_class === cls && r.driver_category === cat);
-        if (groupRows.length === 0) return null;
+      {carClasses.length === 0 && (
+        <Card>
+          <CardContent className="py-6 text-center text-sm text-muted-foreground">
+            Ingen bekræftede team-tilmeldinger med mindst 2 lineup-kørere endnu.
+          </CardContent>
+        </Card>
+      )}
+      {carClasses.map((cls) => {
+        const teamsInClass = teamInfos.filter((t) => t.carClass === cls);
+        type TeamAgg = { teamId: string; name: string; rounds: Record<string, { sum: number; drivers: number }>; total: number; uniqueDrivers: Set<string> };
+        const aggs: TeamAgg[] = teamsInClass.map((t) => ({
+          teamId: t.teamId, name: t.name, rounds: {}, total: 0, uniqueDrivers: new Set(),
+        }));
 
-        type TeamAgg = { teamId: string; rounds: Record<string, { sum: number; count: number }>; total: number; drivers: number };
-        const teams = new Map<string, TeamAgg>();
-        for (const r of groupRows) {
-          const tId = entryTeamMap[`${r.car_class}|${r.driver_category}|${r.car_number}`];
-          if (!tId) continue;
-          let agg = teams.get(tId);
-          if (!agg) { agg = { teamId: tId, rounds: {}, total: 0, drivers: 0 }; teams.set(tId, agg); }
-          agg.drivers += 1;
-          for (const d of completed) {
-            const cell = r.rounds[d.id];
-            if (!cell || cell.dns) continue;
-            const pts = Math.max(0, cell.points + cell.flPts - cell.pointPenalty);
-            const slot = agg.rounds[d.id] ?? { sum: 0, count: 0 };
-            slot.sum += pts;
-            slot.count += 1;
-            agg.rounds[d.id] = slot;
+        for (const d of completed as any[]) {
+          // Aggregate per team for this round using allRows
+          const classRows = allRows.filter((r) => r.car_class === cls);
+          for (const agg of aggs) {
+            const info = teamsInClass.find((t) => t.teamId === agg.teamId)!;
+            let sum = 0;
+            const drivers = new Set<string>();
+            for (const r of classRows) {
+              const uid = rowUserId(r);
+              if (!uid || !info.userIds.has(uid)) continue;
+              const cell = r.rounds[d.id];
+              if (!cell || cell.dns) continue;
+              sum += Math.max(0, cell.points + cell.flPts - cell.pointPenalty);
+              drivers.add(uid);
+            }
+            if (drivers.size >= 2) {
+              agg.rounds[d.id] = { sum, drivers: drivers.size };
+              agg.total += sum;
+              drivers.forEach((u) => agg.uniqueDrivers.add(u));
+            } else {
+              agg.rounds[d.id] = { sum: 0, drivers: drivers.size };
+            }
           }
         }
-        for (const agg of teams.values()) {
-          agg.total = Object.values(agg.rounds).reduce((acc, s) => acc + (s.count > 0 ? s.sum / s.count : 0), 0);
-        }
-        const list = Array.from(teams.values()).sort((a, b) => b.total - a.total);
+
+        const list = aggs.filter((a) => a.total > 0 || Object.keys(a.rounds).length > 0)
+          .sort((a, b) => b.total - a.total);
         if (list.length === 0) {
           return (
-            <Card key={k}>
+            <Card key={cls}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2"><span>{cls}</span><Badge variant="outline" className="text-[10px]">{cat}</Badge></CardTitle>
+                <CardTitle className="text-sm">{cls}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0 py-4 text-center text-xs text-muted-foreground">Ingen team-tilmeldinger i denne klasse endnu.</CardContent>
             </Card>
           );
         }
         return (
-          <Card key={k}>
+          <Card key={cls}>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2"><span>{cls}</span><Badge variant="outline" className="text-[10px]">{cat}</Badge></CardTitle>
+              <CardTitle className="text-sm">{cls}</CardTitle>
             </CardHeader>
             <CardContent className="pt-0 overflow-x-auto">
               <table className="w-full text-sm">
@@ -1160,7 +1206,6 @@ function TeamStandings({
                   <tr className="text-left text-xs text-muted-foreground">
                     <th className="py-1 pr-2 w-8">#</th>
                     <th className="py-1 pr-2">Team</th>
-                    <th className="py-1 pr-2 w-14 text-center">Kørere</th>
                     {completed.map((d: any) => (
                       <th key={d.id} className="py-1 px-1 w-14 text-center" title={d.name}>{d.name.slice(0, 4)}</th>
                     ))}
@@ -1171,18 +1216,22 @@ function TeamStandings({
                   {list.map((t, i) => (
                     <tr key={t.teamId} className="border-t border-border">
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
-                      <td className="py-1.5 pr-2 truncate">{teamMap[t.teamId] ?? "Team"}</td>
-                      <td className="py-1.5 pr-2 text-center tabular-nums text-muted-foreground">{t.drivers}</td>
+                      <td className="py-1.5 pr-2 truncate">
+                        <span className="inline-flex items-center gap-2 min-w-0">
+                          <TeamAvatarOnly teamId={t.teamId} fallbackName={t.name} size="sm" />
+                          <span className="truncate">{t.name}</span>
+                        </span>
+                      </td>
                       {completed.map((d: any) => {
                         const slot = t.rounds[d.id];
-                        if (!slot || slot.count === 0) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                        if (!slot || slot.drivers < 2) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground" title={slot ? `Kun ${slot.drivers} lineup-kører — ingen point` : undefined}>–</td>;
                         return (
-                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`${slot.sum} pt / ${slot.count} kørere`}>
-                            {Math.floor(slot.sum / slot.count)}
+                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`${slot.drivers} lineup-kørere`}>
+                            {slot.sum}
                           </td>
                         );
                       })}
-                      <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{Math.floor(t.total)}</td>
+                      <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{t.total}</td>
                     </tr>
                   ))}
                 </tbody>
