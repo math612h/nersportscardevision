@@ -375,6 +375,51 @@ function NewsHome() {
         </section>
       )}
 
+      {latest && latestTeamStandings && latestTeamStandings.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 text-primary">
+            <Users className="h-4 w-4" />
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Team-stilling (seneste løb)</h2>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {latestTeamStandings.map((g) => (
+              <div key={g.car_class} className="space-y-2 rounded-xl border border-border bg-card p-4">
+                <h3 className="text-sm font-semibold">{g.car_class}</h3>
+                <ol className="space-y-1.5">
+                  {g.teams.map((t, i) => {
+                    const medal =
+                      i === 0
+                        ? "bg-amber-400/20 text-amber-700 ring-1 ring-amber-400/40 dark:text-amber-300"
+                        : i === 1
+                        ? "bg-slate-300/30 text-slate-700 ring-1 ring-slate-400/40 dark:text-slate-200"
+                        : "bg-orange-500/15 text-orange-700 ring-1 ring-orange-500/30 dark:text-orange-300";
+                    return (
+                      <li key={t.teamId} className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm">
+                        <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
+                          {i + 1}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate font-medium">{t.name}</span>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          {t.drivers} {t.drivers === 1 ? "kører" : "kørere"}
+                        </span>
+                        <span className="shrink-0 text-xs font-semibold tabular-nums">
+                          {Math.floor(t.points)} p
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            Team-point = gennemsnit af medlemmernes opnåede point i løbet.
+          </p>
+        </section>
+      )}
+
+
+
       {otherResults.length > 0 && (
         <section className="space-y-4">
           <div className="flex items-center gap-2 text-primary">
