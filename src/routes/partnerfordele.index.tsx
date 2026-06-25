@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Handshake } from "lucide-react";
+import { ArrowUpRight, Handshake } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/partnerfordele/")({
@@ -13,6 +13,7 @@ type PartnerBenefit = {
   id: string;
   name: string;
   logo_path: string | null;
+  hero_image_path: string | null;
 };
 
 function PartnerfordelePage() {
@@ -23,7 +24,7 @@ function PartnerfordelePage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("partner_benefits")
-        .select("id,name,logo_path")
+        .select("id,name,logo_path,hero_image_path")
         .eq("active", true)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
@@ -32,14 +33,16 @@ function PartnerfordelePage() {
     },
   });
 
-  const logoPaths = (benefits ?? []).map((b) => b.logo_path).filter((p): p is string => !!p);
+  const allPaths = (benefits ?? [])
+    .flatMap((b) => [b.logo_path, b.hero_image_path])
+    .filter((p): p is string => !!p);
   const { data: imageMap } = useQuery({
-    queryKey: ["partner-benefit-logos", logoPaths.sort().join(",")],
-    enabled: logoPaths.length > 0,
+    queryKey: ["partner-benefit-images-list", allPaths.sort().join(",")],
+    enabled: allPaths.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase.storage
         .from("partner-images")
-        .createSignedUrls(logoPaths, 60 * 60 * 24);
+        .createSignedUrls(allPaths, 60 * 60 * 24);
       if (error) throw error;
       const m: Record<string, string> = {};
       data?.forEach((d) => {
@@ -66,23 +69,45 @@ function PartnerfordelePage() {
         </p>
       )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {(benefits ?? []).map((b) => (
-          <Link key={b.id} to="/partnerfordele/$benefitId" params={{ benefitId: b.id }} className="group">
-            <Card className="h-full transition hover:border-primary hover:shadow-md">
-              <CardContent className="flex h-full flex-col items-center justify-center gap-4 p-6 text-center">
-                <div className="flex h-32 w-full items-center justify-center rounded-md bg-muted/40">
-                  {b.logo_path && imageMap?.[b.logo_path] ? (
-                    <img src={imageMap[b.logo_path]} alt={b.name} className="max-h-28 max-w-[80%] object-contain" />
+      <div className="grid gap-3 sm:grid-cols-2">
+        {(benefits ?? []).map((b) => {
+          const heroUrl = b.hero_image_path ? imageMap?.[b.hero_image_path] : null;
+          const logoUrl = b.logo_path ? imageMap?.[b.logo_path] : null;
+          const coverUrl = heroUrl ?? logoUrl;
+          return (
+            <Link key={b.id} to="/partnerfordele/$benefitId" params={{ benefitId: b.id }} className="group block">
+              <Card className="flex h-full flex-col overflow-hidden border-border transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]">
+                <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
+                  {coverUrl ? (
+                    <img
+                      src={coverUrl}
+                      alt={b.name}
+                      className={`h-full w-full transition duration-500 group-hover:scale-105 ${heroUrl ? "object-cover" : "object-contain p-6"}`}
+                      loading="lazy"
+                    />
                   ) : (
-                    <Handshake className="h-12 w-12 text-muted-foreground" />
+                    <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
                   )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
+                  {logoUrl && heroUrl && (
+                    <div className="absolute bottom-3 left-3 flex h-12 w-12 items-center justify-center rounded-lg border border-border/60 bg-background/90 p-1 shadow-md backdrop-blur">
+                      <img src={logoUrl} alt="" className="max-h-full max-w-full object-contain" />
+                    </div>
+                  )}
+                  <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </div>
                 </div>
-                <h2 className="text-base font-semibold group-hover:text-primary">{b.name}</h2>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-base">{b.name}</CardTitle>
+                  <CardDescription>
+                    {t("partnerBenefits.cardCta", "Se aftalen")}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
