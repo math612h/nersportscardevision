@@ -145,6 +145,22 @@ function LeaderboardPage() {
     [rows],
   );
 
+  const versions = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of rows ?? []) set.add(r.game_version ?? UNKNOWN_VERSION);
+    return Array.from(set).sort(compareVersionsDesc);
+  }, [rows]);
+
+  const versionLabel = (v: string) => (v === UNKNOWN_VERSION ? "Ukendt" : v);
+
+  const toggleVersion = (v: string) => {
+    setExcludedVersions((prev) => {
+      const next = new Set(prev);
+      if (next.has(v)) next.delete(v); else next.add(v);
+      return next;
+    });
+  };
+
   const filtered = useMemo(() => {
     const list = (rows ?? []).filter((r) => {
       if (carClass !== ALL && r.car_class !== carClass) return false;
