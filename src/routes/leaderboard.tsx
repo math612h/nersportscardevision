@@ -550,8 +550,61 @@ function LeaderboardPage() {
               </PopoverContent>
             </Popover>
           </div>
+          {versions.length > 0 && (
+            <div className="sm:col-span-2">
+              <Label className="text-xs">Patch-version</Label>
+              <Popover open={versionPickerOpen} onOpenChange={setVersionPickerOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-left text-sm shadow-sm transition hover:bg-accent/40 focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <span className="truncate">
+                      {excludedVersions.size === 0
+                        ? "Alle versioner"
+                        : versions.filter((v) => !excludedVersions.has(v)).length === 0
+                          ? "Ingen valgt"
+                          : versions
+                              .filter((v) => !excludedVersions.has(v))
+                              .map(versionLabel)
+                              .join(", ")}
+                    </span>
+                    <ChevronRight className="ml-2 h-4 w-4 shrink-0 rotate-90 text-muted-foreground" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[--radix-popover-trigger-width] max-h-[60vh] overflow-y-auto p-1">
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      onClick={() => setExcludedVersions(new Set())}
+                      className="flex items-center justify-between rounded-sm px-2 py-2 text-sm hover:bg-accent"
+                    >
+                      <span>Vælg alle</span>
+                      {excludedVersions.size === 0 && <Check className="h-4 w-4 text-primary" />}
+                    </button>
+                    <div className="my-1 h-px bg-border" />
+                    {versions.map((v) => {
+                      const selected = !excludedVersions.has(v);
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => toggleVersion(v)}
+                          className="flex items-center justify-between rounded-sm px-2 py-2 text-sm hover:bg-accent"
+                        >
+                          <span className="truncate">{versionLabel(v)}</span>
+                          {selected && <Check className="h-4 w-4 text-primary" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
         </div>
       </section>
+
 
       <section className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
