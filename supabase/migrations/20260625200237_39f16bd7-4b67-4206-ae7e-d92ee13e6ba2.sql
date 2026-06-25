@@ -1,0 +1,1 @@
+DELETE FROM public.league_results WHERE division_id IS NULL;
