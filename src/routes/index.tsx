@@ -136,7 +136,7 @@ function NewsHome() {
 
   // Team-stilling for seneste løb: kun bekræftede team-tilmeldinger med ≥2 accepterede lineup-kørere
   const { data: latestTeamStandings } = useQuery({
-    queryKey: ["home-latest-team-standings", latest?.id, latest?.league_id],
+    queryKey: ["home-latest-team-standings-v2", latest?.id, latest?.league_id],
     enabled: !!latest?.id && !!latest?.league_id,
     queryFn: async () => {
       const results = (latest?.settings?.results ?? []) as ResultRow[];
