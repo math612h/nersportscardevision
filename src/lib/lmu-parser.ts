@@ -18,6 +18,7 @@ export type ParsedRace = {
   track: string;
   layout: string | null;
   recordedAt: string | null; // ISO
+  gameVersion: string | null;
   drivers: ParsedDriver[];
 };
 
