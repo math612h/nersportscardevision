@@ -73,9 +73,26 @@ type Row = {
   source: "admin" | "user" | "league";
   recorded_at: string | null;
   created_at: string;
+  game_version: string | null;
 };
 
 const ALL = "__all__";
+const UNKNOWN_VERSION = "__unknown__";
+
+// Sortér patch-versioner nyest først (numerisk pr. dot-segment, ukendt sidst).
+function compareVersionsDesc(a: string, b: string): number {
+  if (a === UNKNOWN_VERSION) return 1;
+  if (b === UNKNOWN_VERSION) return -1;
+  const pa = a.split(".").map((n) => parseInt(n, 10));
+  const pb = b.split(".").map((n) => parseInt(n, 10));
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const x = pa[i] ?? 0;
+    const y = pb[i] ?? 0;
+    if (x !== y) return y - x;
+  }
+  return 0;
+}
 
 function LeaderboardPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
