@@ -184,9 +184,11 @@ function NewsHome() {
       const groups: { car_class: string; teams: { teamId: string; name: string; points: number; drivers: number }[] }[] = [];
       for (const [cls, m] of byClass.entries()) {
         const teamsList = Array.from(m.entries())
+          .filter(([, s]) => s.count >= 2) // mindst 2 lineup-kørere skal faktisk have kørt
           .map(([teamId, s]) => ({ teamId, name: s.name, points: s.sum, drivers: s.count }))
           .sort((a, b) => b.points - a.points)
           .slice(0, 3);
+
         if (teamsList.length > 0) groups.push({ car_class: cls, teams: teamsList });
       }
       return groups;
