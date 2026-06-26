@@ -999,12 +999,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         <Trophy className="h-4 w-4" />
         <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger</h2>
       </div>
-      <Tabs defaultValue="drivers" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="drivers">Kørere</TabsTrigger>
-          <TabsTrigger value="teams">Teams</TabsTrigger>
-        </TabsList>
-        <TabsContent value="drivers" className="space-y-4">
+      <div className="space-y-4">
       {groupKeys.map((k) => {
         const [cls, cat] = k.split(" · ");
         const rows = allRows
@@ -1075,16 +1070,13 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
           </Card>
         );
       })}
-        </TabsContent>
-        <TabsContent value="teams" className="space-y-4">
-          <TeamStandings
-            leagueId={leagueId}
-            completed={completed}
-            allRows={allRows}
-            entryUserMap={entryUserMap}
-          />
-        </TabsContent>
-      </Tabs>
+        <TeamStandings
+          leagueId={leagueId}
+          completed={completed}
+          allRows={allRows}
+          entryUserMap={entryUserMap}
+        />
+      </div>
     </section>
   );
 }
