@@ -55,9 +55,7 @@ function fmtTime(ms: number | null | undefined): string {
 }
 
 function UploadResultsPage() {
-  const { leagueId, divisionId } = useParams({
-    from: "/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger/$divisionId/upload",
-  });
+  const { leagueId, divisionId } = Route.useParams();
   const preview = useServerFn(previewLeagueRaceResult);
   const publish = useServerFn(publishLeagueRaceResult);
 
