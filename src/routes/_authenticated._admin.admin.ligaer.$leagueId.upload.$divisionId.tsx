@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute(
-  "/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger/$divisionId/upload",
+  "/_authenticated/_admin/admin/ligaer/$leagueId/upload/$divisionId",
 )({ component: UploadResultsPage });
 
 type SessionType = "race" | "qualifying";
