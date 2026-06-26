@@ -739,14 +739,19 @@ export type Database = {
           car_model: string | null
           created_at: string
           division_id: string | null
+          dsq: boolean
           id: string
+          laps: number | null
           layout: string | null
           league_id: string
           notes: string | null
           points: number | null
+          points_penalty: number
           position: number | null
+          position_penalty: number
           round: number | null
           session_type: string
+          time_penalty_ms: number
           track: string
           updated_at: string
           user_id: string
@@ -758,14 +763,19 @@ export type Database = {
           car_model?: string | null
           created_at?: string
           division_id?: string | null
+          dsq?: boolean
           id?: string
+          laps?: number | null
           layout?: string | null
           league_id: string
           notes?: string | null
           points?: number | null
+          points_penalty?: number
           position?: number | null
+          position_penalty?: number
           round?: number | null
           session_type?: string
+          time_penalty_ms?: number
           track: string
           updated_at?: string
           user_id: string
@@ -777,14 +787,19 @@ export type Database = {
           car_model?: string | null
           created_at?: string
           division_id?: string | null
+          dsq?: boolean
           id?: string
+          laps?: number | null
           layout?: string | null
           league_id?: string
           notes?: string | null
           points?: number | null
+          points_penalty?: number
           position?: number | null
+          position_penalty?: number
           round?: number | null
           session_type?: string
+          time_penalty_ms?: number
           track?: string
           updated_at?: string
           user_id?: string
