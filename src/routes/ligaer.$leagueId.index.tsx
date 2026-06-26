@@ -988,6 +988,12 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
             </div>
           );
         })}
+        <TeamStandings
+          leagueId={leagueId}
+          completed={completed}
+          allRows={allRows}
+          entryUserMap={entryUserMap}
+        />
       </section>
     );
   }
