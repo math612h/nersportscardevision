@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/RatingBadge";
 import { UserAvatar } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
+import { computeTeamRacePoints } from "@/lib/team-points";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1090,57 +1091,89 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
 function TeamStandings({
   leagueId,
   completed,
-  allRows,
-  entryUserMap,
 }: {
   leagueId: string;
   completed: any[];
-  allRows: Array<{ car_number: number; car_class: string; driver_category: string; rounds: Record<string, { points: number; flPts: number; pointPenalty: number; dns: boolean }> }>;
-  entryUserMap: Record<string, string>;
+  // legacy props kept for callers, ikke længere brugt:
+  allRows?: any;
+  entryUserMap?: any;
 }) {
-  // Team-stillinger: kun bekræftede team-tilmeldinger pr. klasse med ≥2 accepterede
-  // lineup-kørere. Pr. løb tæller team-point KUN hvis ≥2 lineup-kørere faktisk har
-  // kørt (ikke DNS). Pointene SUMMERES (ikke gennemsnit).
+  // Team-stillinger: median af lineup-medlemmernes klasse-positioner pr. løb.
+  // P1 = 30 point, derefter ligaens points_per_position. Min. 2 accepterede
+  // lineup-medlemmer skal faktisk have kørt løbet for point.
   const { data: teamData } = useQuery({
-    queryKey: ["league-team-standings-v2", leagueId],
+    queryKey: ["league-team-standings-v3", leagueId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("league_team_entries")
-        .select("id, team_id, car_class, status, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status)")
-        .eq("league_id", leagueId)
-        .eq("status", "confirmed");
+      const [{ data, error }, { data: leagueRow }] = await Promise.all([
+        (supabase as any)
+          .from("league_team_entries")
+          .select("id, team_id, car_class, status, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status)")
+          .eq("league_id", leagueId)
+          .eq("status", "confirmed"),
+        supabase.from("leagues").select("points_system").eq("id", leagueId).maybeSingle(),
+      ]);
       if (error) throw error;
-      return data ?? [];
+      return {
+        entries: data ?? [],
+        pointsPerPosition: Array.isArray((leagueRow?.points_system as any)?.points_per_position)
+          ? (leagueRow!.points_system as any).points_per_position.map((n: any) => Number(n) || 0)
+          : [],
+      };
     },
   });
 
-  type Info = { teamId: string; name: string; carClass: string; userIds: Set<string> };
+  type Info = { teamId: string; teamName: string; carClass: string; userIds: Set<string> };
   const teamInfos: Info[] = [];
-  for (const e of (teamData ?? []) as any[]) {
+  for (const e of ((teamData?.entries ?? []) as any[])) {
     const accepted = ((e.league_team_lineup ?? []) as any[])
       .filter((l) => l.status === "accepted")
       .map((l) => l.user_id as string);
     if (accepted.length < 2) continue;
     teamInfos.push({
       teamId: e.team_id,
-      name: e.teams?.name ?? "Team",
+      teamName: e.teams?.name ?? "Team",
       carClass: e.car_class,
       userIds: new Set(accepted),
     });
   }
 
+  // Beregn pr. løb pr. klasse via shared helper.
   const carClasses = Array.from(new Set(teamInfos.map((t) => t.carClass)));
+  type TeamAgg = { teamId: string; teamName: string; rounds: Record<string, { points: number; participants: number; rank: number }>; total: number };
+  const aggByClass = new Map<string, TeamAgg[]>();
+  for (const cls of carClasses) {
+    aggByClass.set(cls, teamInfos.filter((t) => t.carClass === cls).map((t) => ({
+      teamId: t.teamId, teamName: t.teamName, rounds: {}, total: 0,
+    })));
+  }
 
-  // Build user_id per row for matching
-  const rowUserId = (r: { car_class: string; driver_category: string; car_number: number }) =>
-    entryUserMap[`${r.car_class}|${r.driver_category}|${r.car_number}`];
+
+
+  for (const d of completed as any[]) {
+    const results = (d.settings?.results ?? []) as Array<{ user_id?: string; car_class: string; class_position?: number; position?: number; dns?: boolean; dnf?: boolean }>;
+    const ranked = computeTeamRacePoints({
+      results,
+      teams: teamInfos,
+      pointsPerPosition: teamData?.pointsPerPosition ?? [],
+    });
+    for (const [cls, list] of ranked.entries()) {
+      const aggs = aggByClass.get(cls);
+      if (!aggs) continue;
+      for (const t of list) {
+        const agg = aggs.find((a) => a.teamId === t.teamId);
+        if (!agg) continue;
+        agg.rounds[d.id] = { points: t.points, participants: t.participants, rank: t.rank };
+        agg.total += t.points;
+      }
+    }
+  }
 
   return (
     <>
       <Card>
         <CardContent className="py-3 text-xs text-muted-foreground">
-          Team-point pr. løb summeres for de accepterede lineup-kørere. Et team får
-          kun point i et løb, hvis mindst 2 lineup-kørere fra teamet faktisk har kørt løbet.
+          Team-point pr. løb: medianen af lineup-kørernes klasse-positioner bestemmer teamets placering.
+          P1 giver 30 point; derefter følges ligaens pointsystem. Mindst 2 lineup-kørere skal have kørt løbet for point.
         </CardContent>
       </Card>
       {carClasses.length === 0 && (
@@ -1151,38 +1184,7 @@ function TeamStandings({
         </Card>
       )}
       {carClasses.map((cls) => {
-        const teamsInClass = teamInfos.filter((t) => t.carClass === cls);
-        type TeamAgg = { teamId: string; name: string; rounds: Record<string, { sum: number; drivers: number }>; total: number; uniqueDrivers: Set<string> };
-        const aggs: TeamAgg[] = teamsInClass.map((t) => ({
-          teamId: t.teamId, name: t.name, rounds: {}, total: 0, uniqueDrivers: new Set(),
-        }));
-
-        for (const d of completed as any[]) {
-          // Aggregate per team for this round using allRows
-          const classRows = allRows.filter((r) => r.car_class === cls);
-          for (const agg of aggs) {
-            const info = teamsInClass.find((t) => t.teamId === agg.teamId)!;
-            let sum = 0;
-            const drivers = new Set<string>();
-            for (const r of classRows) {
-              const uid = rowUserId(r);
-              if (!uid || !info.userIds.has(uid)) continue;
-              const cell = r.rounds[d.id];
-              if (!cell || cell.dns) continue;
-              sum += Math.max(0, cell.points + cell.flPts - cell.pointPenalty);
-              drivers.add(uid);
-            }
-            if (drivers.size >= 2) {
-              agg.rounds[d.id] = { sum, drivers: drivers.size };
-              agg.total += sum;
-              drivers.forEach((u) => agg.uniqueDrivers.add(u));
-            } else {
-              agg.rounds[d.id] = { sum: 0, drivers: drivers.size };
-            }
-          }
-        }
-
-        const list = aggs.filter((a) => a.total > 0 || Object.keys(a.rounds).length > 0)
+        const list = (aggByClass.get(cls) ?? []).filter((a) => a.total > 0 || Object.keys(a.rounds).length > 0)
           .sort((a, b) => b.total - a.total);
         if (list.length === 0) {
           return (
@@ -1190,7 +1192,7 @@ function TeamStandings({
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm">{cls}</CardTitle>
               </CardHeader>
-              <CardContent className="pt-0 py-4 text-center text-xs text-muted-foreground">Ingen team-tilmeldinger i denne klasse endnu.</CardContent>
+              <CardContent className="pt-0 py-4 text-center text-xs text-muted-foreground">Ingen team-resultater i denne klasse endnu.</CardContent>
             </Card>
           );
         }
@@ -1217,16 +1219,18 @@ function TeamStandings({
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
                       <td className="py-1.5 pr-2 truncate">
                         <span className="inline-flex items-center gap-2 min-w-0">
-                          <TeamAvatarOnly teamId={t.teamId} fallbackName={t.name} size="sm" />
-                          <span className="truncate">{t.name}</span>
+                          <TeamAvatarOnly teamId={t.teamId} fallbackName={t.teamName} size="sm" />
+                          <span className="truncate">{t.teamName}</span>
                         </span>
                       </td>
                       {completed.map((d: any) => {
                         const slot = t.rounds[d.id];
-                        if (!slot || slot.drivers < 2) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground" title={slot ? `Kun ${slot.drivers} lineup-kører — ingen point` : undefined}>–</td>;
+                        if (!slot || slot.rank === 0) {
+                          return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground" title={slot ? `Kun ${slot.participants} lineup-kører — ingen point` : undefined}>–</td>;
+                        }
                         return (
-                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`${slot.drivers} lineup-kørere`}>
-                            {slot.sum}
+                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`Placering ${slot.rank} · ${slot.participants} lineup-kørere`}>
+                            {slot.points}
                           </td>
                         );
                       })}
