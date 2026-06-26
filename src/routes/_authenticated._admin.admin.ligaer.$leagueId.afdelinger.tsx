@@ -83,7 +83,7 @@ function AdminDivisions() {
                   </CardTitle>
                   <div className="flex gap-1">
                     <Button asChild variant="ghost" size="sm" title="Upload resultater">
-                      <Link to="/admin/ligaer/$leagueId/afdelinger/$divisionId/upload" params={{ leagueId, divisionId: d.id }}>
+                      <Link to="/admin/ligaer/$leagueId/upload/$divisionId" params={{ leagueId, divisionId: d.id }}>
                         <Upload className="h-4 w-4" /> Upload resultater
                       </Link>
                     </Button>
