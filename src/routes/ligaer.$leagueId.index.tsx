@@ -1147,9 +1147,7 @@ function TeamStandings({
     })));
   }
 
-  // Lazy import inside render is fine — pure function
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { computeTeamRacePoints } = require("@/lib/team-points") as typeof import("@/lib/team-points");
+
 
   for (const d of completed as any[]) {
     const results = (d.settings?.results ?? []) as Array<{ user_id?: string; car_class: string; class_position?: number; position?: number; dns?: boolean; dnf?: boolean }>;
