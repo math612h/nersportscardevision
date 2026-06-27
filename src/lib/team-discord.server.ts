@@ -109,7 +109,9 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       voiceId = v.id;
       created.voice = true;
     } else {
-      errors.push(`voice: ${v.status} ${v.message ?? ""}`);
+      const msg = `voice[${team.name}]: ${v.status} ${v.message ?? ""}`;
+      console.error("[team-discord]", msg);
+      errors.push(msg);
     }
   }
 
@@ -238,10 +240,14 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
           .update({ discord_welcome_sent_at: new Date().toISOString() })
           .eq("id", teamId);
       } else {
-        errors.push(`welcome: ${r.status} ${r.message ?? ""}`);
+        const msg = `welcome[${team.name}]: ${r.status} ${r.message ?? ""}`;
+        console.error("[team-discord]", msg);
+        errors.push(msg);
       }
     } catch (e) {
-      errors.push(`welcome: ${(e as Error).message}`);
+      const msg = `welcome[${team.name}]: ${(e as Error).message}`;
+      console.error("[team-discord]", msg);
+      errors.push(msg);
     }
   }
 
