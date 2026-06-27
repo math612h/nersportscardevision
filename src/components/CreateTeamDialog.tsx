@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from "@/components/ui/dialog";
+import { syncTeamDiscordResources } from "@/lib/team-discord.functions";
+
 
 export function CreateTeamDialog({ trigger }: { trigger?: React.ReactNode }) {
   const { user } = useAuth();
