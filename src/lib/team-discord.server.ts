@@ -31,6 +31,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
     teamTextChannelOverwrites,
     teamVoiceChannelOverwrites,
     getEveryoneRoleId,
+    getBotUserId,
     addGuildRole,
     removeGuildRole,
     listGuildMemberIdsWithRole,
@@ -82,13 +83,23 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
   }
 
   const everyone = getEveryoneRoleId();
+  const botUserId = await getBotUserId().catch(() => null);
+  if (botUserId && roleId) {
+    // Existing team text channels are private to the team role. Give the bot the
+    // team role too, otherwise Discord returns "Missing Access" before we can
+    // patch the channel overwrites or send the welcome message.
+    const botRole = await addGuildRole(botUserId, roleId);
+    if (!botRole.ok && botRole.status !== 204) {
+      errors.push(`bot role: ${botRole.status} ${botRole.message ?? ""}`);
+    }
+  }
 
   if (!textId && categoryId) {
     const t = await createGuildChannel({
       name: `${team.name}-chat`,
       type: 0,
       parent_id: categoryId,
-      permission_overwrites: teamTextChannelOverwrites(everyone, roleId!),
+      permission_overwrites: teamTextChannelOverwrites(everyone, roleId!, botUserId),
     });
     if (t.ok && t.id) {
       textId = t.id;
@@ -96,6 +107,13 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
     } else {
       errors.push(`text: ${t.status} ${t.message ?? ""}`);
     }
+  } else if (textId && roleId) {
+    const t = await editGuildChannel(textId, {
+      name: `${team.name}-chat`,
+      parent_id: categoryId,
+      permission_overwrites: teamTextChannelOverwrites(everyone, roleId, botUserId),
+    });
+    if (!t.ok && t.status !== 404) errors.push(`text update: ${t.status} ${t.message ?? ""}`);
   }
 
   if (!voiceId && categoryId) {
@@ -103,7 +121,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       name: `${team.name} Voice`,
       type: 2,
       parent_id: categoryId,
-      permission_overwrites: teamVoiceChannelOverwrites(everyone, roleId!),
+      permission_overwrites: teamVoiceChannelOverwrites(everyone, roleId!, botUserId),
     });
     if (v.ok && v.id) {
       voiceId = v.id;
@@ -112,6 +130,19 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       const msg = `voice[${team.name}]: ${v.status} ${v.message ?? ""}`;
       console.error("[team-discord]", msg);
       errors.push(msg);
+    }
+  } else if (voiceId && roleId) {
+    const v = await editGuildChannel(voiceId, {
+      name: `${team.name} Voice`,
+      parent_id: categoryId,
+      permission_overwrites: teamVoiceChannelOverwrites(everyone, roleId, botUserId),
+    });
+    // Some Discord setups let the bot create private voice channels, but do not
+    // let it later inspect/patch them unless it also has voice-specific guild
+    // permissions. The important part is that the voice channel exists; don't
+    // fail a full team sync just because Discord rejects a harmless refresh.
+    if (!v.ok && v.status !== 404 && !v.message?.includes("Missing Access")) {
+      errors.push(`voice update: ${v.status} ${v.message ?? ""}`);
     }
   }
 
@@ -164,6 +195,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       }
     }
     for (const id of currentDiscordIds) {
+      if (id === botUserId) continue;
       if (!targetDiscordIds.has(id)) {
         const r = await removeGuildRole(id, roleId);
         if (r.ok) rolesRemoved++;
@@ -218,6 +250,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       const pingLine = mentionIds.length > 0
         ? mentionIds.map((id) => `<@${id}>`).join(" ")
         : "";
+      const welcomeText = `${pingLine ? `${pingLine}\n\n` : ""}Velkommen til ${team.name}!\nVelkommen til jeres helt egen, dedikeret team chat, med tilhørende talekanal.\n\n— LMU Danmark`;
 
 
       const embed: Record<string, unknown> = {
@@ -227,10 +260,13 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
         color: 0xe10600,
         footer: { text: "LMU Danmark" },
       };
-      if (logoUrl) (embed as { thumbnail?: { url: string } }).thumbnail = { url: logoUrl };
+      // Do not attach the logo URL as an embed thumbnail unless the bot has the
+      // Discord "Embed Links" permission. Signing with the team avatar in the
+      // footer keeps the message stable even on servers where embeds with
+      // external links are blocked for bots.
 
       const r = await sendDiscordChannelRichMessage(textId, {
-        content: pingLine || undefined,
+        content: welcomeText,
         embeds: [embed],
         userMentions: mentionIds,
       });

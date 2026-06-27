@@ -1,6 +1,7 @@
 // Server-only Discord helpers. Never import from client code.
 
 const DISCORD_API = "https://discord.com/api/v10";
+let cachedBotUserId: string | null = null;
 
 function getEnv(name: string): string {
   const v = process.env[name];
@@ -489,14 +490,57 @@ const TEAM_TEXT_PERMS =
   DISCORD_PERM_VIEW_CHANNEL |
   DISCORD_PERM_SEND_MESSAGES |
   DISCORD_PERM_READ_HISTORY;
-const TEAM_VOICE_PERMS =
-  DISCORD_PERM_VIEW_CHANNEL | DISCORD_PERM_CONNECT | DISCORD_PERM_SPEAK;
+// Keep voice overwrites to visibility only. The bot's server role does not need
+// Connect/Speak to create or maintain voice channels, and Discord rejects
+// overwrites that grant permissions the bot itself doesn't have. Members inherit
+// Connect/Speak from the server defaults once the team role can view the channel.
+const TEAM_VOICE_PERMS = DISCORD_PERM_VIEW_CHANNEL;
 
 function botHeaders(): HeadersInit {
   return {
     Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}`,
     "Content-Type": "application/json",
   };
+}
+
+async function discordFetch(input: string, init: RequestInit, attempts = 4): Promise<Response> {
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const res = await fetch(input, init);
+    if (res.status !== 429 || attempt === attempts - 1) return res;
+
+    let retryMs = 1_250;
+    try {
+      const body = (await res.clone().json()) as { retry_after?: number };
+      if (typeof body.retry_after === "number") retryMs = Math.ceil(body.retry_after * 1000) + 250;
+    } catch {
+      const header = res.headers.get("retry-after");
+      if (header) retryMs = Math.ceil(Number.parseFloat(header) * 1000) + 250;
+    }
+    await new Promise((resolve) => setTimeout(resolve, Math.min(retryMs, 15_000)));
+  }
+  return fetch(input, init);
+}
+
+export async function getBotUserId(): Promise<string> {
+  if (cachedBotUserId) return cachedBotUserId;
+  const fallback = process.env.DISCORD_CLIENT_ID;
+  try {
+    const res = await discordFetch(`${DISCORD_API}/users/@me`, {
+      headers: { Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}` },
+    });
+    if (res.ok) {
+      const user = (await res.json()) as { id?: string };
+      if (user.id) {
+        cachedBotUserId = user.id;
+        return user.id;
+      }
+    }
+  } catch {
+    // Fall through to the application id. For Discord bots this is normally the bot user id too.
+  }
+  if (!fallback) throw new Error("Mangler env-variabel: DISCORD_CLIENT_ID");
+  cachedBotUserId = fallback;
+  return fallback;
 }
 
 function sanitizeChannelName(name: string): string {
@@ -514,7 +558,7 @@ export async function createGuildRole(
   name: string,
 ): Promise<{ ok: boolean; status: number; id?: string; message?: string }> {
   const guildId = getEnv("DISCORD_GUILD_ID");
-  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/roles`, {
+  const res = await discordFetch(`${DISCORD_API}/guilds/${guildId}/roles`, {
     method: "POST",
     headers: botHeaders(),
     body: JSON.stringify({ name: name.slice(0, 100), mentionable: true, hoist: false }),
@@ -534,7 +578,7 @@ export async function editGuildRole(
   const guildId = getEnv("DISCORD_GUILD_ID");
   const body: Record<string, unknown> = {};
   if (patch.name != null) body.name = patch.name.slice(0, 100);
-  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/roles/${roleId}`, {
+  const res = await discordFetch(`${DISCORD_API}/guilds/${guildId}/roles/${roleId}`, {
     method: "PATCH",
     headers: botHeaders(),
     body: JSON.stringify(body),
@@ -566,12 +610,12 @@ export async function createGuildChannel(opts: {
 }): Promise<{ ok: boolean; status: number; id?: string; message?: string }> {
   const guildId = getEnv("DISCORD_GUILD_ID");
   const body: Record<string, unknown> = {
-    name: opts.type === 4 ? opts.name.slice(0, 90) : sanitizeChannelName(opts.name),
+    name: opts.type === 4 || opts.type === 2 ? opts.name.slice(0, 90) : sanitizeChannelName(opts.name),
     type: opts.type,
   };
   if (opts.parent_id) body.parent_id = opts.parent_id;
   if (opts.permission_overwrites) body.permission_overwrites = opts.permission_overwrites;
-  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/channels`, {
+  const res = await discordFetch(`${DISCORD_API}/guilds/${guildId}/channels`, {
     method: "POST",
     headers: botHeaders(),
     body: JSON.stringify(body),
@@ -586,11 +630,17 @@ export async function createGuildChannel(opts: {
 
 export async function editGuildChannel(
   channelId: string,
-  patch: { name?: string },
+  patch: {
+    name?: string;
+    parent_id?: string | null;
+    permission_overwrites?: Array<{ id: string; type: 0 | 1; allow?: string; deny?: string }>;
+  },
 ): Promise<{ ok: boolean; status: number; message?: string }> {
   const body: Record<string, unknown> = {};
   if (patch.name != null) body.name = patch.name;
-  const res = await fetch(`${DISCORD_API}/channels/${channelId}`, {
+  if (patch.parent_id !== undefined) body.parent_id = patch.parent_id;
+  if (patch.permission_overwrites) body.permission_overwrites = patch.permission_overwrites;
+  const res = await discordFetch(`${DISCORD_API}/channels/${channelId}`, {
     method: "PATCH",
     headers: botHeaders(),
     body: JSON.stringify(body),
@@ -617,21 +667,27 @@ export async function deleteGuildChannel(
 export function teamTextChannelOverwrites(
   everyoneRoleId: string,
   teamRoleId: string,
+  botUserId?: string | null,
 ): Array<{ id: string; type: 0 | 1; allow?: string; deny?: string }> {
-  return [
+  const overwrites: Array<{ id: string; type: 0 | 1; allow?: string; deny?: string }> = [
     { id: everyoneRoleId, type: 0, deny: DISCORD_PERM_VIEW_CHANNEL.toString() },
     { id: teamRoleId, type: 0, allow: TEAM_TEXT_PERMS.toString() },
   ];
+  if (botUserId) overwrites.push({ id: botUserId, type: 1, allow: TEAM_TEXT_PERMS.toString() });
+  return overwrites;
 }
 
 export function teamVoiceChannelOverwrites(
   everyoneRoleId: string,
   teamRoleId: string,
+  botUserId?: string | null,
 ): Array<{ id: string; type: 0 | 1; allow?: string; deny?: string }> {
-  return [
+  const overwrites: Array<{ id: string; type: 0 | 1; allow?: string; deny?: string }> = [
     { id: everyoneRoleId, type: 0, deny: DISCORD_PERM_VIEW_CHANNEL.toString() },
     { id: teamRoleId, type: 0, allow: TEAM_VOICE_PERMS.toString() },
   ];
+  if (botUserId) overwrites.push({ id: botUserId, type: 1, allow: TEAM_VOICE_PERMS.toString() });
+  return overwrites;
 }
 
 // @everyone role id is identical to the guild id
