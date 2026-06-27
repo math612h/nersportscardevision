@@ -177,6 +177,7 @@ function AdminHub() {
               <Button onClick={handlePostHostAnchor} disabled={postingHost} variant="outline">{postingHost ? "Sender..." : "Post hosted session-knap"}</Button>
               <Button onClick={() => setOffseasonOpen(true)} variant="outline">Post liga-kalender</Button>
               <Button onClick={handleStripUnverified} disabled={stripping} variant="outline">{stripping ? "Scanner..." : "Fjern rolle fra uverificerede"}</Button>
+              <Button onClick={handleSyncTeams} disabled={syncingTeams} variant="outline">{syncingTeams ? "Synkroniserer..." : "Sync teams til Discord"}</Button>
             </CardContent>
           </CollapsibleContent>
         </Card>
