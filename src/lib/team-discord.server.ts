@@ -186,7 +186,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
           .from("user_roles")
           .select("user_id, role")
           .in("user_id", memberIds2)
-          .in("role", ["admin", "moderator"]);
+          .in("role", ["admin"]);
         const staffIds = new Set((staffRoles ?? []).map((r: { user_id: string }) => r.user_id));
         nonAdminMemberIds = memberIds2.filter((id) => !staffIds.has(id));
       }
