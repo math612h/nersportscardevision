@@ -19,6 +19,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeamsIndexRouteImport } from './routes/teams.index'
 import { Route as PartnerfordeleIndexRouteImport } from './routes/partnerfordele.index'
+import { Route as CoachingIndexRouteImport } from './routes/coaching.index'
 import { Route as TeamsTeamIdRouteImport } from './routes/teams.$teamId'
 import { Route as PartnerfordeleBenefitIdRouteImport } from './routes/partnerfordele.$benefitId'
 import { Route as LmuTeamsRouteImport } from './routes/lmu.teams'
@@ -36,6 +37,10 @@ import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/em
 import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
 import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/public/leaderboard-upload'
 import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
+import { Route as AuthenticatedCoachingMineBookingerRouteImport } from './routes/_authenticated.coaching.mine-bookinger'
+import { Route as AuthenticatedCoachingMinProfilRouteImport } from './routes/_authenticated.coaching.min-profil'
+import { Route as AuthenticatedCoachingMinKalenderRouteImport } from './routes/_authenticated.coaching.min-kalender'
+import { Route as AuthenticatedCoachingBookRouteImport } from './routes/_authenticated.coaching.book'
 import { Route as AuthenticatedBeskederSystemRouteImport } from './routes/_authenticated.beskeder.system'
 import { Route as AuthenticatedBeskederThreadIdRouteImport } from './routes/_authenticated.beskeder.$threadId'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated._admin.admin.index'
@@ -53,6 +58,7 @@ import { Route as ApiPublicCronStripUnverifiedMembersRouteImport } from './route
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
 import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './routes/api/public/cron/delete-expired-host-sessions'
+import { Route as ApiPublicCronCoachingRemindersRouteImport } from './routes/api/public/cron/coaching-reminders'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
@@ -63,6 +69,7 @@ import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminAdminGaesterRouteImport } from './routes/_authenticated._admin.admin.gaester'
 import { Route as AuthenticatedAdminAdminFejlRouteImport } from './routes/_authenticated._admin.admin.fejl'
 import { Route as AuthenticatedAdminAdminCronRouteImport } from './routes/_authenticated._admin.admin.cron'
+import { Route as AuthenticatedAdminAdminCoachesRouteImport } from './routes/_authenticated._admin.admin.coaches'
 import { Route as AuthenticatedAdminAdminBriefingRouteImport } from './routes/_authenticated._admin.admin.briefing'
 import { Route as AuthenticatedAdminAdminBeskederRouteImport } from './routes/_authenticated._admin.admin.beskeder'
 import { Route as AuthenticatedAdminAdminAuditRouteImport } from './routes/_authenticated._admin.admin.audit'
@@ -124,6 +131,11 @@ const TeamsIndexRoute = TeamsIndexRouteImport.update({
 const PartnerfordeleIndexRoute = PartnerfordeleIndexRouteImport.update({
   id: '/partnerfordele/',
   path: '/partnerfordele/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoachingIndexRoute = CoachingIndexRouteImport.update({
+  id: '/coaching/',
+  path: '/coaching/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TeamsTeamIdRoute = TeamsTeamIdRouteImport.update({
@@ -212,6 +224,30 @@ const AuthenticatedProfilUserIdRoute =
   AuthenticatedProfilUserIdRouteImport.update({
     id: '/profil/$userId',
     path: '/profil/$userId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachingMineBookingerRoute =
+  AuthenticatedCoachingMineBookingerRouteImport.update({
+    id: '/coaching/mine-bookinger',
+    path: '/coaching/mine-bookinger',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachingMinProfilRoute =
+  AuthenticatedCoachingMinProfilRouteImport.update({
+    id: '/coaching/min-profil',
+    path: '/coaching/min-profil',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachingMinKalenderRoute =
+  AuthenticatedCoachingMinKalenderRouteImport.update({
+    id: '/coaching/min-kalender',
+    path: '/coaching/min-kalender',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachingBookRoute =
+  AuthenticatedCoachingBookRouteImport.update({
+    id: '/coaching/book',
+    path: '/coaching/book',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedBeskederSystemRoute =
@@ -312,6 +348,12 @@ const ApiPublicCronDeleteExpiredHostSessionsRoute =
     path: '/api/public/cron/delete-expired-host-sessions',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronCoachingRemindersRoute =
+  ApiPublicCronCoachingRemindersRouteImport.update({
+    id: '/api/public/cron/coaching-reminders',
+    path: '/api/public/cron/coaching-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCompanionVerifyTokenRoute =
   ApiPublicCompanionVerifyTokenRouteImport.update({
     id: '/api/public/companion/verify-token',
@@ -370,6 +412,12 @@ const AuthenticatedAdminAdminCronRoute =
   AuthenticatedAdminAdminCronRouteImport.update({
     id: '/admin/cron',
     path: '/admin/cron',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminCoachesRoute =
+  AuthenticatedAdminAdminCoachesRouteImport.update({
+    id: '/admin/coaches',
+    path: '/admin/coaches',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAdminBriefingRoute =
@@ -469,10 +517,15 @@ export interface FileRoutesByFullPath {
   '/lmu/teams': typeof LmuTeamsRoute
   '/partnerfordele/$benefitId': typeof PartnerfordeleBenefitIdRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/coaching/': typeof CoachingIndexRoute
   '/partnerfordele/': typeof PartnerfordeleIndexRoute
   '/teams/': typeof TeamsIndexRoute
   '/beskeder/$threadId': typeof AuthenticatedBeskederThreadIdRoute
   '/beskeder/system': typeof AuthenticatedBeskederSystemRoute
+  '/coaching/book': typeof AuthenticatedCoachingBookRoute
+  '/coaching/min-kalender': typeof AuthenticatedCoachingMinKalenderRoute
+  '/coaching/min-profil': typeof AuthenticatedCoachingMinProfilRoute
+  '/coaching/mine-bookinger': typeof AuthenticatedCoachingMineBookingerRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -483,6 +536,7 @@ export interface FileRoutesByFullPath {
   '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/admin/beskeder': typeof AuthenticatedAdminAdminBeskederRoute
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
+  '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
@@ -493,6 +547,7 @@ export interface FileRoutesByFullPath {
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
@@ -535,10 +590,15 @@ export interface FileRoutesByTo {
   '/lmu/teams': typeof LmuTeamsRoute
   '/partnerfordele/$benefitId': typeof PartnerfordeleBenefitIdRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/coaching': typeof CoachingIndexRoute
   '/partnerfordele': typeof PartnerfordeleIndexRoute
   '/teams': typeof TeamsIndexRoute
   '/beskeder/$threadId': typeof AuthenticatedBeskederThreadIdRoute
   '/beskeder/system': typeof AuthenticatedBeskederSystemRoute
+  '/coaching/book': typeof AuthenticatedCoachingBookRoute
+  '/coaching/min-kalender': typeof AuthenticatedCoachingMinKalenderRoute
+  '/coaching/min-profil': typeof AuthenticatedCoachingMinProfilRoute
+  '/coaching/mine-bookinger': typeof AuthenticatedCoachingMineBookingerRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -549,6 +609,7 @@ export interface FileRoutesByTo {
   '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/admin/beskeder': typeof AuthenticatedAdminAdminBeskederRoute
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
+  '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
@@ -558,6 +619,7 @@ export interface FileRoutesByTo {
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
@@ -604,10 +666,15 @@ export interface FileRoutesById {
   '/lmu/teams': typeof LmuTeamsRoute
   '/partnerfordele/$benefitId': typeof PartnerfordeleBenefitIdRoute
   '/teams/$teamId': typeof TeamsTeamIdRoute
+  '/coaching/': typeof CoachingIndexRoute
   '/partnerfordele/': typeof PartnerfordeleIndexRoute
   '/teams/': typeof TeamsIndexRoute
   '/_authenticated/beskeder/$threadId': typeof AuthenticatedBeskederThreadIdRoute
   '/_authenticated/beskeder/system': typeof AuthenticatedBeskederSystemRoute
+  '/_authenticated/coaching/book': typeof AuthenticatedCoachingBookRoute
+  '/_authenticated/coaching/min-kalender': typeof AuthenticatedCoachingMinKalenderRoute
+  '/_authenticated/coaching/min-profil': typeof AuthenticatedCoachingMinProfilRoute
+  '/_authenticated/coaching/mine-bookinger': typeof AuthenticatedCoachingMineBookingerRoute
   '/_authenticated/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
@@ -618,6 +685,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/_authenticated/_admin/admin/beskeder': typeof AuthenticatedAdminAdminBeskederRoute
   '/_authenticated/_admin/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
+  '/_authenticated/_admin/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/_authenticated/_admin/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/_authenticated/_admin/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/_authenticated/_admin/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
@@ -628,6 +696,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
@@ -673,10 +742,15 @@ export interface FileRouteTypes {
     | '/lmu/teams'
     | '/partnerfordele/$benefitId'
     | '/teams/$teamId'
+    | '/coaching/'
     | '/partnerfordele/'
     | '/teams/'
     | '/beskeder/$threadId'
     | '/beskeder/system'
+    | '/coaching/book'
+    | '/coaching/min-kalender'
+    | '/coaching/min-profil'
+    | '/coaching/mine-bookinger'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
@@ -687,6 +761,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/beskeder'
     | '/admin/briefing'
+    | '/admin/coaches'
     | '/admin/cron'
     | '/admin/fejl'
     | '/admin/gaester'
@@ -697,6 +772,7 @@ export interface FileRouteTypes {
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/coaching-reminders'
     | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
@@ -739,10 +815,15 @@ export interface FileRouteTypes {
     | '/lmu/teams'
     | '/partnerfordele/$benefitId'
     | '/teams/$teamId'
+    | '/coaching'
     | '/partnerfordele'
     | '/teams'
     | '/beskeder/$threadId'
     | '/beskeder/system'
+    | '/coaching/book'
+    | '/coaching/min-kalender'
+    | '/coaching/min-profil'
+    | '/coaching/mine-bookinger'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
@@ -753,6 +834,7 @@ export interface FileRouteTypes {
     | '/admin/audit'
     | '/admin/beskeder'
     | '/admin/briefing'
+    | '/admin/coaches'
     | '/admin/cron'
     | '/admin/fejl'
     | '/admin/gaester'
@@ -762,6 +844,7 @@ export interface FileRouteTypes {
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/coaching-reminders'
     | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
@@ -807,10 +890,15 @@ export interface FileRouteTypes {
     | '/lmu/teams'
     | '/partnerfordele/$benefitId'
     | '/teams/$teamId'
+    | '/coaching/'
     | '/partnerfordele/'
     | '/teams/'
     | '/_authenticated/beskeder/$threadId'
     | '/_authenticated/beskeder/system'
+    | '/_authenticated/coaching/book'
+    | '/_authenticated/coaching/min-kalender'
+    | '/_authenticated/coaching/min-profil'
+    | '/_authenticated/coaching/mine-bookinger'
     | '/_authenticated/profil/$userId'
     | '/api/public/leaderboard-upload'
     | '/ligaer/$leagueId/regler'
@@ -821,6 +909,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/audit'
     | '/_authenticated/_admin/admin/beskeder'
     | '/_authenticated/_admin/admin/briefing'
+    | '/_authenticated/_admin/admin/coaches'
     | '/_authenticated/_admin/admin/cron'
     | '/_authenticated/_admin/admin/fejl'
     | '/_authenticated/_admin/admin/gaester'
@@ -831,6 +920,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/storage'
     | '/_authenticated/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/coaching-reminders'
     | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
@@ -872,11 +962,13 @@ export interface RootRouteChildren {
   LmuTeamsRoute: typeof LmuTeamsRoute
   PartnerfordeleBenefitIdRoute: typeof PartnerfordeleBenefitIdRoute
   TeamsTeamIdRoute: typeof TeamsTeamIdRoute
+  CoachingIndexRoute: typeof CoachingIndexRoute
   PartnerfordeleIndexRoute: typeof PartnerfordeleIndexRoute
   TeamsIndexRoute: typeof TeamsIndexRoute
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
+  ApiPublicCronCoachingRemindersRoute: typeof ApiPublicCronCoachingRemindersRoute
   ApiPublicCronDeleteExpiredHostSessionsRoute: typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   ApiPublicCronExpireReserveOffersRoute: typeof ApiPublicCronExpireReserveOffersRoute
   ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
@@ -962,6 +1054,13 @@ declare module '@tanstack/react-router' {
       path: '/partnerfordele'
       fullPath: '/partnerfordele/'
       preLoaderRoute: typeof PartnerfordeleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coaching/': {
+      id: '/coaching/'
+      path: '/coaching'
+      fullPath: '/coaching/'
+      preLoaderRoute: typeof CoachingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/teams/$teamId': {
@@ -1083,6 +1182,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProfilUserIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/coaching/mine-bookinger': {
+      id: '/_authenticated/coaching/mine-bookinger'
+      path: '/coaching/mine-bookinger'
+      fullPath: '/coaching/mine-bookinger'
+      preLoaderRoute: typeof AuthenticatedCoachingMineBookingerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coaching/min-profil': {
+      id: '/_authenticated/coaching/min-profil'
+      path: '/coaching/min-profil'
+      fullPath: '/coaching/min-profil'
+      preLoaderRoute: typeof AuthenticatedCoachingMinProfilRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coaching/min-kalender': {
+      id: '/_authenticated/coaching/min-kalender'
+      path: '/coaching/min-kalender'
+      fullPath: '/coaching/min-kalender'
+      preLoaderRoute: typeof AuthenticatedCoachingMinKalenderRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coaching/book': {
+      id: '/_authenticated/coaching/book'
+      path: '/coaching/book'
+      fullPath: '/coaching/book'
+      preLoaderRoute: typeof AuthenticatedCoachingBookRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/beskeder/system': {
       id: '/_authenticated/beskeder/system'
       path: '/system'
@@ -1202,6 +1329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronDeleteExpiredHostSessionsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/coaching-reminders': {
+      id: '/api/public/cron/coaching-reminders'
+      path: '/api/public/cron/coaching-reminders'
+      fullPath: '/api/public/cron/coaching-reminders'
+      preLoaderRoute: typeof ApiPublicCronCoachingRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/companion/verify-token': {
       id: '/api/public/companion/verify-token'
       path: '/api/public/companion/verify-token'
@@ -1270,6 +1404,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/cron'
       fullPath: '/admin/cron'
       preLoaderRoute: typeof AuthenticatedAdminAdminCronRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/coaches': {
+      id: '/_authenticated/_admin/admin/coaches'
+      path: '/admin/coaches'
+      fullPath: '/admin/coaches'
+      preLoaderRoute: typeof AuthenticatedAdminAdminCoachesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/_admin/admin/briefing': {
@@ -1416,6 +1557,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminAuditRoute: typeof AuthenticatedAdminAdminAuditRoute
   AuthenticatedAdminAdminBeskederRoute: typeof AuthenticatedAdminAdminBeskederRoute
   AuthenticatedAdminAdminBriefingRoute: typeof AuthenticatedAdminAdminBriefingRoute
+  AuthenticatedAdminAdminCoachesRoute: typeof AuthenticatedAdminAdminCoachesRoute
   AuthenticatedAdminAdminCronRoute: typeof AuthenticatedAdminAdminCronRoute
   AuthenticatedAdminAdminFejlRoute: typeof AuthenticatedAdminAdminFejlRoute
   AuthenticatedAdminAdminGaesterRoute: typeof AuthenticatedAdminAdminGaesterRoute
@@ -1434,6 +1576,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminAuditRoute: AuthenticatedAdminAdminAuditRoute,
   AuthenticatedAdminAdminBeskederRoute: AuthenticatedAdminAdminBeskederRoute,
   AuthenticatedAdminAdminBriefingRoute: AuthenticatedAdminAdminBriefingRoute,
+  AuthenticatedAdminAdminCoachesRoute: AuthenticatedAdminAdminCoachesRoute,
   AuthenticatedAdminAdminCronRoute: AuthenticatedAdminAdminCronRoute,
   AuthenticatedAdminAdminFejlRoute: AuthenticatedAdminAdminFejlRoute,
   AuthenticatedAdminAdminGaesterRoute: AuthenticatedAdminAdminGaesterRoute,
@@ -1480,6 +1623,10 @@ interface AuthenticatedRouteChildren {
   AuthenticatedBeskederRoute: typeof AuthenticatedBeskederRouteWithChildren
   AuthenticatedMineProtestsRoute: typeof AuthenticatedMineProtestsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedCoachingBookRoute: typeof AuthenticatedCoachingBookRoute
+  AuthenticatedCoachingMinKalenderRoute: typeof AuthenticatedCoachingMinKalenderRoute
+  AuthenticatedCoachingMinProfilRoute: typeof AuthenticatedCoachingMinProfilRoute
+  AuthenticatedCoachingMineBookingerRoute: typeof AuthenticatedCoachingMineBookingerRoute
   AuthenticatedProfilUserIdRoute: typeof AuthenticatedProfilUserIdRoute
   AuthenticatedProfilIndexRoute: typeof AuthenticatedProfilIndexRoute
 }
@@ -1490,6 +1637,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBeskederRoute: AuthenticatedBeskederRouteWithChildren,
   AuthenticatedMineProtestsRoute: AuthenticatedMineProtestsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedCoachingBookRoute: AuthenticatedCoachingBookRoute,
+  AuthenticatedCoachingMinKalenderRoute: AuthenticatedCoachingMinKalenderRoute,
+  AuthenticatedCoachingMinProfilRoute: AuthenticatedCoachingMinProfilRoute,
+  AuthenticatedCoachingMineBookingerRoute:
+    AuthenticatedCoachingMineBookingerRoute,
   AuthenticatedProfilUserIdRoute: AuthenticatedProfilUserIdRoute,
   AuthenticatedProfilIndexRoute: AuthenticatedProfilIndexRoute,
 }
@@ -1529,11 +1681,13 @@ const rootRouteChildren: RootRouteChildren = {
   LmuTeamsRoute: LmuTeamsRoute,
   PartnerfordeleBenefitIdRoute: PartnerfordeleBenefitIdRoute,
   TeamsTeamIdRoute: TeamsTeamIdRoute,
+  CoachingIndexRoute: CoachingIndexRoute,
   PartnerfordeleIndexRoute: PartnerfordeleIndexRoute,
   TeamsIndexRoute: TeamsIndexRoute,
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
+  ApiPublicCronCoachingRemindersRoute: ApiPublicCronCoachingRemindersRoute,
   ApiPublicCronDeleteExpiredHostSessionsRoute:
     ApiPublicCronDeleteExpiredHostSessionsRoute,
   ApiPublicCronExpireReserveOffersRoute: ApiPublicCronExpireReserveOffersRoute,
