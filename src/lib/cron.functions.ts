@@ -37,6 +37,7 @@ const TRIGGERS = [
   { key: "expire-reserve-offers", label: "Udløb reserve-tilbud" },
   { key: "league-open", label: "Åbn liga-tilmeldinger" },
   { key: "strip-unverified-members", label: "Fjern rolle fra uverificerede" },
+  { key: "coaching-reminders", label: "Send coaching-påmindelser (2t før)" },
 ] as const;
 
 export const listCronTriggers = createServerFn({ method: "POST" })
