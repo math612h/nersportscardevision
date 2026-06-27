@@ -109,7 +109,9 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       voiceId = v.id;
       created.voice = true;
     } else {
-      errors.push(`voice: ${v.status} ${v.message ?? ""}`);
+      const msg = `voice[${team.name}]: ${v.status} ${v.message ?? ""}`;
+      console.error("[team-discord]", msg);
+      errors.push(msg);
     }
   }
 
