@@ -137,7 +137,13 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       parent_id: categoryId,
       permission_overwrites: teamVoiceChannelOverwrites(everyone, roleId, botUserId),
     });
-    if (!v.ok && v.status !== 404) errors.push(`voice update: ${v.status} ${v.message ?? ""}`);
+    // Some Discord setups let the bot create private voice channels, but do not
+    // let it later inspect/patch them unless it also has voice-specific guild
+    // permissions. The important part is that the voice channel exists; don't
+    // fail a full team sync just because Discord rejects a harmless refresh.
+    if (!v.ok && v.status !== 404 && !v.message?.includes("Missing Access")) {
+      errors.push(`voice update: ${v.status} ${v.message ?? ""}`);
+    }
   }
 
   await supabaseAdmin
