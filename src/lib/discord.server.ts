@@ -485,12 +485,10 @@ const DISCORD_PERM_VIEW_CHANNEL = 1n << 10n;
 const DISCORD_PERM_CONNECT = 1n << 20n;
 const DISCORD_PERM_SPEAK = 1n << 21n;
 const DISCORD_PERM_SEND_MESSAGES = 1n << 11n;
-const DISCORD_PERM_EMBED_LINKS = 1n << 14n;
 const DISCORD_PERM_READ_HISTORY = 1n << 16n;
 const TEAM_TEXT_PERMS =
   DISCORD_PERM_VIEW_CHANNEL |
   DISCORD_PERM_SEND_MESSAGES |
-  DISCORD_PERM_EMBED_LINKS |
   DISCORD_PERM_READ_HISTORY;
 // Keep voice overwrites to visibility only. The bot's server role does not need
 // Connect/Speak to create or maintain voice channels, and Discord rejects
