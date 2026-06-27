@@ -253,7 +253,10 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
         color: 0xe10600,
         footer: { text: "LMU Danmark" },
       };
-      if (logoUrl) (embed as { thumbnail?: { url: string } }).thumbnail = { url: logoUrl };
+      // Do not attach the logo URL as an embed thumbnail unless the bot has the
+      // Discord "Embed Links" permission. Signing with the team avatar in the
+      // footer keeps the message stable even on servers where embeds with
+      // external links are blocked for bots.
 
       const r = await sendDiscordChannelRichMessage(textId, {
         content: pingLine || undefined,
