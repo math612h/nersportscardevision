@@ -490,8 +490,11 @@ const TEAM_TEXT_PERMS =
   DISCORD_PERM_VIEW_CHANNEL |
   DISCORD_PERM_SEND_MESSAGES |
   DISCORD_PERM_READ_HISTORY;
-const TEAM_VOICE_PERMS =
-  DISCORD_PERM_VIEW_CHANNEL | DISCORD_PERM_CONNECT | DISCORD_PERM_SPEAK;
+// Keep voice overwrites to visibility only. The bot's server role does not need
+// Connect/Speak to create or maintain voice channels, and Discord rejects
+// overwrites that grant permissions the bot itself doesn't have. Members inherit
+// Connect/Speak from the server defaults once the team role can view the channel.
+const TEAM_VOICE_PERMS = DISCORD_PERM_VIEW_CHANNEL;
 
 function botHeaders(): HeadersInit {
   return {
