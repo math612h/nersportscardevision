@@ -462,6 +462,7 @@ function ApplyButton({ teamId, userId }: { teamId: string; userId: string }) {
     },
     onSuccess: () => {
       toast.success("Du er nu medlem!");
+      void syncTeamDiscordResources({ data: { teamId } }).catch(() => {});
       qc.invalidateQueries({ queryKey: ["team-members", teamId] });
       qc.invalidateQueries({ queryKey: ["my-team-invitation", teamId, userId] });
       qc.invalidateQueries({ queryKey: ["my-teams"] });
