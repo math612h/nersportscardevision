@@ -17,7 +17,7 @@ import logoAsset from "@/assets/lmu-logo.png.asset.json";
 
 
 export function AppHeader() {
-  const { user, isAdmin, signOut, loading, isGuest } = useAuth();
+  const { user, isAdmin, signOut, loading, isGuest, isCoach } = useAuth();
   const { complete: profileComplete, signedIn } = useProfileComplete();
   const { t } = useTranslation();
   const gated = signedIn && !profileComplete && !isGuest;
