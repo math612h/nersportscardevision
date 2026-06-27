@@ -31,6 +31,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
     teamTextChannelOverwrites,
     teamVoiceChannelOverwrites,
     getEveryoneRoleId,
+    getBotUserId,
     addGuildRole,
     removeGuildRole,
     listGuildMemberIdsWithRole,
@@ -82,13 +83,14 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
   }
 
   const everyone = getEveryoneRoleId();
+  const botUserId = await getBotUserId().catch(() => null);
 
   if (!textId && categoryId) {
     const t = await createGuildChannel({
       name: `${team.name}-chat`,
       type: 0,
       parent_id: categoryId,
-      permission_overwrites: teamTextChannelOverwrites(everyone, roleId!),
+      permission_overwrites: teamTextChannelOverwrites(everyone, roleId!, botUserId),
     });
     if (t.ok && t.id) {
       textId = t.id;
@@ -96,6 +98,13 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
     } else {
       errors.push(`text: ${t.status} ${t.message ?? ""}`);
     }
+  } else if (textId && roleId) {
+    const t = await editGuildChannel(textId, {
+      name: `${team.name}-chat`,
+      parent_id: categoryId,
+      permission_overwrites: teamTextChannelOverwrites(everyone, roleId, botUserId),
+    });
+    if (!t.ok && t.status !== 404) errors.push(`text update: ${t.status} ${t.message ?? ""}`);
   }
 
   if (!voiceId && categoryId) {
@@ -103,7 +112,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       name: `${team.name} Voice`,
       type: 2,
       parent_id: categoryId,
-      permission_overwrites: teamVoiceChannelOverwrites(everyone, roleId!),
+      permission_overwrites: teamVoiceChannelOverwrites(everyone, roleId!, botUserId),
     });
     if (v.ok && v.id) {
       voiceId = v.id;
@@ -113,6 +122,13 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       console.error("[team-discord]", msg);
       errors.push(msg);
     }
+  } else if (voiceId && roleId) {
+    const v = await editGuildChannel(voiceId, {
+      name: `${team.name} Voice`,
+      parent_id: categoryId,
+      permission_overwrites: teamVoiceChannelOverwrites(everyone, roleId, botUserId),
+    });
+    if (!v.ok && v.status !== 404) errors.push(`voice update: ${v.status} ${v.message ?? ""}`);
   }
 
   await supabaseAdmin
