@@ -9,6 +9,7 @@ type AuthCtx = {
   session: Session | null;
   isAdmin: boolean;
   isGuest: boolean;
+  isCoach: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 };
@@ -18,6 +19,7 @@ const AuthContext = createContext<AuthCtx>({
   session: null,
   isAdmin: false,
   isGuest: false,
+  isCoach: false,
   loading: true,
   signOut: async () => {},
 });
