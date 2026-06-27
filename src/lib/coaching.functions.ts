@@ -1,0 +1,338 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { COACHING_FOCUS_POINTS, COACHING_DURATIONS } from "./coaching-focus-points";
+
+async function isAdmin(ctx: { supabase: any; userId: string }) {
+  const { data } = await ctx.supabase
+    .from("user_roles").select("role").eq("user_id", ctx.userId).eq("role", "admin").maybeSingle();
+  return !!data;
+}
+async function isCoach(ctx: { supabase: any; userId: string }) {
+  const { data } = await ctx.supabase
+    .from("user_roles").select("role").eq("user_id", ctx.userId).eq("role", "coach").maybeSingle();
+  return !!data;
+}
+
+export type CoachListItem = {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  bio: string | null;
+  specialties: string[];
+  achievements: string[];
+  active: boolean;
+};
+
+// Public-ish: list active coaches with their profile info
+export const listCoaches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: profiles } = await context.supabase
+      .from("coach_profiles")
+      .select("user_id, bio, specialties, achievements, active")
+      .eq("active", true);
+    const ids = (profiles ?? []).map((p: any) => p.user_id);
+    if (ids.length === 0) return [] as CoachListItem[];
+    const { data: ppl } = await context.supabase
+      .from("profiles")
+      .select("id, display_name, avatar_url")
+      .in("id", ids);
+    const map = new Map((ppl ?? []).map((p: any) => [p.id, p]));
+    return (profiles ?? []).map((p: any) => ({
+      user_id: p.user_id,
+      display_name: map.get(p.user_id)?.display_name ?? "Coach",
+      avatar_url: map.get(p.user_id)?.avatar_url ?? null,
+      bio: p.bio,
+      specialties: p.specialties ?? [],
+      achievements: p.achievements ?? [],
+      active: p.active,
+    })) as CoachListItem[];
+  });
+
+// My coach profile (for the coach themselves)
+export const getMyCoachProfile = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roleRow } = await context.supabase
+      .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "coach").maybeSingle();
+    const hasCoachRole = !!roleRow;
+    const { data } = await context.supabase
+      .from("coach_profiles").select("*").eq("user_id", context.userId).maybeSingle();
+    return { hasCoachRole, profile: data ?? null };
+  });
+
+export const upsertMyCoachProfile = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { bio: string; specialties: string[]; achievements: string[]; active: boolean }) => {
+    return {
+      bio: (d.bio ?? "").slice(0, 4000),
+      specialties: (d.specialties ?? []).filter((s) => (COACHING_FOCUS_POINTS as readonly string[]).includes(s)),
+      achievements: (d.achievements ?? []).map((a) => String(a).slice(0, 200)).slice(0, 30),
+      active: !!d.active,
+    };
+  })
+  .handler(async ({ data, context }) => {
+    if (!(await isCoach(context))) throw new Error("Du har ikke coach-rollen");
+    const { error } = await context.supabase
+      .from("coach_profiles")
+      .upsert({ user_id: context.userId, ...data }, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Availability
+export const listCoachAvailability = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { coach_user_id: string }) => ({ coach_user_id: String(d.coach_user_id) }))
+  .handler(async ({ data, context }) => {
+    const { data: rows } = await context.supabase
+      .from("coach_availability")
+      .select("*")
+      .eq("coach_user_id", data.coach_user_id)
+      .order("weekday", { ascending: true, nullsFirst: false });
+    return (rows ?? []) as any[];
+  });
+
+export const addCoachAvailability = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { weekday: number | null; specific_date: string | null; start_time: string; end_time: string }) => {
+    const weekday = d.weekday == null ? null : Number(d.weekday);
+    const specific_date = d.specific_date || null;
+    if ((weekday == null) === (specific_date == null)) {
+      throw new Error("Vælg enten en ugedag eller en specifik dato — ikke begge");
+    }
+    if (weekday != null && (weekday < 0 || weekday > 6)) throw new Error("Ugyldig ugedag");
+    const t = /^([01]\d|2[0-3]):[0-5]\d$/;
+    if (!t.test(d.start_time) || !t.test(d.end_time)) throw new Error("Ugyldigt tidsformat (HH:MM)");
+    if (d.end_time <= d.start_time) throw new Error("Sluttid skal være efter starttid");
+    return { weekday, specific_date, start_time: d.start_time, end_time: d.end_time };
+  })
+  .handler(async ({ data, context }) => {
+    if (!(await isCoach(context))) throw new Error("Du har ikke coach-rollen");
+    const { error } = await context.supabase
+      .from("coach_availability").insert({ ...data, coach_user_id: context.userId });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteCoachAvailability = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("coach_availability").delete().eq("id", data.id).eq("coach_user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Slot generation: given coach + date + duration, return possible start times
+export const getCoachSlots = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { coach_user_id: string; date: string; duration_minutes: number }) => ({
+    coach_user_id: String(d.coach_user_id),
+    date: String(d.date), // YYYY-MM-DD
+    duration_minutes: Number(d.duration_minutes),
+  }))
+  .handler(async ({ data, context }) => {
+    if (!(COACHING_DURATIONS as readonly number[]).includes(data.duration_minutes)) throw new Error("Ugyldig varighed");
+    const date = new Date(`${data.date}T00:00:00`);
+    if (isNaN(date.getTime())) throw new Error("Ugyldig dato");
+    const weekday = date.getDay();
+
+    const { data: avail } = await context.supabase
+      .from("coach_availability")
+      .select("weekday, specific_date, start_time, end_time")
+      .eq("coach_user_id", data.coach_user_id);
+
+    const windows = (avail ?? []).filter((a: any) =>
+      a.specific_date === data.date || (a.specific_date == null && a.weekday === weekday)
+    );
+    if (windows.length === 0) return [] as string[];
+
+    const dayStart = new Date(`${data.date}T00:00:00`);
+    const dayEnd = new Date(`${data.date}T23:59:59`);
+    const { data: existing } = await context.supabase
+      .from("coaching_bookings")
+      .select("starts_at, duration_minutes, status")
+      .eq("coach_user_id", data.coach_user_id)
+      .gte("starts_at", dayStart.toISOString())
+      .lte("starts_at", dayEnd.toISOString())
+      .in("status", ["pending", "confirmed"]);
+
+    const taken = (existing ?? []).map((b: any) => {
+      const s = new Date(b.starts_at).getTime();
+      return [s, s + Number(b.duration_minutes) * 60_000] as [number, number];
+    });
+
+    const slots: string[] = [];
+    const step = 15;
+    const dur = data.duration_minutes;
+    for (const w of windows) {
+      const [sh, sm] = w.start_time.split(":").map(Number);
+      const [eh, em] = w.end_time.split(":").map(Number);
+      const winStart = new Date(date); winStart.setHours(sh, sm, 0, 0);
+      const winEnd = new Date(date); winEnd.setHours(eh, em, 0, 0);
+      for (let cursor = winStart.getTime(); cursor + dur * 60_000 <= winEnd.getTime(); cursor += step * 60_000) {
+        const slotEnd = cursor + dur * 60_000;
+        if (cursor < Date.now() + 30 * 60_000) continue; // 30 min buffer in future
+        const conflicts = taken.some(([s, e]) => cursor < e && slotEnd > s);
+        if (conflicts) continue;
+        slots.push(new Date(cursor).toISOString());
+      }
+    }
+    return Array.from(new Set(slots)).sort();
+  });
+
+// Days in a month that have at least one available slot
+export const getCoachAvailableDays = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { coach_user_id: string; year: number; month: number; duration_minutes: number }) => ({
+    coach_user_id: String(d.coach_user_id),
+    year: Number(d.year),
+    month: Number(d.month), // 0-11
+    duration_minutes: Number(d.duration_minutes),
+  }))
+  .handler(async ({ data, context }) => {
+    const { data: avail } = await context.supabase
+      .from("coach_availability")
+      .select("weekday, specific_date, start_time, end_time")
+      .eq("coach_user_id", data.coach_user_id);
+    if (!avail || avail.length === 0) return [] as string[];
+    const monthStart = new Date(data.year, data.month, 1);
+    const monthEnd = new Date(data.year, data.month + 1, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const result: string[] = [];
+    for (let day = new Date(monthStart); day <= monthEnd; day.setDate(day.getDate() + 1)) {
+      if (day < today) continue;
+      const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+      const wd = day.getDay();
+      const has = avail.some((a: any) => {
+        if (a.specific_date === iso) return true;
+        if (a.specific_date == null && a.weekday === wd) {
+          const [sh, sm] = a.start_time.split(":").map(Number);
+          const [eh, em] = a.end_time.split(":").map(Number);
+          return (eh - sh) * 60 + (em - sm) >= data.duration_minutes;
+        }
+        return false;
+      });
+      if (has) result.push(iso);
+    }
+    return result;
+  });
+
+// Bookings
+export const createCoachingBooking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: {
+    coach_user_id: string;
+    focus_points: string[];
+    duration_minutes: number;
+    track: string;
+    layout: string | null;
+    starts_at: string;
+    extra_info: string | null;
+  }) => {
+    const focus = (d.focus_points ?? []).filter((f) => (COACHING_FOCUS_POINTS as readonly string[]).includes(f));
+    if (focus.length === 0) throw new Error("Vælg mindst ét fokuspunkt");
+    if (!(COACHING_DURATIONS as readonly number[]).includes(Number(d.duration_minutes))) throw new Error("Ugyldig varighed");
+    if (!d.track) throw new Error("Vælg en bane");
+    if (!d.starts_at || isNaN(new Date(d.starts_at).getTime())) throw new Error("Ugyldigt starttidspunkt");
+    return {
+      coach_user_id: String(d.coach_user_id),
+      focus_points: focus,
+      duration_minutes: Number(d.duration_minutes),
+      track: String(d.track).slice(0, 100),
+      layout: d.layout ? String(d.layout).slice(0, 100) : null,
+      starts_at: new Date(d.starts_at).toISOString(),
+      extra_info: d.extra_info ? String(d.extra_info).slice(0, 2000) : null,
+    };
+  })
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("coaching_bookings")
+      .insert({ ...data, user_id: context.userId, status: "pending" })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+
+    // Notify coach via Discord
+    try {
+      const { notifyCoachOfNewBooking } = await import("./coaching-discord.server");
+      await notifyCoachOfNewBooking(row.id);
+    } catch (e) {
+      console.error("notifyCoachOfNewBooking failed", e);
+    }
+    return { id: row.id };
+  });
+
+export const listMyBookingsAsUser = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("coaching_bookings").select("*").eq("user_id", context.userId).order("starts_at", { ascending: false });
+    const ids = Array.from(new Set((data ?? []).map((b: any) => b.coach_user_id)));
+    const { data: coaches } = ids.length
+      ? await context.supabase.from("profiles").select("id, display_name, avatar_url").in("id", ids)
+      : { data: [] as any[] };
+    const cm = new Map((coaches ?? []).map((p: any) => [p.id, p]));
+    return (data ?? []).map((b: any) => ({ ...b, coach: cm.get(b.coach_user_id) ?? null }));
+  });
+
+export const listMyBookingsAsCoach = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!(await isCoach(context))) return [];
+    const { data } = await context.supabase
+      .from("coaching_bookings").select("*").eq("coach_user_id", context.userId).order("starts_at", { ascending: true });
+    const ids = Array.from(new Set((data ?? []).map((b: any) => b.user_id)));
+    const { data: users } = ids.length
+      ? await context.supabase.from("profiles").select("id, display_name, avatar_url").in("id", ids)
+      : { data: [] as any[] };
+    const um = new Map((users ?? []).map((p: any) => [p.id, p]));
+    return (data ?? []).map((b: any) => ({ ...b, user: um.get(b.user_id) ?? null }));
+  });
+
+export const cancelMyBooking = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("coaching_bookings").update({ status: "cancelled" }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Admin: assign / unassign coach role
+export const adminSetCoachRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { user_id: string; is_coach: boolean }) => ({
+    user_id: String(d.user_id),
+    is_coach: !!d.is_coach,
+  }))
+  .handler(async ({ data, context }) => {
+    if (!(await isAdmin(context))) throw new Error("Kun admins");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.is_coach) {
+      const { error } = await supabaseAdmin.from("user_roles").upsert(
+        { user_id: data.user_id, role: "coach" },
+        { onConflict: "user_id,role" },
+      );
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id).eq("role", "coach");
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true };
+  });
+
+export const adminListCoaches = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!(await isAdmin(context))) throw new Error("Kun admins");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles } = await supabaseAdmin.from("user_roles").select("user_id").eq("role", "coach");
+    const ids = (roles ?? []).map((r: any) => r.user_id);
+    if (ids.length === 0) return [];
+    const { data: ppl } = await supabaseAdmin.from("profiles").select("id, display_name, avatar_url").in("id", ids);
+    return (ppl ?? []) as any[];
+  });
