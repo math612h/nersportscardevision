@@ -297,6 +297,7 @@ function TeamDetailPage() {
                         if (error) toastError(error.message);
                         else {
                           toast.success("Medlem fjernet");
+                          void syncTeamDiscordResources({ data: { teamId } }).catch(() => {});
                           qc.invalidateQueries({ queryKey: ["team-members", teamId] });
                         }
                       }}
