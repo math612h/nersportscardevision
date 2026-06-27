@@ -24,6 +24,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { LeagueTeamSignupCard, MyLineupInvitations } from "@/components/LeagueTeamSignupCard";
+import { syncTeamDiscordResources } from "@/lib/team-discord.functions";
 
 
 export const Route = createFileRoute("/teams/$teamId")({
