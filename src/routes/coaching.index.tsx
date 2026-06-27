@@ -3,6 +3,7 @@ import { ArrowRight, CheckCircle2, Flame, Target, Trophy, Users, Zap } from "luc
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { COACHING_FOCUS_POINTS } from "@/lib/coaching-focus-points";
+import { CoachingAccessGate } from "@/components/CoachingAccessGate";
 
 export const Route = createFileRoute("/coaching/")({
   head: () => ({
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/coaching/")({
       { property: "og:description", content: "Bliv hurtigere, mere stabil og bedre forberedt til race." },
     ],
   }),
-  component: CoachingLanding,
+  component: () => <CoachingAccessGate><CoachingLanding /></CoachingAccessGate>,
 });
 
 function CoachingLanding() {

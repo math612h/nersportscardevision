@@ -17,7 +17,7 @@ import logoAsset from "@/assets/lmu-logo.png.asset.json";
 
 
 export function AppHeader() {
-  const { user, isAdmin, signOut, loading, isGuest } = useAuth();
+  const { user, isAdmin, signOut, loading, isGuest, isCoach } = useAuth();
   const { complete: profileComplete, signedIn } = useProfileComplete();
   const { t } = useTranslation();
   const gated = signedIn && !profileComplete && !isGuest;
@@ -33,7 +33,7 @@ export function AppHeader() {
     { to: "/teams", label: t("nav.teams"), icon: <Shield className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/brugere", label: t("nav.users"), icon: <Users className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/partnerfordele", label: t("nav.partnerBenefits", "Partnerfordele"), icon: <Handshake className="h-4 w-4" />, show: !isAdminRoute },
-    { to: "/coaching", label: t("nav.coaching", "Coaching"), icon: <GraduationCap className="h-4 w-4" />, show: !isAdminRoute },
+    { to: "/coaching", label: t("nav.coaching", "Coaching"), icon: <GraduationCap className="h-4 w-4" />, show: !isAdminRoute && (!!isAdmin || !!isCoach) },
     { to: "/", label: t("nav.participantPage"), icon: <LayoutGrid className="h-4 w-4" />, show: !!isAdmin && isAdminRoute },
     { to: "/admin", label: t("nav.controlPanel"), icon: <Gauge className="h-4 w-4" />, show: !!isAdmin && !isAdminRoute, highlight: true },
   ];

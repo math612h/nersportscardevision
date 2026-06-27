@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CoachingAccessGate } from "@/components/CoachingAccessGate";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -10,7 +11,7 @@ import { listMyBookingsAsCoach } from "@/lib/coaching.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/coaching/min-kalender")({
-  component: CoachCalendarPage,
+  component: () => <CoachingAccessGate><CoachCalendarPage /></CoachingAccessGate>,
 });
 
 function CoachCalendarPage() {

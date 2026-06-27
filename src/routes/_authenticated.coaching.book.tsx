@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { CoachingAccessGate } from "@/components/CoachingAccessGate";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,7 +17,7 @@ import { LMU_TRACKS } from "@/lib/tracks";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/coaching/book")({
-  component: BookCoachingPage,
+  component: () => <CoachingAccessGate><BookCoachingPage /></CoachingAccessGate>,
 });
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
