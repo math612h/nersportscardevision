@@ -178,12 +178,25 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
         .select("user_id")
         .eq("team_id", teamId);
       const memberIds2 = (members2 ?? []).map((m: { user_id: string }) => m.user_id);
-      let mentionIds: string[] = [];
+
+      // Exclude site admins/moderators from the welcome ping even if they are team members.
+      let nonAdminMemberIds = memberIds2;
       if (memberIds2.length > 0) {
+        const { data: staffRoles } = await supabaseAdmin
+          .from("user_roles")
+          .select("user_id, role")
+          .in("user_id", memberIds2)
+          .in("role", ["admin", "moderator"]);
+        const staffIds = new Set((staffRoles ?? []).map((r: { user_id: string }) => r.user_id));
+        nonAdminMemberIds = memberIds2.filter((id) => !staffIds.has(id));
+      }
+
+      let mentionIds: string[] = [];
+      if (nonAdminMemberIds.length > 0) {
         const { data: privs2 } = await supabaseAdmin
           .from("profiles_private")
           .select("discord_user_id")
-          .in("user_id", memberIds2)
+          .in("user_id", nonAdminMemberIds)
           .not("discord_user_id", "is", null);
         mentionIds = (privs2 ?? [])
           .map((p: { discord_user_id: string | null }) => p.discord_user_id)
@@ -198,9 +211,12 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
         logoUrl = signed?.signedUrl ?? null;
       }
 
+      // Only ping individual (non-admin) team members. Never fall back to the role mention,
+      // since admins may carry the team role for moderation access.
       const pingLine = mentionIds.length > 0
         ? mentionIds.map((id) => `<@${id}>`).join(" ")
-        : (roleId ? `<@&${roleId}>` : "");
+        : "";
+
 
       const embed: Record<string, unknown> = {
         title: `Velkommen til ${team.name}!`,
