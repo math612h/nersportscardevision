@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   KeyRound,
   Handshake,
+  GraduationCap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -95,6 +96,7 @@ export function AdminSidebar() {
         { title: "Ligaer & afdelinger", url: "/admin/ligaer", icon: Flag },
         { title: "Protester", url: "/admin/protests", icon: MessageSquareWarning, badge: openProtestsCount },
         { title: "Teams", url: "/teams", icon: Shield },
+        { title: "Coaches", url: "/admin/coaches", icon: GraduationCap },
       ],
     },
     {

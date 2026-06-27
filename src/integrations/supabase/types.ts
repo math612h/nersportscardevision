@@ -156,6 +156,160 @@ export type Database = {
         }
         Relationships: []
       }
+      coach_availability: {
+        Row: {
+          coach_user_id: string
+          created_at: string
+          end_time: string
+          id: string
+          specific_date: string | null
+          start_time: string
+          updated_at: string
+          weekday: number | null
+        }
+        Insert: {
+          coach_user_id: string
+          created_at?: string
+          end_time: string
+          id?: string
+          specific_date?: string | null
+          start_time: string
+          updated_at?: string
+          weekday?: number | null
+        }
+        Update: {
+          coach_user_id?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          specific_date?: string | null
+          start_time?: string
+          updated_at?: string
+          weekday?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_availability_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coach_profiles: {
+        Row: {
+          achievements: string[]
+          active: boolean
+          bio: string | null
+          created_at: string
+          specialties: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievements?: string[]
+          active?: boolean
+          bio?: string | null
+          created_at?: string
+          specialties?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievements?: string[]
+          active?: boolean
+          bio?: string | null
+          created_at?: string
+          specialties?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coach_profiles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_bookings: {
+        Row: {
+          coach_notified_channel_id: string | null
+          coach_notified_message_id: string | null
+          coach_user_id: string
+          created_at: string
+          discord_channel_id: string | null
+          duration_minutes: number
+          extra_info: string | null
+          focus_points: string[]
+          id: string
+          layout: string | null
+          rejection_reason: string | null
+          reminder_sent_at: string | null
+          starts_at: string
+          status: Database["public"]["Enums"]["coaching_booking_status"]
+          track: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coach_notified_channel_id?: string | null
+          coach_notified_message_id?: string | null
+          coach_user_id: string
+          created_at?: string
+          discord_channel_id?: string | null
+          duration_minutes: number
+          extra_info?: string | null
+          focus_points?: string[]
+          id?: string
+          layout?: string | null
+          rejection_reason?: string | null
+          reminder_sent_at?: string | null
+          starts_at: string
+          status?: Database["public"]["Enums"]["coaching_booking_status"]
+          track: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coach_notified_channel_id?: string | null
+          coach_notified_message_id?: string | null
+          coach_user_id?: string
+          created_at?: string
+          discord_channel_id?: string | null
+          duration_minutes?: number
+          extra_info?: string | null
+          focus_points?: string[]
+          id?: string
+          layout?: string | null
+          rejection_reason?: string | null
+          reminder_sent_at?: string | null
+          starts_at?: string
+          status?: Database["public"]["Enums"]["coaching_booking_status"]
+          track?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_bookings_coach_user_id_fkey"
+            columns: ["coach_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coaching_bookings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       device_tokens: {
         Row: {
           created_at: string
@@ -2127,7 +2281,13 @@ export type Database = {
       user_locked_team: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "racer" | "guest"
+      app_role: "admin" | "racer" | "guest" | "coach"
+      coaching_booking_status:
+        | "pending"
+        | "confirmed"
+        | "rejected"
+        | "cancelled"
+        | "completed"
       league_team_entry_status: "pending" | "confirmed" | "withdrawn"
       league_team_lineup_status: "invited" | "accepted" | "declined"
       protest_status: "open" | "ruled"
@@ -2273,7 +2433,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "racer", "guest"],
+      app_role: ["admin", "racer", "guest", "coach"],
+      coaching_booking_status: [
+        "pending",
+        "confirmed",
+        "rejected",
+        "cancelled",
+        "completed",
+      ],
       league_team_entry_status: ["pending", "confirmed", "withdrawn"],
       league_team_lineup_status: ["invited", "accepted", "declined"],
       protest_status: ["open", "ruled"],
