@@ -382,6 +382,42 @@ export async function sendDiscordChannelMessage(
   return { ok: false, status: msgRes.status, message: text };
 }
 
+export async function sendDiscordChannelRichMessage(
+  channelId: string,
+  opts: {
+    content?: string;
+    embeds?: Array<Record<string, unknown>>;
+    userMentions?: string[];
+    roleMentions?: string[];
+  },
+): Promise<{ ok: boolean; status: number; message?: string; messageId?: string }> {
+  const botToken = getEnv("DISCORD_BOT_TOKEN");
+  const body: Record<string, unknown> = {
+    allowed_mentions: {
+      parse: [] as string[],
+      users: opts.userMentions ?? [],
+      roles: opts.roleMentions ?? [],
+    },
+  };
+  if (opts.content) body.content = opts.content.slice(0, 1900);
+  if (opts.embeds) body.embeds = opts.embeds;
+  const msgRes = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
+    method: "POST",
+    headers: { Authorization: `Bot ${botToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (msgRes.status === 200 || msgRes.status === 201) {
+    let messageId: string | undefined;
+    try {
+      const json = (await msgRes.json()) as { id?: string };
+      messageId = json?.id;
+    } catch (_) {}
+    return { ok: true, status: msgRes.status, messageId };
+  }
+  const text = await msgRes.text().catch(() => "");
+  return { ok: false, status: msgRes.status, message: text };
+}
+
 export async function deleteDiscordChannelMessage(
   channelId: string,
   messageId: string,

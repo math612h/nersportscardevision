@@ -1,0 +1,1 @@
+ALTER TABLE public.teams ADD COLUMN IF NOT EXISTS discord_welcome_sent_at timestamptz;

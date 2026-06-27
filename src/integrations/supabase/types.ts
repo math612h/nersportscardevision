@@ -1739,6 +1739,7 @@ export type Database = {
           discord_synced_at: string | null
           discord_text_channel_id: string | null
           discord_voice_channel_id: string | null
+          discord_welcome_sent_at: string | null
           id: string
           logo_url: string | null
           name: string
@@ -1753,6 +1754,7 @@ export type Database = {
           discord_synced_at?: string | null
           discord_text_channel_id?: string | null
           discord_voice_channel_id?: string | null
+          discord_welcome_sent_at?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -1767,6 +1769,7 @@ export type Database = {
           discord_synced_at?: string | null
           discord_text_channel_id?: string | null
           discord_voice_channel_id?: string | null
+          discord_welcome_sent_at?: string | null
           id?: string
           logo_url?: string | null
           name?: string
