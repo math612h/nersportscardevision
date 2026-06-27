@@ -14,7 +14,7 @@ export const Route = createFileRoute("/coaching/")({
       { property: "og:description", content: "Bliv hurtigere, mere stabil og bedre forberedt til race." },
     ],
   }),
-  component: CoachingLanding,
+  component: () => <CoachingAccessGate><CoachingLanding /></CoachingAccessGate>,
 });
 
 function CoachingLanding() {
