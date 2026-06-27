@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CoachingAccessGate } from "@/components/CoachingAccessGate";
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -18,7 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/coaching/min-profil")({
-  component: MyCoachProfilePage,
+  component: () => <CoachingAccessGate><MyCoachProfilePage /></CoachingAccessGate>,
 });
 
 const WEEKDAYS = ["Søndag", "Mandag", "Tirsdag", "Onsdag", "Torsdag", "Fredag", "Lørdag"];
