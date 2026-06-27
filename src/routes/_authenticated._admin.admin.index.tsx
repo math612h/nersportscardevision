@@ -129,6 +129,25 @@ function AdminHub() {
     } catch (e) { toast.error((e as Error).message || "Kunne ikke køre."); }
     finally { setStripping(false); }
   };
+  const syncTeams = useServerFn(syncAllTeamsDiscordResources);
+  const [syncingTeams, setSyncingTeams] = useState(false);
+  const handleSyncTeams = async () => {
+    if (syncingTeams) return;
+    if (!confirm("Opret/sync Discord rolle, kategori og kanaler for ALLE teams (og giv medlemmer rollen)?")) return;
+    setSyncingTeams(true);
+    try {
+      const res = await syncTeams();
+      const failed = (res as { failed?: number }).failed ?? 0;
+      const succeeded = (res as { succeeded?: number }).succeeded ?? 0;
+      toast.success(`Synkroniseret ${succeeded} team(s)${failed > 0 ? ` · ${failed} fejlede` : ""}.`);
+      if (failed > 0) console.warn("team discord sync errors:", res);
+    } catch (e) {
+      toast.error((e as Error).message || "Kunne ikke synkronisere.");
+    } finally {
+      setSyncingTeams(false);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
