@@ -4,10 +4,12 @@
 type Team = {
   id: string;
   name: string;
+  logo_url: string | null;
   discord_role_id: string | null;
   discord_category_id: string | null;
   discord_text_channel_id: string | null;
   discord_voice_channel_id: string | null;
+  discord_welcome_sent_at: string | null;
 };
 
 export type SyncTeamResult = {
