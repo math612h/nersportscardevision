@@ -34,12 +34,13 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
     addGuildRole,
     removeGuildRole,
     listGuildMemberIdsWithRole,
+    sendDiscordChannelRichMessage,
   } = await import("./discord.server");
 
   const { data: teamRow } = await supabaseAdmin
     .from("teams")
     .select(
-      "id, name, discord_role_id, discord_category_id, discord_text_channel_id, discord_voice_channel_id",
+      "id, name, logo_url, discord_role_id, discord_category_id, discord_text_channel_id, discord_voice_channel_id, discord_welcome_sent_at",
     )
     .eq("id", teamId)
     .maybeSingle();
