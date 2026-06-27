@@ -244,6 +244,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       const pingLine = mentionIds.length > 0
         ? mentionIds.map((id) => `<@${id}>`).join(" ")
         : "";
+      const welcomeText = `${pingLine ? `${pingLine}\n\n` : ""}Velkommen til ${team.name}!\nVelkommen til jeres helt egen, dedikeret team chat, med tilhørende talekanal.\n\n— LMU Danmark`;
 
 
       const embed: Record<string, unknown> = {
@@ -259,7 +260,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       // external links are blocked for bots.
 
       const r = await sendDiscordChannelRichMessage(textId, {
-        content: pingLine || undefined,
+        content: welcomeText,
         embeds: [embed],
         userMentions: mentionIds,
       });
