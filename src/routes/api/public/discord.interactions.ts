@@ -508,7 +508,6 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
                 .update({
                   status: "confirmed",
                   discord_channel_id: channelId,
-                  confirmed_at: new Date().toISOString(),
                 })
                 .eq("id", invitationId)
                 .eq("status", "pending");
@@ -766,7 +765,6 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
                 .update({
                   status: "rejected",
                   rejection_reason: reason,
-                  rejected_at: new Date().toISOString(),
                 })
                 .eq("id", bookingId);
               const { notifyUserOfRejection } = await import("@/lib/coaching-discord.server");
