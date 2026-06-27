@@ -170,6 +170,65 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
     }
   }
 
+  // Send welcome message once per team (after text channel exists and members have been synced)
+  if (textId && !team.discord_welcome_sent_at) {
+    try {
+      const { data: members2 } = await supabaseAdmin
+        .from("team_members")
+        .select("user_id")
+        .eq("team_id", teamId);
+      const memberIds2 = (members2 ?? []).map((m: { user_id: string }) => m.user_id);
+      let mentionIds: string[] = [];
+      if (memberIds2.length > 0) {
+        const { data: privs2 } = await supabaseAdmin
+          .from("profiles_private")
+          .select("discord_user_id")
+          .in("user_id", memberIds2)
+          .not("discord_user_id", "is", null);
+        mentionIds = (privs2 ?? [])
+          .map((p: { discord_user_id: string | null }) => p.discord_user_id)
+          .filter((x): x is string => !!x);
+      }
+
+      let logoUrl: string | null = null;
+      if (team.logo_url) {
+        const { data: signed } = await supabaseAdmin
+          .storage.from("team-logos")
+          .createSignedUrl(team.logo_url, 60 * 60 * 24 * 30);
+        logoUrl = signed?.signedUrl ?? null;
+      }
+
+      const pingLine = mentionIds.length > 0
+        ? mentionIds.map((id) => `<@${id}>`).join(" ")
+        : (roleId ? `<@&${roleId}>` : "");
+
+      const embed: Record<string, unknown> = {
+        title: `Velkommen til ${team.name}!`,
+        description:
+          "Velkommen til jeres helt egen, dedikeret team chat, med tilhørende talekanal.\n\nBrug kanalerne til at planlægge træning, dele opsætninger og koordinere løb. God fornøjelse! 🏁",
+        color: 0xe10600,
+        footer: { text: "LMU Danmark" },
+      };
+      if (logoUrl) (embed as { thumbnail?: { url: string } }).thumbnail = { url: logoUrl };
+
+      const r = await sendDiscordChannelRichMessage(textId, {
+        content: pingLine || undefined,
+        embeds: [embed],
+        userMentions: mentionIds,
+      });
+      if (r.ok) {
+        await supabaseAdmin
+          .from("teams")
+          .update({ discord_welcome_sent_at: new Date().toISOString() })
+          .eq("id", teamId);
+      } else {
+        errors.push(`welcome: ${r.status} ${r.message ?? ""}`);
+      }
+    } catch (e) {
+      errors.push(`welcome: ${(e as Error).message}`);
+    }
+  }
+
   return { ok: true, created, rolesAdded, rolesRemoved, errors: errors.slice(0, 10) };
 }
 
