@@ -539,7 +539,11 @@ function LeaveButton({ teamId, userId, onLeft }: { teamId: string; userId: strin
         if (!confirm("Forlad teamet?")) return;
         const { error } = await (supabase as any).from("team_members").delete().eq("team_id", teamId).eq("user_id", userId);
         if (error) toastError(error.message);
-        else { toast.success("Du har forladt teamet"); onLeft(); }
+        else {
+          toast.success("Du har forladt teamet");
+          void syncTeamDiscordResources({ data: { teamId } }).catch(() => {});
+          onLeft();
+        }
       }}
     >
       <LogOut className="h-4 w-4" /> {locked ? "Låst til team" : "Forlad team"}
