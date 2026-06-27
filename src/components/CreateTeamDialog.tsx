@@ -76,6 +76,9 @@ export function CreateTeamDialog({ trigger }: { trigger?: React.ReactNode }) {
           .eq("user_id", user.id)
           .is("team_id", null);
       }
+      // Fire-and-forget: opret Discord rolle, kategori og kanaler til teamet
+      void syncTeamDiscordResources({ data: { teamId: id } }).catch(() => {});
+
       toast.success("Team oprettet!");
       qc.invalidateQueries({ queryKey: ["teams"] });
       qc.invalidateQueries({ queryKey: ["my-teams"] });
