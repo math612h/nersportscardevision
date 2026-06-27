@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Flag, Gauge, Handshake, Home, LayoutGrid, LogOut, Menu, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
+import { Flag, Gauge, GraduationCap, Handshake, Home, LayoutGrid, LogOut, Menu, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
@@ -33,6 +33,7 @@ export function AppHeader() {
     { to: "/teams", label: t("nav.teams"), icon: <Shield className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/brugere", label: t("nav.users"), icon: <Users className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/partnerfordele", label: t("nav.partnerBenefits", "Partnerfordele"), icon: <Handshake className="h-4 w-4" />, show: !isAdminRoute },
+    { to: "/coaching", label: t("nav.coaching", "Coaching"), icon: <GraduationCap className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/", label: t("nav.participantPage"), icon: <LayoutGrid className="h-4 w-4" />, show: !!isAdmin && isAdminRoute },
     { to: "/admin", label: t("nav.controlPanel"), icon: <Gauge className="h-4 w-4" />, show: !!isAdmin && !isAdminRoute, highlight: true },
   ];
