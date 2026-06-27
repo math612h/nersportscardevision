@@ -673,6 +673,7 @@ function OwnerInbox({ teamId }: { teamId: string }) {
     if (insErr) return toastError(insErr.message);
     await (supabase as any).from("team_applications").update({ status: "accepted", responded_at: new Date().toISOString() }).eq("id", a.id);
     toast.success(`Optaget i teamet (${acceptClass})`);
+    void syncTeamDiscordResources({ data: { teamId } }).catch(() => {});
     setAcceptingId(null);
     setAcceptClass("");
     qc.invalidateQueries({ queryKey: ["team-applications", teamId] });
