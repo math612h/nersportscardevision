@@ -84,6 +84,15 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
 
   const everyone = getEveryoneRoleId();
   const botUserId = await getBotUserId().catch(() => null);
+  if (botUserId && roleId) {
+    // Existing team text channels are private to the team role. Give the bot the
+    // team role too, otherwise Discord returns "Missing Access" before we can
+    // patch the channel overwrites or send the welcome message.
+    const botRole = await addGuildRole(botUserId, roleId);
+    if (!botRole.ok && botRole.status !== 204) {
+      errors.push(`bot role: ${botRole.status} ${botRole.message ?? ""}`);
+    }
+  }
 
   if (!textId && categoryId) {
     const t = await createGuildChannel({
@@ -180,6 +189,7 @@ export async function syncTeamDiscordResourcesCore(teamId: string): Promise<Sync
       }
     }
     for (const id of currentDiscordIds) {
+      if (id === botUserId) continue;
       if (!targetDiscordIds.has(id)) {
         const r = await removeGuildRole(id, roleId);
         if (r.ok) rolesRemoved++;
