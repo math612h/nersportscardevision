@@ -439,6 +439,97 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             }
           }
 
+          // Coaching: coach pressed "Bekræft" → ask for channel via channel-select
+          if (kind === "coaching_confirm" && invitationId) {
+            return Response.json({
+              type: CHANNEL_MESSAGE_WITH_SOURCE,
+              data: {
+                flags: FLAG_EPHEMERAL,
+                content: "Vælg den Discord-kanal sessionen skal foregå i:",
+                components: [
+                  {
+                    type: 1,
+                    components: [
+                      {
+                        type: 8, // CHANNEL_SELECT
+                        custom_id: `coaching_channel:${invitationId}`,
+                        placeholder: "Vælg kanal",
+                        channel_types: [0, 2], // text + voice
+                        min_values: 1,
+                        max_values: 1,
+                      },
+                    ],
+                  },
+                ],
+              },
+            });
+          }
+
+          // Coaching: coach pressed "Afvis" → open modal for begrundelse
+          if (kind === "coaching_reject" && invitationId) {
+            return Response.json({
+              type: MODAL,
+              data: {
+                custom_id: `coaching_reject_modal:${invitationId}`,
+                title: "Afvis booking",
+                components: [
+                  {
+                    type: 1,
+                    components: [
+                      {
+                        type: 4,
+                        custom_id: "reason",
+                        label: "Begrundelse til brugeren",
+                        style: 2,
+                        required: true,
+                        min_length: 3,
+                        max_length: 1000,
+                      },
+                    ],
+                  },
+                ],
+              },
+            });
+          }
+
+          // Coaching: coach picked a channel from CHANNEL_SELECT → confirm booking
+          if (kind === "coaching_channel" && invitationId) {
+            const channelId = (payload?.data?.values?.[0] ?? "").toString();
+            if (!channelId) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: "Ingen kanal valgt." },
+              });
+            }
+            try {
+              const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+              const { error } = await (supabaseAdmin as any)
+                .from("coaching_bookings")
+                .update({
+                  status: "confirmed",
+                  discord_channel_id: channelId,
+                  confirmed_at: new Date().toISOString(),
+                })
+                .eq("id", invitationId)
+                .eq("status", "pending");
+              if (error) throw error;
+              const { notifyUserOfConfirmation } = await import("@/lib/coaching-discord.server");
+              await notifyUserOfConfirmation(invitationId);
+              return Response.json({
+                type: UPDATE_MESSAGE,
+                data: {
+                  content: `✅ Bekræftet. Brugeren har fået besked. Kanal: <#${channelId}>`,
+                  components: [],
+                },
+              });
+            } catch (e) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: `Noget gik galt: ${(e as Error).message}` },
+              });
+            }
+          }
+
           return Response.json({
             type: CHANNEL_MESSAGE_WITH_SOURCE,
             data: { flags: FLAG_EPHEMERAL, content: "Ukendt handling." },
@@ -650,6 +741,47 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
           }
 
 
+
+          if (customId.startsWith("coaching_reject_modal:")) {
+            const bookingId = customId.slice("coaching_reject_modal:".length);
+            const rows = (payload?.data?.components ?? []) as Array<{
+              components: Array<{ custom_id: string; value: string }>;
+            }>;
+            let reason = "";
+            for (const row of rows) {
+              for (const c of row.components ?? []) {
+                if (c.custom_id === "reason") reason = (c.value ?? "").trim();
+              }
+            }
+            if (!reason) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: "Begrundelse er påkrævet." },
+              });
+            }
+            try {
+              const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+              await (supabaseAdmin as any)
+                .from("coaching_bookings")
+                .update({
+                  status: "rejected",
+                  rejection_reason: reason,
+                  rejected_at: new Date().toISOString(),
+                })
+                .eq("id", bookingId);
+              const { notifyUserOfRejection } = await import("@/lib/coaching-discord.server");
+              await notifyUserOfRejection(bookingId, reason);
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: "❌ Booking afvist. Brugeren har fået besked." },
+              });
+            } catch (e) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: `Noget gik galt: ${(e as Error).message}` },
+              });
+            }
+          }
 
           return Response.json({
             type: CHANNEL_MESSAGE_WITH_SOURCE,
