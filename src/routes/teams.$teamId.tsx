@@ -24,6 +24,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { LeagueTeamSignupCard, MyLineupInvitations } from "@/components/LeagueTeamSignupCard";
+import { syncTeamDiscordResources } from "@/lib/team-discord.functions";
 
 
 export const Route = createFileRoute("/teams/$teamId")({
@@ -296,6 +297,7 @@ function TeamDetailPage() {
                         if (error) toastError(error.message);
                         else {
                           toast.success("Medlem fjernet");
+                          void syncTeamDiscordResources({ data: { teamId } }).catch(() => {});
                           qc.invalidateQueries({ queryKey: ["team-members", teamId] });
                         }
                       }}
@@ -460,6 +462,7 @@ function ApplyButton({ teamId, userId }: { teamId: string; userId: string }) {
     },
     onSuccess: () => {
       toast.success("Du er nu medlem!");
+      void syncTeamDiscordResources({ data: { teamId } }).catch(() => {});
       qc.invalidateQueries({ queryKey: ["team-members", teamId] });
       qc.invalidateQueries({ queryKey: ["my-team-invitation", teamId, userId] });
       qc.invalidateQueries({ queryKey: ["my-teams"] });
@@ -536,7 +539,11 @@ function LeaveButton({ teamId, userId, onLeft }: { teamId: string; userId: strin
         if (!confirm("Forlad teamet?")) return;
         const { error } = await (supabase as any).from("team_members").delete().eq("team_id", teamId).eq("user_id", userId);
         if (error) toastError(error.message);
-        else { toast.success("Du har forladt teamet"); onLeft(); }
+        else {
+          toast.success("Du har forladt teamet");
+          void syncTeamDiscordResources({ data: { teamId } }).catch(() => {});
+          onLeft();
+        }
       }}
     >
       <LogOut className="h-4 w-4" /> {locked ? "Låst til team" : "Forlad team"}
@@ -666,6 +673,7 @@ function OwnerInbox({ teamId }: { teamId: string }) {
     if (insErr) return toastError(insErr.message);
     await (supabase as any).from("team_applications").update({ status: "accepted", responded_at: new Date().toISOString() }).eq("id", a.id);
     toast.success(`Optaget i teamet (${acceptClass})`);
+    void syncTeamDiscordResources({ data: { teamId } }).catch(() => {});
     setAcceptingId(null);
     setAcceptClass("");
     qc.invalidateQueries({ queryKey: ["team-applications", teamId] });

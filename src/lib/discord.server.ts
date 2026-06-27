@@ -440,6 +440,170 @@ export async function listGuildMembersWithRole(
   return out;
 }
 
+// =========================================================================
+// Team resources: roles + category + channels (used by team Discord sync)
+// =========================================================================
+
+const DISCORD_PERM_VIEW_CHANNEL = 1n << 10n;
+const DISCORD_PERM_CONNECT = 1n << 20n;
+const DISCORD_PERM_SPEAK = 1n << 21n;
+const DISCORD_PERM_SEND_MESSAGES = 1n << 11n;
+const DISCORD_PERM_READ_HISTORY = 1n << 16n;
+const TEAM_TEXT_PERMS =
+  DISCORD_PERM_VIEW_CHANNEL |
+  DISCORD_PERM_SEND_MESSAGES |
+  DISCORD_PERM_READ_HISTORY;
+const TEAM_VOICE_PERMS =
+  DISCORD_PERM_VIEW_CHANNEL | DISCORD_PERM_CONNECT | DISCORD_PERM_SPEAK;
+
+function botHeaders(): HeadersInit {
+  return {
+    Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}`,
+    "Content-Type": "application/json",
+  };
+}
+
+function sanitizeChannelName(name: string): string {
+  return (
+    name
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 90) || "team"
+  );
+}
+
+export async function createGuildRole(
+  name: string,
+): Promise<{ ok: boolean; status: number; id?: string; message?: string }> {
+  const guildId = getEnv("DISCORD_GUILD_ID");
+  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/roles`, {
+    method: "POST",
+    headers: botHeaders(),
+    body: JSON.stringify({ name: name.slice(0, 100), mentionable: true, hoist: false }),
+  });
+  if (res.status === 200 || res.status === 201) {
+    const j = (await res.json()) as { id: string };
+    return { ok: true, status: res.status, id: j.id };
+  }
+  const text = await res.text().catch(() => "");
+  return { ok: false, status: res.status, message: text };
+}
+
+export async function editGuildRole(
+  roleId: string,
+  patch: { name?: string },
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const guildId = getEnv("DISCORD_GUILD_ID");
+  const body: Record<string, unknown> = {};
+  if (patch.name != null) body.name = patch.name.slice(0, 100);
+  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/roles/${roleId}`, {
+    method: "PATCH",
+    headers: botHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (res.status === 200) return { ok: true, status: 200 };
+  const text = await res.text().catch(() => "");
+  return { ok: false, status: res.status, message: text };
+}
+
+export async function deleteGuildRole(
+  roleId: string,
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const guildId = getEnv("DISCORD_GUILD_ID");
+  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/roles/${roleId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}` },
+  });
+  if (res.status === 204 || res.status === 404) return { ok: true, status: res.status };
+  const text = await res.text().catch(() => "");
+  return { ok: false, status: res.status, message: text };
+}
+
+// Channel types: 0=text, 2=voice, 4=category
+export async function createGuildChannel(opts: {
+  name: string;
+  type: 0 | 2 | 4;
+  parent_id?: string | null;
+  permission_overwrites?: Array<{ id: string; type: 0 | 1; allow?: string; deny?: string }>;
+}): Promise<{ ok: boolean; status: number; id?: string; message?: string }> {
+  const guildId = getEnv("DISCORD_GUILD_ID");
+  const body: Record<string, unknown> = {
+    name: opts.type === 4 ? opts.name.slice(0, 90) : sanitizeChannelName(opts.name),
+    type: opts.type,
+  };
+  if (opts.parent_id) body.parent_id = opts.parent_id;
+  if (opts.permission_overwrites) body.permission_overwrites = opts.permission_overwrites;
+  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/channels`, {
+    method: "POST",
+    headers: botHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (res.status === 200 || res.status === 201) {
+    const j = (await res.json()) as { id: string };
+    return { ok: true, status: res.status, id: j.id };
+  }
+  const text = await res.text().catch(() => "");
+  return { ok: false, status: res.status, message: text };
+}
+
+export async function editGuildChannel(
+  channelId: string,
+  patch: { name?: string },
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const body: Record<string, unknown> = {};
+  if (patch.name != null) body.name = patch.name;
+  const res = await fetch(`${DISCORD_API}/channels/${channelId}`, {
+    method: "PATCH",
+    headers: botHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (res.status === 200) return { ok: true, status: 200 };
+  const text = await res.text().catch(() => "");
+  return { ok: false, status: res.status, message: text };
+}
+
+export async function deleteGuildChannel(
+  channelId: string,
+): Promise<{ ok: boolean; status: number; message?: string }> {
+  const res = await fetch(`${DISCORD_API}/channels/${channelId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bot ${getEnv("DISCORD_BOT_TOKEN")}` },
+  });
+  if (res.status === 200 || res.status === 204 || res.status === 404) {
+    return { ok: true, status: res.status };
+  }
+  const text = await res.text().catch(() => "");
+  return { ok: false, status: res.status, message: text };
+}
+
+export function teamTextChannelOverwrites(
+  everyoneRoleId: string,
+  teamRoleId: string,
+): Array<{ id: string; type: 0 | 1; allow?: string; deny?: string }> {
+  return [
+    { id: everyoneRoleId, type: 0, deny: DISCORD_PERM_VIEW_CHANNEL.toString() },
+    { id: teamRoleId, type: 0, allow: TEAM_TEXT_PERMS.toString() },
+  ];
+}
+
+export function teamVoiceChannelOverwrites(
+  everyoneRoleId: string,
+  teamRoleId: string,
+): Array<{ id: string; type: 0 | 1; allow?: string; deny?: string }> {
+  return [
+    { id: everyoneRoleId, type: 0, deny: DISCORD_PERM_VIEW_CHANNEL.toString() },
+    { id: teamRoleId, type: 0, allow: TEAM_VOICE_PERMS.toString() },
+  ];
+}
+
+// @everyone role id is identical to the guild id
+export function getEveryoneRoleId(): string {
+  return getEnv("DISCORD_GUILD_ID");
+}
+
+
 
 
 

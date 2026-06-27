@@ -30,7 +30,13 @@ export async function respondToTeamInvitationCore(opts: {
       .from("team_members")
       .insert({ team_id: (inv as any).team_id, user_id: opts.actingUserId, role: "member" });
     if (insErr && (insErr as any).code !== "23505") throw new Error(insErr.message);
+    // Sørg for Discord-rolle/kanaler er oprettet og at den nye accept får rollen
+    try {
+      const { syncTeamDiscordResourcesCore } = await import("./team-discord.server");
+      await syncTeamDiscordResourcesCore((inv as any).team_id);
+    } catch (_) {}
   }
+
 
   if ((inv as any).discord_channel_id && (inv as any).discord_message_id) {
     try {

@@ -1734,6 +1734,11 @@ export type Database = {
         Row: {
           bio: string | null
           created_at: string
+          discord_category_id: string | null
+          discord_role_id: string | null
+          discord_synced_at: string | null
+          discord_text_channel_id: string | null
+          discord_voice_channel_id: string | null
           id: string
           logo_url: string | null
           name: string
@@ -1743,6 +1748,11 @@ export type Database = {
         Insert: {
           bio?: string | null
           created_at?: string
+          discord_category_id?: string | null
+          discord_role_id?: string | null
+          discord_synced_at?: string | null
+          discord_text_channel_id?: string | null
+          discord_voice_channel_id?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -1752,6 +1762,11 @@ export type Database = {
         Update: {
           bio?: string | null
           created_at?: string
+          discord_category_id?: string | null
+          discord_role_id?: string | null
+          discord_synced_at?: string | null
+          discord_text_channel_id?: string | null
+          discord_voice_channel_id?: string | null
           id?: string
           logo_url?: string | null
           name?: string
