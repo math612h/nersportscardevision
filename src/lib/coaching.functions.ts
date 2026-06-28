@@ -343,6 +343,13 @@ export const adminSetCoachRole = createServerFn({ method: "POST" })
       const { error } = await supabaseAdmin.from("user_roles").delete().eq("user_id", data.user_id).eq("role", "coach");
       if (error) throw new Error(error.message);
     }
+    // Sync Discord coach role
+    try {
+      const { syncDiscordCoachRole } = await import("./coaching-discord.server");
+      await syncDiscordCoachRole(data.user_id, data.is_coach);
+    } catch (e) {
+      console.error("[coaching] discord coach role sync failed", e);
+    }
     return { ok: true };
   });
 
