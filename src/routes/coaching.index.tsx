@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Flame, Target, Trophy, Users, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, Flame, Target, Trophy, UserCog, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { COACHING_FOCUS_POINTS } from "@/lib/coaching-focus-points";
 import { CoachingAccessGate } from "@/components/CoachingAccessGate";
+import { useAuth } from "@/hooks/use-auth";
+
 
 export const Route = createFileRoute("/coaching/")({
   head: () => ({
@@ -18,8 +20,29 @@ export const Route = createFileRoute("/coaching/")({
 });
 
 function CoachingLanding() {
+  const { isAdmin, isCoach } = useAuth();
   return (
     <div className="min-h-screen bg-background">
+      {(isAdmin || isCoach) && (
+        <section className="border-b border-border bg-primary/5">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+            <div className="flex items-center gap-2 text-sm">
+              <UserCog className="h-4 w-4 text-primary" />
+              <span className="font-medium">Coach-værktøjer</span>
+              <span className="text-muted-foreground">— administrér din profil og kalender</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm" variant="outline">
+                <Link to="/coaching/min-profil">Gå til min coach-profil</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/coaching/min-kalender">Min kalender</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(60%_60%_at_50%_0%,hsl(var(--primary)/0.18),transparent_70%)]" />
@@ -93,21 +116,7 @@ function CoachingLanding() {
         </div>
       </section>
 
-      {/* Coaches CTA */}
-      <section className="mx-auto max-w-5xl px-4 py-16 text-center">
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground">
-          <Users className="h-3.5 w-3.5" /> Er du coach?
-        </div>
-        <h3 className="mt-3 text-2xl font-bold">Opret din coach-profil</h3>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-          Når du er tildelt coach-rollen kan du oprette din profil, vælge specialer og styre din tilgængelighed.
-        </p>
-        <div className="mt-5">
-          <Button asChild variant="outline">
-            <Link to="/coaching/min-profil">Gå til min coach-profil</Link>
-          </Button>
-        </div>
-      </section>
     </div>
   );
 }
+
