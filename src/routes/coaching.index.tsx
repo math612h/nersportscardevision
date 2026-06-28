@@ -1,9 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Flame, Target, Trophy, Users, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, Flame, Target, Trophy, UserCog, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { COACHING_FOCUS_POINTS } from "@/lib/coaching-focus-points";
 import { CoachingAccessGate } from "@/components/CoachingAccessGate";
+import { useAuth } from "@/hooks/use-auth";
+
 
 export const Route = createFileRoute("/coaching/")({
   head: () => ({
