@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CoachingAccessGate } from "@/components/CoachingAccessGate";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -10,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { listMyBookingsAsUser, cancelMyBooking } from "@/lib/coaching.functions";
 
 export const Route = createFileRoute("/_authenticated/coaching/mine-bookinger")({
-  component: () => <CoachingAccessGate><MyBookingsPage /></CoachingAccessGate>,
+  component: MyBookingsPage,
 });
 
 function MyBookingsPage() {
