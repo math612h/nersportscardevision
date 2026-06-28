@@ -137,6 +137,20 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function BookingDetail({ booking, onClose }: { booking: any; onClose: () => void }) {
+  const qc = useQueryClient();
+  const cancelFn = useServerFn(cancelBookingAsCoach);
+  const [reason, setReason] = useState("");
+  const [showCancel, setShowCancel] = useState(false);
+  const cancelMut = useMutation({
+    mutationFn: () => cancelFn({ data: { id: booking.id, reason: reason || null } }),
+    onSuccess: () => {
+      toast.success("Sessionen er aflyst");
+      qc.invalidateQueries({ queryKey: ["coach-bookings"] });
+      onClose();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const canCancel = booking.status === "pending" || booking.status === "confirmed";
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4 backdrop-blur" onClick={onClose}>
       <Card className="max-h-[85vh] w-full max-w-lg overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -170,8 +184,23 @@ function BookingDetail({ booking, onClose }: { booking: any; onClose: () => void
               Bekræft eller afvis denne booking via den Discord-besked vi har sendt dig.
             </p>
           )}
-          <div className="pt-2">
-            <Button variant="outline" className="w-full" onClick={onClose}>Luk</Button>
+          {canCancel && showCancel && (
+            <div className="space-y-2 rounded border border-destructive/30 bg-destructive/5 p-3">
+              <label className="text-xs font-medium">Begrundelse (valgfri — sendes til brugeren)</label>
+              <Textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="F.eks. sygdom, akut forhindring..." />
+              <div className="flex gap-2">
+                <Button variant="destructive" size="sm" disabled={cancelMut.isPending} onClick={() => cancelMut.mutate()}>
+                  {cancelMut.isPending ? "Aflyser..." : "Bekræft aflysning"}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowCancel(false)}>Fortryd</Button>
+              </div>
+            </div>
+          )}
+          <div className="flex gap-2 pt-2">
+            {canCancel && !showCancel && (
+              <Button variant="destructive" className="flex-1" onClick={() => setShowCancel(true)}>Aflys session</Button>
+            )}
+            <Button variant="outline" className="flex-1" onClick={onClose}>Luk</Button>
           </div>
         </CardContent>
       </Card>
