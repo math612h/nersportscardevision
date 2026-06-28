@@ -64,6 +64,9 @@ function CoachingLanding() {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
+              <Link to="/coaching/mine-bookinger">Mine bookinger</Link>
+            </Button>
+            <Button asChild size="lg" variant="ghost">
               <a href="#tilbyder">Vi tilbyder</a>
             </Button>
           </div>
