@@ -315,11 +315,55 @@ export const listMyBookingsAsCoach = createServerFn({ method: "GET" })
 
 export const cancelMyBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { id: string }) => ({ id: String(d.id) }))
+  .inputValidator((d: { id: string; reason?: string | null }) => ({
+    id: String(d.id),
+    reason: d.reason ? String(d.reason).slice(0, 1000) : null,
+  }))
   .handler(async ({ data, context }) => {
+    const { data: booking, error: fetchErr } = await context.supabase
+      .from("coaching_bookings").select("*").eq("id", data.id).maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!booking) throw new Error("Booking ikke fundet");
+    if (booking.user_id !== context.userId) throw new Error("Du kan kun aflyse dine egne bookinger");
+    if (booking.status === "cancelled" || booking.status === "rejected") {
+      return { ok: true };
+    }
     const { error } = await context.supabase
       .from("coaching_bookings").update({ status: "cancelled" }).eq("id", data.id);
     if (error) throw new Error(error.message);
+    try {
+      const { notifyCancellation } = await import("./coaching-discord.server");
+      await notifyCancellation(data.id, "user", data.reason);
+    } catch (e) {
+      console.error("notifyCancellation failed", e);
+    }
+    return { ok: true };
+  });
+
+export const cancelBookingAsCoach = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; reason?: string | null }) => ({
+    id: String(d.id),
+    reason: d.reason ? String(d.reason).slice(0, 1000) : null,
+  }))
+  .handler(async ({ data, context }) => {
+    const { data: booking, error: fetchErr } = await context.supabase
+      .from("coaching_bookings").select("*").eq("id", data.id).maybeSingle();
+    if (fetchErr) throw new Error(fetchErr.message);
+    if (!booking) throw new Error("Booking ikke fundet");
+    if (booking.coach_user_id !== context.userId) throw new Error("Du kan kun aflyse dine egne coaching-sessioner");
+    if (booking.status === "cancelled" || booking.status === "rejected") {
+      return { ok: true };
+    }
+    const { error } = await context.supabase
+      .from("coaching_bookings").update({ status: "cancelled" }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    try {
+      const { notifyCancellation } = await import("./coaching-discord.server");
+      await notifyCancellation(data.id, "coach", data.reason);
+    } catch (e) {
+      console.error("notifyCancellation failed", e);
+    }
     return { ok: true };
   });
 
