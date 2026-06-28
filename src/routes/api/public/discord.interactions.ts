@@ -439,24 +439,44 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             }
           }
 
-          // Coaching: coach pressed "Bekræft" → ask for channel via channel-select
+          // Coaching: coach pressed "Bekræft" → ask for talekanal (Coaching 1/2/3)
           if (kind === "coaching_confirm" && invitationId) {
+            const { listSelectableChannelsForCoach } = await import("@/lib/coaching-discord.server");
+            const allChannels = await listSelectableChannelsForCoach();
+            const wanted = ["coaching 1", "coaching 2", "coaching 3"];
+            const options = wanted
+              .map((name) => {
+                const ch = allChannels.find(
+                  (c) => c.type === 2 && c.name.toLowerCase().replace(/[-_]/g, " ").trim() === name,
+                );
+                return ch ? { label: ch.name, value: ch.id } : null;
+              })
+              .filter((o): o is { label: string; value: string } => o !== null);
+            if (options.length === 0) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: {
+                  flags: FLAG_EPHEMERAL,
+                  content: "Kunne ikke finde talekanalerne 'Coaching 1', 'Coaching 2' eller 'Coaching 3'. Kontakt en admin.",
+                },
+              });
+            }
             return Response.json({
               type: CHANNEL_MESSAGE_WITH_SOURCE,
               data: {
                 flags: FLAG_EPHEMERAL,
-                content: "Vælg den Discord-kanal sessionen skal foregå i:",
+                content: "Vælg den talekanal sessionen skal foregå i:",
                 components: [
                   {
                     type: 1,
                     components: [
                       {
-                        type: 8, // CHANNEL_SELECT
+                        type: 3, // STRING_SELECT
                         custom_id: `coaching_channel:${invitationId}`,
-                        placeholder: "Vælg kanal",
-                        channel_types: [0, 2], // text + voice
+                        placeholder: "Vælg talekanal",
                         min_values: 1,
                         max_values: 1,
+                        options,
                       },
                     ],
                   },
