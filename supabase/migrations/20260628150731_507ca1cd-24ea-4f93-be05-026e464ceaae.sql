@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.upload_leaderboard_time_with_device_token(text,text,text,text,text,text,integer,timestamp with time zone);
