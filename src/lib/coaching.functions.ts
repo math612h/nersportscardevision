@@ -155,12 +155,9 @@ export const getCoachSlots = createServerFn({ method: "POST" })
     if (!y || isNaN(m0) || !dd) throw new Error("Ugyldig dato");
     // Weekday in Copenhagen at noon (avoids DST/midnight edge cases)
     const noonUtc = copenhagenWallclockToUtc(y, m0, dd, 12, 0);
-    const weekday = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Copenhagen", weekday: "short" })
-      .format(noonUtc).match(/Sun|Mon|Tue|Wed|Thu|Fri|Sat/)?.[0]
-      ? ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(
-          new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Copenhagen", weekday: "short" }).format(noonUtc)
-        )
-      : 0);
+    const wdShort = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Copenhagen", weekday: "short" }).format(noonUtc);
+    const weekday = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(wdShort);
+
 
     const { data: avail } = await context.supabase
       .from("coach_availability")
