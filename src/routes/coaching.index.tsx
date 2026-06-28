@@ -95,21 +95,7 @@ function CoachingLanding() {
         </div>
       </section>
 
-      {/* Coaches CTA */}
-      <section className="mx-auto max-w-5xl px-4 py-16 text-center">
-        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground">
-          <Users className="h-3.5 w-3.5" /> Er du coach?
-        </div>
-        <h3 className="mt-3 text-2xl font-bold">Opret din coach-profil</h3>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-          Når du er tildelt coach-rollen kan du oprette din profil, vælge specialer og styre din tilgængelighed.
-        </p>
-        <div className="mt-5">
-          <Button asChild variant="outline">
-            <Link to="/coaching/min-profil">Gå til min coach-profil</Link>
-          </Button>
-        </div>
-      </section>
     </div>
   );
 }
+
