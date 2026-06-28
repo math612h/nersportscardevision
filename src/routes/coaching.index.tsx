@@ -20,8 +20,29 @@ export const Route = createFileRoute("/coaching/")({
 });
 
 function CoachingLanding() {
+  const { isAdmin, isCoach } = useAuth();
   return (
     <div className="min-h-screen bg-background">
+      {(isAdmin || isCoach) && (
+        <section className="border-b border-border bg-primary/5">
+          <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+            <div className="flex items-center gap-2 text-sm">
+              <UserCog className="h-4 w-4 text-primary" />
+              <span className="font-medium">Coach-værktøjer</span>
+              <span className="text-muted-foreground">— administrér din profil og kalender</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button asChild size="sm" variant="outline">
+                <Link to="/coaching/min-profil">Gå til min coach-profil</Link>
+              </Button>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/coaching/min-kalender">Min kalender</Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(60%_60%_at_50%_0%,hsl(var(--primary)/0.18),transparent_70%)]" />
