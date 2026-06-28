@@ -73,6 +73,7 @@ function Gate() {
     const onOnboarding = path === "/onboarding";
     const onProfile = path.startsWith("/profil");
     const onHome = path === "/";
+    const onCoaching = path.startsWith("/coaching");
     // If Discord isn't linked, force onboarding (initial Discord OAuth step).
     if (!status.discordLinked && !onOnboarding) {
       navigate({ to: "/onboarding" });
@@ -83,8 +84,8 @@ function Gate() {
       navigate({ to: "/" });
       return;
     }
-    // If profile is incomplete (but Discord linked), only allow home, profile and onboarding.
-    if (status.discordLinked && !status.complete && !onHome && !onProfile && !onOnboarding) {
+    // If profile is incomplete (but Discord linked), only allow home, profile, coaching and onboarding.
+    if (status.discordLinked && !status.complete && !onHome && !onProfile && !onCoaching && !onOnboarding) {
       navigate({ to: "/" });
     }
   }, [loading, user, status, statusLoading, isGuest, location.pathname, navigate]);
