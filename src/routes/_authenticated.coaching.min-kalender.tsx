@@ -1,13 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CoachingAccessGate } from "@/components/CoachingAccessGate";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { listMyBookingsAsCoach } from "@/lib/coaching.functions";
+import { Textarea } from "@/components/ui/textarea";
+import { listMyBookingsAsCoach, cancelBookingAsCoach } from "@/lib/coaching.functions";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/coaching/min-kalender")({
