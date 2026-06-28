@@ -170,3 +170,38 @@ export async function listSelectableChannelsForCoach(): Promise<Array<{ id: stri
   // 0 = text, 2 = voice
   return all.filter((c) => c.type === 0 || c.type === 2).slice(0, 25);
 }
+
+// Find (or create) the "Coach" role in the guild and add/remove it on the user.
+export async function syncDiscordCoachRole(userId: string, isCoach: boolean): Promise<void> {
+  const guildId = process.env.DISCORD_GUILD_ID;
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!guildId || !token) return;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const discordId = await getDiscordId(supabaseAdmin, userId);
+  if (!discordId) {
+    console.warn("[coaching] user has no Discord linked", userId);
+    return;
+  }
+  const { addGuildRole, removeGuildRole, createGuildRole } = await import("./discord.server");
+  // Look up "Coach" role (case-insensitive)
+  const rolesRes = await fetch(`https://discord.com/api/v10/guilds/${guildId}/roles`, {
+    headers: { Authorization: `Bot ${token}` },
+  });
+  if (!rolesRes.ok) {
+    console.error("[coaching] could not list guild roles", rolesRes.status);
+    return;
+  }
+  const roles = (await rolesRes.json()) as Array<{ id: string; name: string }>;
+  let role = roles.find((r) => r.name.toLowerCase() === "coach");
+  if (!role) {
+    if (!isCoach) return; // nothing to remove
+    const created = await createGuildRole("Coach");
+    if (!created.ok || !created.id) {
+      console.error("[coaching] failed to create Coach role", created);
+      return;
+    }
+    role = { id: created.id, name: "Coach" };
+  }
+  if (isCoach) await addGuildRole(discordId, role.id);
+  else await removeGuildRole(discordId, role.id);
+}
