@@ -119,6 +119,32 @@ export async function notifyUserOfConfirmation(bookingId: string): Promise<void>
   if (userDid) await sendDiscordDM(userDid, content);
 }
 
+export async function notifyCancellation(bookingId: string, cancelledBy: "user" | "coach", reason: string | null): Promise<void> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { sendDiscordDM } = await import("./discord.server");
+  const { data: b } = await supabaseAdmin.from("coaching_bookings").select("*").eq("id", bookingId).maybeSingle();
+  if (!b) return;
+  const [coachDid, userDid, coachName, userName] = await Promise.all([
+    getDiscordId(supabaseAdmin, b.coach_user_id),
+    getDiscordId(supabaseAdmin, b.user_id),
+    getDisplayName(supabaseAdmin, b.coach_user_id),
+    getDisplayName(supabaseAdmin, b.user_id),
+  ]);
+  const unix = Math.floor(new Date(b.starts_at).getTime() / 1000);
+  const who = cancelledBy === "user" ? userName : coachName;
+  const lines = [
+    `❌ **Coaching-session aflyst**`,
+    `Aflyst af: **${who}**${cancelledBy === "coach" ? " (coach)" : " (bruger)"}`,
+    `Tid: <t:${unix}:F> (<t:${unix}:R>)`,
+    `Varighed: **${b.duration_minutes} min**`,
+    `Bane: **${b.track}${b.layout ? ` — ${b.layout}` : ""}**`,
+  ];
+  if (reason) lines.push("", `**Begrundelse:**`, reason.slice(0, 1500));
+  const content = lines.join("\n");
+  if (coachDid) await sendDiscordDM(coachDid, content);
+  if (userDid) await sendDiscordDM(userDid, content);
+}
+
 export async function sendCoachingReminders(): Promise<{ sent: number }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { sendDiscordDM } = await import("./discord.server");
