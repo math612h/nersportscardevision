@@ -441,26 +441,29 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
 
           // Coaching: coach pressed "Bekræft" → ask for talekanal (Coaching 1/2/3)
           if (kind === "coaching_confirm" && invitationId) {
-            const { listSelectableChannelsForCoach } = await import("@/lib/coaching-discord.server");
-            const allChannels = await listSelectableChannelsForCoach();
-            const wanted = ["coaching 1", "coaching 2", "coaching 3"];
-            const options = wanted
-              .map((name) => {
-                const ch = allChannels.find(
-                  (c) => c.type === 2 && c.name.toLowerCase().replace(/[-_]/g, " ").trim() === name,
-                );
-                return ch ? { label: ch.name, value: ch.id } : null;
-              })
-              .filter((o): o is { label: string; value: string } => o !== null);
-            if (options.length === 0) {
-              return Response.json({
-                type: CHANNEL_MESSAGE_WITH_SOURCE,
-                data: {
-                  flags: FLAG_EPHEMERAL,
-                  content: "Kunne ikke finde talekanalerne 'Coaching 1', 'Coaching 2' eller 'Coaching 3'. Kontakt en admin.",
-                },
-              });
+            const COACHING_CHANNELS: { label: string; value: string }[] = [
+              { label: "Coaching 1", value: "1520738778489159811" },
+              { label: "Coaching 2", value: "1520739023788839002" },
+              { label: "Coaching 3", value: "1520739080634236998" },
+            ];
+            let options = COACHING_CHANNELS;
+            try {
+              const { listSelectableChannelsForCoach } = await import("@/lib/coaching-discord.server");
+              const allChannels = await listSelectableChannelsForCoach();
+              const wanted = ["coaching 1", "coaching 2", "coaching 3"];
+              const discovered = wanted
+                .map((name) => {
+                  const ch = allChannels.find(
+                    (c) => c.type === 2 && c.name.toLowerCase().replace(/[-_]/g, " ").trim() === name,
+                  );
+                  return ch ? { label: ch.name, value: ch.id } : null;
+                })
+                .filter((o): o is { label: string; value: string } => o !== null);
+              if (discovered.length > 0) options = discovered;
+            } catch {
+              // fall back to hard-coded IDs
             }
+
             return Response.json({
               type: CHANNEL_MESSAGE_WITH_SOURCE,
               data: {
