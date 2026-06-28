@@ -125,6 +125,21 @@ export const deleteCoachAvailability = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// Convert a wall-clock time in Europe/Copenhagen to a UTC Date.
+// Server runs in UTC, so we cannot use setHours() — that would treat the
+// coach's "19:30" as 19:30 UTC (= 21:30 CEST) and shift the slots forward.
+function copenhagenWallclockToUtc(year: number, month0: number, day: number, hour: number, minute: number): Date {
+  const utcGuess = Date.UTC(year, month0, day, hour, minute);
+  const dtf = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Copenhagen", hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
+  });
+  const parts = Object.fromEntries(dtf.formatToParts(new Date(utcGuess)).map((p) => [p.type, p.value]));
+  const asUtc = Date.UTC(+parts.year, +parts.month - 1, +parts.day, +parts.hour, +parts.minute);
+  const offset = asUtc - utcGuess; // tz offset in ms
+  return new Date(utcGuess - offset);
+}
+
 // Slot generation: given coach + date + duration, return possible start times
 export const getCoachSlots = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -135,9 +150,17 @@ export const getCoachSlots = createServerFn({ method: "POST" })
   }))
   .handler(async ({ data, context }) => {
     if (!(COACHING_DURATIONS as readonly number[]).includes(data.duration_minutes)) throw new Error("Ugyldig varighed");
-    const date = new Date(`${data.date}T00:00:00`);
-    if (isNaN(date.getTime())) throw new Error("Ugyldig dato");
-    const weekday = date.getDay();
+    const [yStr, mStr, dStr] = data.date.split("-");
+    const y = Number(yStr), m0 = Number(mStr) - 1, dd = Number(dStr);
+    if (!y || isNaN(m0) || !dd) throw new Error("Ugyldig dato");
+    // Weekday in Copenhagen at noon (avoids DST/midnight edge cases)
+    const noonUtc = copenhagenWallclockToUtc(y, m0, dd, 12, 0);
+    const weekday = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Copenhagen", weekday: "short" })
+      .format(noonUtc).match(/Sun|Mon|Tue|Wed|Thu|Fri|Sat/)?.[0]
+      ? ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(
+          new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Copenhagen", weekday: "short" }).format(noonUtc)
+        )
+      : 0);
 
     const { data: avail } = await context.supabase
       .from("coach_availability")
@@ -149,8 +172,8 @@ export const getCoachSlots = createServerFn({ method: "POST" })
     );
     if (windows.length === 0) return [] as string[];
 
-    const dayStart = new Date(`${data.date}T00:00:00`);
-    const dayEnd = new Date(`${data.date}T23:59:59`);
+    const dayStart = copenhagenWallclockToUtc(y, m0, dd, 0, 0);
+    const dayEnd = copenhagenWallclockToUtc(y, m0, dd, 23, 59);
     const { data: existing } = await context.supabase
       .from("coaching_bookings")
       .select("starts_at, duration_minutes, status")
@@ -170,9 +193,9 @@ export const getCoachSlots = createServerFn({ method: "POST" })
     for (const w of windows) {
       const [sh, sm] = w.start_time.split(":").map(Number);
       const [eh, em] = w.end_time.split(":").map(Number);
-      const winStart = new Date(date); winStart.setHours(sh, sm, 0, 0);
-      const winEnd = new Date(date); winEnd.setHours(eh, em, 0, 0);
-      for (let cursor = winStart.getTime(); cursor + dur * 60_000 <= winEnd.getTime(); cursor += step * 60_000) {
+      const winStart = copenhagenWallclockToUtc(y, m0, dd, sh, sm).getTime();
+      const winEnd = copenhagenWallclockToUtc(y, m0, dd, eh, em).getTime();
+      for (let cursor = winStart; cursor + dur * 60_000 <= winEnd; cursor += step * 60_000) {
         const slotEnd = cursor + dur * 60_000;
         if (cursor < Date.now() + 30 * 60_000) continue; // 30 min buffer in future
         const conflicts = taken.some(([s, e]) => cursor < e && slotEnd > s);
@@ -182,6 +205,7 @@ export const getCoachSlots = createServerFn({ method: "POST" })
     }
     return Array.from(new Set(slots)).sort();
   });
+
 
 // Days in a month that have at least one available slot
 export const getCoachAvailableDays = createServerFn({ method: "POST" })
