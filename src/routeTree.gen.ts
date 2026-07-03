@@ -74,8 +74,10 @@ import { Route as AuthenticatedAdminAdminBriefingRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminAdminBeskederRouteImport } from './routes/_authenticated._admin.admin.beskeder'
 import { Route as AuthenticatedAdminAdminAuditRouteImport } from './routes/_authenticated._admin.admin.audit'
 import { Route as AuthenticatedAdminAdminAfventerRouteImport } from './routes/_authenticated._admin.admin.afventer'
+import { Route as AuthenticatedAdminAdminRegelsaetIndexRouteImport } from './routes/_authenticated._admin.admin.regelsaet.index'
 import { Route as AuthenticatedAdminAdminProtestsIndexRouteImport } from './routes/_authenticated._admin.admin.protests.index'
 import { Route as AuthenticatedAdminAdminBrugereIndexRouteImport } from './routes/_authenticated._admin.admin.brugere.index'
+import { Route as AuthenticatedAdminAdminRegelsaetTemplateIdRouteImport } from './routes/_authenticated._admin.admin.regelsaet.$templateId'
 import { Route as AuthenticatedAdminAdminProtestsProtestIdRouteImport } from './routes/_authenticated._admin.admin.protests.$protestId'
 import { Route as AuthenticatedAdminAdminBrugereUserIdRouteImport } from './routes/_authenticated._admin.admin.brugere.$userId'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger'
@@ -444,6 +446,12 @@ const AuthenticatedAdminAdminAfventerRoute =
     path: '/admin/afventer',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminRegelsaetIndexRoute =
+  AuthenticatedAdminAdminRegelsaetIndexRouteImport.update({
+    id: '/admin/regelsaet/',
+    path: '/admin/regelsaet/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminProtestsIndexRoute =
   AuthenticatedAdminAdminProtestsIndexRouteImport.update({
     id: '/',
@@ -454,6 +462,12 @@ const AuthenticatedAdminAdminBrugereIndexRoute =
   AuthenticatedAdminAdminBrugereIndexRouteImport.update({
     id: '/admin/brugere/',
     path: '/admin/brugere/',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminRegelsaetTemplateIdRoute =
+  AuthenticatedAdminAdminRegelsaetTemplateIdRouteImport.update({
+    id: '/admin/regelsaet/$templateId',
+    path: '/admin/regelsaet/$templateId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAdminProtestsProtestIdRoute =
@@ -565,8 +579,10 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/brugere/$userId': typeof AuthenticatedAdminAdminBrugereUserIdRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  '/admin/regelsaet/$templateId': typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
   '/admin/brugere/': typeof AuthenticatedAdminAdminBrugereIndexRoute
   '/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
+  '/admin/regelsaet/': typeof AuthenticatedAdminAdminRegelsaetIndexRoute
   '/admin/ligaer/$leagueId/afdelinger': typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
   '/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
@@ -637,8 +653,10 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/brugere/$userId': typeof AuthenticatedAdminAdminBrugereUserIdRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  '/admin/regelsaet/$templateId': typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereIndexRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsIndexRoute
+  '/admin/regelsaet': typeof AuthenticatedAdminAdminRegelsaetIndexRoute
   '/admin/ligaer/$leagueId/afdelinger': typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
   '/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
@@ -714,8 +732,10 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/_admin/admin/brugere/$userId': typeof AuthenticatedAdminAdminBrugereUserIdRoute
   '/_authenticated/_admin/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  '/_authenticated/_admin/admin/regelsaet/$templateId': typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
   '/_authenticated/_admin/admin/brugere/': typeof AuthenticatedAdminAdminBrugereIndexRoute
   '/_authenticated/_admin/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
+  '/_authenticated/_admin/admin/regelsaet/': typeof AuthenticatedAdminAdminRegelsaetIndexRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger': typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
@@ -790,8 +810,10 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/brugere/$userId'
     | '/admin/protests/$protestId'
+    | '/admin/regelsaet/$templateId'
     | '/admin/brugere/'
     | '/admin/protests/'
+    | '/admin/regelsaet/'
     | '/admin/ligaer/$leagueId/afdelinger'
     | '/admin/ligaer/$leagueId/entries'
     | '/admin/ligaer/$leagueId/regler'
@@ -862,8 +884,10 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/brugere/$userId'
     | '/admin/protests/$protestId'
+    | '/admin/regelsaet/$templateId'
     | '/admin/brugere'
     | '/admin/protests'
+    | '/admin/regelsaet'
     | '/admin/ligaer/$leagueId/afdelinger'
     | '/admin/ligaer/$leagueId/entries'
     | '/admin/ligaer/$leagueId/regler'
@@ -938,8 +962,10 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/_admin/admin/brugere/$userId'
     | '/_authenticated/_admin/admin/protests/$protestId'
+    | '/_authenticated/_admin/admin/regelsaet/$templateId'
     | '/_authenticated/_admin/admin/brugere/'
     | '/_authenticated/_admin/admin/protests/'
+    | '/_authenticated/_admin/admin/regelsaet/'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/entries'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/regler'
@@ -1441,6 +1467,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminAfventerRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/regelsaet/': {
+      id: '/_authenticated/_admin/admin/regelsaet/'
+      path: '/admin/regelsaet'
+      fullPath: '/admin/regelsaet/'
+      preLoaderRoute: typeof AuthenticatedAdminAdminRegelsaetIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/protests/': {
       id: '/_authenticated/_admin/admin/protests/'
       path: '/'
@@ -1453,6 +1486,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/brugere'
       fullPath: '/admin/brugere/'
       preLoaderRoute: typeof AuthenticatedAdminAdminBrugereIndexRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/regelsaet/$templateId': {
+      id: '/_authenticated/_admin/admin/regelsaet/$templateId'
+      path: '/admin/regelsaet/$templateId'
+      fullPath: '/admin/regelsaet/$templateId'
+      preLoaderRoute: typeof AuthenticatedAdminAdminRegelsaetTemplateIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/_admin/admin/protests/$protestId': {
@@ -1568,7 +1608,9 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
   AuthenticatedAdminAdminBrugereUserIdRoute: typeof AuthenticatedAdminAdminBrugereUserIdRoute
+  AuthenticatedAdminAdminRegelsaetTemplateIdRoute: typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
   AuthenticatedAdminAdminBrugereIndexRoute: typeof AuthenticatedAdminAdminBrugereIndexRoute
+  AuthenticatedAdminAdminRegelsaetIndexRoute: typeof AuthenticatedAdminAdminRegelsaetIndexRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
@@ -1592,8 +1634,12 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
   AuthenticatedAdminAdminBrugereUserIdRoute:
     AuthenticatedAdminAdminBrugereUserIdRoute,
+  AuthenticatedAdminAdminRegelsaetTemplateIdRoute:
+    AuthenticatedAdminAdminRegelsaetTemplateIdRoute,
   AuthenticatedAdminAdminBrugereIndexRoute:
     AuthenticatedAdminAdminBrugereIndexRoute,
+  AuthenticatedAdminAdminRegelsaetIndexRoute:
+    AuthenticatedAdminAdminRegelsaetIndexRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =
