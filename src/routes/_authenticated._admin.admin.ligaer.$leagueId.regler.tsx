@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { compareSectionNumbers, shiftRuleNumbersForInsert } from "@/lib/rules-renumber";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/regler")({
   component: AdminRules,
