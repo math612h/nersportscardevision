@@ -86,6 +86,9 @@ function Rules() {
     (acc[main] ??= []).push(r);
     return acc;
   }, {});
+  for (const key of Object.keys(grouped)) {
+    grouped[key].sort((a: any, b: any) => compareSectionNumbers(a.section_number, b.section_number));
+  }
 
   const sectionTitle = (main: string) => {
     const s = sections?.find((x) => String(x.section_number) === main);
