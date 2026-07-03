@@ -42,7 +42,7 @@ export async function shiftRuleNumbersForInsert(params: {
   const newSub = parseInt(parts[1], 10);
   if (isNaN(newSub)) return;
 
-  const { data, error } = await supabase
+  const { data, error } = await (supabase as any)
     .from(table)
     .select("id, section_number")
     .eq(scopeColumn, scopeValue);
