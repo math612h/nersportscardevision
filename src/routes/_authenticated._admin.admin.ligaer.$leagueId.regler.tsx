@@ -82,6 +82,9 @@ function AdminRules() {
     (acc[main] ??= []).push(r);
     return acc;
   }, {});
+  for (const key of Object.keys(grouped)) {
+    grouped[key].sort((a: any, b: any) => compareSectionNumbers(a.section_number, b.section_number));
+  }
 
   const sectionMap = new Map<string, any>((sections ?? []).map((s) => [String(s.section_number), s]));
 
