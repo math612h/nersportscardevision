@@ -419,7 +419,7 @@ function EditRuleDialog({ rule, leagueId }: { rule: any; leagueId: string }) {
   );
 }
 
-function SaveTemplateDialog({ rules }: { rules: any[] }) {
+function SaveTemplateDialog({ rules, sections }: { rules: any[]; sections: any[] }) {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -443,6 +443,15 @@ function SaveTemplateDialog({ rules }: { rules: any[] }) {
     }));
     const { error: rErr } = await supabase.from("ruleset_template_rules").insert(rows);
     if (rErr) return toast.error(rErr.message);
+    if (sections.length > 0) {
+      const secRows = sections.map((s, i) => ({
+        template_id: tpl.id,
+        section_number: s.section_number,
+        title: s.title,
+        sort_order: s.sort_order ?? i,
+      }));
+      await supabase.from("ruleset_template_sections" as any).insert(secRows);
+    }
     toast.success("Regelsæt arkiveret");
     setOpen(false); setName(""); setDesc("");
     qc.invalidateQueries({ queryKey: ["ruleset-templates"] });
@@ -458,7 +467,7 @@ function SaveTemplateDialog({ rules }: { rules: any[] }) {
         <form onSubmit={save} className="space-y-3">
           <div><Label>Navn</Label><Input required maxLength={100} value={name} onChange={(e) => setName(e.target.value)} placeholder="fx GT3 Sprint 2026" /></div>
           <div><Label>Beskrivelse</Label><Textarea maxLength={500} value={desc} onChange={(e) => setDesc(e.target.value)} /></div>
-          <p className="text-xs text-muted-foreground">{rules.length} regler bliver gemt.</p>
+          <p className="text-xs text-muted-foreground">{rules.length} regler og {sections.length} sektioner bliver gemt.</p>
           <DialogFooter><Button type="submit">Gem</Button></DialogFooter>
         </form>
       </DialogContent>
@@ -466,8 +475,7 @@ function SaveTemplateDialog({ rules }: { rules: any[] }) {
   );
 }
 
-function LoadTemplateDialog({ leagueId, existingCount }: { leagueId: string; existingCount: number }) {
-  const qc = useQueryClient();
+function LoadTemplateDialog({ leagueId, existingCount, onLoaded }: { leagueId: string; existingCount: number; onLoaded: () => void }) {
   const [open, setOpen] = useState(false);
   const [templateId, setTemplateId] = useState<string>("");
 
@@ -502,10 +510,22 @@ function LoadTemplateDialog({ leagueId, existingCount }: { leagueId: string; exi
     }));
     const { error: iErr } = await supabase.from("rulesets").insert(rows);
     if (iErr) return toast.error(iErr.message);
+    const { data: tplSections } = await supabase
+      .from("ruleset_template_sections" as any)
+      .select("*")
+      .eq("template_id", templateId);
+    if (tplSections && tplSections.length > 0) {
+      const secRows = (tplSections as any[]).map((s, i) => ({
+        league_id: leagueId,
+        section_number: s.section_number,
+        title: s.title,
+        sort_order: s.sort_order ?? i,
+      }));
+      await supabase.from("ruleset_sections" as any).upsert(secRows, { onConflict: "league_id,section_number" });
+    }
     toast.success(`${rows.length} regler indlæst`);
     setOpen(false); setTemplateId("");
-    qc.invalidateQueries({ queryKey: ["rules-admin", leagueId] });
-    qc.invalidateQueries({ queryKey: ["rules", leagueId] });
+    onLoaded();
   };
 
   return (
@@ -525,13 +545,15 @@ function LoadTemplateDialog({ leagueId, existingCount }: { leagueId: string; exi
             </SelectContent>
           </Select>
           {templates?.length === 0 && <p className="text-sm text-muted-foreground">Ingen arkiverede regelsæt endnu.</p>}
-          <p className="text-xs text-muted-foreground">Reglerne tilføjes til ligaens nuværende regelsæt.</p>
+          <p className="text-xs text-muted-foreground">Reglerne og sektionerne tilføjes til ligaens nuværende regelsæt.</p>
         </div>
         <DialogFooter><Button onClick={load} disabled={!templateId}>Indlæs</Button></DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
+
+
 
 function ManageTemplatesDialog() {
   const qc = useQueryClient();
