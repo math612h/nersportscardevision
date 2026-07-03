@@ -8,6 +8,7 @@ import { GuestLock } from "@/components/GuestGate";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { compareSectionNumbers } from "@/lib/rules-renumber";
 
 export const Route = createFileRoute("/ligaer/$leagueId/regler")({
   component: Rules,
