@@ -1602,6 +1602,44 @@ export type Database = {
         }
         Relationships: []
       }
+      ruleset_sections: {
+        Row: {
+          created_at: string
+          id: string
+          league_id: string
+          section_number: string
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          league_id: string
+          section_number: string
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          league_id?: string
+          section_number?: string
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ruleset_sections_league_id_fkey"
+            columns: ["league_id"]
+            isOneToOne: false
+            referencedRelation: "leagues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ruleset_template_rules: {
         Row: {
           content: string
@@ -1633,6 +1671,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "ruleset_template_rules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "ruleset_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ruleset_template_sections: {
+        Row: {
+          created_at: string
+          id: string
+          section_number: string
+          sort_order: number
+          template_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          section_number: string
+          sort_order?: number
+          template_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          section_number?: string
+          sort_order?: number
+          template_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ruleset_template_sections_template_id_fkey"
             columns: ["template_id"]
             isOneToOne: false
             referencedRelation: "ruleset_templates"
