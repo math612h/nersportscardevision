@@ -70,6 +70,6 @@ export async function shiftRuleNumbersForInsert(params: {
     const sub = parseInt(p[1], 10);
     const rest = p.slice(2).join(".");
     const next = `${main}.${sub + 1}${rest ? "." + rest : ""}`;
-    await supabase.from(table).update({ section_number: next }).eq("id", r.id);
+    await (supabase as any).from(table).update({ section_number: next }).eq("id", r.id);
   }
 }
