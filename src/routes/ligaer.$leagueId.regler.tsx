@@ -58,11 +58,33 @@ function Rules() {
     },
   });
 
-  const grouped = (rules ?? []).reduce<Record<string, any[]>>((acc, r: any) => {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+
+  const filtered = useMemo(() => {
+    if (!q) return rules ?? [];
+    return (rules ?? []).filter((r: any) =>
+      [r.title, r.content, r.section_number].some((f) => (f ?? "").toString().toLowerCase().includes(q)),
+    );
+  }, [rules, q]);
+
+  const grouped = filtered.reduce<Record<string, any[]>>((acc, r: any) => {
     const main = r.section_number ? String(r.section_number).split(".")[0] : "—";
     (acc[main] ??= []).push(r);
     return acc;
   }, {});
+
+  const highlight = (text: string) => {
+    if (!q || !text) return text;
+    const parts = text.split(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi"));
+    return parts.map((p, i) =>
+      p.toLowerCase() === q ? (
+        <mark key={i} className="rounded bg-primary/30 px-0.5 text-foreground">{p}</mark>
+      ) : (
+        <span key={i}>{p}</span>
+      ),
+    );
+  };
 
   if (!authLoading && !user) {
     return (
@@ -81,19 +103,48 @@ function Rules() {
       <h1 className="text-2xl font-bold">
         Regelsæt {leagueName ? `– ${leagueName}` : ""}
       </h1>
+
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Søg i regelsættet…"
+          className="pl-9 pr-9"
+        />
+        {query && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
+            onClick={() => setQuery("")}
+            aria-label="Ryd søgning"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
       {rules?.length === 0 && <p className="text-muted-foreground">Ingen regler oprettet endnu.</p>}
+      {rules && rules.length > 0 && filtered.length === 0 && (
+        <p className="text-sm text-muted-foreground">Ingen regler matcher "{query}".</p>
+      )}
+      {q && filtered.length > 0 && (
+        <p className="text-xs text-muted-foreground">{filtered.length} resultat{filtered.length === 1 ? "" : "er"}</p>
+      )}
+
       <div className="space-y-6">
         {Object.entries(grouped).map(([main, list]) => (
           <div key={main}>
             <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted-foreground">Sektion {main}</h2>
-            <Accordion type="multiple" className="w-full">
+            <Accordion type="multiple" className="w-full" value={q ? list.map((r) => r.id) : undefined}>
               {list.map((r) => (
                 <AccordionItem key={r.id} value={r.id}>
                   <AccordionTrigger className="text-left">
                     {r.section_number && <span className="mr-2 text-muted-foreground">{r.section_number}</span>}
-                    {r.title}
+                    {highlight(r.title)}
                   </AccordionTrigger>
-                  <AccordionContent className="whitespace-pre-wrap">{r.content}</AccordionContent>
+                  <AccordionContent className="whitespace-pre-wrap">{highlight(r.content)}</AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
@@ -103,4 +154,5 @@ function Rules() {
     </div>
   );
 }
+
 
