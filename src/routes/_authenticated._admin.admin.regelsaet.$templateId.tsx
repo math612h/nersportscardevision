@@ -236,9 +236,18 @@ function NewRuleDialogContent({
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
+    const sec = section.trim();
+    if (sec) {
+      await shiftRuleNumbersForInsert({
+        table: "ruleset_template_rules",
+        scopeColumn: "template_id",
+        scopeValue: templateId,
+        newSectionNumber: sec,
+      });
+    }
     const { error } = await supabase.from("ruleset_template_rules").insert({
       template_id: templateId,
-      section_number: section.trim() || null,
+      section_number: sec || null,
       title: title.trim(),
       content: content.trim(),
       sort_order: existingCount,
