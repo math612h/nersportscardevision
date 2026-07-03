@@ -399,10 +399,20 @@ function EditRuleDialog({ rule, templateId }: { rule: any; templateId: string })
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const sec = section.trim();
+    if (sec && sec !== (rule.section_number ?? "")) {
+      await shiftRuleNumbersForInsert({
+        table: "ruleset_template_rules",
+        scopeColumn: "template_id",
+        scopeValue: templateId,
+        newSectionNumber: sec,
+        excludeRuleId: rule.id,
+      });
+    }
     const { error } = await supabase
       .from("ruleset_template_rules")
       .update({
-        section_number: section.trim() || null,
+        section_number: sec || null,
         title: title.trim(),
         content: content.trim(),
       })
