@@ -62,7 +62,6 @@ import { Route as ApiPublicCronCoachingRemindersRouteImport } from './routes/api
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
-import { Route as AuthenticatedAdminAdminRegelsaetRouteImport } from './routes/_authenticated._admin.admin.regelsaet'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminPartnerfordeleRouteImport } from './routes/_authenticated._admin.admin.partnerfordele'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
@@ -373,12 +372,6 @@ const AuthenticatedAdminAdminStorageRoute =
     path: '/admin/storage',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminAdminRegelsaetRoute =
-  AuthenticatedAdminAdminRegelsaetRouteImport.update({
-    id: '/admin/regelsaet',
-    path: '/admin/regelsaet',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
 const AuthenticatedAdminAdminProtestsRoute =
   AuthenticatedAdminAdminProtestsRouteImport.update({
     id: '/admin/protests',
@@ -551,7 +544,6 @@ export interface FileRoutesByFullPath {
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
-  '/admin/regelsaet': typeof AuthenticatedAdminAdminRegelsaetRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
@@ -624,7 +616,6 @@ export interface FileRoutesByTo {
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
-  '/admin/regelsaet': typeof AuthenticatedAdminAdminRegelsaetRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
@@ -702,7 +693,6 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/_authenticated/_admin/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
-  '/_authenticated/_admin/admin/regelsaet': typeof AuthenticatedAdminAdminRegelsaetRoute
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
@@ -779,7 +769,6 @@ export interface FileRouteTypes {
     | '/admin/nyhedsbrev'
     | '/admin/partnerfordele'
     | '/admin/protests'
-    | '/admin/regelsaet'
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
@@ -852,7 +841,6 @@ export interface FileRouteTypes {
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
     | '/admin/partnerfordele'
-    | '/admin/regelsaet'
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
@@ -929,7 +917,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/nyhedsbrev'
     | '/_authenticated/_admin/admin/partnerfordele'
     | '/_authenticated/_admin/admin/protests'
-    | '/_authenticated/_admin/admin/regelsaet'
     | '/_authenticated/_admin/admin/storage'
     | '/_authenticated/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
@@ -1370,13 +1357,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminStorageRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/_admin/admin/regelsaet': {
-      id: '/_authenticated/_admin/admin/regelsaet'
-      path: '/admin/regelsaet'
-      fullPath: '/admin/regelsaet'
-      preLoaderRoute: typeof AuthenticatedAdminAdminRegelsaetRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
     '/_authenticated/_admin/admin/protests': {
       id: '/_authenticated/_admin/admin/protests'
       path: '/admin/protests'
@@ -1585,7 +1565,6 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminNyhedsbrevRoute: typeof AuthenticatedAdminAdminNyhedsbrevRoute
   AuthenticatedAdminAdminPartnerfordeleRoute: typeof AuthenticatedAdminAdminPartnerfordeleRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
-  AuthenticatedAdminAdminRegelsaetRoute: typeof AuthenticatedAdminAdminRegelsaetRoute
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
   AuthenticatedAdminAdminBrugereUserIdRoute: typeof AuthenticatedAdminAdminBrugereUserIdRoute
@@ -1609,7 +1588,6 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminAdminPartnerfordeleRoute,
   AuthenticatedAdminAdminProtestsRoute:
     AuthenticatedAdminAdminProtestsRouteWithChildren,
-  AuthenticatedAdminAdminRegelsaetRoute: AuthenticatedAdminAdminRegelsaetRoute,
   AuthenticatedAdminAdminStorageRoute: AuthenticatedAdminAdminStorageRoute,
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
   AuthenticatedAdminAdminBrugereUserIdRoute:
