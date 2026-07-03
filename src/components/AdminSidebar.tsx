@@ -18,6 +18,7 @@ import {
   KeyRound,
   Handshake,
   GraduationCap,
+  BookOpen,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {

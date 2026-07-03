@@ -77,6 +77,7 @@ import { Route as AuthenticatedAdminAdminAfventerRouteImport } from './routes/_a
 import { Route as AuthenticatedAdminAdminRegelsaetIndexRouteImport } from './routes/_authenticated._admin.admin.regelsaet.index'
 import { Route as AuthenticatedAdminAdminProtestsIndexRouteImport } from './routes/_authenticated._admin.admin.protests.index'
 import { Route as AuthenticatedAdminAdminBrugereIndexRouteImport } from './routes/_authenticated._admin.admin.brugere.index'
+import { Route as AuthenticatedAdminAdminRegelsaetTemplateIdRouteImport } from './routes/_authenticated._admin.admin.regelsaet.$templateId'
 import { Route as AuthenticatedAdminAdminProtestsProtestIdRouteImport } from './routes/_authenticated._admin.admin.protests.$protestId'
 import { Route as AuthenticatedAdminAdminBrugereUserIdRouteImport } from './routes/_authenticated._admin.admin.brugere.$userId'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger'
@@ -463,6 +464,12 @@ const AuthenticatedAdminAdminBrugereIndexRoute =
     path: '/admin/brugere/',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminRegelsaetTemplateIdRoute =
+  AuthenticatedAdminAdminRegelsaetTemplateIdRouteImport.update({
+    id: '/admin/regelsaet/$templateId',
+    path: '/admin/regelsaet/$templateId',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminProtestsProtestIdRoute =
   AuthenticatedAdminAdminProtestsProtestIdRouteImport.update({
     id: '/$protestId',
@@ -572,6 +579,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/brugere/$userId': typeof AuthenticatedAdminAdminBrugereUserIdRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  '/admin/regelsaet/$templateId': typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
   '/admin/brugere/': typeof AuthenticatedAdminAdminBrugereIndexRoute
   '/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
   '/admin/regelsaet/': typeof AuthenticatedAdminAdminRegelsaetIndexRoute
@@ -645,6 +653,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminAdminIndexRoute
   '/admin/brugere/$userId': typeof AuthenticatedAdminAdminBrugereUserIdRoute
   '/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  '/admin/regelsaet/$templateId': typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
   '/admin/brugere': typeof AuthenticatedAdminAdminBrugereIndexRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsIndexRoute
   '/admin/regelsaet': typeof AuthenticatedAdminAdminRegelsaetIndexRoute
@@ -723,6 +732,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/': typeof AuthenticatedAdminAdminIndexRoute
   '/_authenticated/_admin/admin/brugere/$userId': typeof AuthenticatedAdminAdminBrugereUserIdRoute
   '/_authenticated/_admin/admin/protests/$protestId': typeof AuthenticatedAdminAdminProtestsProtestIdRoute
+  '/_authenticated/_admin/admin/regelsaet/$templateId': typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
   '/_authenticated/_admin/admin/brugere/': typeof AuthenticatedAdminAdminBrugereIndexRoute
   '/_authenticated/_admin/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
   '/_authenticated/_admin/admin/regelsaet/': typeof AuthenticatedAdminAdminRegelsaetIndexRoute
@@ -800,6 +810,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/brugere/$userId'
     | '/admin/protests/$protestId'
+    | '/admin/regelsaet/$templateId'
     | '/admin/brugere/'
     | '/admin/protests/'
     | '/admin/regelsaet/'
@@ -873,6 +884,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/brugere/$userId'
     | '/admin/protests/$protestId'
+    | '/admin/regelsaet/$templateId'
     | '/admin/brugere'
     | '/admin/protests'
     | '/admin/regelsaet'
@@ -950,6 +962,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/'
     | '/_authenticated/_admin/admin/brugere/$userId'
     | '/_authenticated/_admin/admin/protests/$protestId'
+    | '/_authenticated/_admin/admin/regelsaet/$templateId'
     | '/_authenticated/_admin/admin/brugere/'
     | '/_authenticated/_admin/admin/protests/'
     | '/_authenticated/_admin/admin/regelsaet/'
@@ -1475,6 +1488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminBrugereIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/regelsaet/$templateId': {
+      id: '/_authenticated/_admin/admin/regelsaet/$templateId'
+      path: '/admin/regelsaet/$templateId'
+      fullPath: '/admin/regelsaet/$templateId'
+      preLoaderRoute: typeof AuthenticatedAdminAdminRegelsaetTemplateIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/protests/$protestId': {
       id: '/_authenticated/_admin/admin/protests/$protestId'
       path: '/$protestId'
@@ -1588,6 +1608,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
   AuthenticatedAdminAdminBrugereUserIdRoute: typeof AuthenticatedAdminAdminBrugereUserIdRoute
+  AuthenticatedAdminAdminRegelsaetTemplateIdRoute: typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
   AuthenticatedAdminAdminBrugereIndexRoute: typeof AuthenticatedAdminAdminBrugereIndexRoute
   AuthenticatedAdminAdminRegelsaetIndexRoute: typeof AuthenticatedAdminAdminRegelsaetIndexRoute
 }
@@ -1613,6 +1634,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
   AuthenticatedAdminAdminBrugereUserIdRoute:
     AuthenticatedAdminAdminBrugereUserIdRoute,
+  AuthenticatedAdminAdminRegelsaetTemplateIdRoute:
+    AuthenticatedAdminAdminRegelsaetTemplateIdRoute,
   AuthenticatedAdminAdminBrugereIndexRoute:
     AuthenticatedAdminAdminBrugereIndexRoute,
   AuthenticatedAdminAdminRegelsaetIndexRoute:
