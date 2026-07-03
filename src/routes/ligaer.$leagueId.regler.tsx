@@ -8,6 +8,7 @@ import { GuestLock } from "@/components/GuestGate";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { compareSectionNumbers } from "@/lib/rules-renumber";
 
 export const Route = createFileRoute("/ligaer/$leagueId/regler")({
   component: Rules,
@@ -86,6 +87,9 @@ function Rules() {
     (acc[main] ??= []).push(r);
     return acc;
   }, {});
+  for (const key of Object.keys(grouped)) {
+    grouped[key].sort((a: any, b: any) => compareSectionNumbers(a.section_number, b.section_number));
+  }
 
   const sectionTitle = (main: string) => {
     const s = sections?.find((x) => String(x.section_number) === main);

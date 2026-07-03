@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { compareSectionNumbers, shiftRuleNumbersForInsert } from "@/lib/rules-renumber";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/regler")({
   component: AdminRules,
@@ -81,6 +82,9 @@ function AdminRules() {
     (acc[main] ??= []).push(r);
     return acc;
   }, {});
+  for (const key of Object.keys(grouped)) {
+    grouped[key].sort((a: any, b: any) => compareSectionNumbers(a.section_number, b.section_number));
+  }
 
   const sectionMap = new Map<string, any>((sections ?? []).map((s) => [String(s.section_number), s]));
 
@@ -223,9 +227,18 @@ function NewRuleDialogContent({
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
+    const sec = section.trim();
+    if (sec) {
+      await shiftRuleNumbersForInsert({
+        table: "rulesets",
+        scopeColumn: "league_id",
+        scopeValue: leagueId,
+        newSectionNumber: sec,
+      });
+    }
     const { error } = await supabase.from("rulesets").insert({
       league_id: leagueId,
-      section_number: section.trim() || null,
+      section_number: sec || null,
       title: title.trim(),
       content: content.trim(),
       sort_order: existingCount,
@@ -384,10 +397,20 @@ function EditRuleDialog({ rule, leagueId }: { rule: any; leagueId: string }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const sec = section.trim();
+    if (sec && sec !== (rule.section_number ?? "")) {
+      await shiftRuleNumbersForInsert({
+        table: "rulesets",
+        scopeColumn: "league_id",
+        scopeValue: leagueId,
+        newSectionNumber: sec,
+        excludeRuleId: rule.id,
+      });
+    }
     const { error } = await supabase
       .from("rulesets")
       .update({
-        section_number: section.trim() || null,
+        section_number: sec || null,
         title: title.trim(),
         content: content.trim(),
       })

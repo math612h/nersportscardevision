@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { compareSectionNumbers, shiftRuleNumbersForInsert } from "@/lib/rules-renumber";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/regelsaet/$templateId")({
   component: TemplateEditor,
@@ -90,6 +91,9 @@ function TemplateEditor() {
     (acc[main] ??= []).push(r);
     return acc;
   }, {});
+  for (const key of Object.keys(grouped)) {
+    grouped[key].sort((a: any, b: any) => compareSectionNumbers(a.section_number, b.section_number));
+  }
 
   const sectionMap = new Map<string, any>((sections ?? []).map((s) => [String(s.section_number), s]));
 
@@ -232,9 +236,18 @@ function NewRuleDialogContent({
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
+    const sec = section.trim();
+    if (sec) {
+      await shiftRuleNumbersForInsert({
+        table: "ruleset_template_rules",
+        scopeColumn: "template_id",
+        scopeValue: templateId,
+        newSectionNumber: sec,
+      });
+    }
     const { error } = await supabase.from("ruleset_template_rules").insert({
       template_id: templateId,
-      section_number: section.trim() || null,
+      section_number: sec || null,
       title: title.trim(),
       content: content.trim(),
       sort_order: existingCount,
@@ -386,10 +399,20 @@ function EditRuleDialog({ rule, templateId }: { rule: any; templateId: string })
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const sec = section.trim();
+    if (sec && sec !== (rule.section_number ?? "")) {
+      await shiftRuleNumbersForInsert({
+        table: "ruleset_template_rules",
+        scopeColumn: "template_id",
+        scopeValue: templateId,
+        newSectionNumber: sec,
+        excludeRuleId: rule.id,
+      });
+    }
     const { error } = await supabase
       .from("ruleset_template_rules")
       .update({
-        section_number: section.trim() || null,
+        section_number: sec || null,
         title: title.trim(),
         content: content.trim(),
       })
