@@ -218,8 +218,8 @@ function NewRuleDialogContent({
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  // reset when defaultSection changes (dialog reopened)
-  useState(() => setSection(defaultSection));
+
+
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
