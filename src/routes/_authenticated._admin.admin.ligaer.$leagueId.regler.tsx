@@ -397,10 +397,20 @@ function EditRuleDialog({ rule, leagueId }: { rule: any; leagueId: string }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const sec = section.trim();
+    if (sec && sec !== (rule.section_number ?? "")) {
+      await shiftRuleNumbersForInsert({
+        table: "rulesets",
+        scopeColumn: "league_id",
+        scopeValue: leagueId,
+        newSectionNumber: sec,
+        excludeRuleId: rule.id,
+      });
+    }
     const { error } = await supabase
       .from("rulesets")
       .update({
-        section_number: section.trim() || null,
+        section_number: sec || null,
         title: title.trim(),
         content: content.trim(),
       })
