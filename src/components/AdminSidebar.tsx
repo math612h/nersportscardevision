@@ -95,6 +95,7 @@ export function AdminSidebar() {
       label: "Racing",
       items: [
         { title: "Ligaer & afdelinger", url: "/admin/ligaer", icon: Flag },
+        { title: "Regelsæt-arkiv", url: "/admin/regelsaet", icon: BookOpen },
         { title: "Protester", url: "/admin/protests", icon: MessageSquareWarning, badge: openProtestsCount },
         { title: "Teams", url: "/teams", icon: Shield },
         { title: "Coaches", url: "/admin/coaches", icon: GraduationCap },
