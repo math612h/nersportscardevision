@@ -433,7 +433,6 @@ function DivisionEditor({
 
       const newSettings = {
         ...(division.settings ?? {}),
-        fastest_lap_points: flPoints,
         completed,
         results,
       };
