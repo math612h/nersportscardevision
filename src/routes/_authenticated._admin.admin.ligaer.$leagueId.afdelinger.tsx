@@ -165,7 +165,7 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
     toast.success("Afdeling oprettet");
     setOpen(false); setName(""); setRaceDate("");
     setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny"));
-    setTemperature(22); setFlPoints(1);
+    setTemperature(22);
     setLobbyCode(""); setLobbyPassword(""); setServerName("");
     setEventSettings({});
     onDone();
