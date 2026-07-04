@@ -195,7 +195,6 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
           </div>
           <div><Label>Dato & tid</Label><Input type="datetime-local" value={raceDate} onChange={(e) => setRaceDate(e.target.value)} /></div>
           <div>
-          <div>
             <Label>Temperatur (°C)</Label>
             <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
             <p className="mt-1 text-xs text-muted-foreground">Lufttemperatur for løbet.</p>
