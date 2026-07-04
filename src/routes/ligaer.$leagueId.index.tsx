@@ -873,7 +873,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   };
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
-    const flPts = Number(d.settings?.fastest_lap_points ?? 0);
+    const flPts = leagueFlPoints;
     for (const r of d.settings.results as ResultRow[]) {
       const key = `${r.car_class}|${r.driver_category}|${r.car_number}`;
       const cur = map.get(key) ?? {
