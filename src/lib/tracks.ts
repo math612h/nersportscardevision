@@ -39,6 +39,7 @@ export type EventSettings = {
   quali_minutes?: number;
   race_minutes?: number;
   in_game_time?: string; // HH:MM (24h)
+  time_of_day?: number; // hours 0-24
   time_scale?: number; // e.g. 1, 2, 5, 10, 30
   fuel_consumption?: number; // multiplier
   tyre_wear?: number; // multiplier
