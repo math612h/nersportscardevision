@@ -914,7 +914,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
           <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger pr. afdeling</h2>
         </div>
         {completed.map((d: any) => {
-          const flPts = Number(d.settings?.fastest_lap_points ?? 0);
+          const flPts = leagueFlPoints;
           const results = (d.settings.results as ResultRow[]) ?? [];
           const classKeys = groupKeys.filter((k) => {
             const [cls, cat] = k.split(" · ");
