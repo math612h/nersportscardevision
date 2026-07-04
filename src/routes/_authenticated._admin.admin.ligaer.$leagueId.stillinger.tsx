@@ -213,7 +213,7 @@ function DivisionEditor({
   });
 
   const [rows, setRows] = useState<DraftRow[]>(initialRows);
-  const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? leagueFlPoints));
+  const flPoints = leagueFlPoints;
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
