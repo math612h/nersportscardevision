@@ -37,7 +37,7 @@ export const notifyProtestRuling = createServerFn({ method: "POST" })
 
     const { data: protest, error: pErr } = await supabaseAdmin
       .from("protests")
-      .select("id, submitted_by, verdict_outcome, verdict_reason, verdict_details, divisions(name, leagues(name))")
+      .select("id, submitted_by, verdict_outcome, verdict_reason, verdict_details, divisions(name, leagues(name, incident_channel_id))")
       .eq("id", data.protestId)
       .maybeSingle();
     if (pErr || !protest) throw new Error(pErr?.message ?? "Protest ikke fundet");
@@ -49,6 +49,8 @@ export const notifyProtestRuling = createServerFn({ method: "POST" })
 
     const ligaNavn = (protest as any).divisions?.leagues?.name ?? "ligaen";
     const afdNavn = (protest as any).divisions?.name ?? "";
+    const leagueChannelId: string | null =
+      (protest as any).divisions?.leagues?.incident_channel_id ?? null;
     const details = (protest as any).verdict_details ?? {};
     const outcomeText = describeOutcome((protest as any).verdict_outcome, details);
     const reason = (protest as any).verdict_reason ?? "";
@@ -123,7 +125,8 @@ export const notifyProtestRuling = createServerFn({ method: "POST" })
       `**Modtager straf:** ${penalizedText}\n` +
       `**Afgørelse:** ${outcomeText}\n\n` +
       `**Begrundelse:**\n${reason}`;
-    const chRes = await sendDiscordChannelMessage(PROTEST_CHANNEL_ID, channelContent);
+    const targetChannelId = leagueChannelId || PROTEST_CHANNEL_ID;
+    const chRes = await sendDiscordChannelMessage(targetChannelId, channelContent);
     if (!chRes.ok) console.error("Ruling channel post failed", chRes);
 
     return { ok: true };
