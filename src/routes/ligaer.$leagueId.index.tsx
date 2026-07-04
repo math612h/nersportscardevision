@@ -790,6 +790,16 @@ type ResultRow = {
 };
 
 function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId: string; configs: ClassConfig[]; separateDivisionStandings: boolean }) {
+  const { data: league } = useQuery({
+    queryKey: ["league-standings", leagueId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("leagues").select("points_system").eq("id", leagueId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const leagueFlPoints = Number((league?.points_system as any)?.fastest_lap_points ?? 1);
+
   const { data: divisions } = useQuery({
     queryKey: ["league-results", leagueId],
     queryFn: async () => {
