@@ -129,7 +129,6 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   const [raceDate, setRaceDate] = useState("");
   const [weather, setWeather] = useState<WeatherKey[]>(Array(WEATHER_SLOT_COUNT).fill("sunny"));
   const [temperature, setTemperature] = useState<number>(22);
-  const [flPoints, setFlPoints] = useState<number>(1);
   const [lobbyCode, setLobbyCode] = useState("");
   const [lobbyPassword, setLobbyPassword] = useState("");
   const [serverName, setServerName] = useState("");
