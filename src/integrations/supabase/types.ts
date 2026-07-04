@@ -1123,6 +1123,7 @@ export type Database = {
           driver_category: string | null
           event_settings: Json
           id: string
+          incident_channel_id: string | null
           is_offseason: boolean
           name: string
           points_system: Json
@@ -1150,6 +1151,7 @@ export type Database = {
           driver_category?: string | null
           event_settings?: Json
           id?: string
+          incident_channel_id?: string | null
           is_offseason?: boolean
           name: string
           points_system?: Json
@@ -1177,6 +1179,7 @@ export type Database = {
           driver_category?: string | null
           event_settings?: Json
           id?: string
+          incident_channel_id?: string | null
           is_offseason?: boolean
           name?: string
           points_system?: Json
