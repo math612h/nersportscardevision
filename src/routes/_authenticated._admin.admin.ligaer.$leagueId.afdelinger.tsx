@@ -72,7 +72,6 @@ function AdminDivisions() {
         {divisions?.map((d: any) => {
           const slots: WeatherKey[] = Array.isArray(d.settings?.weather) ? d.settings.weather : [];
           const completed = !!d.settings?.completed;
-          const flPts = Number(d.settings?.fastest_lap_points ?? 0);
           return (
             <Card key={d.id}>
               <CardHeader>
