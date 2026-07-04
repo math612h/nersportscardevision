@@ -125,7 +125,8 @@ export const notifyProtestRuling = createServerFn({ method: "POST" })
       `**Modtager straf:** ${penalizedText}\n` +
       `**Afgørelse:** ${outcomeText}\n\n` +
       `**Begrundelse:**\n${reason}`;
-    const chRes = await sendDiscordChannelMessage(PROTEST_CHANNEL_ID, channelContent);
+    const targetChannelId = leagueChannelId || PROTEST_CHANNEL_ID;
+    const chRes = await sendDiscordChannelMessage(targetChannelId, channelContent);
     if (!chRes.ok) console.error("Ruling channel post failed", chRes);
 
     return { ok: true };
