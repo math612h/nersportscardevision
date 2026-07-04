@@ -47,7 +47,7 @@ function AdminProtestDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("protests")
-        .select("*, divisions(id, name, settings, league_id, leagues(id, name)), protest_involved(*)")
+        .select("*, divisions(id, name, settings, league_id, leagues(id, name, points_system)), protest_involved(*)")
         .eq("id", protestId)
         .single();
       if (error) throw error;
@@ -137,7 +137,7 @@ function AdminProtestDetail() {
       if (division) {
         const settings = (division.settings ?? {}) as any;
         const results: any[] = Array.isArray(settings.results) ? [...settings.results] : [];
-        const flPts = Number(settings.fastest_lap_points ?? 1);
+        const flPts = Number(((p as any)?.divisions?.leagues?.points_system as any)?.fastest_lap_points ?? 1);
 
         const userIds = new Set<string>([...Object.keys(prevApplied), ...Object.keys(newApplied)]);
         let changed = false;

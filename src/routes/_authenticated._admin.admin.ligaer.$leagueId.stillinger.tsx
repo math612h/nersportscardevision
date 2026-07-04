@@ -213,7 +213,7 @@ function DivisionEditor({
   });
 
   const [rows, setRows] = useState<DraftRow[]>(initialRows);
-  const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? leagueFlPoints));
+  const flPoints = leagueFlPoints;
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -433,7 +433,6 @@ function DivisionEditor({
 
       const newSettings = {
         ...(division.settings ?? {}),
-        fastest_lap_points: flPoints,
         completed,
         results,
       };
@@ -472,19 +471,6 @@ function DivisionEditor({
             </p>
           </div>
           <div className="flex items-end gap-3">
-            <div>
-              <Label className="text-xs">FL-point (pr. klasse)</Label>
-              <Input
-                className="w-24"
-                type="text"
-                inputMode="numeric"
-                value={flPoints === 0 ? "" : String(flPoints)}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/[^0-9]/g, "");
-                  setFlPoints(v === "" ? 0 : Number(v));
-                }}
-              />
-            </div>
             <label className="flex items-center gap-2 text-sm pb-2">
               <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
               Afsluttet

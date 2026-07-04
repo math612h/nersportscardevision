@@ -790,6 +790,16 @@ type ResultRow = {
 };
 
 function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId: string; configs: ClassConfig[]; separateDivisionStandings: boolean }) {
+  const { data: league } = useQuery({
+    queryKey: ["league-standings", leagueId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("leagues").select("points_system").eq("id", leagueId).maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+  const leagueFlPoints = Number((league?.points_system as any)?.fastest_lap_points ?? 1);
+
   const { data: divisions } = useQuery({
     queryKey: ["league-results", leagueId],
     queryFn: async () => {
@@ -863,7 +873,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   };
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
-    const flPts = Number(d.settings?.fastest_lap_points ?? 0);
+    const flPts = leagueFlPoints;
     for (const r of d.settings.results as ResultRow[]) {
       const key = `${r.car_class}|${r.driver_category}|${r.car_number}`;
       const cur = map.get(key) ?? {
@@ -904,7 +914,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
           <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger pr. afdeling</h2>
         </div>
         {completed.map((d: any) => {
-          const flPts = Number(d.settings?.fastest_lap_points ?? 0);
+          const flPts = leagueFlPoints;
           const results = (d.settings.results as ResultRow[]) ?? [];
           const classKeys = groupKeys.filter((k) => {
             const [cls, cat] = k.split(" · ");
