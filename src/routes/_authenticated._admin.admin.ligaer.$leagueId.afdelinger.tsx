@@ -294,7 +294,6 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     e.preventDefault();
     const newSettings = {
       ...(division.settings ?? {}),
-      fastest_lap_points: flPoints,
       temperature,
       completed,
       event_settings: eventSettings,
