@@ -148,7 +148,6 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
       race_date: raceDate ? new Date(raceDate).toISOString() : null,
       settings: {
         weather,
-        fastest_lap_points: flPoints,
         temperature,
         event_settings: eventSettings,
       },
