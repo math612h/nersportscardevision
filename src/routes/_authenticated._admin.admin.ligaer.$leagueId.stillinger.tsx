@@ -472,19 +472,6 @@ function DivisionEditor({
             </p>
           </div>
           <div className="flex items-end gap-3">
-            <div>
-              <Label className="text-xs">FL-point (pr. klasse)</Label>
-              <Input
-                className="w-24"
-                type="text"
-                inputMode="numeric"
-                value={flPoints === 0 ? "" : String(flPoints)}
-                onChange={(e) => {
-                  const v = e.target.value.replace(/[^0-9]/g, "");
-                  setFlPoints(v === "" ? 0 : Number(v));
-                }}
-              />
-            </div>
             <label className="flex items-center gap-2 text-sm pb-2">
               <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
               Afsluttet
