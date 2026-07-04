@@ -47,7 +47,7 @@ function AdminProtestDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("protests")
-        .select("*, divisions(id, name, settings, league_id, leagues(id, name)), protest_involved(*)")
+        .select("*, divisions(id, name, settings, league_id, leagues(id, name, points_system)), protest_involved(*)")
         .eq("id", protestId)
         .single();
       if (error) throw error;
