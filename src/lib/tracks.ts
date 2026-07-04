@@ -39,6 +39,7 @@ export type EventSettings = {
   quali_minutes?: number;
   race_minutes?: number;
   in_game_time?: string; // HH:MM (24h)
+  time_of_day?: number; // hours 0-24
   time_scale?: number; // e.g. 1, 2, 5, 10, 30
   fuel_consumption?: number; // multiplier
   tyre_wear?: number; // multiplier
@@ -66,6 +67,7 @@ export const EVENT_NUMERIC_FIELDS: { key: keyof EventSettings; label: string; su
   { key: "practice_minutes", label: "Practice", suffix: "min", min: 0 },
   { key: "quali_minutes", label: "Qualifying", suffix: "min", min: 0 },
   { key: "race_minutes", label: "Race", suffix: "min", min: 0 },
+  { key: "time_of_day", label: "Time of day", suffix: "h", step: 1, min: 0 },
   { key: "time_scale", label: "Time scale", suffix: "x", step: 1, min: 1 },
   { key: "fuel_consumption", label: "Fuel consumption", suffix: "x", step: 0.1, min: 0 },
   { key: "tyre_wear", label: "Tyre wear", suffix: "x", step: 0.1, min: 0 },
