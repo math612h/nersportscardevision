@@ -260,7 +260,6 @@ function toLocalInput(iso: string | null): string {
 
 function EditDivisionDialog({ division, onDone }: { division: any; onDone: () => void }) {
   const [open, setOpen] = useState(false);
-  const [flPoints, setFlPoints] = useState<number>(Number(division.settings?.fastest_lap_points ?? 1));
   const [temperature, setTemperature] = useState<number>(Number(division.settings?.temperature ?? 22));
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [raceDate, setRaceDate] = useState<string>(toLocalInput(division.race_date ?? null));
