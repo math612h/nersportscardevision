@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { triggerReserveOfferForAbsence, respondReserveOffer } from "@/lib/division-reserves.functions";
+import { triggerReserveOfferForAbsence, respondReserveOffer, undoDivisionAbsence } from "@/lib/division-reserves.functions";
 import { PracticeSessionsList } from "@/components/PracticeSessionsList";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_NUMERIC_FIELDS } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -472,7 +472,7 @@ function DivisionDetail() {
           <AbsenceDialog divisionId={divisionId} userId={user.id} />
         )}
         {user && myAbsence && (
-          <Badge variant="outline" className="gap-1"><UserX className="h-3 w-3" /> Markeret som ikke-deltagende</Badge>
+          <UndoAbsenceControl divisionId={divisionId} />
         )}
         {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
@@ -691,6 +691,56 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function UndoAbsenceControl({ divisionId }: { divisionId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const undoFn = useServerFn(undoDivisionAbsence);
+
+  const submit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await undoFn({ data: { divisionId } });
+      toast.success("Du er tilbage på griddet");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
+      qc.invalidateQueries({ queryKey: ["division-absence-reasons", divisionId] });
+      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
+      qc.invalidateQueries({ queryKey: ["my-reserve-offer", divisionId] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Badge variant="outline" className="gap-1"><UserX className="h-3 w-3" /> Markeret som ikke-deltagende</Badge>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1">
+            <UserCheck className="h-4 w-4" /> Deltag alligevel
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Deltag alligevel</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Er du sikker på, at du vil fortryde dit afbud og deltage alligevel? Dette er kun muligt, så længe ingen reserve har accepteret pladsen. Eventuelle igangværende reservetilbud bliver trukket tilbage.
+          </p>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Annuller</Button>
+            <Button type="button" onClick={submit} disabled={submitting}>
+              {submitting ? "Bekræfter…" : "Ja, deltag alligevel"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
