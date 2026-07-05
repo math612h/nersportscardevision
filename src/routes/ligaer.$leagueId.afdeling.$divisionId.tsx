@@ -472,7 +472,7 @@ function DivisionDetail() {
           <AbsenceDialog divisionId={divisionId} userId={user.id} />
         )}
         {user && myAbsence && (
-          <Badge variant="outline" className="gap-1"><UserX className="h-3 w-3" /> Markeret som ikke-deltagende</Badge>
+          <UndoAbsenceControl divisionId={divisionId} />
         )}
         {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
