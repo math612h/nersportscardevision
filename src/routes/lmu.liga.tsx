@@ -46,7 +46,7 @@ function ParticipantDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("*, divisions(settings)")
+        .select("id,name,banner_url,created_at,class_configs,is_offseason,signup_opens_at,published,sort_order,divisions(settings)")
         .eq("published", true)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
