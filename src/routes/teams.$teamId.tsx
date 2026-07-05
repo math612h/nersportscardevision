@@ -8,7 +8,6 @@ import {
   Users, Check, X, LogOut, Crown, Pencil, Trophy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { GuestLock } from "@/components/GuestGate";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";

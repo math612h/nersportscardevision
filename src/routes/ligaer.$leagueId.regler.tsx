@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Search, X, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { GuestLock } from "@/components/GuestGate";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";

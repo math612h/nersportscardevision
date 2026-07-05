@@ -8,7 +8,6 @@ import { da } from "date-fns/locale";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { GuestLock } from "@/components/GuestGate";
 import { useServerFn } from "@tanstack/react-start";
 import { triggerReserveOfferForAbsence, respondReserveOffer } from "@/lib/division-reserves.functions";
 import { PracticeSessionsList } from "@/components/PracticeSessionsList";

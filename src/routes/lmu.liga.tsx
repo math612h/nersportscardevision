@@ -10,7 +10,6 @@ import { reorderLeaguesSwap } from "@/lib/league-order";
 import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
 import { classColor } from "@/lib/lmu-cars";
-import { GuestBlur } from "@/components/GuestGate";
 
 import { cn } from "@/lib/utils";
 import type { ClassConfig } from "@/lib/tracks";

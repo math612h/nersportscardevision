@@ -21,7 +21,6 @@ import { PersonalBestPanel } from "@/components/PersonalBestPanel";
 import { getLeaderboardRows } from "@/lib/leaderboard.functions";
 import { classColor } from "@/lib/lmu-cars";
 import { normalizeTrackName, LMU_TRACKS } from "@/lib/tracks";
-import { GuestLock } from "@/components/GuestGate";
 
 const COMPANION_DOWNLOAD_URL =
   "https://github.com/math612h/nersportscardevision/releases/latest/download/LMU-Danmark-Tracker-Setup.exe";
