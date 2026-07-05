@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, ChevronDown, ChevronRight, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, KeyRound, Settings as SettingsIcon, Timer, Shield } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, ChevronDown, ChevronRight, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, KeyRound, Settings as SettingsIcon, Timer, Shield, Lock } from "lucide-react";
 import { useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -31,7 +31,6 @@ import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, 
 import { CARS_BY_CLASS, classColor } from "@/lib/lmu-cars";
 import { Checkbox } from "@/components/ui/checkbox";
 import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
-import { GuestBlur } from "@/components/GuestGate";
 import { PracticeSessionsList } from "@/components/PracticeSessionsList";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { LeagueTeamsList } from "@/components/LeagueTeamsList";
@@ -357,25 +356,23 @@ function LeagueDetail() {
 
           <SignupOpensBanner opensAt={(league as any)?.signup_opens_at ?? null} />
 
-          <GuestBlur active={isGuest} label="Log ind for at tilmelde">
-            <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                {league && (
-                  <SignupDialog
-                    leagueId={leagueId}
-                    configs={configs}
-                    signupOpensAt={(league as any)?.signup_opens_at ?? null}
-                    approvedOnly={!!(league as any)?.approved_only}
-                  />
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <RulesButton leagueId={leagueId} />
-                {league && <EditEntryDialog leagueId={leagueId} />}
-                {league && <LeaveLeagueButton leagueId={leagueId} />}
-              </div>
+          <div className="flex flex-col gap-3 border-t border-border pt-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              {league && (
+                <SignupDialog
+                  leagueId={leagueId}
+                  configs={configs}
+                  signupOpensAt={(league as any)?.signup_opens_at ?? null}
+                  approvedOnly={!!(league as any)?.approved_only}
+                />
+              )}
             </div>
-          </GuestBlur>
+            <div className="flex flex-wrap items-center gap-2">
+              <RulesButton leagueId={leagueId} />
+              {league && <EditEntryDialog leagueId={leagueId} />}
+              {league && <LeaveLeagueButton leagueId={leagueId} />}
+            </div>
+          </div>
         </div>
       </header>
 
@@ -1416,7 +1413,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
 
 
   if (!user) {
-    return <Button asChild size="sm" className="gap-2"><Link to="/login">Log ind for at tilmelde</Link></Button>;
+    return <Button asChild size="lg" className="gap-2 px-6 text-base font-semibold"><Link to="/login"><Lock className="h-5 w-5" /> Log ind for at tilmelde</Link></Button>;
   }
   if (isGuest) {
     return (
