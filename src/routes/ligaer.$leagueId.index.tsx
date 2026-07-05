@@ -155,7 +155,11 @@ function LeagueDetail() {
     staleTime: 0,
     refetchOnMount: "always",
     queryFn: async () => {
-      const { data, error } = await supabase.from("leagues").select("*").eq("id", leagueId).single();
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("id,name,description,banner_url,car_class,driver_category,class_configs,is_offseason,event_settings,signup_opens_at,approved_only,briefing_required,separate_division_standings,published,protest_tickets_per_season,teams_allowed")
+        .eq("id", leagueId)
+        .single();
       if (error) throw error;
       return data;
     },
@@ -378,9 +382,7 @@ function LeagueDetail() {
       <QuickNav teamsAllowed={!!(league as any)?.teams_allowed} />
 
 
-      <GuestBlur active={isGuest} label="Log ind for at se entrylisten">
-        {league && <SignupsList leagueId={leagueId} configs={configs} />}
-      </GuestBlur>
+      {league && <SignupsList leagueId={leagueId} configs={configs} />}
 
       {(league as any)?.teams_allowed && !isGuest && <LeagueTeamSignupEntry leagueId={leagueId} />}
       {(league as any)?.teams_allowed && <LeagueTeamsList leagueId={leagueId} />}
@@ -418,11 +420,9 @@ function LeagueDetail() {
                     <div className="h-full w-full bg-gradient-to-br from-primary/25 via-primary/10 to-transparent" />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-card/90 via-card/20 to-transparent" />
-                  {!isGuest && (
-                    <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
-                      <ArrowUpRight className="h-3.5 w-3.5" />
-                    </div>
-                  )}
+                  <div className="absolute right-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/70 text-foreground backdrop-blur transition group-hover:bg-primary group-hover:text-primary-foreground">
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </div>
                   {completed && (
                     <Badge variant="secondary" className="absolute left-3 top-3 text-[10px]">Afsluttet</Badge>
                   )}
@@ -498,13 +498,6 @@ function LeagueDetail() {
             </CardContent>
           </Card>
         );
-        if (isGuest) {
-          return (
-            <div key={d.id} className="group block h-full opacity-90" aria-disabled="true">
-              {cardInner}
-            </div>
-          );
-        }
         return (
           <Link
             key={d.id}
@@ -519,13 +512,9 @@ function LeagueDetail() {
         </div>
       </section>
 
-      <GuestBlur active={isGuest} label="Log ind for at se resultater">
-        <RaceDataResults leagueId={leagueId} />
-      </GuestBlur>
+      <RaceDataResults leagueId={leagueId} />
 
-      <GuestBlur active={isGuest} label="Log ind for at se stillinger">
-        <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={!!(league as any)?.separate_division_standings} />
-      </GuestBlur>
+      <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={!!(league as any)?.separate_division_standings} />
     </div>
   );
 }

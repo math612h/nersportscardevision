@@ -9,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CreateTeamDialog } from "@/components/CreateTeamDialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { GuestBlur } from "@/components/GuestGate";
 
 type TeamRow = {
   id: string;
@@ -209,13 +208,6 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
                 </div>
               </Card>
             );
-            if (!user) {
-              return (
-                <GuestBlur key={t.id} active label="Log ind">
-                  {cardInner}
-                </GuestBlur>
-              );
-            }
             return (
               <Link key={t.id} to="/teams/$teamId" params={{ teamId: t.id }}>
                 {cardInner}

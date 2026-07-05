@@ -110,7 +110,11 @@ function DivisionDetail() {
   const { data: league } = useQuery({
     queryKey: ["league", leagueId],
     queryFn: async () => {
-      const { data, error } = await supabase.from("leagues").select("*").eq("id", leagueId).single();
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("id,name,class_configs,briefing_required,protest_tickets_per_season")
+        .eq("id", leagueId)
+        .single();
       if (error) throw error;
       return data;
     },
