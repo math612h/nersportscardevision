@@ -285,7 +285,26 @@ export const undoDivisionAbsence = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!abs) throw new Error("Du er ikke markeret som ikke-deltagende");
 
-    // Block if any reserve has already accepted the spot
+    // Load division + league for waitlist lookup and notifications
+    const { data: div } = await supabaseAdmin
+      .from("divisions")
+      .select("id,name,league_id,leagues(name)")
+      .eq("id", data.divisionId)
+      .maybeSingle();
+    if (!div) throw new Error("Afdeling ikke fundet");
+    const ligaNavn = (div as any)?.leagues?.name ?? "ligaen";
+    const afd = div.name ?? "afdelingen";
+
+    // Look up the user's league entry to know car_class / driver_category
+    const { data: myEntry } = await supabaseAdmin
+      .from("entries")
+      .select("car_class,driver_category")
+      .eq("league_id", (div as any).league_id)
+      .is("division_id", null)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    // Block if a reserve has already accepted the spot
     const { data: acceptedOffers } = await supabaseAdmin
       .from("division_reserve_offers")
       .select("id")
@@ -297,14 +316,24 @@ export const undoDivisionAbsence = createServerFn({ method: "POST" })
       throw new Error("En reserve har allerede accepteret pladsen — du kan ikke fortryde");
     }
 
-    // Load division for notifications
-    const { data: div } = await supabaseAdmin
-      .from("divisions")
-      .select("id,name,league_id,leagues(name)")
-      .eq("id", data.divisionId)
-      .maybeSingle();
-    const ligaNavn = (div as any)?.leagues?.name ?? "ligaen";
-    const afd = div?.name ?? "afdelingen";
+    // Block if there are waitlisted drivers in the same class/category
+    // waiting for a spot in this league
+    if (myEntry) {
+      const { data: waitlisters } = await supabaseAdmin
+        .from("entries")
+        .select("id")
+        .eq("league_id", (div as any).league_id)
+        .is("division_id", null)
+        .eq("waitlist", true)
+        .eq("car_class", (myEntry as any).car_class)
+        .eq("driver_category", (myEntry as any).driver_category)
+        .limit(1);
+      if (waitlisters && waitlisters.length > 0) {
+        throw new Error(
+          "Der er reservekørere på ventelisten — du kan ikke fortryde dit afbud",
+        );
+      }
+    }
 
     // Void any pending offers and notify the offered users
     const { data: pending } = await supabaseAdmin
