@@ -264,6 +264,89 @@ export const cancelReserveOffersForAbsence = createServerFn({ method: "POST" })
     return { ok: true, cancelled: (offers ?? []).length };
   });
 
+/**
+ * User un-marks their absence themselves. Only allowed if no reserve has
+ * already accepted the spot. Cancels any pending offers and notifies the
+ * offered users that the offer is void.
+ */
+export const undoDivisionAbsence = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ divisionId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = context.userId;
+
+    // Verify the absence exists for this user
+    const { data: abs } = await supabaseAdmin
+      .from("division_absences")
+      .select("id")
+      .eq("division_id", data.divisionId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!abs) throw new Error("Du er ikke markeret som ikke-deltagende");
+
+    // Block if any reserve has already accepted the spot
+    const { data: acceptedOffers } = await supabaseAdmin
+      .from("division_reserve_offers")
+      .select("id")
+      .eq("division_id", data.divisionId)
+      .eq("absentee_user_id", userId)
+      .eq("status", "accepted")
+      .limit(1);
+    if (acceptedOffers && acceptedOffers.length > 0) {
+      throw new Error("En reserve har allerede accepteret pladsen — du kan ikke fortryde");
+    }
+
+    // Load division for notifications
+    const { data: div } = await supabaseAdmin
+      .from("divisions")
+      .select("id,name,league_id,leagues(name)")
+      .eq("id", data.divisionId)
+      .maybeSingle();
+    const ligaNavn = (div as any)?.leagues?.name ?? "ligaen";
+    const afd = div?.name ?? "afdelingen";
+
+    // Void any pending offers and notify the offered users
+    const { data: pending } = await supabaseAdmin
+      .from("division_reserve_offers")
+      .select("id,offered_user_id,car_class,driver_category")
+      .eq("division_id", data.divisionId)
+      .eq("absentee_user_id", userId)
+      .eq("status", "pending");
+
+    for (const o of pending ?? []) {
+      await supabaseAdmin
+        .from("division_reserve_offers")
+        .update({ status: "superseded", responded_at: new Date().toISOString() })
+        .eq("id", o.id);
+      await notifyAndDM(
+        supabaseAdmin,
+        o.offered_user_id,
+        `Reservetilbud trukket tilbage — ${afd}`,
+        `Den oprindelige kører i ${ligaNavn} (${o.car_class} · ${o.driver_category}) deltager alligevel, så reservetilbuddet til "${afd}" er trukket tilbage. Du er stadig på ventelisten med din nuværende plads i køen.`,
+        `/ligaer/${div?.league_id}/afdeling/${data.divisionId}`,
+      );
+    }
+
+    // Delete the absence row
+    const { error: delErr } = await supabaseAdmin
+      .from("division_absences")
+      .delete()
+      .eq("division_id", data.divisionId)
+      .eq("user_id", userId);
+    if (delErr) throw new Error(delErr.message);
+
+    await notifyAndDM(
+      supabaseAdmin,
+      userId,
+      `Deltagelse genoptaget — ${afd}`,
+      `Du er nu tilbage på griddet til afdelingen "${afd}" i ${ligaNavn}.`,
+      `/ligaer/${div?.league_id}/afdeling/${data.divisionId}`,
+    );
+
+    return { ok: true, cancelledOffers: (pending ?? []).length };
+  });
+
 /** Reserve accepts or declines an offer. */
 export const respondReserveOffer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
