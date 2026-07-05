@@ -10,7 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
-import { leaveLeague } from "@/lib/leagues.functions";
+import { leaveLeague, updateMyLeagueEntry } from "@/lib/leagues.functions";
 import { assignDiscordRoleForEntry, removeDiscordRoleForEntry } from "@/lib/discord.functions";
 import { checkDiscordGuildMembership } from "@/lib/discord-guild.functions";
 
@@ -1800,9 +1800,11 @@ function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
 function EditEntryDialog({ leagueId }: { leagueId: string }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const updateEntry = useServerFn(updateMyLeagueEntry);
   const { data: signups } = useLeagueSignups(leagueId);
   const { data: myTeams } = useMyTeams(user?.id);
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const myEntry = useMemo(
     () => (signups ?? []).find((s) => user && s.user_id === user.id) as any,
@@ -1844,14 +1846,17 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
   const save = async () => {
     if (locked) return toastError("Bilvalg er låst.");
     if (!carModel) return toastError("Vælg din bil.");
-    const { error } = await (supabase as any)
-      .from("entries")
-      .update({ car_model: carModel, team_id: teamId || null })
-      .eq("id", myEntry.id);
-    if (error) return toastError(error.message);
-    toast.success("Tilmelding opdateret.");
-    setOpen(false);
-    qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
+    setSaving(true);
+    try {
+      await updateEntry({ data: { leagueId, carModel, teamId: teamId || null } });
+      toast.success("Tilmelding opdateret.");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
+    } catch (err) {
+      toastError(err instanceof Error ? err.message : "Kunne ikke opdatere tilmeldingen.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -1900,7 +1905,7 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
           )}
         </div>
         <DialogFooter>
-          <Button onClick={save} disabled={locked}>Gem</Button>
+          <Button onClick={save} disabled={locked || saving}>{saving ? "Gemmer…" : "Gem"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

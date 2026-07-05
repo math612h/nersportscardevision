@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { CARS_BY_CLASS } from "@/lib/lmu-cars";
 
 const SITE = "https://lmudanmark.dk";
 
@@ -293,4 +294,68 @@ export const leaveLeague = createServerFn({ method: "POST" })
     }
 
     return { ok: true, promotedDriver };
+  });
+
+export const updateMyLeagueEntry = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      leagueId: z.string().uuid(),
+      carModel: z.string().trim().min(1, "Vælg din bil.").max(120),
+      teamId: z.string().uuid().nullable().optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { userId } = context;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: league, error: leagueErr } = await supabaseAdmin
+      .from("leagues")
+      .select("car_lock_never,car_lock_at")
+      .eq("id", data.leagueId)
+      .maybeSingle();
+    if (leagueErr) throw new Error(leagueErr.message);
+    if (!league) throw new Error("Ligaen findes ikke.");
+
+    const lockNever = !!(league as any).car_lock_never;
+    const lockAtRaw = (league as any).car_lock_at ?? null;
+    const lockAt = lockAtRaw ? new Date(lockAtRaw).getTime() : null;
+    if (!lockNever && lockAt != null && Number.isFinite(lockAt) && Date.now() >= lockAt) {
+      throw new Error("Bilvalg er låst.");
+    }
+
+    const { data: entry, error: entryErr } = await supabaseAdmin
+      .from("entries")
+      .select("id,car_class")
+      .eq("league_id", data.leagueId)
+      .is("division_id", null)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (entryErr) throw new Error(entryErr.message);
+    if (!entry) throw new Error("Du er ikke tilmeldt denne liga.");
+
+    const validCars = CARS_BY_CLASS[(entry as any).car_class] ?? [];
+    if (validCars.length > 0 && !validCars.includes(data.carModel.trim())) {
+      throw new Error("Vælg en gyldig bil for klassen.");
+    }
+
+    const teamId = data.teamId ?? null;
+    if (teamId) {
+      const { data: membership, error: membershipErr } = await supabaseAdmin
+        .from("team_members")
+        .select("id")
+        .eq("team_id", teamId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (membershipErr) throw new Error(membershipErr.message);
+      if (!membership) throw new Error("Du kan kun vælge et team, du selv er medlem af.");
+    }
+
+    const { error: updateErr } = await supabaseAdmin
+      .from("entries")
+      .update({ car_model: data.carModel.trim(), team_id: teamId } as any)
+      .eq("id", entry.id);
+    if (updateErr) throw new Error(updateErr.message);
+
+    return { ok: true };
   });
