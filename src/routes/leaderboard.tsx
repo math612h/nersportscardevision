@@ -339,14 +339,7 @@ function LeaderboardPage() {
     qc.invalidateQueries({ queryKey: ["leaderboard"] });
   };
 
-  if (!authLoading && !user) {
-    return (
-      <GuestLock
-        title="Leaderboardet kræver login"
-        message="Du skal være logget ind som medlem for at se hurtigste omgangstider."
-      />
-    );
-  }
+  // Alle kan se leaderboardet; upload/handlinger er stadig gated på login.
 
   return (
     <div className="space-y-8">

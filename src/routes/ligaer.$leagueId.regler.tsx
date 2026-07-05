@@ -120,14 +120,7 @@ function Rules() {
     );
   };
 
-  if (!authLoading && !user) {
-    return (
-      <GuestLock
-        title="Regelsæt kræver login"
-        message="Du skal være logget ind for at læse regelsættet for ligaen."
-      />
-    );
-  }
+  // Regelsæt er offentligt tilgængeligt.
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
