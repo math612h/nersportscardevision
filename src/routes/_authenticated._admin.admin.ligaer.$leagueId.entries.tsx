@@ -446,7 +446,8 @@ function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: ()
   const [selectedUser, setSelectedUser] = useState<{ id: string; display_name: string | null } | null>(null);
   const [carClass, setCarClass] = useState<string>(CAR_CLASSES[0]);
   const [category, setCategory] = useState<string>(DRIVER_CATEGORIES[0]);
-  const [carNumber, setCarNumber] = useState<number | "">("");
+  const [carNumber, setCarNumber] = useState<number | null>(null);
+  const [carModel, setCarModel] = useState<string>("");
 
   const searchFn = useServerFn(searchUsersForAdmin);
   const addFn = useServerFn(adminAddEntryToLeague);
@@ -471,19 +472,45 @@ function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: ()
 
   const selectedCfg = configs.find((c) => c.car_class === carClass && c.driver_category === category);
 
+  const { data: allSignups } = useQuery({
+    queryKey: ["league-signups-admin-add", leagueId, open],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("car_number")
+        .eq("league_id", leagueId);
+      if (error) throw error;
+      return (data ?? []) as Array<{ car_number: number | null }>;
+    },
+  });
+
+  const { taken, available } = useMemo(() => {
+    if (!selectedCfg) return { taken: [] as number[], available: [] as number[] };
+    const t = (allSignups ?? [])
+      .filter((s) => s.car_number != null)
+      .map((s) => s.car_number as number);
+    const a: number[] = [];
+    for (let n = selectedCfg.number_from; n <= selectedCfg.number_to; n++) if (!t.includes(n)) a.push(n);
+    return { taken: t, available: a };
+  }, [allSignups, selectedCfg]);
+
+  const cars = CARS_BY_CLASS[carClass] ?? [];
+
   const addMut = useMutation({
     mutationFn: async () => {
       if (!selectedUser) throw new Error("Vælg en bruger.");
-      if (!carNumber) throw new Error("Vælg et kørenummer.");
+      if (carNumber == null) throw new Error("Vælg et kørenummer.");
+      if (cars.length > 0 && !carModel) throw new Error("Vælg en bil.");
       return addFn({
         data: {
           leagueId,
           targetUserId: selectedUser.id,
           carClass,
           driverCategory: category,
-          carNumber: Number(carNumber),
+          carNumber,
           teamId: null,
-          carModel: null,
+          carModel: carModel || null,
         },
       });
     },
@@ -492,7 +519,8 @@ function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: ()
       setOpen(false);
       setSelectedUser(null);
       setQuery("");
-      setCarNumber("");
+      setCarNumber(null);
+      setCarModel("");
       onDone();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -503,7 +531,8 @@ function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: ()
     if (!c) return;
     setCarClass(c.car_class);
     setCategory(c.driver_category);
-    setCarNumber("");
+    setCarNumber(null);
+    setCarModel("");
   };
   const cfgIdx = configs.findIndex((c) => c.car_class === carClass && c.driver_category === category);
 
@@ -573,21 +602,47 @@ function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: ()
             <p className="text-sm text-muted-foreground">Ligaen har ingen klasse-konfiguration.</p>
           )}
 
-          {selectedCfg && (
+          {cars.length > 0 && (
             <div>
-              <Label>Kørenummer (#{selectedCfg.number_from}-{selectedCfg.number_to})</Label>
-              <Input
-                type="number"
-                min={selectedCfg.number_from}
-                max={selectedCfg.number_to}
-                value={carNumber}
-                onChange={(e) => setCarNumber(e.target.value === "" ? "" : Number(e.target.value))}
-              />
+              <Label>Bil</Label>
+              <Select value={carModel} onValueChange={setCarModel}>
+                <SelectTrigger><SelectValue placeholder={`Vælg ${carClass}-bil`} /></SelectTrigger>
+                <SelectContent>
+                  {cars.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {selectedCfg && (
+            <div className="space-y-2">
+              <Label>Kørenummer</Label>
+              <div className="grid grid-cols-8 gap-1 rounded-md border border-border p-2 max-h-48 overflow-y-auto">
+                {Array.from({ length: selectedCfg.number_to - selectedCfg.number_from + 1 }, (_, i) => selectedCfg.number_from + i).map((n) => {
+                  const isTaken = taken.includes(n);
+                  const isSel = carNumber === n;
+                  return (
+                    <button
+                      key={n}
+                      type="button"
+                      disabled={isTaken}
+                      onClick={() => setCarNumber(n)}
+                      className={`rounded px-1 py-1 text-xs ${isTaken ? "bg-muted text-muted-foreground line-through cursor-not-allowed" : isSel ? "bg-primary text-primary-foreground" : "bg-card border border-border hover:bg-accent"}`}
+                    >
+                      {n}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">{available.length} ledige · {taken.length} optaget</p>
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button onClick={() => addMut.mutate()} disabled={!selectedUser || !carNumber || addMut.isPending}>
+          <Button
+            onClick={() => addMut.mutate()}
+            disabled={!selectedUser || carNumber == null || (cars.length > 0 && !carModel) || addMut.isPending}
+          >
             {addMut.isPending ? "Tilføjer…" : "Tilføj"}
           </Button>
         </DialogFooter>
