@@ -1,0 +1,1 @@
+GRANT SELECT ON public.leagues TO anon;

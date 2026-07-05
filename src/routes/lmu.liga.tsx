@@ -46,7 +46,7 @@ function ParticipantDashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("*, divisions(settings)")
+        .select("id,name,banner_url,created_at,class_configs,is_offseason,signup_opens_at,published,sort_order,divisions(settings)")
         .eq("published", true)
         .order("sort_order", { ascending: true })
         .order("created_at", { ascending: false });
@@ -200,11 +200,9 @@ function CardGrid({ children }: { children: React.ReactNode }) {
 }
 
 function LeaderboardTeaser() {
-  const { user } = useAuth();
   type TeaserRow = { id: string; driver_name: string; track: string; layout: string | null; car_class: string; best_lap_ms: number };
   const { data: rows } = useQuery({
     queryKey: ["leaderboard-teaser"],
-    enabled: !!user,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leaderboard_times")
@@ -226,21 +224,9 @@ function LeaderboardTeaser() {
     return Array.from(map.values()).sort((a, b) => a.best_lap_ms - b.best_lap_ms).slice(0, 5);
   })();
 
-  // Placeholder rows used to make the blur preview show structure for guests.
-  const previewRows: TeaserRow[] = user
-    ? best
-    : Array.from({ length: 5 }).map((_, i) => ({
-        id: `guest-${i}`,
-        driver_name: "—————————",
-        track: "—————",
-        layout: null,
-        car_class: "LMGT3",
-        best_lap_ms: 90000 + i * 250,
-      }));
-
   const listMarkup = (
     <ul className="divide-y divide-border">
-      {previewRows.map((r, i) => (
+      {best.map((r, i) => (
         <li key={r.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
           <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-xs font-semibold tabular-nums">{i + 1}</span>
           <span className="flex-1 truncate font-medium">{r.driver_name}</span>
@@ -259,39 +245,22 @@ function LeaderboardTeaser() {
           <Trophy className="h-4 w-4" />
           <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Leaderboard</h2>
         </div>
-        {user && (
-          <Link to="/leaderboard" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
-            Se alle tider <ArrowUpRight className="h-3 w-3" />
-          </Link>
-        )}
+        <Link to="/leaderboard" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+          Se alle tider <ArrowUpRight className="h-3 w-3" />
+        </Link>
       </div>
-      {user ? (
-        <Link
-          to="/leaderboard"
-          className="block overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
-        >
-          {best.length === 0 ? (
-            <div className="px-4 py-5 text-center text-sm text-muted-foreground">
-              Ingen tider endnu — upload en race-fil for at komme på leaderboardet.
-            </div>
-          ) : (
-            listMarkup
-          )}
-        </Link>
-      ) : (
-        <Link
-          to="/leaderboard"
-          className="block overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
-        >
-          {best.length === 0 ? (
-            <div className="px-4 py-5 text-center text-sm text-muted-foreground">
-              Ingen tider endnu — log ind og upload en race-fil for at komme på leaderboardet.
-            </div>
-          ) : (
-            listMarkup
-          )}
-        </Link>
-      )}
+      <Link
+        to="/leaderboard"
+        className="block overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
+      >
+        {best.length === 0 ? (
+          <div className="px-4 py-5 text-center text-sm text-muted-foreground">
+            Ingen tider endnu — upload en race-fil for at komme på leaderboardet.
+          </div>
+        ) : (
+          listMarkup
+        )}
+      </Link>
     </section>
   );
 }
