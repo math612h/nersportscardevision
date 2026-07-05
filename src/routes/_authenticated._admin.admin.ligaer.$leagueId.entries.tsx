@@ -11,6 +11,7 @@ import { splitClassIntoProAm } from "@/lib/league-split.functions";
 import { searchUsersForAdmin, adminAddEntryToLeague } from "@/lib/league-admin-entries.functions";
 import { adminDeleteEntryWithRoleCleanup } from "@/lib/discord-sync.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
+import { CARS_BY_CLASS } from "@/lib/lmu-cars";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
