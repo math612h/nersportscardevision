@@ -694,6 +694,56 @@ function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: str
   );
 }
 
+function UndoAbsenceControl({ divisionId }: { divisionId: string }) {
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const undoFn = useServerFn(undoDivisionAbsence);
+
+  const submit = async () => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await undoFn({ data: { divisionId } });
+      toast.success("Du er tilbage på griddet");
+      setOpen(false);
+      qc.invalidateQueries({ queryKey: ["division-absences", divisionId] });
+      qc.invalidateQueries({ queryKey: ["division-absence-reasons", divisionId] });
+      qc.invalidateQueries({ queryKey: ["division-reserves", divisionId] });
+      qc.invalidateQueries({ queryKey: ["my-reserve-offer", divisionId] });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Badge variant="outline" className="gap-1"><UserX className="h-3 w-3" /> Markeret som ikke-deltagende</Badge>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-1">
+            <UserCheck className="h-4 w-4" /> Deltag alligevel
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Deltag alligevel</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Er du sikker på, at du vil fortryde dit afbud og deltage alligevel? Dette er kun muligt, så længe ingen reserve har accepteret pladsen. Eventuelle igangværende reservetilbud bliver trukket tilbage.
+          </p>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Annuller</Button>
+            <Button type="button" onClick={submit} disabled={submitting}>
+              {submitting ? "Bekræfter…" : "Ja, deltag alligevel"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 type EntryLite = { id: string; user_id: string; driver_name: string };
 
 function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPerSeason }: { leagueId: string; divisionId: string; entries: EntryLite[]; currentUserId: string; ticketsPerSeason: number }) {
