@@ -196,6 +196,7 @@ class LmuWatcher {
       let duplicates = 0;
       let errors = 0;
       let lastNote = null;
+      let notInFileCount = 0;
       for (const f of files) {
         try {
           const parsed = parseFile(f.path);
@@ -206,12 +207,18 @@ class LmuWatcher {
           if (res && res.skipped) skipped += res.skipped;
           if (res && res.duplicates) duplicates += res.duplicates;
           if (res && (res.note || res.reason)) lastNote = res.note || res.reason;
+          if (res && res.note === "Du var ikke i filen — sprunget over") notInFileCount += 1;
           if (res && !res.error) { this.seen.add(f.name); if (this.onSeenChanged) this.onSeenChanged(this.seen); }
         } catch (err) {
           console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
           errors += 1;
           lastNote = err.message;
         }
+      }
+      // Don't let a single "not in file" note from one file mislead when
+      // other files were processed fine (duplicates or uploads).
+      if ((uploaded > 0 || duplicates > 0) && lastNote === "Du var ikke i filen — sprunget over") {
+        lastNote = null;
       }
       const result = { uploaded, total: files.length, processed, skipped, duplicates, errors, note: lastNote };
       if (this.onScanComplete) this.onScanComplete(result, { markFullScan });
