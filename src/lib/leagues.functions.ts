@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { CARS_BY_CLASS } from "@/lib/lmu-cars";
 
 const SITE = "https://lmudanmark.dk";
 
@@ -325,13 +326,18 @@ export const updateMyLeagueEntry = createServerFn({ method: "POST" })
 
     const { data: entry, error: entryErr } = await supabaseAdmin
       .from("entries")
-      .select("id")
+      .select("id,car_class")
       .eq("league_id", data.leagueId)
       .is("division_id", null)
       .eq("user_id", userId)
       .maybeSingle();
     if (entryErr) throw new Error(entryErr.message);
     if (!entry) throw new Error("Du er ikke tilmeldt denne liga.");
+
+    const validCars = CARS_BY_CLASS[(entry as any).car_class] ?? [];
+    if (validCars.length > 0 && !validCars.includes(data.carModel.trim())) {
+      throw new Error("Vælg en gyldig bil for klassen.");
+    }
 
     const teamId = data.teamId ?? null;
     if (teamId) {
