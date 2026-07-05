@@ -10,7 +10,6 @@ import { reorderLeaguesSwap } from "@/lib/league-order";
 import { Badge } from "@/components/ui/badge";
 import { msToLapStr } from "@/lib/lmu-parser";
 import { classColor } from "@/lib/lmu-cars";
-import { GuestBlur } from "@/components/GuestGate";
 
 import { cn } from "@/lib/utils";
 import type { ClassConfig } from "@/lib/tracks";
@@ -280,11 +279,18 @@ function LeaderboardTeaser() {
           )}
         </Link>
       ) : (
-        <GuestBlur active label="Log ind for at se tider">
-          <div className="overflow-hidden rounded-xl border border-border bg-card">
-            {listMarkup}
-          </div>
-        </GuestBlur>
+        <Link
+          to="/leaderboard"
+          className="block overflow-hidden rounded-xl border border-border bg-card transition hover:border-primary hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)]"
+        >
+          {best.length === 0 ? (
+            <div className="px-4 py-5 text-center text-sm text-muted-foreground">
+              Ingen tider endnu — log ind og upload en race-fil for at komme på leaderboardet.
+            </div>
+          ) : (
+            listMarkup
+          )}
+        </Link>
       )}
     </section>
   );

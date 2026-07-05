@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Search, X, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { GuestLock } from "@/components/GuestGate";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -120,14 +119,7 @@ function Rules() {
     );
   };
 
-  if (!authLoading && !user) {
-    return (
-      <GuestLock
-        title="Regelsæt kræver login"
-        message="Du skal være logget ind for at læse regelsættet for ligaen."
-      />
-    );
-  }
+  // Regelsæt er offentligt tilgængeligt.
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

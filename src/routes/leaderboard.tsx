@@ -21,7 +21,6 @@ import { PersonalBestPanel } from "@/components/PersonalBestPanel";
 import { getLeaderboardRows } from "@/lib/leaderboard.functions";
 import { classColor } from "@/lib/lmu-cars";
 import { normalizeTrackName, LMU_TRACKS } from "@/lib/tracks";
-import { GuestLock } from "@/components/GuestGate";
 
 const COMPANION_DOWNLOAD_URL =
   "https://github.com/math612h/nersportscardevision/releases/latest/download/LMU-Danmark-Tracker-Setup.exe";
@@ -339,14 +338,7 @@ function LeaderboardPage() {
     qc.invalidateQueries({ queryKey: ["leaderboard"] });
   };
 
-  if (!authLoading && !user) {
-    return (
-      <GuestLock
-        title="Leaderboardet kræver login"
-        message="Du skal være logget ind som medlem for at se hurtigste omgangstider."
-      />
-    );
-  }
+  // Alle kan se leaderboardet; upload/handlinger er stadig gated på login.
 
   return (
     <div className="space-y-8">

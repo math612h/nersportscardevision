@@ -8,7 +8,6 @@ import { da } from "date-fns/locale";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { GuestLock } from "@/components/GuestGate";
 import { useServerFn } from "@tanstack/react-start";
 import { triggerReserveOfferForAbsence, respondReserveOffer } from "@/lib/division-reserves.functions";
 import { PracticeSessionsList } from "@/components/PracticeSessionsList";
@@ -311,14 +310,7 @@ function DivisionDetail() {
   const absentCount = absences?.length ?? 0;
   const participantCount = totalSignups - absentCount;
 
-  if (!user) {
-    return (
-      <GuestLock
-        title="Afdelingen kræver login"
-        message="Du skal være logget ind for at se afdelingens entryliste, resultater og briefing."
-      />
-    );
-  }
+  // Anonymous visitors can browse afdelings-siden; interaktive elementer er gated længere nede.
 
   return (
     <div className="space-y-8">
