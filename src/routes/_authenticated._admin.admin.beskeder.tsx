@@ -54,6 +54,11 @@ import {
   type DiscordRole,
 } from "@/lib/message-templates.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import {
+  generateAutoMessage,
+  type AutoMessageType,
+  type AutoMessageFormat,
+} from "@/lib/message-generator.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/beskeder")({
   head: () => ({ meta: [{ title: "Besked Hub – Admin" }] }),
