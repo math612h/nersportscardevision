@@ -431,5 +431,6 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
 function stripDiscordMarkup(s: string): string {
   return s
     .replace(/<@&\d+>\s*\n?\n?/g, "")
+    .replace(/```[a-z]*\n?/gi, "")
     .replace(/\*\*(.+?)\*\*/g, "$1");
 }
