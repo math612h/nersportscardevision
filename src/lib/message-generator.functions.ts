@@ -356,15 +356,39 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
         byClass.set(k, arr);
       }
       out.push(`${B}${label}${B}`, "");
+
+      const pad = (s: string, n: number) =>
+        s.length >= n ? s.slice(0, n) : s + " ".repeat(n - s.length);
+      const padLeft = (s: string, n: number) =>
+        s.length >= n ? s.slice(0, n) : " ".repeat(n - s.length) + s;
+
       for (const [cls, list] of byClass) {
         list.sort((x, y) => y.total - x.total);
         out.push(`🏎️ ${B}${cls}${B}`);
-        const podium = ["🥇", "🥈", "🥉"];
-        list.slice(0, 10).forEach((row, i) => {
-          const badge = podium[i] ?? `${(i + 1).toString().padStart(2, " ")}.`;
-          out.push(`${badge} ${row.driver_name} — ${B}${row.total}${B} p.`);
-        });
-        out.push("");
+
+        if (isDiscord) {
+          // Monospace table rendered inside a Discord code block for pro alignment
+          const nameCol = Math.min(
+            22,
+            Math.max(6, ...list.map((r) => r.driver_name.length)),
+          );
+          const header =
+            `${pad("Pos", 3)} ${pad("Kører", nameCol)} ${padLeft("Løb", 3)}  ${padLeft("Point", 5)}`;
+          const sep = "─".repeat(header.length);
+          const podium = ["🥇", "🥈", "🥉"];
+          const bodyRows = list.map((row, i) => {
+            const pos = podium[i] ?? `${(i + 1).toString().padStart(2, " ")}.`;
+            return `${pad(pos, 3)} ${pad(row.driver_name, nameCol)} ${padLeft(String(row.races), 3)}  ${padLeft(String(row.total), 5)}`;
+          });
+          out.push("```", header, sep, ...bodyRows, "```", "");
+        } else {
+          const podium = ["🥇", "🥈", "🥉"];
+          list.forEach((row, i) => {
+            const badge = podium[i] ?? `${(i + 1).toString().padStart(2, " ")}.`;
+            out.push(`${badge} ${row.driver_name} — ${row.total} p. (${row.races} løb)`);
+          });
+          out.push("");
+        }
       }
       return out;
     };
@@ -377,7 +401,7 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
     }
     parts.push(`${B}${leagueName}${B}`, "");
     parts.push(
-      `Efter ${completed.length} ${completed.length === 1 ? "løb" : "løb"} af ${divisions.length}.`,
+      `Efter ${completed.length} af ${divisions.length} løb.`,
       "",
     );
 
@@ -395,6 +419,7 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
       parts.push(...buildTable(all, "Samlet stilling"));
     }
 
+
     parts.push(`👉 Se hele stillingen: ${leagueUrl}#stillinger`);
 
     return {
@@ -406,5 +431,6 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
 function stripDiscordMarkup(s: string): string {
   return s
     .replace(/<@&\d+>\s*\n?\n?/g, "")
+    .replace(/```[a-z]*\n?/gi, "")
     .replace(/\*\*(.+?)\*\*/g, "$1");
 }
