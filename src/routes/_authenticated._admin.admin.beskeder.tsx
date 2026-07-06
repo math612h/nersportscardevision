@@ -308,11 +308,13 @@ function BeskedHub() {
         open={!!editing || !!creatingKind}
         template={editing}
         creatingKind={creatingKind}
+        prefill={creatingPrefill}
         leagues={leagues ?? []}
         roles={roles ?? []}
         onClose={() => {
           setEditing(null);
           setCreatingKind(null);
+          setCreatingPrefill(null);
         }}
         onSave={(vals) => saveMut.mutate(vals)}
         saving={saveMut.isPending}
@@ -333,6 +335,22 @@ function BeskedHub() {
         onClose={() => setEmailing(null)}
         onSend={(to) => emailing && emailMut.mutate({ tpl: emailing, to })}
         sending={emailMut.isPending}
+      />
+
+      <GenerateWizard
+        open={wizardOpen}
+        leagues={leagues ?? []}
+        onClose={() => setWizardOpen(false)}
+        onGenerated={({ title, body, format, leagueId, type }) => {
+          setCreatingPrefill({
+            title,
+            body,
+            leagueId,
+            keySuggest: `${type}_${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
+          });
+          setCreatingKind(format === "email" ? "email" : "discord");
+          setWizardOpen(false);
+        }}
       />
     </div>
   );
