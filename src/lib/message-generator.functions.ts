@@ -5,7 +5,7 @@ import {
   buildSignupOpenMessage,
   buildCountdownMessage,
 } from "./league-announce.functions";
-import { nFile } from "./tracks";
+import { getTrackImageFile } from "./tracks";
 
 const SITE_URL = "https://www.lmudanmark.dk";
 
