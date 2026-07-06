@@ -112,8 +112,15 @@ function BeskedHub() {
 
   const [editing, setEditing] = useState<MessageTemplate | null>(null);
   const [creatingKind, setCreatingKind] = useState<MessageTemplateKind | null>(null);
+  const [creatingPrefill, setCreatingPrefill] = useState<{
+    title: string;
+    body: string;
+    leagueId: string | null;
+    keySuggest: string;
+  } | null>(null);
   const [sharing, setSharing] = useState<MessageTemplate | null>(null);
   const [emailing, setEmailing] = useState<MessageTemplate | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const [tab, setTab] = useState<"all" | "discord" | "email">("all");
   const [search, setSearch] = useState("");
