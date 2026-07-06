@@ -48,8 +48,9 @@ async function assertAdmin(userId: string) {
 
 const inputSchema = z.object({
   leagueId: z.string().uuid(),
-  type: z.enum(["signup_open", "remaining_seats", "standings"]),
+  type: z.enum(["signup_open", "remaining_seats", "standings", "division_briefing"]),
   format: z.enum(["discord", "email"]),
+  divisionId: z.string().uuid().optional(),
 });
 
 export const generateAutoMessage = createServerFn({ method: "POST" })
@@ -61,7 +62,7 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
 
     const { data: league, error: lErr } = await supabaseAdmin
       .from("leagues")
-      .select("id, name, signup_opens_at, class_configs, separate_division_standings, points_system")
+      .select("id, name, signup_opens_at, class_configs, separate_division_standings, points_system, briefing_required")
       .eq("id", data.leagueId)
       .maybeSingle();
     if (lErr) throw new Error(lErr.message);
@@ -75,7 +76,7 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
 
     const { data: divs } = await supabaseAdmin
       .from("divisions")
-      .select("id, name, track, layout, race_date, settings")
+      .select("id, name, track, layout, race_date, settings, image_url, server_started_at")
       .eq("league_id", league.id as string)
       .order("race_date", { ascending: true });
 
@@ -86,7 +87,10 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
       layout: string | null;
       race_date: string | null;
       settings: any;
+      image_url: string | null;
+      server_started_at: string | null;
     }>;
+
 
     // --- 1. Signup open ---
     if (data.type === "signup_open") {
