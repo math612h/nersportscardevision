@@ -14,6 +14,7 @@ import {
   Trophy,
   Search,
   Sparkles,
+  Wand2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,11 @@ import {
   type DiscordRole,
 } from "@/lib/message-templates.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
+import {
+  generateAutoMessage,
+  type AutoMessageType,
+  type AutoMessageFormat,
+} from "@/lib/message-generator.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/beskeder")({
   head: () => ({ meta: [{ title: "Besked Hub – Admin" }] }),
@@ -106,8 +112,15 @@ function BeskedHub() {
 
   const [editing, setEditing] = useState<MessageTemplate | null>(null);
   const [creatingKind, setCreatingKind] = useState<MessageTemplateKind | null>(null);
+  const [creatingPrefill, setCreatingPrefill] = useState<{
+    title: string;
+    body: string;
+    leagueId: string | null;
+    keySuggest: string;
+  } | null>(null);
   const [sharing, setSharing] = useState<MessageTemplate | null>(null);
   const [emailing, setEmailing] = useState<MessageTemplate | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const [tab, setTab] = useState<"all" | "discord" | "email">("all");
   const [search, setSearch] = useState("");
@@ -223,7 +236,10 @@ function BeskedHub() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setCreatingKind("discord")} className="gap-1.5">
+            <Button onClick={() => setWizardOpen(true)} className="gap-1.5">
+              <Wand2 className="h-4 w-4" /> Auto-generér
+            </Button>
+            <Button onClick={() => setCreatingKind("discord")} variant="secondary" className="gap-1.5">
               <Hash className="h-4 w-4" /> Ny Discord-besked
             </Button>
             <Button onClick={() => setCreatingKind("email")} variant="secondary" className="gap-1.5">
@@ -292,11 +308,13 @@ function BeskedHub() {
         open={!!editing || !!creatingKind}
         template={editing}
         creatingKind={creatingKind}
+        prefill={creatingPrefill}
         leagues={leagues ?? []}
         roles={roles ?? []}
         onClose={() => {
           setEditing(null);
           setCreatingKind(null);
+          setCreatingPrefill(null);
         }}
         onSave={(vals) => saveMut.mutate(vals)}
         saving={saveMut.isPending}
@@ -317,6 +335,22 @@ function BeskedHub() {
         onClose={() => setEmailing(null)}
         onSend={(to) => emailing && emailMut.mutate({ tpl: emailing, to })}
         sending={emailMut.isPending}
+      />
+
+      <GenerateWizard
+        open={wizardOpen}
+        leagues={leagues ?? []}
+        onClose={() => setWizardOpen(false)}
+        onGenerated={({ title, body, format, leagueId, type }) => {
+          setCreatingPrefill({
+            title,
+            body,
+            leagueId,
+            keySuggest: `${type}_${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
+          });
+          setCreatingKind(format === "email" ? "email" : "discord");
+          setWizardOpen(false);
+        }}
       />
     </div>
   );
@@ -417,6 +451,7 @@ function TemplateEditor({
   open,
   template,
   creatingKind,
+  prefill,
   leagues,
   roles,
   onClose,
@@ -426,6 +461,7 @@ function TemplateEditor({
   open: boolean;
   template: MessageTemplate | null;
   creatingKind: MessageTemplateKind | null;
+  prefill?: { title: string; body: string; leagueId: string | null; keySuggest: string } | null;
   leagues: LeagueLite[];
   roles: DiscordRole[];
   onClose: () => void;
@@ -466,14 +502,22 @@ function TemplateEditor({
 
   useEffect(() => {
     if (open) {
-      setKey(template?.key ?? "");
-      setTitle(template?.title ?? "");
-      setBody(template?.body ?? "");
-      const lid = template?.league_id ?? null;
-      setLinkLeague(!!lid);
-      setLeagueId(lid ?? "");
+      if (!template && prefill) {
+        setKey(prefill.keySuggest);
+        setTitle(prefill.title);
+        setBody(prefill.body);
+        setLinkLeague(!!prefill.leagueId);
+        setLeagueId(prefill.leagueId ?? "");
+      } else {
+        setKey(template?.key ?? "");
+        setTitle(template?.title ?? "");
+        setBody(template?.body ?? "");
+        const lid = template?.league_id ?? null;
+        setLinkLeague(!!lid);
+        setLeagueId(lid ?? "");
+      }
     }
-  }, [open, template]);
+  }, [open, template, prefill]);
 
   const isNew = !template;
   const kind: MessageTemplateKind = (template?.kind ?? creatingKind ?? "discord") as MessageTemplateKind;
@@ -731,6 +775,124 @@ function EmailDialog({
           <Button variant="ghost" onClick={onClose}>Annullér</Button>
           <Button disabled={!to.trim() || sending} onClick={() => onSend(to.trim())}>
             {sending ? "Sender…" : "Send e-mail"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function GenerateWizard({
+  open,
+  leagues,
+  onClose,
+  onGenerated,
+}: {
+  open: boolean;
+  leagues: LeagueLite[];
+  onClose: () => void;
+  onGenerated: (args: {
+    title: string;
+    body: string;
+    format: AutoMessageFormat;
+    leagueId: string;
+    type: AutoMessageType;
+  }) => void;
+}) {
+  const generateFn = useServerFn(generateAutoMessage);
+  const [format, setFormat] = useState<AutoMessageFormat>("discord");
+  const [leagueId, setLeagueId] = useState<string>("");
+  const [type, setType] = useState<AutoMessageType>("signup_open");
+
+  useEffect(() => {
+    if (open) {
+      setFormat("discord");
+      setLeagueId("");
+      setType("signup_open");
+    }
+  }, [open]);
+
+  const genMut = useMutation({
+    mutationFn: async () => {
+      return await generateFn({ data: { leagueId, type, format } });
+    },
+    onSuccess: (res) => {
+      onGenerated({ title: res.title, body: res.body, format, leagueId, type });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const canGenerate = !!leagueId && !!type && !!format;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Wand2 className="h-5 w-5 text-primary" />
+            Auto-generér besked
+          </DialogTitle>
+          <DialogDescription>
+            Vælg liga og besked-type, så genererer vi indholdet for dig. Du kan
+            redigere det bagefter inden du gemmer eller sender.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div>
+            <Label>Format</Label>
+            <Select value={format} onValueChange={(v) => setFormat(v as AutoMessageFormat)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="discord">
+                  <span className="inline-flex items-center gap-2"><Hash className="h-3.5 w-3.5" /> Discord</span>
+                </SelectItem>
+                <SelectItem value="email">
+                  <span className="inline-flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> E-mail</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Liga</Label>
+            <Select value={leagueId} onValueChange={setLeagueId}>
+              <SelectTrigger><SelectValue placeholder="Vælg liga…" /></SelectTrigger>
+              <SelectContent>
+                {leagues.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Besked-type</Label>
+            <Select value={type} onValueChange={(v) => setType(v as AutoMessageType)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="signup_open">Tilmelding er åben</SelectItem>
+                <SelectItem value="remaining_seats">Ledige pladser på gridden</SelectItem>
+                <SelectItem value="standings">Foreløbig stilling</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {type === "signup_open" && "Bruger klasser, pladser og sæsonkalender fra ligaen."}
+              {type === "remaining_seats" && "Viser hvor mange pladser der er tilbage pr. klasse."}
+              {type === "standings" && "Bygger championship-stilling baseret på afsluttede løb."}
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Annullér</Button>
+          <Button
+            disabled={!canGenerate || genMut.isPending}
+            onClick={() => genMut.mutate()}
+            className="gap-1.5"
+          >
+            <Sparkles className="h-4 w-4" />
+            {genMut.isPending ? "Genererer…" : "Generér"}
           </Button>
         </DialogFooter>
       </DialogContent>
