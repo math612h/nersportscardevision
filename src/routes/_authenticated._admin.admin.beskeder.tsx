@@ -451,6 +451,7 @@ function TemplateEditor({
   open,
   template,
   creatingKind,
+  prefill,
   leagues,
   roles,
   onClose,
@@ -460,6 +461,7 @@ function TemplateEditor({
   open: boolean;
   template: MessageTemplate | null;
   creatingKind: MessageTemplateKind | null;
+  prefill?: { title: string; body: string; leagueId: string | null; keySuggest: string } | null;
   leagues: LeagueLite[];
   roles: DiscordRole[];
   onClose: () => void;
@@ -500,14 +502,22 @@ function TemplateEditor({
 
   useEffect(() => {
     if (open) {
-      setKey(template?.key ?? "");
-      setTitle(template?.title ?? "");
-      setBody(template?.body ?? "");
-      const lid = template?.league_id ?? null;
-      setLinkLeague(!!lid);
-      setLeagueId(lid ?? "");
+      if (!template && prefill) {
+        setKey(prefill.keySuggest);
+        setTitle(prefill.title);
+        setBody(prefill.body);
+        setLinkLeague(!!prefill.leagueId);
+        setLeagueId(prefill.leagueId ?? "");
+      } else {
+        setKey(template?.key ?? "");
+        setTitle(template?.title ?? "");
+        setBody(template?.body ?? "");
+        const lid = template?.league_id ?? null;
+        setLinkLeague(!!lid);
+        setLeagueId(lid ?? "");
+      }
     }
-  }, [open, template]);
+  }, [open, template, prefill]);
 
   const isNew = !template;
   const kind: MessageTemplateKind = (template?.kind ?? creatingKind ?? "discord") as MessageTemplateKind;
