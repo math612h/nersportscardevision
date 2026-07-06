@@ -236,7 +236,10 @@ function BeskedHub() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button onClick={() => setCreatingKind("discord")} className="gap-1.5">
+            <Button onClick={() => setWizardOpen(true)} className="gap-1.5">
+              <Wand2 className="h-4 w-4" /> Auto-generér
+            </Button>
+            <Button onClick={() => setCreatingKind("discord")} variant="secondary" className="gap-1.5">
               <Hash className="h-4 w-4" /> Ny Discord-besked
             </Button>
             <Button onClick={() => setCreatingKind("email")} variant="secondary" className="gap-1.5">
