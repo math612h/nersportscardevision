@@ -803,18 +803,53 @@ function GenerateWizard({
   const [format, setFormat] = useState<AutoMessageFormat>("discord");
   const [leagueId, setLeagueId] = useState<string>("");
   const [type, setType] = useState<AutoMessageType>("signup_open");
+  const [divisionId, setDivisionId] = useState<string>("");
 
   useEffect(() => {
     if (open) {
       setFormat("discord");
       setLeagueId("");
       setType("signup_open");
+      setDivisionId("");
     }
   }, [open]);
 
+  useEffect(() => {
+    setDivisionId("");
+  }, [leagueId, type]);
+
+  const needsDivision = type === "division_briefing";
+
+  const { data: divisions } = useQuery({
+    queryKey: ["wizard-divisions", leagueId],
+    enabled: !!leagueId && needsDivision,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("divisions")
+        .select("id, name, track, layout, race_date")
+        .eq("league_id", leagueId)
+        .order("race_date", { ascending: true, nullsFirst: false });
+      if (error) throw error;
+      return (data ?? []) as Array<{
+        id: string;
+        name: string | null;
+        track: string | null;
+        layout: string | null;
+        race_date: string | null;
+      }>;
+    },
+  });
+
   const genMut = useMutation({
     mutationFn: async () => {
-      return await generateFn({ data: { leagueId, type, format } });
+      return await generateFn({
+        data: {
+          leagueId,
+          type,
+          format,
+          ...(needsDivision ? { divisionId } : {}),
+        },
+      });
     },
     onSuccess: (res) => {
       onGenerated({ title: res.title, body: res.body, format, leagueId, type });
@@ -822,7 +857,8 @@ function GenerateWizard({
     onError: (e) => toast.error((e as Error).message),
   });
 
-  const canGenerate = !!leagueId && !!type && !!format;
+  const canGenerate =
+    !!leagueId && !!type && !!format && (!needsDivision || !!divisionId);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -874,14 +910,41 @@ function GenerateWizard({
                 <SelectItem value="signup_open">Tilmelding er åben</SelectItem>
                 <SelectItem value="remaining_seats">Ledige pladser på gridden</SelectItem>
                 <SelectItem value="standings">Foreløbig stilling</SelectItem>
+                <SelectItem value="division_briefing">Pre-race for en afdeling</SelectItem>
               </SelectContent>
             </Select>
             <p className="mt-1 text-xs text-muted-foreground">
               {type === "signup_open" && "Bruger klasser, pladser og sæsonkalender fra ligaen."}
               {type === "remaining_seats" && "Viser hvor mange pladser der er tilbage pr. klasse."}
               {type === "standings" && "Bygger championship-stilling baseret på afsluttede løb."}
+              {type === "division_briefing" && "Program, briefing, bane og server-info for én afdeling."}
             </p>
           </div>
+
+          {needsDivision && (
+            <div>
+              <Label>Afdeling</Label>
+              <Select value={divisionId} onValueChange={setDivisionId} disabled={!leagueId}>
+                <SelectTrigger>
+                  <SelectValue placeholder={leagueId ? "Vælg afdeling…" : "Vælg liga først"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {(divisions ?? []).map((d) => {
+                    const label =
+                      d.name ??
+                      [d.track, d.layout].filter(Boolean).join(" – ") ??
+                      "Afdeling";
+                    const dateBit = d.race_date
+                      ? ` — ${new Date(d.race_date).toLocaleDateString("da-DK", { day: "2-digit", month: "short" })}`
+                      : "";
+                    return (
+                      <SelectItem key={d.id} value={d.id}>{label}{dateBit}</SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
@@ -899,3 +962,4 @@ function GenerateWizard({
     </Dialog>
   );
 }
+
