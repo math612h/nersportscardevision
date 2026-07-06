@@ -5,10 +5,16 @@ import {
   buildSignupOpenMessage,
   buildCountdownMessage,
 } from "./league-announce.functions";
+import { nFile } from "./tracks";
 
 const SITE_URL = "https://www.lmudanmark.dk";
 
-export type AutoMessageType = "signup_open" | "remaining_seats" | "standings";
+export type AutoMessageType =
+  | "signup_open"
+  | "remaining_seats"
+  | "standings"
+  | "division_briefing";
+
 export type AutoMessageFormat = "discord" | "email";
 
 type ClassConfig = {
