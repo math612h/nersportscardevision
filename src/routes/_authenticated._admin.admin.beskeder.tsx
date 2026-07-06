@@ -781,3 +781,121 @@ function EmailDialog({
     </Dialog>
   );
 }
+
+function GenerateWizard({
+  open,
+  leagues,
+  onClose,
+  onGenerated,
+}: {
+  open: boolean;
+  leagues: LeagueLite[];
+  onClose: () => void;
+  onGenerated: (args: {
+    title: string;
+    body: string;
+    format: AutoMessageFormat;
+    leagueId: string;
+    type: AutoMessageType;
+  }) => void;
+}) {
+  const generateFn = useServerFn(generateAutoMessage);
+  const [format, setFormat] = useState<AutoMessageFormat>("discord");
+  const [leagueId, setLeagueId] = useState<string>("");
+  const [type, setType] = useState<AutoMessageType>("signup_open");
+
+  useEffect(() => {
+    if (open) {
+      setFormat("discord");
+      setLeagueId("");
+      setType("signup_open");
+    }
+  }, [open]);
+
+  const genMut = useMutation({
+    mutationFn: async () => {
+      return await generateFn({ data: { leagueId, type, format } });
+    },
+    onSuccess: (res) => {
+      onGenerated({ title: res.title, body: res.body, format, leagueId, type });
+    },
+    onError: (e) => toast.error((e as Error).message),
+  });
+
+  const canGenerate = !!leagueId && !!type && !!format;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Wand2 className="h-5 w-5 text-primary" />
+            Auto-generér besked
+          </DialogTitle>
+          <DialogDescription>
+            Vælg liga og besked-type, så genererer vi indholdet for dig. Du kan
+            redigere det bagefter inden du gemmer eller sender.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div>
+            <Label>Format</Label>
+            <Select value={format} onValueChange={(v) => setFormat(v as AutoMessageFormat)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="discord">
+                  <span className="inline-flex items-center gap-2"><Hash className="h-3.5 w-3.5" /> Discord</span>
+                </SelectItem>
+                <SelectItem value="email">
+                  <span className="inline-flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> E-mail</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Liga</Label>
+            <Select value={leagueId} onValueChange={setLeagueId}>
+              <SelectTrigger><SelectValue placeholder="Vælg liga…" /></SelectTrigger>
+              <SelectContent>
+                {leagues.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Besked-type</Label>
+            <Select value={type} onValueChange={(v) => setType(v as AutoMessageType)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="signup_open">Tilmelding er åben</SelectItem>
+                <SelectItem value="remaining_seats">Ledige pladser på gridden</SelectItem>
+                <SelectItem value="standings">Foreløbig stilling</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {type === "signup_open" && "Bruger klasser, pladser og sæsonkalender fra ligaen."}
+              {type === "remaining_seats" && "Viser hvor mange pladser der er tilbage pr. klasse."}
+              {type === "standings" && "Bygger championship-stilling baseret på afsluttede løb."}
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Annullér</Button>
+          <Button
+            disabled={!canGenerate || genMut.isPending}
+            onClick={() => genMut.mutate()}
+            className="gap-1.5"
+          >
+            <Sparkles className="h-4 w-4" />
+            {genMut.isPending ? "Genererer…" : "Generér"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
