@@ -14,7 +14,7 @@ export const ADMIN_MESSAGE_TEMPLATE_KEYS = {
 export const ADMIN_MESSAGE_LINKS: Record<string, string> = {
   wrong_name_in_guild: "/profil",
   missing_lmu_name: "/profil",
-  profile_approved: "/ligaer",
+  profile_approved: "/lmu/liga",
 };
 
 const schema = z.object({
