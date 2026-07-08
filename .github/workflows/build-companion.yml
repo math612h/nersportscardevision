@@ -29,6 +29,18 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Auto-bump patch version (rolling latest build)
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        run: |
+          $pkgPath = "package.json"
+          $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
+          $parts = $pkg.version.Split('.')
+          $newVersion = "$($parts[0]).$($parts[1]).${{ github.run_number }}"
+          Write-Host "Setting companion version to $newVersion"
+          $pkg.version = $newVersion
+          ($pkg | ConvertTo-Json -Depth 100) | Set-Content $pkgPath -Encoding utf8
+
       - name: Install companion dependencies
         env:
           ELECTRON_GET_USE_PROXY: "true"
@@ -98,7 +110,10 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          files: companion/release/*Setup*.exe
+          files: |
+            companion/release/*Setup*.exe
+            companion/release/latest.yml
+            companion/release/*.blockmap
           tag_name: companion-latest
           name: "Companion (seneste build)"
           body: "Automatisk bygget fra main. Hent .exe-filen herunder og kør den for at installere companion-appen."
@@ -111,7 +126,10 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/companion-v')
         uses: softprops/action-gh-release@v2
         with:
-          files: companion/release/*Setup*.exe
+          files: |
+            companion/release/*Setup*.exe
+            companion/release/latest.yml
+            companion/release/*.blockmap
           generate_release_notes: true
           name: "Companion ${{ github.ref_name }}"
           tag_name: ${{ github.ref_name }}
