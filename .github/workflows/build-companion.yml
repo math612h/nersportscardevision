@@ -29,6 +29,18 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Auto-bump patch version (rolling latest build)
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        run: |
+          $pkgPath = "package.json"
+          $pkg = Get-Content $pkgPath -Raw | ConvertFrom-Json
+          $parts = $pkg.version.Split('.')
+          $newVersion = "$($parts[0]).$($parts[1]).${{ github.run_number }}"
+          Write-Host "Setting companion version to $newVersion"
+          $pkg.version = $newVersion
+          ($pkg | ConvertTo-Json -Depth 100) | Set-Content $pkgPath -Encoding utf8
+
       - name: Install companion dependencies
         env:
           ELECTRON_GET_USE_PROXY: "true"
