@@ -159,18 +159,21 @@ function parseLmuRaceFile(xml) {
 
   const layout = parseLayoutFromTrackData(trackData);
 
+  // Session-node er ikke længere obligatorisk — vi accepterer filen så længe
+  // vi kan finde kørere med omgangstider et sted i XML'en. Nogle LMU-filer
+  // (afbrudte sessions, testkørsler, ældre formater) har ingen Race/Qualify/
+  // Practice-wrapper, men indeholder stadig gyldige tider.
   const race = findSessionNode(rr);
-  if (!race) throw new Error("Missing session node (Race/Qualify/Practice)");
   const gameVersion = childValue(rr, "GameVersion") || null;
 
   let recordedAt = null;
-  const ts = childValue(race, "DateTime") || childValue(rr, "DateTime");
+  const ts = (race && childValue(race, "DateTime")) || childValue(rr, "DateTime");
   if (ts) {
     const n = Number(ts);
     if (Number.isFinite(n) && n > 0) recordedAt = new Date(n * 1000).toISOString();
   }
 
-  let driverEls = directDrivers(race);
+  let driverEls = race ? directDrivers(race) : [];
   if (!driverEls.length) driverEls = findDriversDeep(rr);
 
   const drivers = driverEls.map((el) => {
