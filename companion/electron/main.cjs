@@ -411,6 +411,7 @@ app.whenReady().then(async () => {
   }
 
   await restoreOnStartup();
+  scheduleUpdateChecks();
 });
 
 app.on("window-all-closed", (e) => {
