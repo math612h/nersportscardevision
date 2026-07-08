@@ -110,7 +110,10 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: softprops/action-gh-release@v2
         with:
-          files: companion/release/*Setup*.exe
+          files: |
+            companion/release/*Setup*.exe
+            companion/release/latest.yml
+            companion/release/*.blockmap
           tag_name: companion-latest
           name: "Companion (seneste build)"
           body: "Automatisk bygget fra main. Hent .exe-filen herunder og kør den for at installere companion-appen."
