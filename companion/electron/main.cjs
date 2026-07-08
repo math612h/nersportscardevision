@@ -5,6 +5,30 @@ const { POLL_INTERVAL_MS } = require("./config.cjs");
 const authStore = require("./auth-store.cjs");
 const uploader = require("./uploader.cjs");
 const { LmuWatcher } = require("./lmu-watcher.cjs");
+const { autoUpdater } = require("electron-updater");
+
+// ---- Auto-update (GitHub releases, tag: companion-latest) ------------------
+autoUpdater.autoDownload = true;
+autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.logger = { info: (...a) => console.log("[updater]", ...a), warn: (...a) => console.warn("[updater]", ...a), error: (...a) => console.error("[updater]", ...a), debug: () => {} };
+autoUpdater.on("error", (err) => console.error("[updater] error:", err?.message || err));
+autoUpdater.on("update-available", (info) => console.log("[updater] update available:", info?.version));
+autoUpdater.on("update-not-available", () => console.log("[updater] no update available"));
+autoUpdater.on("update-downloaded", (info) => {
+  console.log("[updater] downloaded:", info?.version, "— will install on quit");
+  // Silently install and relaunch shortly after download completes so brugeren
+  // ikke skal gøre noget aktivt. Vi venter 5s for at undgå at afbryde en aktiv scan.
+  setTimeout(() => {
+    try { app.isQuiting = true; autoUpdater.quitAndInstall(true, true); } catch (e) { console.error("[updater] quitAndInstall failed:", e); }
+  }, 5000);
+});
+
+function scheduleUpdateChecks() {
+  const check = () => autoUpdater.checkForUpdates().catch((e) => console.error("[updater] check failed:", e?.message || e));
+  // Første tjek 10s efter start, herefter hver time.
+  setTimeout(check, 10_000);
+  setInterval(check, 60 * 60 * 1000);
+}
 
 // Single instance — second launch just shows existing window
 const gotLock = app.requestSingleInstanceLock();
