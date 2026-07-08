@@ -64,6 +64,14 @@
       "shortcutName": "Leaderboard tracker LMU",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": false
-    }
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "math612h",
+        "repo": "nersportscardevision",
+        "releaseType": "release"
+      }
+    ]
   }
 }
