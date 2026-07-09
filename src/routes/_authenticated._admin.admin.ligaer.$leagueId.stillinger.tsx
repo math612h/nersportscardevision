@@ -488,14 +488,82 @@ function DivisionEditor({
         finished.forEach((r, idx) => { r.class_position = idx + 1; });
       }
 
+      // Auto-mark division as completed when there is real race data
+      const hasRaceData = raceResults.some((r) => r.class_position > 0 || r.dnf || r.dns);
+      const effectiveCompleted = completed || hasRaceData;
+
       const newSettings = {
         ...(division.settings ?? {}),
-        completed,
+        completed: effectiveCompleted,
         results: raceResults,
         quali_results: qualiResults,
       };
       const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
       if (error) throw error;
+      if (effectiveCompleted && !completed) setCompleted(true);
+
+      // Compute round number from division order (by race_date)
+      const sortedDivs = [...allDivisions].sort((a, b) => {
+        const ta = a.race_date ? new Date(a.race_date).getTime() : Number.MAX_SAFE_INTEGER;
+        const tb = b.race_date ? new Date(b.race_date).getTime() : Number.MAX_SAFE_INTEGER;
+        return ta - tb;
+      });
+      const round = Math.max(1, sortedDivs.findIndex((d) => d.id === division.id) + 1);
+
+      // Sync to league_results (drives ELO, "løb kørt" på profiler og /arkiv)
+      const dbRaceRows = raceResults
+        .filter((r) => r.class_position > 0)
+        .map((r) => ({
+          user_id: r.user_id,
+          league_id: division.league_id,
+          division_id: division.id,
+          round,
+          track: division.track ?? "",
+          layout: division.layout ?? null,
+          car_class: r.car_class,
+          car_model: null,
+          best_lap_ms: null,
+          position: r.class_position,
+          points: r.points,
+          session_type: "race" as const,
+          laps: r.laps ?? null,
+          time_penalty_ms: (r.penalty_seconds ?? 0) * 1000,
+          position_penalty: 0,
+          points_penalty: r.penalty_points ?? 0,
+          dsq: false,
+        }));
+      const dbQualiRows = qualiResults
+        .filter((r) => r.class_position > 0)
+        .map((r) => ({
+          user_id: r.user_id,
+          league_id: division.league_id,
+          division_id: division.id,
+          round,
+          track: division.track ?? "",
+          layout: division.layout ?? null,
+          car_class: r.car_class,
+          car_model: null,
+          best_lap_ms: r.best_lap_ms ?? null,
+          position: r.class_position,
+          points: 0,
+          session_type: "qualifying" as const,
+          laps: null,
+          time_penalty_ms: 0,
+          position_penalty: 0,
+          points_penalty: 0,
+          dsq: false,
+        }));
+
+      await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "race");
+      await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "qualifying");
+      if (dbRaceRows.length > 0) {
+        const { error: rErr } = await supabase.from("league_results").insert(dbRaceRows);
+        if (rErr) throw rErr;
+      }
+      if (dbQualiRows.length > 0) {
+        const { error: qErr } = await supabase.from("league_results").insert(dbQualiRows);
+        if (qErr) throw qErr;
+      }
 
       await reconcileWaitlist({
         currentDivisionId: division.id,
