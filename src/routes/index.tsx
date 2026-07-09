@@ -101,7 +101,7 @@ function NewsHome() {
           d.settings?.completed &&
           !d.settings?.hidden_from_home &&
           Array.isArray(d.settings?.results) &&
-          d.settings.results.length > 0,
+          d.settings.results.some((r: ResultRow) => Number(r.class_position) > 0 && !r.dns && !r.dnf),
       );
     },
   });
