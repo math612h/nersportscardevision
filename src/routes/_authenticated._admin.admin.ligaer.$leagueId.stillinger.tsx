@@ -570,14 +570,29 @@ function DivisionEditor({
           dsq: false,
         }));
 
-      await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "race");
-      await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "qualifying");
-      if (dbRaceRows.length > 0) {
-        const { error: rErr } = await supabase.from("league_results").insert(dbRaceRows);
+      const dbUserIds = Array.from(new Set([...dbRaceRows, ...dbQualiRows].map((r) => r.user_id)));
+      const validUserIds = new Set<string>();
+      if (dbUserIds.length > 0) {
+        const { data: existingUsers, error: usersErr } = await supabase
+          .from("profiles")
+          .select("id")
+          .in("id", dbUserIds);
+        if (usersErr) throw usersErr;
+        for (const user of existingUsers ?? []) validUserIds.add(user.id as string);
+      }
+      const validRaceRows = dbRaceRows.filter((r) => validUserIds.has(r.user_id));
+      const validQualiRows = dbQualiRows.filter((r) => validUserIds.has(r.user_id));
+
+      const { error: deleteRaceErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "race");
+      if (deleteRaceErr) throw deleteRaceErr;
+      const { error: deleteQualiErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "qualifying");
+      if (deleteQualiErr) throw deleteQualiErr;
+      if (validRaceRows.length > 0) {
+        const { error: rErr } = await supabase.from("league_results").insert(validRaceRows);
         if (rErr) throw rErr;
       }
-      if (dbQualiRows.length > 0) {
-        const { error: qErr } = await supabase.from("league_results").insert(dbQualiRows);
+      if (validQualiRows.length > 0) {
+        const { error: qErr } = await supabase.from("league_results").insert(validQualiRows);
         if (qErr) throw qErr;
       }
 
