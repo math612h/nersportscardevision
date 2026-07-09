@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
 import { deleteLeagueRaceResults } from "@/lib/league-results.functions";
@@ -21,6 +22,8 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagu
 
 const DEFAULT_POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
+type SessionKind = "race" | "qualifying";
+
 type DraftRow = {
   entry_id: string;
   user_id: string;
@@ -28,12 +31,17 @@ type DraftRow = {
   driver_name: string;
   car_class: string;
   driver_category: string;
-  time_str: string;
+  // Race
+  time_str: string;          // finish time m:ss.xxx
+  laps: number | null;
   penalty_seconds: number;
   penalty_points: number;
   fastest_lap: boolean;
   dnf: boolean;
   dns: boolean;
+  // Quali
+  q_best_str: string;        // best lap m:ss.xxx
+  q_dns: boolean;
 };
 
 type EntryRec = {
@@ -189,15 +197,17 @@ function DivisionEditor({
   leagueFlPoints: number;
   onSaved: () => void;
 }) {
-  const existing: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
-  const existingByKey = new Map(existing.map((r) => [`${r.car_class}|${r.driver_category}|${r.car_number}`, r]));
+  const existingRace: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
+  const existingQuali: any[] = Array.isArray(division.settings?.quali_results) ? division.settings.quali_results : [];
+  const raceByKey = new Map(existingRace.map((r) => [`${r.car_class}|${r.driver_category}|${r.car_number}`, r]));
+  const qualiByKey = new Map(existingQuali.map((r) => [`${r.car_class}|${r.driver_category}|${r.car_number}`, r]));
 
-  // Only edit results for drivers currently on the grid (not waitlist) – waitlist drivers don't race
   const gridEntries = entries.filter((e) => !e.waitlist);
 
-  const initialRows: DraftRow[] = gridEntries.map((e) => {
+  const buildInitial = (): DraftRow[] => gridEntries.map((e) => {
     const k = `${e.car_class}|${e.driver_category}|${e.car_number}`;
-    const ex = existingByKey.get(k) as any;
+    const race = raceByKey.get(k) as any;
+    const quali = qualiByKey.get(k) as any;
     return {
       entry_id: e.id,
       user_id: e.user_id,
@@ -205,33 +215,36 @@ function DivisionEditor({
       driver_name: e.driver_name,
       car_class: e.car_class,
       driver_category: e.driver_category,
-      time_str: ex && typeof ex.finish_time_ms === "number" && ex.finish_time_ms > 0 ? msToStr(ex.finish_time_ms) : "",
-      penalty_seconds: Number(ex?.penalty_seconds ?? 0),
-      penalty_points: Number(ex?.penalty_points ?? 0),
-      fastest_lap: !!ex?.fastest_lap,
-      dnf: !!ex?.dnf,
-      dns: !!ex?.dns,
+      time_str: race && typeof race.finish_time_ms === "number" && race.finish_time_ms > 0 ? msToStr(race.finish_time_ms) : "",
+      laps: race && typeof race.laps === "number" ? race.laps : null,
+      penalty_seconds: Number(race?.penalty_seconds ?? 0),
+      penalty_points: Number(race?.penalty_points ?? 0),
+      fastest_lap: !!race?.fastest_lap,
+      dnf: !!race?.dnf,
+      dns: !!race?.dns,
+      q_best_str: quali && typeof quali.best_lap_ms === "number" && quali.best_lap_ms > 0 ? msToStr(quali.best_lap_ms) : "",
+      q_dns: !!quali?.dns,
     };
   });
 
-  const [rows, setRows] = useState<DraftRow[]>(initialRows);
+  const [rows, setRows] = useState<DraftRow[]>(buildInitial);
+  const [session, setSession] = useState<SessionKind>("race");
   const flPoints = leagueFlPoints;
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [importedInfo, setImportedInfo] = useState<{ track: string; layout: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
   const deleteResults = useServerFn(deleteLeagueRaceResults);
 
-  // Belt & braces: hvis Select-værdi ændres uden at komponentet remounter,
-  // så nulstil formulardata når den valgte afdeling skifter.
   useEffect(() => {
-    setRows(initialRows);
+    setRows(buildInitial());
     setCompleted(!!division.settings?.completed);
+    setImportedInfo(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
 
-  // Profiles for the entries on grid (for LMU name matching)
   const userIds = useMemo(() => Array.from(new Set(entries.map((e) => e.user_id))), [entries]);
   const { data: profiles } = useQuery({
     queryKey: ["profiles-lmu", userIds.sort().join(",")],
@@ -249,23 +262,13 @@ function DivisionEditor({
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
 
-  const importXml = async (file: File) => {
+  const importXml = async (file: File, kind: SessionKind) => {
     try {
       const text = await file.text();
       const parsedRace = parseLmuRaceFile(text);
       const parsed = parsedRace.drivers;
+      setImportedInfo({ track: parsedRace.track, layout: parsedRace.layout });
 
-      // Fastest-lap winner per car class (raw, for matching to draft rows below)
-      const flByClass = new Map<string, string>(); // class -> lowercase driver name
-      const classes = Array.from(new Set(parsed.map((p) => p.carClass).filter(Boolean)));
-      for (const cls of classes) {
-        const inCls = parsed.filter((p) => p.carClass === cls && p.bestLapMs != null);
-        if (inCls.length === 0) continue;
-        inCls.sort((a, b) => (a.bestLapMs! - b.bestLapMs!));
-        flByClass.set(cls, inCls[0].name.trim().toLowerCase());
-      }
-
-      // Build lmu_name -> userId lookup
       const lmuToUser = new Map<string, string>();
       const profilesWithLmu = (profiles ?? []).filter((p) => (p.lmu_name ?? "").trim().length > 0);
       for (const p of profilesWithLmu) {
@@ -274,36 +277,52 @@ function DivisionEditor({
       }
 
       let matched = 0;
-      let fuzzyMatched = 0;
       const missing: string[] = [];
       const noLmu: string[] = [];
 
-      const updates = new Map<string, Partial<DraftRow>>();
-      // Resolve a parsed driver name to a userId — exact first, then fuzzy (≥85%).
       const resolveUser = (parsedName: string): string | null => {
         const key = parsedName.trim().toLowerCase();
         const exact = lmuToUser.get(key);
         if (exact) return exact;
         const best = findBestNameMatch(parsedName, profilesWithLmu, (p) => p.lmu_name, 0.85);
-        if (best) { fuzzyMatched++; return best.match.id; }
-        return null;
+        return best?.match.id ?? null;
       };
+
+      // Fastest-lap winner per car class (race only)
+      const flByClass = new Map<string, string>();
+      if (kind === "race") {
+        const classes = Array.from(new Set(parsed.map((p) => p.carClass).filter(Boolean)));
+        for (const cls of classes) {
+          const inCls = parsed.filter((p) => p.carClass === cls && p.bestLapMs != null);
+          if (inCls.length === 0) continue;
+          inCls.sort((a, b) => (a.bestLapMs! - b.bestLapMs!));
+          flByClass.set(cls, inCls[0].name.trim().toLowerCase());
+        }
+      }
+
+      const updates = new Map<string, Partial<DraftRow>>();
       for (const p of parsed) {
         const userId = resolveUser(p.name);
         if (!userId) { missing.push(p.name); continue; }
         const row = rows.find((r) => r.user_id === userId);
         if (!row) continue;
-        const key = p.name.trim().toLowerCase();
-        const isFl = flByClass.get(p.carClass) === key;
-        if (p.finished && p.finishMs != null) {
-          updates.set(row.entry_id, { time_str: msToStr(p.finishMs), fastest_lap: isFl, dnf: false, dns: false });
+        if (kind === "race") {
+          const isFl = flByClass.get(p.carClass) === p.name.trim().toLowerCase();
+          if (p.finished && p.finishMs != null) {
+            updates.set(row.entry_id, { time_str: msToStr(p.finishMs), laps: p.laps, fastest_lap: isFl, dnf: false, dns: false });
+          } else {
+            updates.set(row.entry_id, { time_str: "", laps: p.laps, fastest_lap: false, dnf: true, dns: false });
+          }
         } else {
-          updates.set(row.entry_id, { time_str: "", fastest_lap: false, dnf: true, dns: false });
+          if (p.bestLapMs != null) {
+            updates.set(row.entry_id, { q_best_str: msToStr(p.bestLapMs), q_dns: false });
+          } else {
+            updates.set(row.entry_id, { q_best_str: "", q_dns: true });
+          }
         }
         matched++;
       }
 
-      // Drivers on grid with no lmu_name set on their profile
       for (const r of rows) {
         const prof = (profiles ?? []).find((p) => p.id === r.user_id);
         if (!prof?.lmu_name) noLmu.push(r.driver_name);
@@ -311,44 +330,41 @@ function DivisionEditor({
 
       setRows((prev) => prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r)));
 
-      // Also push every valid best-lap into the global leaderboard
-      const { data: { user } } = await supabase.auth.getUser();
+      // Push best-laps to global leaderboard (race file only)
       let lbInserted = 0;
-      if (user) {
-        const lbRows = parsed
-          .filter((p) => p.bestLapMs != null && p.carClass)
-          .map((p) => {
-            const matchId = lmuToUser.get(p.name.trim().toLowerCase()) ?? (findBestNameMatch(p.name, profilesWithLmu, (x) => x.lmu_name, 0.85)?.match.id ?? null);
-            if (!matchId) return null;
-            return {
-              user_id: matchId,
-              driver_name: p.name,
-              track: parsedRace.track,
-              layout: parsedRace.layout,
-              car_class: normalizeCarClass(p.carClass),
-              car_model: p.carModel,
-              best_lap_ms: p.bestLapMs!,
-              source: "admin" as const,
-              uploaded_by: user.id,
-              division_id: division.id,
-              recorded_at: parsedRace.recordedAt,
-            };
-          })
-          .filter((r): r is NonNullable<typeof r> => r !== null);
-        if (lbRows.length > 0) {
-          const { error: lbErr } = await supabase.from("leaderboard_times").insert(lbRows);
-          if (lbErr) toast.warning(`Leaderboard ikke opdateret: ${lbErr.message}`);
-          else lbInserted = lbRows.length;
+      if (kind === "race") {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const lbRows = parsed
+            .filter((p) => p.bestLapMs != null && p.carClass)
+            .map((p) => {
+              const matchId = resolveUser(p.name);
+              if (!matchId) return null;
+              return {
+                user_id: matchId,
+                driver_name: p.name,
+                track: parsedRace.track,
+                layout: parsedRace.layout,
+                car_class: normalizeCarClass(p.carClass),
+                car_model: p.carModel,
+                best_lap_ms: p.bestLapMs!,
+                source: "admin" as const,
+                uploaded_by: user.id,
+                division_id: division.id,
+                recorded_at: parsedRace.recordedAt,
+              };
+            })
+            .filter((r): r is NonNullable<typeof r> => r !== null);
+          if (lbRows.length > 0) {
+            const { error: lbErr } = await supabase.from("leaderboard_times").insert(lbRows);
+            if (!lbErr) lbInserted = lbRows.length;
+          }
         }
       }
 
-      toast.success(`Importerede ${matched} kørere fra resultatfilen.${lbInserted ? ` ${lbInserted} tider lagt på leaderboardet.` : ""}`);
-      if (missing.length > 0) {
-        toast.warning(`${missing.length} kørere i filen blev ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
-      }
-      if (noLmu.length > 0) {
-        toast.message(`${noLmu.length} kørere på grid mangler LMU-navn på profilen: ${noLmu.slice(0, 5).join(", ")}${noLmu.length > 5 ? "…" : ""}`);
-      }
+      toast.success(`Importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
+      if (missing.length > 0) toast.warning(`${missing.length} ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
+      if (noLmu.length > 0) toast.message(`${noLmu.length} på grid mangler LMU-navn.`);
     } catch (e: any) {
       toast.error(e.message ?? "Kunne ikke importere fil");
     }
@@ -360,18 +376,36 @@ function DivisionEditor({
       : Array.from(new Set(rows.map((r) => `${r.car_class}|${r.driver_category}`)));
   }, [configs, rows]);
 
+  // Compute preview per session
   const preview = useMemo(() => {
-    const out: Record<string, (DraftRow & { effective_ms: number | null; position: number; points: number })[]> = {};
+    const out: Record<string, (DraftRow & { effective_ms: number | null; position: number; points: number; best_ms: number | null })[]> = {};
     for (const k of groupKeys) out[k] = [];
     for (const r of rows) {
       const k = `${r.car_class}|${r.driver_category}`;
       if (!out[k]) out[k] = [];
-      const baseMs = parseTimeToMs(r.time_str);
-      const effective_ms = r.dnf || r.dns || baseMs == null ? null : baseMs + Math.max(0, r.penalty_seconds) * 1000;
-      out[k].push({ ...r, effective_ms, position: 0, points: 0 });
+      const raceBase = parseTimeToMs(r.time_str);
+      const raceEff = r.dnf || r.dns || raceBase == null ? null : raceBase + Math.max(0, r.penalty_seconds) * 1000;
+      const qBest = parseTimeToMs(r.q_best_str);
+      out[k].push({
+        ...r,
+        effective_ms: session === "race" ? raceEff : (r.q_dns ? null : qBest),
+        best_ms: qBest,
+        position: 0,
+        points: 0,
+      });
     }
     for (const k of Object.keys(out)) {
       out[k].sort((a, b) => {
+        if (session === "race") {
+          const aFin = a.effective_ms != null;
+          const bFin = b.effective_ms != null;
+          if (aFin !== bFin) return aFin ? -1 : 1;
+          const lapsCmp = (b.laps ?? 0) - (a.laps ?? 0);
+          if (lapsCmp !== 0) return lapsCmp;
+          if (aFin) return a.effective_ms! - b.effective_ms!;
+          return a.car_number - b.car_number;
+        }
+        // qualifying: only fastest lap
         if (a.effective_ms == null && b.effective_ms == null) return a.car_number - b.car_number;
         if (a.effective_ms == null) return 1;
         if (b.effective_ms == null) return -1;
@@ -380,81 +414,92 @@ function DivisionEditor({
       out[k].forEach((row, idx) => {
         const finished = row.effective_ms != null;
         row.position = finished ? idx + 1 : 0;
-        row.points = finished ? pointsFor(row.position) : 0;
+        row.points = session === "race" && finished ? pointsFor(row.position) : 0;
       });
     }
     return out;
-  }, [rows, groupKeys]);
+  }, [rows, groupKeys, session]);
 
   const save = async () => {
     setSaving(true);
     try {
-      for (const k of Object.keys(preview)) {
-        const fls = preview[k].filter((r) => r.fastest_lap);
-        if (fls.length > 1) {
-          toast.error(`Kun én hurtigste omgang pr. klasse (${k.replace("|", " · ")})`);
+      // Build both result sets
+      const raceResults: any[] = [];
+      const qualiResults: any[] = [];
+
+      for (const r of rows) {
+        const raceBase = parseTimeToMs(r.time_str);
+        const raceEff = r.dnf || r.dns || raceBase == null ? null : raceBase + Math.max(0, r.penalty_seconds) * 1000;
+        const qBest = parseTimeToMs(r.q_best_str);
+        qualiResults.push({
+          user_id: r.user_id,
+          car_number: r.car_number,
+          driver_name: r.driver_name,
+          car_class: r.car_class,
+          driver_category: r.driver_category,
+          best_lap_ms: qBest ?? 0,
+          dns: !!r.q_dns,
+          class_position: 0,
+        });
+        raceResults.push({
+          user_id: r.user_id,
+          car_number: r.car_number,
+          driver_name: r.driver_name,
+          car_class: r.car_class,
+          driver_category: r.driver_category,
+          class_position: 0,
+          points: 0,
+          fastest_lap: r.fastest_lap && !(r.dnf || r.dns),
+          finish_time_ms: raceBase ?? 0,
+          effective_ms: raceEff ?? 0,
+          laps: r.laps,
+          penalty_seconds: Math.max(0, r.penalty_seconds),
+          penalty_points: Math.max(0, r.penalty_points),
+          dnf: r.dnf && !r.dns,
+          dns: r.dns,
+        });
+      }
+
+      // Rank race per class
+      for (const k of groupKeys) {
+        const [cls, cat] = k.split("|");
+        const inClass = raceResults.filter((r) => r.car_class === cls && r.driver_category === cat);
+        const finished = inClass.filter((r) => !r.dnf && !r.dns && r.effective_ms > 0)
+          .sort((a, b) => ((b.laps ?? 0) - (a.laps ?? 0)) || (a.effective_ms - b.effective_ms));
+        finished.forEach((r, idx) => {
+          r.class_position = idx + 1;
+          const base = pointsFor(idx + 1);
+          const fl = r.fastest_lap ? flPoints : 0;
+          r.points = Math.max(0, base + fl - Math.max(0, r.penalty_points));
+        });
+        // FL uniqueness
+        const flCount = inClass.filter((r) => r.fastest_lap).length;
+        if (flCount > 1) {
+          toast.error(`Kun én hurtigste omgang pr. klasse (${cls} · ${cat})`);
           setSaving(false);
           return;
         }
       }
-      const results: any[] = Object.values(preview).flatMap((list) =>
-        list
-          .filter((r) => r.position > 0)
-          .map((r) => {
-            const baseMs = parseTimeToMs(r.time_str)!;
-            return {
-              user_id: r.user_id,
-              car_number: r.car_number,
-              driver_name: r.driver_name,
-              car_class: r.car_class,
-              driver_category: r.driver_category,
-              class_position: r.position,
-              points: r.points,
-              fastest_lap: r.fastest_lap,
-              finish_time_ms: baseMs,
-              penalty_seconds: Math.max(0, r.penalty_seconds),
-              penalty_points: Math.max(0, r.penalty_points),
-              effective_ms: baseMs + Math.max(0, r.penalty_seconds) * 1000,
-              dnf: false,
-              dns: false,
-            };
-          }),
-      );
-      for (const k of Object.keys(preview)) {
-        for (const r of preview[k]) {
-          if (r.position === 0) {
-            results.push({
-              user_id: r.user_id,
-              car_number: r.car_number,
-              driver_name: r.driver_name,
-              car_class: r.car_class,
-              driver_category: r.driver_category,
-              class_position: 0,
-              points: 0,
-              fastest_lap: false,
-              finish_time_ms: 0,
-              penalty_seconds: Math.max(0, r.penalty_seconds),
-              penalty_points: Math.max(0, r.penalty_points),
-              effective_ms: 0,
-              dnf: r.dnf && !r.dns,
-              dns: r.dns,
-            });
-          }
-        }
+      // Rank quali per class
+      for (const k of groupKeys) {
+        const [cls, cat] = k.split("|");
+        const inClass = qualiResults.filter((r) => r.car_class === cls && r.driver_category === cat);
+        const finished = inClass.filter((r) => !r.dns && r.best_lap_ms > 0).sort((a, b) => a.best_lap_ms - b.best_lap_ms);
+        finished.forEach((r, idx) => { r.class_position = idx + 1; });
       }
 
       const newSettings = {
         ...(division.settings ?? {}),
         completed,
-        results,
+        results: raceResults,
+        quali_results: qualiResults,
       };
       const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
       if (error) throw error;
 
-      // Recompute waitlist based on DNS counts across all divisions (including the one we just saved)
       await reconcileWaitlist({
         currentDivisionId: division.id,
-        currentResults: results,
+        currentResults: raceResults,
         allDivisions,
         entries,
         configs,
@@ -480,9 +525,12 @@ function DivisionEditor({
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
               {division.track}{division.layout ? ` · ${division.layout}` : ""}
+              {importedInfo && (
+                <span className="ml-2 opacity-70">· Læst: {importedInfo.track}{importedInfo.layout ? ` · ${importedInfo.layout}` : ""}</span>
+              )}
             </p>
           </div>
-          <div className="flex items-end gap-3">
+          <div className="flex flex-wrap items-end gap-3">
             <label className="flex items-center gap-2 text-sm pb-2">
               <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
               Afsluttet
@@ -494,25 +542,34 @@ function DivisionEditor({
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) importXml(f);
+                if (f) importXml(f, session);
                 e.target.value = "";
               }}
             />
             <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
-              <Upload className="h-4 w-4" /> Importer LMU-fil
+              <Upload className="h-4 w-4" /> Importer {session === "race" ? "race-fil" : "quali-fil"}
             </Button>
             <Button
               type="button"
               variant="outline"
               disabled={resetting || saving}
               onClick={async () => {
-                if (!confirm(`Slet alle gemte resultater for ${division.name}? Både manuelle stillinger og uploadede race/quali-resultater fjernes. Handlingen kan ikke fortrydes.`)) return;
+                const label = session === "race" ? "race" : "quali";
+                if (!confirm(`Slet gemte ${label}-resultater for ${division.name}?`)) return;
                 setResetting(true);
                 try {
-                  const res = await deleteResults({ data: { leagueId: division.league_id, divisionId: division.id, sessionType: "both", clearDivisionSettings: true } });
-                  setRows((prev) => prev.map((r) => ({ ...r, time_str: "", penalty_seconds: 0, penalty_points: 0, fastest_lap: false, dnf: false, dns: false })));
-                  setCompleted(false);
-                  toast.success(`Resultater slettet (${res.deleted} rækker fjernet fra database)`);
+                  const res = await deleteResults({ data: { leagueId: division.league_id, divisionId: division.id, sessionType: session, clearDivisionSettings: session === "race" } });
+                  setRows((prev) => prev.map((r) => session === "race"
+                    ? { ...r, time_str: "", laps: null, penalty_seconds: 0, penalty_points: 0, fastest_lap: false, dnf: false, dns: false }
+                    : { ...r, q_best_str: "", q_dns: false }
+                  ));
+                  if (session === "race") setCompleted(false);
+                  // Also clear from settings
+                  const key = session === "race" ? "results" : "quali_results";
+                  const newSettings = { ...(division.settings ?? {}), [key]: [] };
+                  if (session === "race") newSettings.completed = false;
+                  await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
+                  toast.success(`${label} nulstillet (${res.deleted} rækker fjernet)`);
                   onSaved();
                 } catch (e: any) {
                   toast.error(e?.message ?? "Kunne ikke slette resultater");
@@ -522,10 +579,18 @@ function DivisionEditor({
               }}
               className="gap-2 text-destructive hover:text-destructive"
             >
-              <Trash2 className="h-4 w-4" /> {resetting ? "Sletter…" : "Nulstil resultater"}
+              <Trash2 className="h-4 w-4" /> {resetting ? "Sletter…" : `Nulstil ${session === "race" ? "race" : "quali"}`}
             </Button>
             <Button onClick={save} disabled={saving} className="gap-2"><Save className="h-4 w-4" /> Gem</Button>
           </div>
+        </div>
+        <div className="pt-3">
+          <Tabs value={session} onValueChange={(v) => setSession(v as SessionKind)}>
+            <TabsList>
+              <TabsTrigger value="race">Race</TabsTrigger>
+              <TabsTrigger value="qualifying">Quali</TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -541,112 +606,163 @@ function DivisionEditor({
                 <Badge variant="outline" className="text-[10px]">{cat}</Badge>
               </div>
               <div className="overflow-x-auto rounded-md border border-border">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
-                    <tr>
-                      <th className="px-2 py-1.5 w-10">Pos</th>
-                      <th className="px-2 py-1.5 w-12">Nr.</th>
-                      <th className="px-2 py-1.5">Kører</th>
-                      <th className="px-2 py-1.5 w-36">Tid (m:ss.xxx)</th>
-                      <th className="px-2 py-1.5 w-28">Straf (s)</th>
-                      <th className="px-2 py-1.5 w-28">Pointstraf</th>
-                      <th className="px-2 py-1.5 w-28">Effektiv tid</th>
-                      <th className="px-2 py-1.5 w-16 text-center">FL</th>
-                      <th className="px-2 py-1.5 w-16 text-center">DNF</th>
-                      <th className="px-2 py-1.5 w-16 text-center">DNS</th>
-                      <th className="px-2 py-1.5 w-14 text-right">Pts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {groupRows.map((r) => {
-                      const i = rows.findIndex((x) => x.entry_id === r.entry_id);
-                      const basePts = r.points + (r.fastest_lap && r.position > 0 ? flPoints : 0);
-                      const totalPts = Math.max(0, basePts - Math.max(0, r.penalty_points));
-                      return (
-                        <tr key={r.entry_id} className="border-t border-border">
-                          <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
-                          <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
-                          <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
-                          <td className="px-2 py-1.5">
-                            <Input
-                              className="h-8 min-w-[100px]"
-                              placeholder=""
-                              value={r.time_str}
-                              onChange={(e) => setRow(i, { time_str: e.target.value })}
-                              disabled={r.dnf || r.dns}
-                            />
-                          </td>
-                          <td className="px-2 py-1.5">
-                            <Input
-                              className="h-8 min-w-[70px]"
-                              type="text"
-                              inputMode="numeric"
-                              value={r.penalty_seconds === 0 ? "" : String(r.penalty_seconds)}
-                              onChange={(e) => {
-                                const v = e.target.value.replace(/[^0-9]/g, "");
-                                setRow(i, { penalty_seconds: v === "" ? 0 : Number(v) });
-                              }}
-                              disabled={r.dnf || r.dns}
-                            />
-                          </td>
-                          <td className="px-2 py-1.5">
-                            <Input
-                              className="h-8 min-w-[70px]"
-                              type="text"
-                              inputMode="numeric"
-                              value={r.penalty_points === 0 ? "" : String(r.penalty_points)}
-                              onChange={(e) => {
-                                const v = e.target.value.replace(/[^0-9]/g, "");
-                                setRow(i, { penalty_points: v === "" ? 0 : Number(v) });
-                              }}
-                              disabled={r.dnf || r.dns}
-                            />
-                          </td>
-                          <td className="px-2 py-1.5 tabular-nums text-xs text-muted-foreground">
-                            {r.effective_ms != null ? msToStr(r.effective_ms) : "–"}
-                          </td>
-                          <td className="px-2 py-1.5 text-center">
-                            <input
-                              type="checkbox"
-                              checked={r.fastest_lap}
-                              onChange={(e) => setRow(i, { fastest_lap: e.target.checked })}
-                              disabled={r.dnf || r.dns}
-                              aria-label="Fastest lap"
-                            />
-                          </td>
-                          <td className="px-2 py-1.5 text-center">
-                            <input
-                              type="checkbox"
-                              checked={r.dnf}
-                              onChange={(e) => setRow(i, { dnf: e.target.checked, dns: e.target.checked ? false : r.dns })}
-                            />
-                          </td>
-                          <td className="px-2 py-1.5 text-center">
-                            <input
-                              type="checkbox"
-                              checked={r.dns}
-                              onChange={(e) => setRow(i, { dns: e.target.checked, dnf: e.target.checked ? false : r.dnf, fastest_lap: false })}
-                              title="Did Not Show"
-                            />
-                          </td>
-                          <td className="px-2 py-1.5 text-right font-semibold tabular-nums">
-                            <span className="inline-flex items-center gap-0.5">
-                              {totalPts}
-                              {r.fastest_lap && r.position > 0 && <Zap className="h-3 w-3 text-primary" />}
-                              {r.penalty_points > 0 && <span className="text-[10px] text-destructive">-{r.penalty_points}p</span>}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                {session === "race" ? (
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
+                      <tr>
+                        <th className="px-2 py-1.5 w-10">Pos</th>
+                        <th className="px-2 py-1.5 w-12">Nr.</th>
+                        <th className="px-2 py-1.5">Kører</th>
+                        <th className="px-2 py-1.5 w-14">Omg.</th>
+                        <th className="px-2 py-1.5 w-32">Tid (m:ss.xxx)</th>
+                        <th className="px-2 py-1.5 w-24">Straf (s)</th>
+                        <th className="px-2 py-1.5 w-24">Pointstraf</th>
+                        <th className="px-2 py-1.5 w-24">Effektiv</th>
+                        <th className="px-2 py-1.5 w-12 text-center">FL</th>
+                        <th className="px-2 py-1.5 w-12 text-center">DNF</th>
+                        <th className="px-2 py-1.5 w-12 text-center">DNS</th>
+                        <th className="px-2 py-1.5 w-14 text-right">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {groupRows.map((r) => {
+                        const i = rows.findIndex((x) => x.entry_id === r.entry_id);
+                        const basePts = r.points + (r.fastest_lap && r.position > 0 ? flPoints : 0);
+                        const totalPts = Math.max(0, basePts - Math.max(0, r.penalty_points));
+                        return (
+                          <tr key={r.entry_id} className="border-t border-border">
+                            <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
+                            <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
+                            <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
+                            <td className="px-2 py-1.5 tabular-nums text-xs">
+                              <Input
+                                className="h-8 w-16"
+                                type="text"
+                                inputMode="numeric"
+                                value={r.laps ?? ""}
+                                onChange={(e) => {
+                                  const v = e.target.value.replace(/[^0-9]/g, "");
+                                  setRow(i, { laps: v === "" ? null : Number(v) });
+                                }}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <Input
+                                className="h-8 min-w-[100px]"
+                                value={r.time_str}
+                                onChange={(e) => setRow(i, { time_str: e.target.value })}
+                                disabled={r.dnf || r.dns}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <Input
+                                className="h-8 min-w-[70px]"
+                                type="text"
+                                inputMode="numeric"
+                                value={r.penalty_seconds === 0 ? "" : String(r.penalty_seconds)}
+                                onChange={(e) => {
+                                  const v = e.target.value.replace(/[^0-9]/g, "");
+                                  setRow(i, { penalty_seconds: v === "" ? 0 : Number(v) });
+                                }}
+                                disabled={r.dnf || r.dns}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <Input
+                                className="h-8 min-w-[70px]"
+                                type="text"
+                                inputMode="numeric"
+                                value={r.penalty_points === 0 ? "" : String(r.penalty_points)}
+                                onChange={(e) => {
+                                  const v = e.target.value.replace(/[^0-9]/g, "");
+                                  setRow(i, { penalty_points: v === "" ? 0 : Number(v) });
+                                }}
+                                disabled={r.dnf || r.dns}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5 tabular-nums text-xs text-muted-foreground">
+                              {r.effective_ms != null ? msToStr(r.effective_ms) : "–"}
+                            </td>
+                            <td className="px-2 py-1.5 text-center">
+                              <input
+                                type="checkbox"
+                                checked={r.fastest_lap}
+                                onChange={(e) => setRow(i, { fastest_lap: e.target.checked })}
+                                disabled={r.dnf || r.dns}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5 text-center">
+                              <input
+                                type="checkbox"
+                                checked={r.dnf}
+                                onChange={(e) => setRow(i, { dnf: e.target.checked, dns: e.target.checked ? false : r.dns })}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5 text-center">
+                              <input
+                                type="checkbox"
+                                checked={r.dns}
+                                onChange={(e) => setRow(i, { dns: e.target.checked, dnf: e.target.checked ? false : r.dnf, fastest_lap: false })}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5 text-right font-semibold tabular-nums">
+                              <span className="inline-flex items-center gap-0.5">
+                                {totalPts}
+                                {r.fastest_lap && r.position > 0 && <Zap className="h-3 w-3 text-primary" />}
+                                {r.penalty_points > 0 && <span className="text-[10px] text-destructive">-{r.penalty_points}p</span>}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
+                      <tr>
+                        <th className="px-2 py-1.5 w-10">Pos</th>
+                        <th className="px-2 py-1.5 w-12">Nr.</th>
+                        <th className="px-2 py-1.5">Kører</th>
+                        <th className="px-2 py-1.5 w-40">Bedste omgang (m:ss.xxx)</th>
+                        <th className="px-2 py-1.5 w-16 text-center">DNS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {groupRows.map((r) => {
+                        const i = rows.findIndex((x) => x.entry_id === r.entry_id);
+                        return (
+                          <tr key={r.entry_id} className="border-t border-border">
+                            <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.q_dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
+                            <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
+                            <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
+                            <td className="px-2 py-1.5">
+                              <Input
+                                className="h-8 min-w-[120px]"
+                                value={r.q_best_str}
+                                onChange={(e) => setRow(i, { q_best_str: e.target.value })}
+                                disabled={r.q_dns}
+                              />
+                            </td>
+                            <td className="px-2 py-1.5 text-center">
+                              <input
+                                type="checkbox"
+                                checked={r.q_dns}
+                                onChange={(e) => setRow(i, { q_dns: e.target.checked })}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           );
         })}
         <p className="text-xs text-muted-foreground">
-          Pointskala: {pointsTable.join(", ")}. Tidsstraf lægges til kørerens tid. DNS = Did Not Show: når en kører når DNS-grænsen pr. klasse, rykkes vedkommende bagerst på ventelisten, og første ventelistekører rykker op på griddet.
+          Pointskala: {pointsTable.join(", ")}. Race sorteres efter omgange og effektiv tid. Quali sorteres udelukkende efter hurtigste omgang og giver ingen point.
         </p>
       </CardContent>
     </Card>
@@ -666,8 +782,7 @@ async function reconcileWaitlist({
   entries: EntryRec[];
   configs: ClassConfig[];
 }) {
-  // Count DNS per entry across divisions (using current edits for the saved one)
-  const dnsByEntry = new Map<string, number>(); // entry_id -> count
+  const dnsByEntry = new Map<string, number>();
   const entryByKey = new Map<string, EntryRec>();
   for (const e of entries) entryByKey.set(`${e.car_class}|${e.driver_category}|${e.car_number}`, e);
 
@@ -687,7 +802,6 @@ async function reconcileWaitlist({
   }
   countResults(currentResults);
 
-  // For each class config that has a dns_limit, demote those past the limit and promote from waitlist
   const updates: { id: string; waitlist: boolean }[] = [];
   for (const cfg of configs) {
     if (!cfg.dns_limit || cfg.dns_limit <= 0) continue;
@@ -705,7 +819,6 @@ async function reconcileWaitlist({
         stillOnGrid.push(e);
       }
     }
-    // If grid has a max_drivers and we freed slots, promote from waitlist
     const cap = cfg.max_drivers ?? Infinity;
     const room = Math.max(0, cap - stillOnGrid.length);
     const promotions = Math.min(openSlots, room, wait.length);
