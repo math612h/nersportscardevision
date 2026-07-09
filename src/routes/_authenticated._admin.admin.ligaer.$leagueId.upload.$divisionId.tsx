@@ -414,6 +414,28 @@ function UploadResultsPage() {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Slet gemte resultater</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Fjern tidligere uploadede resultater for denne afdeling — brug fx hvis du vil erstatte dem med en ny fil.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={!!deleting} onClick={() => removeSaved("qualifying")} className="gap-2">
+              <Trash2 className="h-4 w-4" /> {deleting === "qualifying" ? "Sletter…" : "Slet quali-resultater"}
+            </Button>
+            <Button type="button" variant="outline" size="sm" disabled={!!deleting} onClick={() => removeSaved("race")} className="gap-2">
+              <Trash2 className="h-4 w-4" /> {deleting === "race" ? "Sletter…" : "Slet race-resultater"}
+            </Button>
+            <Button type="button" variant="destructive" size="sm" disabled={!!deleting} onClick={() => removeSaved("both")} className="gap-2">
+              <Trash2 className="h-4 w-4" /> {deleting === "both" ? "Sletter…" : "Slet alle resultater"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {quali && (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Kvalifikation</h2>
