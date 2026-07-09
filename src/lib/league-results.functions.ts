@@ -348,3 +348,41 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
     }
     return { inserted: resultRows.length, leaderboard_inserted: 0, unmatched, track, layout };
   });
+
+// Slet gemte resultater for en afdeling. Bruges når admins vil starte forfra
+// på en afdeling. Kan afgrænses til én session (race/qualifying) eller begge.
+const deleteSchema = z.object({
+  leagueId: z.string().uuid(),
+  divisionId: z.string().uuid(),
+  sessionType: z.enum(["race", "qualifying", "both"]).default("both"),
+  clearDivisionSettings: z.boolean().default(true),
+});
+
+export const deleteLeagueRaceResults = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => deleteSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: division, error: dErr } = await supabaseAdmin
+      .from("divisions").select("id,league_id,settings").eq("id", data.divisionId).maybeSingle();
+    if (dErr) throw new Error(dErr.message);
+    if (!division || division.league_id !== data.leagueId) throw new Error("Afdeling tilhører ikke ligaen.");
+
+    let q = supabaseAdmin.from("league_results").delete({ count: "exact" }).eq("division_id", data.divisionId);
+    if (data.sessionType !== "both") q = q.eq("session_type", data.sessionType);
+    const { error: delErr, count } = await q;
+    if (delErr) throw new Error(delErr.message);
+
+    if (data.clearDivisionSettings && data.sessionType !== "qualifying") {
+      const currentSettings = (division.settings as any) ?? {};
+      const newSettings = { ...currentSettings, completed: false, results: [] };
+      const { error: uErr } = await supabaseAdmin
+        .from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
+      if (uErr) throw new Error(uErr.message);
+    }
+
+    return { deleted: count ?? 0 };
+  });
+

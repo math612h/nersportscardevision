@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Save, Zap, Check, Upload } from "lucide-react";
+import { ArrowLeft, Save, Zap, Check, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
+import { deleteLeagueRaceResults } from "@/lib/league-results.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/stillinger")({
   component: AdminStandings,
@@ -84,7 +86,7 @@ function AdminStandings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("divisions")
-        .select("id,name,settings,race_date,track,layout")
+        .select("id,name,league_id,settings,race_date,track,layout")
         .eq("league_id", leagueId)
         .order("race_date", { ascending: true, nullsFirst: false });
       if (error) throw error;
@@ -216,8 +218,18 @@ function DivisionEditor({
   const flPoints = leagueFlPoints;
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
+  const deleteResults = useServerFn(deleteLeagueRaceResults);
+
+  // Belt & braces: hvis Select-værdi ændres uden at komponentet remounter,
+  // så nulstil formulardata når den valgte afdeling skifter.
+  useEffect(() => {
+    setRows(initialRows);
+    setCompleted(!!division.settings?.completed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [division.id]);
 
   // Profiles for the entries on grid (for LMU name matching)
   const userIds = useMemo(() => Array.from(new Set(entries.map((e) => e.user_id))), [entries]);
@@ -488,6 +500,29 @@ function DivisionEditor({
             />
             <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
               <Upload className="h-4 w-4" /> Importer LMU-fil
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={resetting || saving}
+              onClick={async () => {
+                if (!confirm(`Slet alle gemte resultater for ${division.name}? Både manuelle stillinger og uploadede race/quali-resultater fjernes. Handlingen kan ikke fortrydes.`)) return;
+                setResetting(true);
+                try {
+                  const res = await deleteResults({ data: { leagueId: division.league_id, divisionId: division.id, sessionType: "both", clearDivisionSettings: true } });
+                  setRows((prev) => prev.map((r) => ({ ...r, time_str: "", penalty_seconds: 0, penalty_points: 0, fastest_lap: false, dnf: false, dns: false })));
+                  setCompleted(false);
+                  toast.success(`Resultater slettet (${res.deleted} rækker fjernet fra database)`);
+                  onSaved();
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Kunne ikke slette resultater");
+                } finally {
+                  setResetting(false);
+                }
+              }}
+              className="gap-2 text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" /> {resetting ? "Sletter…" : "Nulstil resultater"}
             </Button>
             <Button onClick={save} disabled={saving} className="gap-2"><Save className="h-4 w-4" /> Gem</Button>
           </div>

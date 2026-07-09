@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { previewLeagueRaceResult, publishLeagueRaceResult } from "@/lib/league-results.functions";
+import { previewLeagueRaceResult, publishLeagueRaceResult, deleteLeagueRaceResults } from "@/lib/league-results.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,11 +58,27 @@ function UploadResultsPage() {
   const { leagueId, divisionId } = Route.useParams();
   const preview = useServerFn(previewLeagueRaceResult);
   const publish = useServerFn(publishLeagueRaceResult);
+  const deleteResults = useServerFn(deleteLeagueRaceResults);
 
   const [trackLayout, setTrackLayout] = useState<{ track: string; layout: string | null } | null>(null);
   const [quali, setQuali] = useState<SessionState | null>(null);
   const [race, setRace] = useState<SessionState | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [deleting, setDeleting] = useState<null | "race" | "qualifying" | "both">(null);
+
+  const removeSaved = async (sessionType: "race" | "qualifying" | "both") => {
+    const label = sessionType === "race" ? "race-resultater" : sessionType === "qualifying" ? "quali-resultater" : "alle gemte resultater (race + quali)";
+    if (!confirm(`Slet ${label} for denne afdeling? Handlingen kan ikke fortrydes.`)) return;
+    setDeleting(sessionType);
+    try {
+      const res = await deleteResults({ data: { leagueId, divisionId, sessionType, clearDivisionSettings: sessionType !== "qualifying" } });
+      toast.success(`Slettede ${res.deleted} række${res.deleted === 1 ? "" : "r"}. Du kan nu uploade en ny fil.`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke slette resultater");
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   const { data: league } = useQuery({
     queryKey: ["league-points", leagueId],
@@ -394,6 +410,28 @@ function UploadResultsPage() {
               <Input type="file" accept=".xml,application/xml,text/xml" onChange={handleFile("race")} />
               {race && <p className="mt-1 text-xs text-muted-foreground">{race.rows.length} kørere indlæst</p>}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Slet gemte resultater</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            Fjern tidligere uploadede resultater for denne afdeling — brug fx hvis du vil erstatte dem med en ny fil.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="outline" size="sm" disabled={!!deleting} onClick={() => removeSaved("qualifying")} className="gap-2">
+              <Trash2 className="h-4 w-4" /> {deleting === "qualifying" ? "Sletter…" : "Slet quali-resultater"}
+            </Button>
+            <Button type="button" variant="outline" size="sm" disabled={!!deleting} onClick={() => removeSaved("race")} className="gap-2">
+              <Trash2 className="h-4 w-4" /> {deleting === "race" ? "Sletter…" : "Slet race-resultater"}
+            </Button>
+            <Button type="button" variant="destructive" size="sm" disabled={!!deleting} onClick={() => removeSaved("both")} className="gap-2">
+              <Trash2 className="h-4 w-4" /> {deleting === "both" ? "Sletter…" : "Slet alle resultater"}
+            </Button>
           </div>
         </CardContent>
       </Card>
