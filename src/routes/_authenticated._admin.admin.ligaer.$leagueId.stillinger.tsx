@@ -39,6 +39,7 @@ type DraftRow = {
   fastest_lap: boolean;
   dnf: boolean;
   dns: boolean;
+  race_position: number | null;
   // Quali
   q_best_str: string;        // best lap m:ss.xxx
   q_dns: boolean;
@@ -222,6 +223,7 @@ function DivisionEditor({
       fastest_lap: !!race?.fastest_lap,
       dnf: !!race?.dnf,
       dns: !!race?.dns,
+      race_position: typeof race?.class_position === "number" && race.class_position > 0 ? race.class_position : null,
       q_best_str: quali && typeof quali.best_lap_ms === "number" && quali.best_lap_ms > 0 ? msToStr(quali.best_lap_ms) : "",
       q_dns: !!quali?.dns,
     };
@@ -308,10 +310,11 @@ function DivisionEditor({
         if (!row) continue;
         if (kind === "race") {
           const isFl = flByClass.get(p.carClass) === p.name.trim().toLowerCase();
+          const racePosition = p.classPosition ?? p.position ?? null;
           if (p.finished && p.finishMs != null) {
-            updates.set(row.entry_id, { time_str: msToStr(p.finishMs), laps: p.laps, fastest_lap: isFl, dnf: false, dns: false });
+            updates.set(row.entry_id, { time_str: msToStr(p.finishMs), laps: p.laps, race_position: racePosition, fastest_lap: isFl, dnf: false, dns: false });
           } else {
-            updates.set(row.entry_id, { time_str: "", laps: p.laps, fastest_lap: false, dnf: true, dns: false });
+            updates.set(row.entry_id, { time_str: "", laps: p.laps, race_position: racePosition, fastest_lap: false, dnf: true, dns: false });
           }
         } else {
           if (p.bestLapMs != null) {
@@ -453,6 +456,7 @@ function DivisionEditor({
           finish_time_ms: raceBase ?? 0,
           effective_ms: raceEff ?? 0,
           laps: r.laps,
+          source_position: r.race_position,
           penalty_seconds: Math.max(0, r.penalty_seconds),
           penalty_points: Math.max(0, r.penalty_points),
           dnf: r.dnf && !r.dns,
@@ -464,8 +468,20 @@ function DivisionEditor({
       for (const k of groupKeys) {
         const [cls, cat] = k.split("|");
         const inClass = raceResults.filter((r) => r.car_class === cls && r.driver_category === cat);
-        const finished = inClass.filter((r) => !r.dnf && !r.dns && r.effective_ms > 0)
-          .sort((a, b) => ((b.laps ?? 0) - (a.laps ?? 0)) || (a.effective_ms - b.effective_ms));
+        const active = inClass.filter((r) => !r.dns && (r.source_position || r.effective_ms > 0 || (r.laps ?? 0) > 0));
+        const withImportedPositions = active.filter((r) => typeof r.source_position === "number" && r.source_position > 0);
+        const withoutImportedPositions = active.filter((r) => !(typeof r.source_position === "number" && r.source_position > 0));
+        const sortByRaceData = (a: any, b: any) => {
+          const lapsCmp = (b.laps ?? 0) - (a.laps ?? 0);
+          if (lapsCmp !== 0) return lapsCmp;
+          if (a.effective_ms > 0 && b.effective_ms > 0) return a.effective_ms - b.effective_ms;
+          if (a.effective_ms > 0) return -1;
+          if (b.effective_ms > 0) return 1;
+          return a.car_number - b.car_number;
+        };
+        const finished = withImportedPositions.length > 0
+          ? [...withImportedPositions].sort((a, b) => a.source_position - b.source_position).concat(withoutImportedPositions.sort(sortByRaceData))
+          : active.filter((r) => !r.dnf).sort(sortByRaceData);
         finished.forEach((r, idx) => {
           r.class_position = idx + 1;
           const base = pointsFor(idx + 1);
@@ -489,8 +505,8 @@ function DivisionEditor({
       }
 
       // Auto-mark division as completed when there is real race data
-      const hasRaceData = raceResults.some((r) => r.class_position > 0 || r.dnf || r.dns);
-      const effectiveCompleted = completed || hasRaceData;
+      const hasRaceData = raceResults.some((r) => r.class_position > 0);
+      const effectiveCompleted = hasRaceData || (completed && hasRaceData);
 
       const newSettings = {
         ...(division.settings ?? {}),
@@ -554,14 +570,29 @@ function DivisionEditor({
           dsq: false,
         }));
 
-      await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "race");
-      await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "qualifying");
-      if (dbRaceRows.length > 0) {
-        const { error: rErr } = await supabase.from("league_results").insert(dbRaceRows);
+      const dbUserIds = Array.from(new Set([...dbRaceRows, ...dbQualiRows].map((r) => r.user_id)));
+      const validUserIds = new Set<string>();
+      if (dbUserIds.length > 0) {
+        const { data: existingUsers, error: usersErr } = await supabase
+          .from("profiles")
+          .select("id")
+          .in("id", dbUserIds);
+        if (usersErr) throw usersErr;
+        for (const user of existingUsers ?? []) validUserIds.add(user.id as string);
+      }
+      const validRaceRows = dbRaceRows.filter((r) => validUserIds.has(r.user_id));
+      const validQualiRows = dbQualiRows.filter((r) => validUserIds.has(r.user_id));
+
+      const { error: deleteRaceErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "race");
+      if (deleteRaceErr) throw deleteRaceErr;
+      const { error: deleteQualiErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "qualifying");
+      if (deleteQualiErr) throw deleteQualiErr;
+      if (validRaceRows.length > 0) {
+        const { error: rErr } = await supabase.from("league_results").insert(validRaceRows);
         if (rErr) throw rErr;
       }
-      if (dbQualiRows.length > 0) {
-        const { error: qErr } = await supabase.from("league_results").insert(dbQualiRows);
+      if (validQualiRows.length > 0) {
+        const { error: qErr } = await supabase.from("league_results").insert(validQualiRows);
         if (qErr) throw qErr;
       }
 
@@ -628,7 +659,7 @@ function DivisionEditor({
                 try {
                   const res = await deleteResults({ data: { leagueId: division.league_id, divisionId: division.id, sessionType: session, clearDivisionSettings: session === "race" } });
                   setRows((prev) => prev.map((r) => session === "race"
-                    ? { ...r, time_str: "", laps: null, penalty_seconds: 0, penalty_points: 0, fastest_lap: false, dnf: false, dns: false }
+                    ? { ...r, time_str: "", laps: null, race_position: null, penalty_seconds: 0, penalty_points: 0, fastest_lap: false, dnf: false, dns: false }
                     : { ...r, q_best_str: "", q_dns: false }
                   ));
                   if (session === "race") setCompleted(false);

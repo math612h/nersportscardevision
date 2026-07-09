@@ -11,6 +11,7 @@ export type ParsedDriver = {
   finishMs: number | null;
   finished: boolean;
   position: number | null;
+  classPosition: number | null;
   laps: number | null;
 };
 
@@ -150,6 +151,7 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     else if (manufacturer) carModel = manufacturer;
     else if (vehFile) carModel = vehFile;
     const pos = parseInt(get("Position"), 10);
+    const classPos = parseInt(get("ClassPosition"), 10);
     const laps = parseInt(get("Laps") || get("LapsCompleted"), 10);
     return {
       name: get("Name"),
@@ -160,6 +162,7 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
       finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
       finished: finishStatus.toLowerCase().startsWith("finished"),
       position: Number.isFinite(pos) && pos > 0 ? pos : null,
+      classPosition: Number.isFinite(classPos) && classPos > 0 ? classPos : null,
       laps: Number.isFinite(laps) && laps >= 0 ? laps : null,
     };
   });

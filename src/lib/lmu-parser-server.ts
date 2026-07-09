@@ -177,6 +177,7 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
     else if (manufacturer) carModel = manufacturer;
     else if (vehFile) carModel = vehFile;
     const pos = parseInt(childValue(d, "Position"), 10);
+    const classPos = parseInt(childValue(d, "ClassPosition"), 10);
     const laps = parseInt(childValue(d, "Laps") || childValue(d, "LapsCompleted"), 10);
     return {
       name: childValue(d, "Name"),
@@ -187,6 +188,7 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
       finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
       finished: finishStatus.toLowerCase().startsWith("finished"),
       position: Number.isFinite(pos) && pos > 0 ? pos : null,
+      classPosition: Number.isFinite(classPos) && classPos > 0 ? classPos : null,
       laps: Number.isFinite(laps) && laps >= 0 ? laps : null,
     };
   });
