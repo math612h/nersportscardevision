@@ -292,7 +292,13 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       const allHavePos = arr.every((d) => d.position != null);
       let ordered: typeof arr;
       if (allHavePos) ordered = [...arr].sort((a, b) => (a.position! - b.position!));
-      else {
+      else if (data.sessionType === "qualifying") {
+        // Quali: sortér udelukkende efter hurtigste omgang. Antal omgange og
+        // finish-status er irrelevant — det handler kun om bedste tid.
+        ordered = [...arr].sort((a, b) =>
+          (a.best_lap_ms ?? Number.MAX_SAFE_INTEGER) - (b.best_lap_ms ?? Number.MAX_SAFE_INTEGER),
+        );
+      } else {
         const finished = arr.filter((d) => d.finished && d.finish_ms != null)
           .sort((a, b) => ((b.laps ?? 0) - (a.laps ?? 0)) || ((a.finish_ms ?? Number.MAX_SAFE_INTEGER) - (b.finish_ms ?? Number.MAX_SAFE_INTEGER)));
         const unfinished = arr.filter((d) => !(d.finished && d.finish_ms != null))
