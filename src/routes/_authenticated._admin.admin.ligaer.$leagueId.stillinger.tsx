@@ -218,8 +218,18 @@ function DivisionEditor({
   const flPoints = leagueFlPoints;
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
+  const deleteResults = useServerFn(deleteLeagueRaceResults);
+
+  // Belt & braces: hvis Select-værdi ændres uden at komponentet remounter,
+  // så nulstil formulardata når den valgte afdeling skifter.
+  useEffect(() => {
+    setRows(initialRows);
+    setCompleted(!!division.settings?.completed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [division.id]);
 
   // Profiles for the entries on grid (for LMU name matching)
   const userIds = useMemo(() => Array.from(new Set(entries.map((e) => e.user_id))), [entries]);
