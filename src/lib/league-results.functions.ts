@@ -370,9 +370,9 @@ export const deleteLeagueRaceResults = createServerFn({ method: "POST" })
     if (dErr) throw new Error(dErr.message);
     if (!division || division.league_id !== data.leagueId) throw new Error("Afdeling tilhører ikke ligaen.");
 
-    let q = supabaseAdmin.from("league_results").delete().eq("division_id", data.divisionId);
+    let q = supabaseAdmin.from("league_results").delete({ count: "exact" }).eq("division_id", data.divisionId);
     if (data.sessionType !== "both") q = q.eq("session_type", data.sessionType);
-    const { error: delErr, count } = await q.select("id", { count: "exact", head: true });
+    const { error: delErr, count } = await q;
     if (delErr) throw new Error(delErr.message);
 
     if (data.clearDivisionSettings && data.sessionType !== "qualifying") {
