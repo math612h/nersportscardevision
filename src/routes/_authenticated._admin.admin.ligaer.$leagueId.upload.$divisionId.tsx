@@ -150,7 +150,11 @@ function UploadResultsPage() {
       const nonDsq = enriched.filter((r) => !r.dsq);
       const dsq = enriched.filter((r) => r.dsq);
       nonDsq.sort((a, b) => {
-        // finished first by (laps desc, effective finish asc), then unfinished by (laps desc, best lap asc)
+        if (kind === "qualifying") {
+          // Quali rangeres kun efter hurtigste omgang.
+          return (a.best_lap_ms ?? Number.MAX_SAFE_INTEGER) - (b.best_lap_ms ?? Number.MAX_SAFE_INTEGER);
+        }
+        // Race: finished first by (laps desc, effective finish asc), then unfinished by (laps desc, best lap asc)
         const aFin = a.finished && a.effectiveFinishMs != null;
         const bFin = b.finished && b.effectiveFinishMs != null;
         if (aFin !== bFin) return aFin ? -1 : 1;
