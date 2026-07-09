@@ -570,7 +570,7 @@ function DivisionEditor({
                           <td className="px-2 py-1.5">
                             <Input
                               className="h-8 min-w-[100px]"
-                              placeholder="1:32.456"
+                              placeholder=""
                               value={r.time_str}
                               onChange={(e) => setRow(i, { time_str: e.target.value })}
                               disabled={r.dnf || r.dns}
