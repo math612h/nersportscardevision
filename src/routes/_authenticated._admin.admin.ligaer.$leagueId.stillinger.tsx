@@ -86,7 +86,7 @@ function AdminStandings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("divisions")
-        .select("id,name,settings,race_date,track,layout")
+        .select("id,name,league_id,settings,race_date,track,layout")
         .eq("league_id", leagueId)
         .order("race_date", { ascending: true, nullsFirst: false });
       if (error) throw error;
