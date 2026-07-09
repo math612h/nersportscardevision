@@ -501,6 +501,29 @@ function DivisionEditor({
             <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
               <Upload className="h-4 w-4" /> Importer LMU-fil
             </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={resetting || saving}
+              onClick={async () => {
+                if (!confirm(`Slet alle gemte resultater for ${division.name}? Både manuelle stillinger og uploadede race/quali-resultater fjernes. Handlingen kan ikke fortrydes.`)) return;
+                setResetting(true);
+                try {
+                  const res = await deleteResults({ data: { leagueId: division.league_id, divisionId: division.id, sessionType: "both", clearDivisionSettings: true } });
+                  setRows((prev) => prev.map((r) => ({ ...r, time_str: "", penalty_seconds: 0, penalty_points: 0, fastest_lap: false, dnf: false, dns: false })));
+                  setCompleted(false);
+                  toast.success(`Resultater slettet (${res.deleted} rækker fjernet fra database)`);
+                  onSaved();
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Kunne ikke slette resultater");
+                } finally {
+                  setResetting(false);
+                }
+              }}
+              className="gap-2 text-destructive hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" /> {resetting ? "Sletter…" : "Nulstil resultater"}
+            </Button>
             <Button onClick={save} disabled={saving} className="gap-2"><Save className="h-4 w-4" /> Gem</Button>
           </div>
         </div>
