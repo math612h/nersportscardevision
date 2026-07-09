@@ -58,11 +58,27 @@ function UploadResultsPage() {
   const { leagueId, divisionId } = Route.useParams();
   const preview = useServerFn(previewLeagueRaceResult);
   const publish = useServerFn(publishLeagueRaceResult);
+  const deleteResults = useServerFn(deleteLeagueRaceResults);
 
   const [trackLayout, setTrackLayout] = useState<{ track: string; layout: string | null } | null>(null);
   const [quali, setQuali] = useState<SessionState | null>(null);
   const [race, setRace] = useState<SessionState | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [deleting, setDeleting] = useState<null | "race" | "qualifying" | "both">(null);
+
+  const removeSaved = async (sessionType: "race" | "qualifying" | "both") => {
+    const label = sessionType === "race" ? "race-resultater" : sessionType === "qualifying" ? "quali-resultater" : "alle gemte resultater (race + quali)";
+    if (!confirm(`Slet ${label} for denne afdeling? Handlingen kan ikke fortrydes.`)) return;
+    setDeleting(sessionType);
+    try {
+      const res = await deleteResults({ data: { leagueId, divisionId, sessionType, clearDivisionSettings: sessionType !== "qualifying" } });
+      toast.success(`Slettede ${res.deleted} række${res.deleted === 1 ? "" : "r"}. Du kan nu uploade en ny fil.`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke slette resultater");
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   const { data: league } = useQuery({
     queryKey: ["league-points", leagueId],
