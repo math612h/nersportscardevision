@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, Upload, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { previewLeagueRaceResult, publishLeagueRaceResult } from "@/lib/league-results.functions";
+import { previewLeagueRaceResult, publishLeagueRaceResult, deleteLeagueRaceResults } from "@/lib/league-results.functions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
