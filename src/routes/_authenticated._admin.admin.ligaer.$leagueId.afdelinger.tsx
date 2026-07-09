@@ -81,11 +81,6 @@ function AdminDivisions() {
                     {completed && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" />Afsluttet</Badge>}
                   </CardTitle>
                   <div className="flex gap-1">
-                    <Button asChild variant="ghost" size="sm" title="Upload resultater">
-                      <Link to="/admin/ligaer/$leagueId/upload/$divisionId" params={{ leagueId, divisionId: d.id }}>
-                        <Upload className="h-4 w-4" /> Upload resultater
-                      </Link>
-                    </Button>
                     <ReplayFileButton divisionId={d.id} />
                     <EditDivisionDialog division={d} onDone={() => qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] })} />
                     <Button variant="ghost" size="sm" onClick={() => { if (confirm("Slet afdeling?")) del.mutate(d.id); }}><Trash2 className="h-4 w-4" /></Button>
