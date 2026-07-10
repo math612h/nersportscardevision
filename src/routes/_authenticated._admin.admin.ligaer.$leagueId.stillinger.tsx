@@ -128,6 +128,7 @@ function AdminStandings() {
     return Array.isArray(arr) && arr.length > 0 ? arr.map((n: any) => Number(n) || 0) : DEFAULT_POINTS_TABLE;
   })();
   const leagueFlPoints: number = Number((league as any)?.points_system?.fastest_lap_points ?? 1);
+  const minFinishPercent: number = Math.max(0, Math.min(100, Number((league as any)?.points_system?.min_finish_percent ?? 0)));
 
   return (
     <div className="space-y-4">
@@ -169,6 +170,7 @@ function AdminStandings() {
           configs={configs}
           pointsTable={leaguePoints}
           leagueFlPoints={leagueFlPoints}
+          minFinishPercent={minFinishPercent}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] });
             qc.invalidateQueries({ queryKey: ["league-results", leagueId] });
@@ -188,6 +190,7 @@ function DivisionEditor({
   configs,
   pointsTable,
   leagueFlPoints,
+  minFinishPercent,
   onSaved,
 }: {
   division: any;
@@ -196,6 +199,7 @@ function DivisionEditor({
   configs: ClassConfig[];
   pointsTable: number[];
   leagueFlPoints: number;
+  minFinishPercent: number;
   onSaved: () => void;
 }) {
   const existingRace: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
@@ -414,14 +418,39 @@ function DivisionEditor({
         if (b.effective_ms == null) return -1;
         return a.effective_ms - b.effective_ms;
       });
-      out[k].forEach((row, idx) => {
+      const maxLaps = Math.max(0, ...out[k].map((r) => r.laps ?? 0));
+      const minLaps = session === "race" && minFinishPercent > 0 && maxLaps > 0
+        ? Math.ceil(maxLaps * minFinishPercent / 100)
+        : 0;
+      let rank = 0;
+      out[k].forEach((row) => {
         const finished = row.effective_ms != null;
-        row.position = finished ? idx + 1 : 0;
-        row.points = session === "race" && finished ? pointsFor(row.position) : 0;
+        if (session === "race") {
+          const meets = minLaps === 0 || (row.laps ?? 0) >= minLaps;
+          const rankedDnf = !finished && row.dnf && !row.dns && meets && row.race_position != null;
+          if ((finished && meets) || rankedDnf) {
+            rank++;
+            row.position = rank;
+            row.points = pointsFor(rank);
+          } else {
+            row.position = 0;
+            row.points = 0;
+          }
+        } else {
+          if (finished) {
+            rank++;
+            row.position = rank;
+            row.points = 0;
+          } else {
+            row.position = 0;
+            row.points = 0;
+          }
+        }
       });
     }
     return out;
-  }, [rows, groupKeys, session]);
+  }, [rows, groupKeys, session, minFinishPercent]);
+
 
   const save = async () => {
     setSaving(true);
@@ -482,7 +511,11 @@ function DivisionEditor({
         const finished = withImportedPositions.length > 0
           ? [...withImportedPositions].sort((a, b) => a.source_position - b.source_position).concat(withoutImportedPositions.sort(sortByRaceData))
           : active.filter((r) => !r.dnf).sort(sortByRaceData);
-        finished.forEach((r, idx) => {
+        // Min-finish threshold: drivers below X% of winner's laps get 0 points and no position.
+        const maxLaps = Math.max(0, ...active.map((r: any) => r.laps ?? 0));
+        const minLaps = minFinishPercent > 0 && maxLaps > 0 ? Math.ceil(maxLaps * minFinishPercent / 100) : 0;
+        const eligible = minLaps > 0 ? finished.filter((r: any) => (r.laps ?? 0) >= minLaps) : finished;
+        eligible.forEach((r, idx) => {
           r.class_position = idx + 1;
           const base = pointsFor(idx + 1);
           const fl = r.fastest_lap ? flPoints : 0;
