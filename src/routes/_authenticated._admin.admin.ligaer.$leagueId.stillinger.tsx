@@ -170,6 +170,7 @@ function AdminStandings() {
           configs={configs}
           pointsTable={leaguePoints}
           leagueFlPoints={leagueFlPoints}
+          minFinishPercent={minFinishPercent}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] });
             qc.invalidateQueries({ queryKey: ["league-results", leagueId] });
