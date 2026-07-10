@@ -511,7 +511,11 @@ function DivisionEditor({
         const finished = withImportedPositions.length > 0
           ? [...withImportedPositions].sort((a, b) => a.source_position - b.source_position).concat(withoutImportedPositions.sort(sortByRaceData))
           : active.filter((r) => !r.dnf).sort(sortByRaceData);
-        finished.forEach((r, idx) => {
+        // Min-finish threshold: drivers below X% of winner's laps get 0 points and no position.
+        const maxLaps = Math.max(0, ...active.map((r: any) => r.laps ?? 0));
+        const minLaps = minFinishPercent > 0 && maxLaps > 0 ? Math.ceil(maxLaps * minFinishPercent / 100) : 0;
+        const eligible = minLaps > 0 ? finished.filter((r: any) => (r.laps ?? 0) >= minLaps) : finished;
+        eligible.forEach((r, idx) => {
           r.class_position = idx + 1;
           const base = pointsFor(idx + 1);
           const fl = r.fastest_lap ? flPoints : 0;
