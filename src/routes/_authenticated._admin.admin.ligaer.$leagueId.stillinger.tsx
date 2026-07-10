@@ -418,14 +418,39 @@ function DivisionEditor({
         if (b.effective_ms == null) return -1;
         return a.effective_ms - b.effective_ms;
       });
-      out[k].forEach((row, idx) => {
+      const maxLaps = Math.max(0, ...out[k].map((r) => r.laps ?? 0));
+      const minLaps = session === "race" && minFinishPercent > 0 && maxLaps > 0
+        ? Math.ceil(maxLaps * minFinishPercent / 100)
+        : 0;
+      let rank = 0;
+      out[k].forEach((row) => {
         const finished = row.effective_ms != null;
-        row.position = finished ? idx + 1 : 0;
-        row.points = session === "race" && finished ? pointsFor(row.position) : 0;
+        if (session === "race") {
+          const meets = minLaps === 0 || (row.laps ?? 0) >= minLaps;
+          const rankedDnf = !finished && row.dnf && !row.dns && meets && row.race_position != null;
+          if ((finished && meets) || rankedDnf) {
+            rank++;
+            row.position = rank;
+            row.points = pointsFor(rank);
+          } else {
+            row.position = 0;
+            row.points = 0;
+          }
+        } else {
+          if (finished) {
+            rank++;
+            row.position = rank;
+            row.points = 0;
+          } else {
+            row.position = 0;
+            row.points = 0;
+          }
+        }
       });
     }
     return out;
-  }, [rows, groupKeys, session]);
+  }, [rows, groupKeys, session, minFinishPercent]);
+
 
   const save = async () => {
     setSaving(true);
