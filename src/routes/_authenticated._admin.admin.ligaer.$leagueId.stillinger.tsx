@@ -190,6 +190,7 @@ function DivisionEditor({
   configs,
   pointsTable,
   leagueFlPoints,
+  minFinishPercent,
   onSaved,
 }: {
   division: any;
@@ -198,6 +199,7 @@ function DivisionEditor({
   configs: ClassConfig[];
   pointsTable: number[];
   leagueFlPoints: number;
+  minFinishPercent: number;
   onSaved: () => void;
 }) {
   const existingRace: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
