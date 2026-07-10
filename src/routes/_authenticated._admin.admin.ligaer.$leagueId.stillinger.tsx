@@ -128,6 +128,7 @@ function AdminStandings() {
     return Array.isArray(arr) && arr.length > 0 ? arr.map((n: any) => Number(n) || 0) : DEFAULT_POINTS_TABLE;
   })();
   const leagueFlPoints: number = Number((league as any)?.points_system?.fastest_lap_points ?? 1);
+  const minFinishPercent: number = Math.max(0, Math.min(100, Number((league as any)?.points_system?.min_finish_percent ?? 0)));
 
   return (
     <div className="space-y-4">
