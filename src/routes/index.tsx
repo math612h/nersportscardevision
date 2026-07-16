@@ -505,14 +505,11 @@ function NewsPostsSection() {
     },
   });
 
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
   if (!posts || posts.length === 0) return null;
 
   return (
     <section className="space-y-4">
       {posts.map((post) => {
-        const isExpanded = expanded[post.id] ?? false;
         return (
           <article
             key={post.id}
@@ -524,25 +521,16 @@ function NewsPostsSection() {
               {post.body && (
                 <>
                   <div
-                    className={`prose-news text-sm text-foreground/90 ${isExpanded ? "" : "line-clamp-3"}`}
+                    className="prose-news text-sm text-foreground/90 line-clamp-3"
                     dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(post.body) }}
                   />
-                  <button
-                    onClick={() =>
-                      setExpanded((prev) => ({ ...prev, [post.id]: !prev[post.id] }))
-                    }
+                  <Link
+                    to="/nyheder"
+                    hash={`post-${post.id}`}
                     className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                   >
-                    {isExpanded ? (
-                      <>
-                        <ChevronUp className="h-3.5 w-3.5" /> Vis mindre
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-3.5 w-3.5" /> Se mere...
-                      </>
-                    )}
-                  </button>
+                    <ChevronDown className="h-3.5 w-3.5" /> Se mere...
+                  </Link>
                 </>
               )}
             </div>

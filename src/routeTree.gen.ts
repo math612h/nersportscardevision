@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivatlivspolitikRouteImport } from './routes/privatlivspolitik'
+import { Route as NyhederRouteImport } from './routes/nyheder'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as BrugereRouteImport } from './routes/brugere'
@@ -93,6 +94,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
 const PrivatlivspolitikRoute = PrivatlivspolitikRouteImport.update({
   id: '/privatlivspolitik',
   path: '/privatlivspolitik',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NyhederRoute = NyhederRouteImport.update({
+  id: '/nyheder',
+  path: '/nyheder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -512,6 +518,7 @@ export interface FileRoutesByFullPath {
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/nyheder': typeof NyhederRoute
   '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/arkiv': typeof AuthenticatedArkivRoute
@@ -587,6 +594,7 @@ export interface FileRoutesByTo {
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/nyheder': typeof NyhederRoute
   '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/arkiv': typeof AuthenticatedArkivRoute
@@ -662,6 +670,7 @@ export interface FileRoutesById {
   '/brugere': typeof BrugereRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
+  '/nyheder': typeof NyhederRoute
   '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
@@ -740,6 +749,7 @@ export interface FileRouteTypes {
     | '/brugere'
     | '/leaderboard'
     | '/login'
+    | '/nyheder'
     | '/privatlivspolitik'
     | '/sitemap.xml'
     | '/arkiv'
@@ -815,6 +825,7 @@ export interface FileRouteTypes {
     | '/brugere'
     | '/leaderboard'
     | '/login'
+    | '/nyheder'
     | '/privatlivspolitik'
     | '/sitemap.xml'
     | '/arkiv'
@@ -889,6 +900,7 @@ export interface FileRouteTypes {
     | '/brugere'
     | '/leaderboard'
     | '/login'
+    | '/nyheder'
     | '/privatlivspolitik'
     | '/sitemap.xml'
     | '/_authenticated/_admin'
@@ -967,6 +979,7 @@ export interface RootRouteChildren {
   BrugereRoute: typeof BrugereRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
+  NyhederRoute: typeof NyhederRoute
   PrivatlivspolitikRoute: typeof PrivatlivspolitikRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
@@ -1011,6 +1024,13 @@ declare module '@tanstack/react-router' {
       path: '/privatlivspolitik'
       fullPath: '/privatlivspolitik'
       preLoaderRoute: typeof PrivatlivspolitikRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nyheder': {
+      id: '/nyheder'
+      path: '/nyheder'
+      fullPath: '/nyheder'
+      preLoaderRoute: typeof NyhederRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -1696,6 +1716,7 @@ const rootRouteChildren: RootRouteChildren = {
   BrugereRoute: BrugereRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
+  NyhederRoute: NyhederRoute,
   PrivatlivspolitikRoute: PrivatlivspolitikRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
