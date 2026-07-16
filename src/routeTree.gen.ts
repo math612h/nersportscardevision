@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UgensOverhalingRouteImport } from './routes/ugens-overhaling'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivatlivspolitikRouteImport } from './routes/privatlivspolitik'
 import { Route as NyhederRouteImport } from './routes/nyheder'
@@ -86,6 +87,11 @@ import { Route as AuthenticatedAdminAdminLigaerLeagueIdReglerRouteImport } from 
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.entries'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.afdelinger'
 
+const UgensOverhalingRoute = UgensOverhalingRouteImport.update({
+  id: '/ugens-overhaling',
+  path: '/ugens-overhaling',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -521,6 +527,7 @@ export interface FileRoutesByFullPath {
   '/nyheder': typeof NyhederRoute
   '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/ugens-overhaling': typeof UgensOverhalingRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
@@ -597,6 +604,7 @@ export interface FileRoutesByTo {
   '/nyheder': typeof NyhederRoute
   '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/ugens-overhaling': typeof UgensOverhalingRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
@@ -673,6 +681,7 @@ export interface FileRoutesById {
   '/nyheder': typeof NyhederRoute
   '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/ugens-overhaling': typeof UgensOverhalingRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/arkiv': typeof AuthenticatedArkivRoute
   '/_authenticated/beskeder': typeof AuthenticatedBeskederRouteWithChildren
@@ -752,6 +761,7 @@ export interface FileRouteTypes {
     | '/nyheder'
     | '/privatlivspolitik'
     | '/sitemap.xml'
+    | '/ugens-overhaling'
     | '/arkiv'
     | '/beskeder'
     | '/mine-protests'
@@ -828,6 +838,7 @@ export interface FileRouteTypes {
     | '/nyheder'
     | '/privatlivspolitik'
     | '/sitemap.xml'
+    | '/ugens-overhaling'
     | '/arkiv'
     | '/beskeder'
     | '/mine-protests'
@@ -903,6 +914,7 @@ export interface FileRouteTypes {
     | '/nyheder'
     | '/privatlivspolitik'
     | '/sitemap.xml'
+    | '/ugens-overhaling'
     | '/_authenticated/_admin'
     | '/_authenticated/arkiv'
     | '/_authenticated/beskeder'
@@ -982,6 +994,7 @@ export interface RootRouteChildren {
   NyhederRoute: typeof NyhederRoute
   PrivatlivspolitikRoute: typeof PrivatlivspolitikRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  UgensOverhalingRoute: typeof UgensOverhalingRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
   LmuLigaRoute: typeof LmuLigaRoute
@@ -1012,6 +1025,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ugens-overhaling': {
+      id: '/ugens-overhaling'
+      path: '/ugens-overhaling'
+      fullPath: '/ugens-overhaling'
+      preLoaderRoute: typeof UgensOverhalingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -1719,6 +1739,7 @@ const rootRouteChildren: RootRouteChildren = {
   NyhederRoute: NyhederRoute,
   PrivatlivspolitikRoute: PrivatlivspolitikRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  UgensOverhalingRoute: UgensOverhalingRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
   LmuLigaRoute: LmuLigaRoute,
