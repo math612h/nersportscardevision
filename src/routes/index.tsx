@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users } from "lucide-react";
+import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -21,6 +21,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { AddressConsentBanner } from "@/components/AddressConsentBanner";
 import { UserAvatarOnly } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
+import { getCurrentWeekStartISO, shiftWeek, weekLabel, youtubeEmbedUrl } from "@/lib/overtaking-utils";
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
 const PAGE_DESC =
@@ -225,6 +226,11 @@ function NewsHome() {
               <Flag className="h-4 w-4" /> {t("home.leagues")}
             </Link>
           </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/ugens-overhaling">
+              <Video className="h-4 w-4" /> Ugens Overhaling
+            </Link>
+          </Button>
           {user && (
             <Button asChild variant="outline" className="relative gap-2">
               <Link to="/mine-protests">
@@ -264,6 +270,8 @@ function NewsHome() {
       </header>
 
       <NewsPostsSection />
+
+      <OvertakingWinnerSection />
 
       {isLoading && (
         <div className="h-96 animate-pulse rounded-xl border border-border bg-card/50" />
@@ -594,5 +602,101 @@ function ProfileCompletionGate() {
     </section>
   );
 }
+
+function OvertakingWinnerSection() {
+  // Sidste afsluttede uge = for én uge siden (mandag).
+  const lastWeek = shiftWeek(getCurrentWeekStartISO(), -1);
+
+  const { data: clips = [] } = useQuery({
+    queryKey: ["home-overtaking-clips", lastWeek],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("overtaking_clips")
+        .select("id,user_id,youtube_id,title,week_start")
+        .eq("week_start", lastWeek);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; user_id: string; youtube_id: string; title: string | null; week_start: string }>;
+    },
+  });
+
+  const clipIds = clips.map((c) => c.id);
+
+  const { data: votes = [] } = useQuery({
+    queryKey: ["home-overtaking-votes", lastWeek, clipIds.join(",")],
+    enabled: clipIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("overtaking_votes").select("clip_id").in("clip_id", clipIds);
+      if (error) throw error;
+      return (data ?? []) as Array<{ clip_id: string }>;
+    },
+  });
+
+  const winner = (() => {
+    if (clips.length === 0) return null;
+    const counts = new Map<string, number>();
+    votes.forEach((v) => counts.set(v.clip_id, (counts.get(v.clip_id) ?? 0) + 1));
+    let best: (typeof clips)[number] | null = null;
+    let bestCount = 0;
+    for (const c of clips) {
+      const n = counts.get(c.id) ?? 0;
+      if (n > bestCount) { best = c; bestCount = n; }
+    }
+    return best && bestCount > 0 ? { clip: best, votes: bestCount } : null;
+  })();
+
+  const { data: profile } = useQuery({
+    queryKey: ["home-overtaking-winner-profile", winner?.clip.user_id],
+    enabled: !!winner,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles").select("id,display_name,lmu_name").eq("id", winner!.clip.user_id).maybeSingle();
+      if (error) throw error;
+      return data as { id: string; display_name: string | null; lmu_name: string | null } | null;
+    },
+  });
+
+  if (!winner) return null;
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-2 text-primary">
+        <div className="flex items-center gap-2">
+          <Video className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Ugens Overhaling</h2>
+        </div>
+        <Link
+          to="/ugens-overhaling"
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          Se alle klip →
+        </Link>
+      </div>
+      <article className="overflow-hidden rounded-xl border border-amber-400/40 bg-card">
+        <div className="aspect-video w-full bg-muted">
+          <iframe
+            src={youtubeEmbedUrl(winner.clip.youtube_id)}
+            title={winner.clip.title ?? "Ugens Overhaling"}
+            className="h-full w-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            loading="lazy"
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+          <div className="flex items-center gap-3">
+            <UserAvatarOnly userId={winner.clip.user_id} fallbackName={profile?.display_name ?? "Kører"} size="md" />
+            <div>
+              <p className="text-sm font-semibold">{profile?.display_name ?? profile?.lmu_name ?? "Kører"}</p>
+              <p className="text-xs text-muted-foreground">{weekLabel(lastWeek)}</p>
+            </div>
+          </div>
+          <Badge className="gap-1"><Trophy className="h-3 w-3" /> {winner.votes} stemmer</Badge>
+        </div>
+      </article>
+    </section>
+  );
+}
+
 
 

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UgensOverhalingRouteImport } from './routes/ugens-overhaling'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivatlivspolitikRouteImport } from './routes/privatlivspolitik'
 import { Route as NyhederRouteImport } from './routes/nyheder'
@@ -65,6 +66,7 @@ import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminPartnerfordeleRouteImport } from './routes/_authenticated._admin.admin.partnerfordele'
+import { Route as AuthenticatedAdminAdminOverhalingerRouteImport } from './routes/_authenticated._admin.admin.overhalinger'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
 import { Route as AuthenticatedAdminAdminGaesterRouteImport } from './routes/_authenticated._admin.admin.gaester'
@@ -86,6 +88,11 @@ import { Route as AuthenticatedAdminAdminLigaerLeagueIdReglerRouteImport } from 
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.entries'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.afdelinger'
 
+const UgensOverhalingRoute = UgensOverhalingRouteImport.update({
+  id: '/ugens-overhaling',
+  path: '/ugens-overhaling',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -391,6 +398,12 @@ const AuthenticatedAdminAdminPartnerfordeleRoute =
     path: '/admin/partnerfordele',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminOverhalingerRoute =
+  AuthenticatedAdminAdminOverhalingerRouteImport.update({
+    id: '/admin/overhalinger',
+    path: '/admin/overhalinger',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminNyhedsbrevRoute =
   AuthenticatedAdminAdminNyhedsbrevRouteImport.update({
     id: '/admin/nyhedsbrev',
@@ -521,6 +534,7 @@ export interface FileRoutesByFullPath {
   '/nyheder': typeof NyhederRoute
   '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/ugens-overhaling': typeof UgensOverhalingRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
@@ -556,6 +570,7 @@ export interface FileRoutesByFullPath {
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
@@ -597,6 +612,7 @@ export interface FileRoutesByTo {
   '/nyheder': typeof NyhederRoute
   '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/ugens-overhaling': typeof UgensOverhalingRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
@@ -631,6 +647,7 @@ export interface FileRoutesByTo {
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
@@ -673,6 +690,7 @@ export interface FileRoutesById {
   '/nyheder': typeof NyhederRoute
   '/privatlivspolitik': typeof PrivatlivspolitikRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/ugens-overhaling': typeof UgensOverhalingRoute
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/arkiv': typeof AuthenticatedArkivRoute
   '/_authenticated/beskeder': typeof AuthenticatedBeskederRouteWithChildren
@@ -709,6 +727,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/_authenticated/_admin/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/_authenticated/_admin/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
@@ -752,6 +771,7 @@ export interface FileRouteTypes {
     | '/nyheder'
     | '/privatlivspolitik'
     | '/sitemap.xml'
+    | '/ugens-overhaling'
     | '/arkiv'
     | '/beskeder'
     | '/mine-protests'
@@ -787,6 +807,7 @@ export interface FileRouteTypes {
     | '/admin/gaester'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
+    | '/admin/overhalinger'
     | '/admin/partnerfordele'
     | '/admin/protests'
     | '/admin/storage'
@@ -828,6 +849,7 @@ export interface FileRouteTypes {
     | '/nyheder'
     | '/privatlivspolitik'
     | '/sitemap.xml'
+    | '/ugens-overhaling'
     | '/arkiv'
     | '/beskeder'
     | '/mine-protests'
@@ -862,6 +884,7 @@ export interface FileRouteTypes {
     | '/admin/gaester'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
+    | '/admin/overhalinger'
     | '/admin/partnerfordele'
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
@@ -903,6 +926,7 @@ export interface FileRouteTypes {
     | '/nyheder'
     | '/privatlivspolitik'
     | '/sitemap.xml'
+    | '/ugens-overhaling'
     | '/_authenticated/_admin'
     | '/_authenticated/arkiv'
     | '/_authenticated/beskeder'
@@ -939,6 +963,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/gaester'
     | '/_authenticated/_admin/admin/ligaer'
     | '/_authenticated/_admin/admin/nyhedsbrev'
+    | '/_authenticated/_admin/admin/overhalinger'
     | '/_authenticated/_admin/admin/partnerfordele'
     | '/_authenticated/_admin/admin/protests'
     | '/_authenticated/_admin/admin/storage'
@@ -982,6 +1007,7 @@ export interface RootRouteChildren {
   NyhederRoute: typeof NyhederRoute
   PrivatlivspolitikRoute: typeof PrivatlivspolitikRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  UgensOverhalingRoute: typeof UgensOverhalingRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LigaerLeagueIdRoute: typeof LigaerLeagueIdRouteWithChildren
   LmuLigaRoute: typeof LmuLigaRoute
@@ -1012,6 +1038,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ugens-overhaling': {
+      id: '/ugens-overhaling'
+      path: '/ugens-overhaling'
+      fullPath: '/ugens-overhaling'
+      preLoaderRoute: typeof UgensOverhalingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -1404,6 +1437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminPartnerfordeleRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/overhalinger': {
+      id: '/_authenticated/_admin/admin/overhalinger'
+      path: '/admin/overhalinger'
+      fullPath: '/admin/overhalinger'
+      preLoaderRoute: typeof AuthenticatedAdminAdminOverhalingerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/nyhedsbrev': {
       id: '/_authenticated/_admin/admin/nyhedsbrev'
       path: '/admin/nyhedsbrev'
@@ -1600,6 +1640,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminGaesterRoute: typeof AuthenticatedAdminAdminGaesterRoute
   AuthenticatedAdminAdminLigaerRoute: typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   AuthenticatedAdminAdminNyhedsbrevRoute: typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  AuthenticatedAdminAdminOverhalingerRoute: typeof AuthenticatedAdminAdminOverhalingerRoute
   AuthenticatedAdminAdminPartnerfordeleRoute: typeof AuthenticatedAdminAdminPartnerfordeleRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
@@ -1623,6 +1664,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminAdminLigaerRouteWithChildren,
   AuthenticatedAdminAdminNyhedsbrevRoute:
     AuthenticatedAdminAdminNyhedsbrevRoute,
+  AuthenticatedAdminAdminOverhalingerRoute:
+    AuthenticatedAdminAdminOverhalingerRoute,
   AuthenticatedAdminAdminPartnerfordeleRoute:
     AuthenticatedAdminAdminPartnerfordeleRoute,
   AuthenticatedAdminAdminProtestsRoute:
@@ -1719,6 +1762,7 @@ const rootRouteChildren: RootRouteChildren = {
   NyhederRoute: NyhederRoute,
   PrivatlivspolitikRoute: PrivatlivspolitikRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  UgensOverhalingRoute: UgensOverhalingRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LigaerLeagueIdRoute: LigaerLeagueIdRouteWithChildren,
   LmuLigaRoute: LmuLigaRoute,
@@ -1751,13 +1795,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
