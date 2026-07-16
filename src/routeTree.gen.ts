@@ -52,6 +52,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
+import { Route as ApiPublicHooksPostOvertakingWinnerRouteImport } from './routes/api/public/hooks/post-overtaking-winner'
 import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
 import { Route as ApiPublicDiscordLoginRouteImport } from './routes/api/public/discord.login'
 import { Route as ApiPublicDiscordInteractionsRouteImport } from './routes/api/public/discord.interactions'
@@ -315,6 +316,12 @@ const LigaerLeagueIdAfdelingDivisionIdRoute =
     id: '/afdeling/$divisionId',
     path: '/afdeling/$divisionId',
     getParentRoute: () => LigaerLeagueIdRoute,
+  } as any)
+const ApiPublicHooksPostOvertakingWinnerRoute =
+  ApiPublicHooksPostOvertakingWinnerRouteImport.update({
+    id: '/api/public/hooks/post-overtaking-winner',
+    path: '/api/public/hooks/post-overtaking-winner',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicDownloadCompanionRoute =
   ApiPublicDownloadCompanionRouteImport.update({
@@ -585,6 +592,7 @@ export interface FileRoutesByFullPath {
   '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
+  '/api/public/hooks/post-overtaking-winner': typeof ApiPublicHooksPostOvertakingWinnerRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -661,6 +669,7 @@ export interface FileRoutesByTo {
   '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
+  '/api/public/hooks/post-overtaking-winner': typeof ApiPublicHooksPostOvertakingWinnerRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -742,6 +751,7 @@ export interface FileRoutesById {
   '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
   '/api/public/download/companion': typeof ApiPublicDownloadCompanionRoute
+  '/api/public/hooks/post-overtaking-winner': typeof ApiPublicHooksPostOvertakingWinnerRoute
   '/ligaer/$leagueId/afdeling/$divisionId': typeof LigaerLeagueIdAfdelingDivisionIdRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -822,6 +832,7 @@ export interface FileRouteTypes {
     | '/api/public/discord/interactions'
     | '/api/public/discord/login'
     | '/api/public/download/companion'
+    | '/api/public/hooks/post-overtaking-winner'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -898,6 +909,7 @@ export interface FileRouteTypes {
     | '/api/public/discord/interactions'
     | '/api/public/discord/login'
     | '/api/public/download/companion'
+    | '/api/public/hooks/post-overtaking-winner'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -978,6 +990,7 @@ export interface FileRouteTypes {
     | '/api/public/discord/interactions'
     | '/api/public/discord/login'
     | '/api/public/download/companion'
+    | '/api/public/hooks/post-overtaking-winner'
     | '/ligaer/$leagueId/afdeling/$divisionId'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1029,6 +1042,7 @@ export interface RootRouteChildren {
   ApiPublicDiscordInteractionsRoute: typeof ApiPublicDiscordInteractionsRoute
   ApiPublicDiscordLoginRoute: typeof ApiPublicDiscordLoginRoute
   ApiPublicDownloadCompanionRoute: typeof ApiPublicDownloadCompanionRoute
+  ApiPublicHooksPostOvertakingWinnerRoute: typeof ApiPublicHooksPostOvertakingWinnerRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -1338,6 +1352,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ligaer/$leagueId/afdeling/$divisionId'
       preLoaderRoute: typeof LigaerLeagueIdAfdelingDivisionIdRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/api/public/hooks/post-overtaking-winner': {
+      id: '/api/public/hooks/post-overtaking-winner'
+      path: '/api/public/hooks/post-overtaking-winner'
+      fullPath: '/api/public/hooks/post-overtaking-winner'
+      preLoaderRoute: typeof ApiPublicHooksPostOvertakingWinnerRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/download/companion': {
       id: '/api/public/download/companion'
@@ -1786,6 +1807,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicDiscordInteractionsRoute: ApiPublicDiscordInteractionsRoute,
   ApiPublicDiscordLoginRoute: ApiPublicDiscordLoginRoute,
   ApiPublicDownloadCompanionRoute: ApiPublicDownloadCompanionRoute,
+  ApiPublicHooksPostOvertakingWinnerRoute:
+    ApiPublicHooksPostOvertakingWinnerRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
