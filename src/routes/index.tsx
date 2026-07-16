@@ -21,6 +21,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { AddressConsentBanner } from "@/components/AddressConsentBanner";
 import { UserAvatarOnly } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
+import { getCurrentWeekStartISO, shiftWeek, weekLabel, youtubeEmbedUrl } from "@/lib/overtaking-utils";
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
 const PAGE_DESC =
