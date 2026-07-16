@@ -270,6 +270,8 @@ function NewsHome() {
 
       <NewsPostsSection />
 
+      <OvertakingWinnerSection />
+
       {isLoading && (
         <div className="h-96 animate-pulse rounded-xl border border-border bg-card/50" />
       )}
