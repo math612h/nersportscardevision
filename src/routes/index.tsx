@@ -605,7 +605,6 @@ function ProfileCompletionGate() {
 
 function OvertakingWinnerSection() {
   // Sidste afsluttede uge = for én uge siden (mandag).
-  const { getCurrentWeekStartISO, shiftWeek, weekLabel, youtubeEmbedUrl } = require("@/lib/overtaking-utils") as typeof import("@/lib/overtaking-utils");
   const lastWeek = shiftWeek(getCurrentWeekStartISO(), -1);
 
   const { data: clips = [] } = useQuery({
