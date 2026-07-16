@@ -1303,6 +1303,71 @@ export type Database = {
         }
         Relationships: []
       }
+      overtaking_clips: {
+        Row: {
+          created_at: string
+          id: string
+          title: string | null
+          updated_at: string
+          user_id: string
+          week_start: string
+          youtube_id: string
+          youtube_url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id: string
+          week_start?: string
+          youtube_id: string
+          youtube_url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string | null
+          updated_at?: string
+          user_id?: string
+          week_start?: string
+          youtube_id?: string
+          youtube_url?: string
+        }
+        Relationships: []
+      }
+      overtaking_votes: {
+        Row: {
+          clip_id: string
+          created_at: string
+          id: string
+          user_id: string
+          week_start: string
+        }
+        Insert: {
+          clip_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+          week_start: string
+        }
+        Update: {
+          clip_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overtaking_votes_clip_id_fkey"
+            columns: ["clip_id"]
+            isOneToOne: false
+            referencedRelation: "overtaking_clips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partner_benefits: {
         Row: {
           active: boolean
@@ -2305,6 +2370,7 @@ export type Database = {
           track: string
         }[]
       }
+      overtaking_current_week_start: { Args: never; Returns: string }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
