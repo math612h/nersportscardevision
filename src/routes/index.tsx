@@ -225,6 +225,11 @@ function NewsHome() {
               <Flag className="h-4 w-4" /> {t("home.leagues")}
             </Link>
           </Button>
+          <Button asChild variant="outline" className="gap-2">
+            <Link to="/ugens-overhaling">
+              <Video className="h-4 w-4" /> Ugens Overhaling
+            </Link>
+          </Button>
           {user && (
             <Button asChild variant="outline" className="relative gap-2">
               <Link to="/mine-protests">
