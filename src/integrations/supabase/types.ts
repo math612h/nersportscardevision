@@ -1336,6 +1336,32 @@ export type Database = {
         }
         Relationships: []
       }
+      overtaking_discord_posts: {
+        Row: {
+          clip_id: string
+          posted_at: string
+          week_start: string
+        }
+        Insert: {
+          clip_id: string
+          posted_at?: string
+          week_start: string
+        }
+        Update: {
+          clip_id?: string
+          posted_at?: string
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overtaking_discord_posts_clip_id_fkey"
+            columns: ["clip_id"]
+            isOneToOne: false
+            referencedRelation: "overtaking_clips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       overtaking_votes: {
         Row: {
           clip_id: string
