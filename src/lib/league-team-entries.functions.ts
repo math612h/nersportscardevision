@@ -132,18 +132,36 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       .eq("league_team_entry_id", entryId)
       .not("user_id", "in", `(${data.userIds.map((u) => `"${u}"`).join(",")})`);
 
-    // Upsert lineup rows
+    // Upsert lineup rows — team owner is auto-accepted so they don't have to re-confirm.
+    const ownerId = (team as any).owner_id as string;
     const lineupRows = data.userIds.map((uid) => ({
       league_team_entry_id: entryId,
       league_id: data.leagueId,
       user_id: uid,
-      status: "invited" as const,
+      status: (uid === ownerId ? "accepted" : "invited") as "accepted" | "invited",
+      responded_at: uid === ownerId ? new Date().toISOString() : null,
     }));
     const { data: upserted, error: upErr } = await (supabaseAdmin as any)
       .from("league_team_lineup")
       .upsert(lineupRows, { onConflict: "league_team_entry_id,user_id", ignoreDuplicates: false })
       .select("id, user_id, status, discord_message_id");
     if (upErr) throw new Error(upErr.message);
+
+    // If all lineup rows are now accepted (e.g. solo owner + auto-accept covers everyone),
+    // promote the entry to confirmed immediately.
+    try {
+      const { data: allRows } = await (supabaseAdmin as any)
+        .from("league_team_lineup")
+        .select("status")
+        .eq("league_team_entry_id", entryId);
+      const rows = (allRows ?? []) as Array<{ status: string }>;
+      if (rows.length >= 2 && rows.every((r) => r.status === "accepted")) {
+        await (supabaseAdmin as any)
+          .from("league_team_entries")
+          .update({ status: "confirmed" })
+          .eq("id", entryId);
+      }
+    } catch (_) {}
 
     // Send Discord DM to each invited user (best-effort)
     try {
