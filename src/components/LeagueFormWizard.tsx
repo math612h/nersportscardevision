@@ -44,6 +44,7 @@ import { Badge } from "@/components/ui/badge";
 import { PointsSystemEditor, type PointsSystem } from "@/components/PointsSystemEditor";
 import { sendLeagueAnnouncement, previewLeagueAnnouncement } from "@/lib/league-announce.functions";
 import { buildLeagueAnnouncementEmail } from "@/lib/league-announce-email.functions";
+import { rebalanceLeagueWaitlist } from "@/lib/league-admin-entries.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -423,6 +424,7 @@ export function LeagueFormWizard({
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const rebalanceWaitlistFn = useServerFn(rebalanceLeagueWaitlist);
 
   // ---- state ----
   const initial = league ?? {};
@@ -597,6 +599,10 @@ export function LeagueFormWizard({
         setSubmitting(false);
         return toast.error(error.message);
       }
+      // Re-balance the waitlist against the (possibly new) class capacities
+      try {
+        await rebalanceWaitlistFn({ data: { leagueId: initial.id } });
+      } catch (_) { /* non-fatal */ }
     }
 
     setSubmitting(false);

@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { setProfileApproval } from "@/lib/leagues.functions";
 import { splitClassIntoProAm } from "@/lib/league-split.functions";
-import { searchUsersForAdmin, adminAddEntryToLeague } from "@/lib/league-admin-entries.functions";
+import { searchUsersForAdmin, adminAddEntryToLeague, adminPromoteWaitlistEntry } from "@/lib/league-admin-entries.functions";
 import { adminDeleteEntryWithRoleCleanup } from "@/lib/discord-sync.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
 import { CARS_BY_CLASS } from "@/lib/lmu-cars";
@@ -76,6 +76,16 @@ function AdminEntries() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const promoteFn = useServerFn(adminPromoteWaitlistEntry);
+  const promoteMut = useMutation({
+    mutationFn: async (id: string) => await promoteFn({ data: { entryId: id } }),
+    onSuccess: () => {
+      toast.success("Rykket op fra ventelisten");
+      qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const setApproval = useServerFn(setProfileApproval);
   const approvalMut = useMutation({
     mutationFn: async (vars: { targetUserId: string; approved: boolean }) =>
@@ -90,6 +100,10 @@ function AdminEntries() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const fmtDate = (v: string | null | undefined) => {
+    if (!v) return "";
+    try { return new Date(v).toLocaleDateString("da-DK", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }); } catch { return ""; }
+  };
 
 
 
@@ -128,63 +142,91 @@ function AdminEntries() {
                   <p className="text-sm font-medium">{cls} <span className="text-xs text-muted-foreground">({totalInClass})</span></p>
                   {canSplit && <SplitClassButton leagueId={leagueId} carClass={cls} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />}
                 </div>
-                {Object.entries(cats).map(([cat, list]) => (
-                  <div key={cat} className="ml-2">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{cat}</p>
-                    <ul className="space-y-1">
-                      {list.map((e) => (
-                        <li key={e.id} className={`flex items-center justify-between rounded border px-3 py-1.5 text-sm ${e.profileApproved ? "border-emerald-500/40 bg-emerald-500/5" : "border-border"}`}>
-                          <span className="flex items-center gap-2 min-w-0">
-                            {e.car_number != null && (
-                              <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-muted px-1.5 font-mono text-xs">#{e.car_number}</span>
-                            )}
-                            <span className="truncate">{e.driver_name}</span>
-                            {e.profileApproved ? (
-                              <Badge variant="secondary" className="gap-1 text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
-                                <CheckCircle2 className="h-3 w-3" />Godkendt profil
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">
-                                <Clock className="h-3 w-3" />Afventer
-                              </Badge>
-                            )}
-                          </span>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <Button
-                              variant={e.profileApproved ? "ghost" : "outline"}
-                              size="sm"
-                              className={`h-7 gap-1 text-xs ${e.profileApproved ? "text-emerald-600 dark:text-emerald-400" : ""}`}
-                              disabled={approvalMut.isPending}
-                              onClick={() => approvalMut.mutate({ targetUserId: e.user_id, approved: !e.profileApproved })}
-                              title={e.profileApproved ? "Fjern godkendelse" : "Godkend profil"}
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              {e.profileApproved ? "Godkendt" : "Godkend"}
-                            </Button>
-                            <MoveEntryDialog entry={e} leagueId={leagueId} allEntries={data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" title="Fjern fra ligaen"><Trash2 className="h-3.5 w-3.5" /></Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Fjern {e.driver_name} fra ligaen?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Tilmeldingen slettes. Hvis køreren stod på griddet, rykker den første på ventelisten automatisk op.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Annullér</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => del.mutate(e.id)}>Fjern</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                {Object.entries(cats).map(([cat, list]) => {
+                  const sorted = [...list].sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
+                  const grid = sorted.filter((x) => !x.waitlist);
+                  const wait = sorted.filter((x) => x.waitlist);
+                  const renderRow = (e: any, opts: { waitlist: boolean; pos?: number }) => (
+                    <li key={e.id} className={`flex items-center justify-between rounded border px-3 py-1.5 text-sm ${opts.waitlist ? "border-amber-500/40 bg-amber-500/5" : e.profileApproved ? "border-emerald-500/40 bg-emerald-500/5" : "border-border"}`}>
+                      <span className="flex items-center gap-2 min-w-0">
+                        {opts.waitlist && opts.pos != null && (
+                          <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-amber-500/20 px-1.5 font-mono text-xs text-amber-700 dark:text-amber-300" title="Placering på ventelisten">V{opts.pos}</span>
+                        )}
+                        {!opts.waitlist && e.car_number != null && (
+                          <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-muted px-1.5 font-mono text-xs">#{e.car_number}</span>
+                        )}
+                        <span className="truncate">{e.driver_name}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0" title="Tilmeldt">{fmtDate(e.created_at)}</span>
+                        {e.profileApproved ? (
+                          <Badge variant="secondary" className="gap-1 text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+                            <CheckCircle2 className="h-3 w-3" />Godkendt profil
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">
+                            <Clock className="h-3 w-3" />Afventer
+                          </Badge>
+                        )}
+                      </span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {opts.waitlist && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1 text-xs"
+                            disabled={promoteMut.isPending}
+                            onClick={() => promoteMut.mutate(e.id)}
+                            title="Ryk op fra ventelisten"
+                          >
+                            <UserPlus className="h-3.5 w-3.5" /> Ryk op
+                          </Button>
+                        )}
+                        <Button
+                          variant={e.profileApproved ? "ghost" : "outline"}
+                          size="sm"
+                          className={`h-7 gap-1 text-xs ${e.profileApproved ? "text-emerald-600 dark:text-emerald-400" : ""}`}
+                          disabled={approvalMut.isPending}
+                          onClick={() => approvalMut.mutate({ targetUserId: e.user_id, approved: !e.profileApproved })}
+                          title={e.profileApproved ? "Fjern godkendelse" : "Godkend profil"}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          {e.profileApproved ? "Godkendt" : "Godkend"}
+                        </Button>
+                        <MoveEntryDialog entry={e} leagueId={leagueId} allEntries={data ?? []} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="sm" title="Fjern fra ligaen"><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Fjern {e.driver_name} fra ligaen?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Tilmeldingen slettes. Hvis køreren stod på griddet, rykker den første på ventelisten automatisk op.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Annullér</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => del.mutate(e.id)}>Fjern</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </li>
+                  );
+                  return (
+                    <div key={cat} className="ml-2">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">{cat}</p>
+                      {grid.length > 0 && (
+                        <ul className="space-y-1">{grid.map((e) => renderRow(e, { waitlist: false }))}</ul>
+                      )}
+                      {wait.length > 0 && (
+                        <>
+                          <p className="mt-2 text-[10px] uppercase tracking-wide text-amber-600 dark:text-amber-400">Venteliste ({wait.length})</p>
+                          <ul className="space-y-1">{wait.map((e, i) => renderRow(e, { waitlist: true, pos: i + 1 }))}</ul>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               );
             })}
