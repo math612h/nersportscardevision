@@ -76,6 +76,16 @@ function AdminEntries() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const promoteFn = useServerFn(adminPromoteWaitlistEntry);
+  const promoteMut = useMutation({
+    mutationFn: async (id: string) => await promoteFn({ data: { entryId: id } }),
+    onSuccess: () => {
+      toast.success("Rykket op fra ventelisten");
+      qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   const setApproval = useServerFn(setProfileApproval);
   const approvalMut = useMutation({
     mutationFn: async (vars: { targetUserId: string; approved: boolean }) =>
@@ -90,6 +100,10 @@ function AdminEntries() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const fmtDate = (v: string | null | undefined) => {
+    if (!v) return "";
+    try { return new Date(v).toLocaleDateString("da-DK", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }); } catch { return ""; }
+  };
 
 
 
