@@ -138,19 +138,17 @@ function AddDonationPanel({ onAdded }: { onAdded: () => void }) {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="flex gap-2">
+            <div className="grid gap-2 sm:grid-cols-[10rem_1fr_auto]">
               <Input
                 type="number"
                 placeholder="Beløb (kr.)"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-40"
               />
               <Input
                 placeholder="Note (valgfri)"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="flex-1"
               />
               <Button onClick={submit} disabled={busy}>Gem</Button>
             </div>
