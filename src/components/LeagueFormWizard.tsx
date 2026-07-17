@@ -423,6 +423,7 @@ export function LeagueFormWizard({
 }) {
   const { user } = useAuth();
   const qc = useQueryClient();
+  const rebalanceWaitlistFn = useServerFn(rebalanceLeagueWaitlist);
 
   // ---- state ----
   const initial = league ?? {};
