@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { setProfileApproval } from "@/lib/leagues.functions";
 import { splitClassIntoProAm } from "@/lib/league-split.functions";
-import { searchUsersForAdmin, adminAddEntryToLeague } from "@/lib/league-admin-entries.functions";
+import { searchUsersForAdmin, adminAddEntryToLeague, adminPromoteWaitlistEntry } from "@/lib/league-admin-entries.functions";
 import { adminDeleteEntryWithRoleCleanup } from "@/lib/discord-sync.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
 import { CARS_BY_CLASS } from "@/lib/lmu-cars";
