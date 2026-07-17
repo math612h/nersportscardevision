@@ -21,6 +21,7 @@ type Brief = {
   lmu_name: string | null;
   avatar_url: string | null;
   discord_avatar_url: string | null;
+  donation_tier: DonationTier;
 };
 
 export function useUserBrief(userId: string | null | undefined) {
@@ -29,15 +30,16 @@ export function useUserBrief(userId: string | null | undefined) {
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("profiles")
-        .select("display_name, lmu_name, avatar_url, discord_avatar_url")
+        .select("display_name, lmu_name, avatar_url, discord_avatar_url, donation_tier")
         .eq("id", userId!)
         .maybeSingle();
       return (data ?? null) as Brief | null;
     },
   });
 }
+
 
 async function signedAvatar(path: string): Promise<string | null> {
   const { data } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24);
