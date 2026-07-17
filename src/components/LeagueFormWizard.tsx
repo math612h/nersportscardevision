@@ -597,6 +597,10 @@ export function LeagueFormWizard({
         setSubmitting(false);
         return toast.error(error.message);
       }
+      // Re-balance the waitlist against the (possibly new) class capacities
+      try {
+        await rebalanceWaitlistFn({ data: { leagueId: initial.id } });
+      } catch (_) { /* non-fatal */ }
     }
 
     setSubmitting(false);
