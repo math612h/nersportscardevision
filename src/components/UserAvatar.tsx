@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { donationRingClass, type DonationTier } from "@/lib/donation-tier";
+
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl";
 
