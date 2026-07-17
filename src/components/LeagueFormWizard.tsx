@@ -44,6 +44,7 @@ import { Badge } from "@/components/ui/badge";
 import { PointsSystemEditor, type PointsSystem } from "@/components/PointsSystemEditor";
 import { sendLeagueAnnouncement, previewLeagueAnnouncement } from "@/lib/league-announce.functions";
 import { buildLeagueAnnouncementEmail } from "@/lib/league-announce-email.functions";
+import { rebalanceLeagueWaitlist } from "@/lib/league-admin-entries.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
