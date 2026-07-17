@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { listDonationProfiles, setDonationTier } from "@/lib/donations-admin.functions";
 import { donationBorderClass, TIER_LABEL, type DonationTier } from "@/lib/donation-tier";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/donationer")({
   component: AdminDonationsPage,

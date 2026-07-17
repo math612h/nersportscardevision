@@ -3,7 +3,7 @@ import { Heart, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/lib/toast";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/donationer")({
   head: () => ({
