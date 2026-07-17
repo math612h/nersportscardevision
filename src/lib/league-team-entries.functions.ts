@@ -132,36 +132,32 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       .eq("league_team_entry_id", entryId)
       .not("user_id", "in", `(${data.userIds.map((u) => `"${u}"`).join(",")})`);
 
-    // Upsert lineup rows — team owner is auto-accepted so they don't have to re-confirm.
-    const ownerId = (team as any).owner_id as string;
+    // Team owner submits the lineup on behalf of members they already have an agreement with,
+    // so every selected driver is auto-accepted — no separate invitation flow.
+    const nowIso = new Date().toISOString();
     const lineupRows = data.userIds.map((uid) => ({
       league_team_entry_id: entryId,
       league_id: data.leagueId,
       user_id: uid,
-      status: (uid === ownerId ? "accepted" : "invited") as "accepted" | "invited",
-      responded_at: uid === ownerId ? new Date().toISOString() : null,
+      status: "accepted" as const,
+      responded_at: nowIso,
     }));
-    const { data: upserted, error: upErr } = await (supabaseAdmin as any)
+    const { error: upErr } = await (supabaseAdmin as any)
       .from("league_team_lineup")
       .upsert(lineupRows, { onConflict: "league_team_entry_id,user_id", ignoreDuplicates: false })
-      .select("id, user_id, status, discord_message_id");
+      .select("id, user_id, status");
     if (upErr) throw new Error(upErr.message);
 
-    // If all lineup rows are now accepted (e.g. solo owner + auto-accept covers everyone),
-    // promote the entry to confirmed immediately.
+    // With all lineup rows accepted, confirm the entry immediately when >= 2 drivers.
     try {
-      const { data: allRows } = await (supabaseAdmin as any)
-        .from("league_team_lineup")
-        .select("status")
-        .eq("league_team_entry_id", entryId);
-      const rows = (allRows ?? []) as Array<{ status: string }>;
-      if (rows.length >= 2 && rows.every((r) => r.status === "accepted")) {
+      if (data.userIds.length >= 2) {
         await (supabaseAdmin as any)
           .from("league_team_entries")
           .update({ status: "confirmed" })
           .eq("id", entryId);
       }
     } catch (_) {}
+
 
     // Send Discord DM to each invited user (best-effort)
     try {
