@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Heart, Copy, Check } from "lucide-react";
+import { Coffee, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -43,13 +43,14 @@ function DonationsPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <header className="space-y-2 text-center">
         <div className="flex items-center justify-center gap-2 text-primary">
-          <Heart className="h-6 w-6" />
-          <h1 className="text-2xl font-bold tracking-tight">Støt LMU Danmark</h1>
+          <Coffee className="h-6 w-6" />
+          <h1 className="text-2xl font-bold tracking-tight">Køb os en kaffe</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Al drift af LMU Danmark betales af egne lommer, og hele fællesskabet holdes kørende af
-          frivillige kræfter. Har du lyst til at hjælpe med at dække serverne, domænet og de mange
-          timer der lægges i platformen, så er ethvert bidrag varmt modtaget – stort som småt.
+          Al drift af LMU Danmark finansieres af frivillige donationer, og hele fællesskabet holdes
+          kørende af frivillige kræfter. Har du lyst til at hjælpe med at dække serverne, domænet og
+          de mange timer og udgifter der lægges i platformen, så er ethvert bidrag varmt modtaget –
+          stort som småt.
         </p>
       </header>
 

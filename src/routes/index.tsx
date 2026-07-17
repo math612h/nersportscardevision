@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
+import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, Coffee, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -229,6 +229,11 @@ function NewsHome() {
           <Button asChild variant="outline" className="gap-2">
             <Link to="/ugens-overhaling">
               <Video className="h-4 w-4" /> Ugens Overhaling
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="gap-2 border-primary/40 text-primary hover:bg-primary/10">
+            <Link to="/donationer">
+              <Coffee className="h-4 w-4" /> Køb os en kaffe
             </Link>
           </Button>
           {user && (
