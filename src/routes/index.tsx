@@ -231,6 +231,11 @@ function NewsHome() {
               <Video className="h-4 w-4" /> Ugens Overhaling
             </Link>
           </Button>
+          <Button asChild variant="outline" className="gap-2 border-primary/40 text-primary hover:bg-primary/10">
+            <Link to="/donationer">
+              <Coffee className="h-4 w-4" /> Køb os en kaffe
+            </Link>
+          </Button>
           {user && (
             <Button asChild variant="outline" className="relative gap-2">
               <Link to="/mine-protests">
