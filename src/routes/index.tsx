@@ -211,9 +211,19 @@ function NewsHome() {
     <div className="space-y-10">
       {user && !isGuest && <ProfileCompletionGate />}
       {user && !isGuest && <AddressConsentBanner />}
-      <header className="space-y-3">
+      <header className="relative space-y-3">
+        <Button
+          asChild
+          size="sm"
+          variant="outline"
+          className="absolute right-0 top-0 h-8 gap-1.5 border-primary/40 px-2.5 text-xs text-primary hover:bg-primary/10"
+        >
+          <Link to="/donationer">
+            <Coffee className="h-3.5 w-3.5" /> Køb os en kaffe
+          </Link>
+        </Button>
 
-        <div className="space-y-1">
+        <div className="space-y-1 pr-32">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
             {t("home.kicker")}
           </p>
@@ -226,35 +236,33 @@ function NewsHome() {
               <Flag className="h-4 w-4" /> {t("home.leagues")}
             </Link>
           </Button>
-          <Button asChild variant="outline" className="gap-2">
-            <Link to="/ugens-overhaling">
-              <Video className="h-4 w-4" /> Ugens Overhaling
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="gap-2 border-primary/40 text-primary hover:bg-primary/10">
-            <Link to="/donationer">
-              <Coffee className="h-4 w-4" /> Køb os en kaffe
-            </Link>
-          </Button>
-          {user && (
-            <Button asChild variant="outline" className="relative gap-2">
-              <Link to="/mine-protests">
-                <MessageSquareWarning className="h-4 w-4" /> {t("home.incidents")}
-                {pendingIncidents > 0 && (
-                  <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground">
-                    {pendingIncidents}
-                  </span>
-                )}
-              </Link>
-            </Button>
-          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2">
                 <MoreHorizontal className="h-4 w-4" /> {t("home.more")}
+                {user && pendingIncidents > 0 && (
+                  <span className="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground">
+                    {pendingIncidents}
+                  </span>
+                )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-48">
+            <DropdownMenuContent align="start" className="w-52">
+              <DropdownMenuItem asChild>
+                <Link to="/ugens-overhaling"><Video className="h-4 w-4" /> Ugens Overhaling</Link>
+              </DropdownMenuItem>
+              {user && (
+                <DropdownMenuItem asChild>
+                  <Link to="/mine-protests" className="relative">
+                    <MessageSquareWarning className="h-4 w-4" /> {t("home.incidents")}
+                    {pendingIncidents > 0 && (
+                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground">
+                        {pendingIncidents}
+                      </span>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem asChild>
                 <Link to="/lmu/teams"><ArrowUpRight className="h-4 w-4" /> {t("home.teams")}</Link>
               </DropdownMenuItem>
@@ -273,6 +281,7 @@ function NewsHome() {
           </DropdownMenu>
         </div>
       </header>
+
 
       <NewsPostsSection />
 
