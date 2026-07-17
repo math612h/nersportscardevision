@@ -622,6 +622,36 @@ export type Database = {
           },
         ]
       }
+      donations: {
+        Row: {
+          amount_dkk: number
+          created_at: string
+          created_by: string | null
+          donated_at: string
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_dkk: number
+          created_at?: string
+          created_by?: string | null
+          donated_at?: string
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_dkk?: number
+          created_at?: string
+          created_by?: string | null
+          donated_at?: string
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -2416,6 +2446,10 @@ export type Database = {
       }
       recompute_all_elo: { Args: never; Returns: undefined }
       recompute_all_team_ratings: { Args: never; Returns: undefined }
+      recompute_donation_tier: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       refresh_class_percentiles: {
         Args: { _car_class: string }
         Returns: undefined
