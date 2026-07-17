@@ -15,6 +15,7 @@ import { Route as PrivatlivspolitikRouteImport } from './routes/privatlivspoliti
 import { Route as NyhederRouteImport } from './routes/nyheder'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as DonationerRouteImport } from './routes/donationer'
 import { Route as BrugereRouteImport } from './routes/brugere'
 import { Route as AppGuideRouteImport } from './routes/app-guide'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -72,6 +73,7 @@ import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
 import { Route as AuthenticatedAdminAdminGaesterRouteImport } from './routes/_authenticated._admin.admin.gaester'
 import { Route as AuthenticatedAdminAdminFejlRouteImport } from './routes/_authenticated._admin.admin.fejl'
+import { Route as AuthenticatedAdminAdminDonationerRouteImport } from './routes/_authenticated._admin.admin.donationer'
 import { Route as AuthenticatedAdminAdminCronRouteImport } from './routes/_authenticated._admin.admin.cron'
 import { Route as AuthenticatedAdminAdminCoachesRouteImport } from './routes/_authenticated._admin.admin.coaches'
 import { Route as AuthenticatedAdminAdminBriefingRouteImport } from './routes/_authenticated._admin.admin.briefing'
@@ -117,6 +119,11 @@ const LoginRoute = LoginRouteImport.update({
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DonationerRoute = DonationerRouteImport.update({
+  id: '/donationer',
+  path: '/donationer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BrugereRoute = BrugereRouteImport.update({
@@ -435,6 +442,12 @@ const AuthenticatedAdminAdminFejlRoute =
     path: '/admin/fejl',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminDonationerRoute =
+  AuthenticatedAdminAdminDonationerRouteImport.update({
+    id: '/admin/donationer',
+    path: '/admin/donationer',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminCronRoute =
   AuthenticatedAdminAdminCronRouteImport.update({
     id: '/admin/cron',
@@ -536,6 +549,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app-guide': typeof AppGuideRoute
   '/brugere': typeof BrugereRoute
+  '/donationer': typeof DonationerRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/nyheder': typeof NyhederRoute
@@ -573,6 +587,7 @@ export interface FileRoutesByFullPath {
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
+  '/admin/donationer': typeof AuthenticatedAdminAdminDonationerRoute
   '/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
@@ -615,6 +630,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app-guide': typeof AppGuideRoute
   '/brugere': typeof BrugereRoute
+  '/donationer': typeof DonationerRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/nyheder': typeof NyhederRoute
@@ -651,6 +667,7 @@ export interface FileRoutesByTo {
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
+  '/admin/donationer': typeof AuthenticatedAdminAdminDonationerRoute
   '/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
@@ -694,6 +711,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/app-guide': typeof AppGuideRoute
   '/brugere': typeof BrugereRoute
+  '/donationer': typeof DonationerRoute
   '/leaderboard': typeof LeaderboardRoute
   '/login': typeof LoginRoute
   '/nyheder': typeof NyhederRoute
@@ -732,6 +750,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/_authenticated/_admin/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/_authenticated/_admin/admin/cron': typeof AuthenticatedAdminAdminCronRoute
+  '/_authenticated/_admin/admin/donationer': typeof AuthenticatedAdminAdminDonationerRoute
   '/_authenticated/_admin/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/_authenticated/_admin/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
@@ -776,6 +795,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app-guide'
     | '/brugere'
+    | '/donationer'
     | '/leaderboard'
     | '/login'
     | '/nyheder'
@@ -813,6 +833,7 @@ export interface FileRouteTypes {
     | '/admin/briefing'
     | '/admin/coaches'
     | '/admin/cron'
+    | '/admin/donationer'
     | '/admin/fejl'
     | '/admin/gaester'
     | '/admin/ligaer'
@@ -855,6 +876,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app-guide'
     | '/brugere'
+    | '/donationer'
     | '/leaderboard'
     | '/login'
     | '/nyheder'
@@ -891,6 +913,7 @@ export interface FileRouteTypes {
     | '/admin/briefing'
     | '/admin/coaches'
     | '/admin/cron'
+    | '/admin/donationer'
     | '/admin/fejl'
     | '/admin/gaester'
     | '/admin/ligaer'
@@ -933,6 +956,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/app-guide'
     | '/brugere'
+    | '/donationer'
     | '/leaderboard'
     | '/login'
     | '/nyheder'
@@ -971,6 +995,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/briefing'
     | '/_authenticated/_admin/admin/coaches'
     | '/_authenticated/_admin/admin/cron'
+    | '/_authenticated/_admin/admin/donationer'
     | '/_authenticated/_admin/admin/fejl'
     | '/_authenticated/_admin/admin/gaester'
     | '/_authenticated/_admin/admin/ligaer'
@@ -1015,6 +1040,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AppGuideRoute: typeof AppGuideRoute
   BrugereRoute: typeof BrugereRoute
+  DonationerRoute: typeof DonationerRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LoginRoute: typeof LoginRoute
   NyhederRoute: typeof NyhederRoute
@@ -1092,6 +1118,13 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donationer': {
+      id: '/donationer'
+      path: '/donationer'
+      fullPath: '/donationer'
+      preLoaderRoute: typeof DonationerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/brugere': {
@@ -1493,6 +1526,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminFejlRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/donationer': {
+      id: '/_authenticated/_admin/admin/donationer'
+      path: '/admin/donationer'
+      fullPath: '/admin/donationer'
+      preLoaderRoute: typeof AuthenticatedAdminAdminDonationerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/cron': {
       id: '/_authenticated/_admin/admin/cron'
       path: '/admin/cron'
@@ -1657,6 +1697,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminBriefingRoute: typeof AuthenticatedAdminAdminBriefingRoute
   AuthenticatedAdminAdminCoachesRoute: typeof AuthenticatedAdminAdminCoachesRoute
   AuthenticatedAdminAdminCronRoute: typeof AuthenticatedAdminAdminCronRoute
+  AuthenticatedAdminAdminDonationerRoute: typeof AuthenticatedAdminAdminDonationerRoute
   AuthenticatedAdminAdminFejlRoute: typeof AuthenticatedAdminAdminFejlRoute
   AuthenticatedAdminAdminGaesterRoute: typeof AuthenticatedAdminAdminGaesterRoute
   AuthenticatedAdminAdminLigaerRoute: typeof AuthenticatedAdminAdminLigaerRouteWithChildren
@@ -1679,6 +1720,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminBriefingRoute: AuthenticatedAdminAdminBriefingRoute,
   AuthenticatedAdminAdminCoachesRoute: AuthenticatedAdminAdminCoachesRoute,
   AuthenticatedAdminAdminCronRoute: AuthenticatedAdminAdminCronRoute,
+  AuthenticatedAdminAdminDonationerRoute:
+    AuthenticatedAdminAdminDonationerRoute,
   AuthenticatedAdminAdminFejlRoute: AuthenticatedAdminAdminFejlRoute,
   AuthenticatedAdminAdminGaesterRoute: AuthenticatedAdminAdminGaesterRoute,
   AuthenticatedAdminAdminLigaerRoute:
@@ -1778,6 +1821,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AppGuideRoute: AppGuideRoute,
   BrugereRoute: BrugereRoute,
+  DonationerRoute: DonationerRoute,
   LeaderboardRoute: LeaderboardRoute,
   LoginRoute: LoginRoute,
   NyhederRoute: NyhederRoute,

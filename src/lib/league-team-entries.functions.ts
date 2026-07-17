@@ -132,30 +132,25 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       .eq("league_team_entry_id", entryId)
       .not("user_id", "in", `(${data.userIds.map((u) => `"${u}"`).join(",")})`);
 
-    // Upsert lineup rows — team owner is auto-accepted so they don't have to re-confirm.
-    const ownerId = (team as any).owner_id as string;
+    // Team owner submits the lineup on behalf of members they already have an agreement with,
+    // so every selected driver is auto-accepted — no separate invitation flow.
+    const nowIso = new Date().toISOString();
     const lineupRows = data.userIds.map((uid) => ({
       league_team_entry_id: entryId,
       league_id: data.leagueId,
       user_id: uid,
-      status: (uid === ownerId ? "accepted" : "invited") as "accepted" | "invited",
-      responded_at: uid === ownerId ? new Date().toISOString() : null,
+      status: "accepted" as const,
+      responded_at: nowIso,
     }));
-    const { data: upserted, error: upErr } = await (supabaseAdmin as any)
+    const { error: upErr } = await (supabaseAdmin as any)
       .from("league_team_lineup")
       .upsert(lineupRows, { onConflict: "league_team_entry_id,user_id", ignoreDuplicates: false })
-      .select("id, user_id, status, discord_message_id");
+      .select("id, user_id, status");
     if (upErr) throw new Error(upErr.message);
 
-    // If all lineup rows are now accepted (e.g. solo owner + auto-accept covers everyone),
-    // promote the entry to confirmed immediately.
+    // With all lineup rows accepted, confirm the entry immediately when >= 2 drivers.
     try {
-      const { data: allRows } = await (supabaseAdmin as any)
-        .from("league_team_lineup")
-        .select("status")
-        .eq("league_team_entry_id", entryId);
-      const rows = (allRows ?? []) as Array<{ status: string }>;
-      if (rows.length >= 2 && rows.every((r) => r.status === "accepted")) {
+      if (data.userIds.length >= 2) {
         await (supabaseAdmin as any)
           .from("league_team_entries")
           .update({ status: "confirmed" })
@@ -163,58 +158,18 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       }
     } catch (_) {}
 
-    // Send Discord DM to each invited user (best-effort)
-    try {
-      const { sendDiscordDM } = await import("./discord.server");
-      const ids = ((upserted ?? []) as any[]).filter((r) => r.status === "invited");
-      for (const lineup of ids) {
-        const { data: priv } = await (supabaseAdmin as any)
-          .from("profiles_private")
-          .select("discord_user_id")
-          .eq("user_id", lineup.user_id)
-          .maybeSingle();
-        const discordUserId = (priv as any)?.discord_user_id as string | null | undefined;
-        if (!discordUserId) continue;
 
-        const content = [
-          `🏁 **Lineup-invitation — "${(team as any).name}" i ${(league as any).name} · ${data.carClass}**`,
-          "",
-          `Du er valgt til teamets lineup i ${data.carClass}.`,
-          `Tryk Accepter for at bekræfte, eller Afvis for at takke nej.`,
-          "",
-          `Eller svar på hjemmesiden: https://lmudanmark.dk/teams/${data.teamId}`,
-        ].join("\n");
-
-        const components = [
-          {
-            type: 1,
-            components: [
-              { type: 2, style: 3, label: "Accepter", custom_id: `team_lineup_accept:${lineup.id}` },
-              { type: 2, style: 4, label: "Afvis", custom_id: `team_lineup_decline:${lineup.id}` },
-            ],
-          },
-        ];
-
-        const dm = await sendDiscordDM(discordUserId, content, components).catch(() => null);
-        if (dm?.ok && dm.channelId && dm.messageId) {
-          await (supabaseAdmin as any)
-            .from("league_team_lineup")
-            .update({ discord_channel_id: dm.channelId, discord_message_id: dm.messageId })
-            .eq("id", lineup.id);
-        }
-      }
-    } catch (_) {}
-
-    // In-app notification
+    // In-app notification (informational — no action required)
     try {
       const rows = data.userIds.map((uid) => ({
         user_id: uid,
-        title: `Du er valgt til "${(team as any).name}" lineup i ${(league as any).name} (${data.carClass})`,
-        body: "Åbn team-siden for at acceptere eller afvise pladsen.",
+        title: `Du er sat på "${(team as any).name}" lineup i ${(league as any).name} (${data.carClass})`,
+        body: "Teamejeren har tilmeldt dig til denne liga.",
         link: `/teams/${data.teamId}`,
       }));
       await (supabaseAdmin as any).from("notifications").insert(rows);
     } catch (_) {}
+
 
     return { ok: true, entryId };
   });

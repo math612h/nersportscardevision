@@ -6,6 +6,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { donationBorderClass } from "@/lib/donation-tier";
+import { cn } from "@/lib/utils";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Select,
@@ -34,7 +37,9 @@ type ProfileRow = {
   avatar_url: string | null;
   discord_avatar_url: string | null;
   approved: boolean;
+  donation_tier: "bronze" | "silver" | "gold" | null;
 };
+
 
 type RatingRow = { user_id: string; score: number | null; percentile: number | null };
 
@@ -51,10 +56,11 @@ function UsersPage() {
   const { data: profiles, isLoading } = useQuery({
     queryKey: ["all-profiles"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("profiles")
-        .select("id, display_name, lmu_name, avatar_url, discord_avatar_url, approved")
+        .select("id, display_name, lmu_name, avatar_url, discord_avatar_url, approved, donation_tier")
         .order("display_name", { ascending: true });
+
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
     },
@@ -169,7 +175,7 @@ function UsersPage() {
             const elo = rating?.score != null ? Math.round(rating.score) : null;
             return (
               <Link key={p.id} to="/profil/$userId" params={{ userId: p.id }}>
-                <Card className="h-full transition hover:border-primary">
+                <Card className={cn("h-full transition hover:border-primary", donationBorderClass(p.donation_tier))}>
                   <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
                     <Avatar className="h-12 w-12">
                       {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}

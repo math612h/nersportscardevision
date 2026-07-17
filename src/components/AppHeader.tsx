@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Flag, Gauge, GraduationCap, Handshake, Home, LayoutGrid, LogOut, Menu, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
+import { Flag, Gauge, GraduationCap, Handshake, Heart, Home, LayoutGrid, LogOut, Menu, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
@@ -93,7 +93,23 @@ export function AppHeader() {
         <div className="flex-1 sm:hidden" />
 
         <div className="flex shrink-0 items-center gap-1">
+          <Link
+            to="/donationer"
+            className="hidden items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 sm:inline-flex"
+            title="Donationer"
+          >
+            <Heart className="h-3.5 w-3.5" />
+            <span>Donationer</span>
+          </Link>
+          <Link
+            to="/donationer"
+            className="inline-flex items-center rounded-md p-1.5 text-primary hover:bg-primary/10 sm:hidden"
+            aria-label="Donationer"
+          >
+            <Heart className="h-4 w-4" />
+          </Link>
           {isGuest && <GuestLanguageSwitcher compact />}
+
           {user ? (
             <>
               {!gated && !isGuest && <NotificationsBell />}

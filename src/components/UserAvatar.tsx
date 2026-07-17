@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { donationRingClass, type DonationTier } from "@/lib/donation-tier";
+
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl";
 
@@ -19,6 +21,7 @@ type Brief = {
   lmu_name: string | null;
   avatar_url: string | null;
   discord_avatar_url: string | null;
+  donation_tier: DonationTier;
 };
 
 export function useUserBrief(userId: string | null | undefined) {
@@ -27,15 +30,16 @@ export function useUserBrief(userId: string | null | undefined) {
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("profiles")
-        .select("display_name, lmu_name, avatar_url, discord_avatar_url")
+        .select("display_name, lmu_name, avatar_url, discord_avatar_url, donation_tier")
         .eq("id", userId!)
         .maybeSingle();
       return (data ?? null) as Brief | null;
     },
   });
 }
+
 
 async function signedAvatar(path: string): Promise<string | null> {
   const { data } = await supabase.storage.from("avatars").createSignedUrl(path, 60 * 60 * 24);
@@ -72,11 +76,12 @@ export function UserAvatarOnly({
   const name = brief?.display_name || brief?.lmu_name || fallbackName || "?";
   const initials = name.slice(0, 2).toUpperCase();
   return (
-    <Avatar className={cn(sizeMap[size], "shrink-0", className)}>
+    <Avatar className={cn(sizeMap[size], "shrink-0", donationRingClass(brief?.donation_tier ?? null), className)}>
       {url ? <AvatarImage src={url} alt={name} /> : null}
       <AvatarFallback>{initials}</AvatarFallback>
     </Avatar>
   );
+
 }
 
 export function UserAvatar({

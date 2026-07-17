@@ -20,6 +20,8 @@ import {
   GraduationCap,
   BookOpen,
   Video,
+  Heart,
+
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -89,9 +91,11 @@ export function AdminSidebar() {
       items: [
         { title: "Afventer godkendelse", url: "/admin/afventer", icon: UserCheck, badge: pendingCount },
         { title: "Alle brugere", url: "/admin/brugere", icon: Users },
+        { title: "Donationsfarver", url: "/admin/donationer", icon: Heart },
         { title: "Gæstekoder", url: "/admin/gaester", icon: KeyRound },
       ],
     },
+
     {
       label: "Racing",
       items: [
