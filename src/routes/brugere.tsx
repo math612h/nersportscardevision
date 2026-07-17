@@ -175,7 +175,7 @@ function UsersPage() {
             const elo = rating?.score != null ? Math.round(rating.score) : null;
             return (
               <Link key={p.id} to="/profil/$userId" params={{ userId: p.id }}>
-                <Card className="h-full transition hover:border-primary">
+                <Card className={cn("h-full transition hover:border-primary", donationBorderClass(p.donation_tier))}>
                   <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
                     <Avatar className="h-12 w-12">
                       {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
