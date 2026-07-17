@@ -34,7 +34,9 @@ type ProfileRow = {
   avatar_url: string | null;
   discord_avatar_url: string | null;
   approved: boolean;
+  donation_tier: "bronze" | "silver" | "gold" | null;
 };
+
 
 type RatingRow = { user_id: string; score: number | null; percentile: number | null };
 
