@@ -76,11 +76,12 @@ export function UserAvatarOnly({
   const name = brief?.display_name || brief?.lmu_name || fallbackName || "?";
   const initials = name.slice(0, 2).toUpperCase();
   return (
-    <Avatar className={cn(sizeMap[size], "shrink-0", className)}>
+    <Avatar className={cn(sizeMap[size], "shrink-0", donationRingClass(brief?.donation_tier ?? null), className)}>
       {url ? <AvatarImage src={url} alt={name} /> : null}
       <AvatarFallback>{initials}</AvatarFallback>
     </Avatar>
   );
+
 }
 
 export function UserAvatar({
