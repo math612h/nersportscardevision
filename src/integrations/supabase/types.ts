@@ -1473,6 +1473,9 @@ export type Database = {
           created_at: string
           discord_avatar_url: string | null
           display_name: string | null
+          donation_note: string | null
+          donation_tier: Database["public"]["Enums"]["donation_tier"] | null
+          donation_total_dkk: number
           id: string
           lmu_name: string | null
           media_consent: boolean
@@ -1487,6 +1490,9 @@ export type Database = {
           created_at?: string
           discord_avatar_url?: string | null
           display_name?: string | null
+          donation_note?: string | null
+          donation_tier?: Database["public"]["Enums"]["donation_tier"] | null
+          donation_total_dkk?: number
           id: string
           lmu_name?: string | null
           media_consent?: boolean
@@ -1501,6 +1507,9 @@ export type Database = {
           created_at?: string
           discord_avatar_url?: string | null
           display_name?: string | null
+          donation_note?: string | null
+          donation_tier?: Database["public"]["Enums"]["donation_tier"] | null
+          donation_total_dkk?: number
           id?: string
           lmu_name?: string | null
           media_consent?: boolean
@@ -2446,6 +2455,7 @@ export type Database = {
         | "rejected"
         | "cancelled"
         | "completed"
+      donation_tier: "bronze" | "silver" | "gold"
       league_team_entry_status: "pending" | "confirmed" | "withdrawn"
       league_team_lineup_status: "invited" | "accepted" | "declined"
       protest_status: "open" | "ruled"
@@ -2599,6 +2609,7 @@ export const Constants = {
         "cancelled",
         "completed",
       ],
+      donation_tier: ["bronze", "silver", "gold"],
       league_team_entry_status: ["pending", "confirmed", "withdrawn"],
       league_team_lineup_status: ["invited", "accepted", "declined"],
       protest_status: ["open", "ruled"],
