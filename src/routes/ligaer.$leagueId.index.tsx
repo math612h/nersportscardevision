@@ -733,7 +733,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
             <p className="mb-1 text-xs font-semibold text-muted-foreground">Venteliste</p>
             <ul className="divide-y divide-border">
               {wait.map((e, idx) => (
-                <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+                <DonorFrame as="li" userId={e.user_id} key={e.id} bare className="flex items-center gap-3 py-2 text-sm">
                   <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-muted px-1.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
                     {idx + 1}
                   </span>
@@ -752,7 +752,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
                       <CheckCircle2 className="h-3 w-3" />Godkendt
                     </Badge>
                   )}
-                </li>
+                </DonorFrame>
               ))}
             </ul>
           </div>
