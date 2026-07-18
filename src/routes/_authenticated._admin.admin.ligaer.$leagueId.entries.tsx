@@ -212,7 +212,7 @@ function AdminEntries() {
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                    </li>
+                    </DonorFrame>
                   );
                   return (
                     <div key={cat} className="ml-2">
