@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { donationBorderClass, type DonationTier } from "@/lib/donation-tier";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/donationer")({
   head: () => ({
@@ -18,6 +20,26 @@ export const Route = createFileRoute("/donationer")({
 });
 
 const MOBILEPAY_BOX = "4412ZQ";
+
+const TIER_LABEL: Record<Exclude<DonationTier, null>, string> = {
+  bronze: "Bronze",
+  silver: "Sølv",
+  gold: "Guld",
+};
+const TIER_COLOR: Record<Exclude<DonationTier, null>, string> = {
+  bronze: "#cd7f32",
+  silver: "#c0c0c0",
+  gold: "#ffd700",
+};
+
+const DEMO_ROWS: Array<{ name: string; tier: DonationTier }> = [
+  { name: "Mikkel Rasmussen", tier: "gold" },
+  { name: "Jonas Sørensen", tier: null },
+  { name: "Anders Kjær", tier: "silver" },
+  { name: "Thomas Berg", tier: null },
+  { name: "Kasper Lund", tier: "bronze" },
+  { name: "Frederik Holm", tier: null },
+];
 
 function TierCard({ label, range, color }: { label: string; range: string; color: string }) {
   return (
@@ -88,8 +110,44 @@ function DonationsPage() {
           <TierCard label="Guld" range="Over 1.000 kr." color="#ffd700" />
         </div>
         <p className="text-xs text-muted-foreground">
-          Farven tildeles manuelt af en admin, når dit bidrag er registreret.
+          Farven tildeles automatisk, når dit bidrag er registreret.
         </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Sådan ser det ud</h2>
+        <p className="text-sm text-muted-foreground">
+          Et eksempel på hvordan donorernes kort skiller sig ud i deltager- og resultatlister.
+        </p>
+        <Card>
+          <CardContent className="p-3">
+            <ul className="divide-y divide-border">
+              {DEMO_ROWS.map((row, idx) => (
+                <li
+                  key={row.name}
+                  className={cn(
+                    "flex items-center gap-3 py-2 text-sm",
+                    row.tier && donationBorderClass(row.tier),
+                    row.tier && "px-3 my-1",
+                  )}
+                >
+                  <span className="inline-flex h-7 min-w-7 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                    {idx + 1}
+                  </span>
+                  <span className="flex-1 truncate font-medium">{row.name}</span>
+                  {row.tier && (
+                    <span
+                      className="text-[10px] font-semibold uppercase tracking-wider"
+                      style={{ color: TIER_COLOR[row.tier] }}
+                    >
+                      {TIER_LABEL[row.tier]}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );
