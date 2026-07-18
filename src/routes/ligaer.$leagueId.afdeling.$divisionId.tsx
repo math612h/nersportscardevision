@@ -565,7 +565,11 @@ function DivisionDetail() {
                     {sorted.map((e) => {
                       const ab = absenceByUser.get(e.user_id);
                       return (
-                        <li key={e.id} className={`flex items-center gap-3 py-2 text-sm ${ab ? "opacity-60" : ""}`}>
+                        <DriverEntryRow
+                          key={e.id}
+                          userId={e.user_id}
+                          absent={!!ab}
+                        >
                           <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
                             #{e.car_number}
                           </span>
@@ -586,7 +590,7 @@ function DivisionDetail() {
                               <UserX className="h-3 w-3" /> Deltager ikke
                             </Badge>
                           )}
-                        </li>
+                        </DriverEntryRow>
                       );
                     })}
                   </ul>
