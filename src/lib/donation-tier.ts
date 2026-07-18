@@ -10,46 +10,37 @@ export const TIER_LABEL: Record<Exclude<DonationTier, null>, string> = {
 };
 
 // Ring/border classes tuned to match the design system tokens where possible.
+// Full glamorous border for cards/rows. Uses layered box-shadows to create
+// a metallic sheen with an outer glow.
 export function donationBorderClass(tier: DonationTier): string {
   switch (tier) {
     case "bronze":
-      return "border-2 border-[#cd7f32] shadow-[0_0_0_1px_rgba(205,127,50,0.35)]";
+      return "rounded-lg border-2 border-[#ff9a3c] shadow-[inset_0_1px_0_0_rgba(255,220,180,0.6),0_0_12px_0_rgba(255,140,50,0.45),0_0_24px_0_rgba(255,120,40,0.25)]";
     case "silver":
-      return "border-2 border-[#c0c0c0] shadow-[0_0_0_1px_rgba(192,192,192,0.35)]";
+      return "rounded-lg border-2 border-[#e8e8f0] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8),0_0_12px_0_rgba(220,225,240,0.55),0_0_24px_0_rgba(200,210,230,0.3)]";
     case "gold":
-      return "border-2 border-[#ffd700] shadow-[0_0_0_1px_rgba(255,215,0,0.4)]";
+      return "rounded-lg border-2 border-[#ffdf5a] shadow-[inset_0_1px_0_0_rgba(255,245,190,0.85),0_0_14px_0_rgba(255,200,50,0.6),0_0_28px_0_rgba(255,180,30,0.35)]";
     default:
       return "";
   }
 }
 
-// Left-accent for list rows where a full border would be too heavy.
-export function donationAccentClass(tier: DonationTier): string {
-  switch (tier) {
-    case "bronze":
-      return "border-l-4 border-l-[#cd7f32] pl-3";
-    case "silver":
-      return "border-l-4 border-l-[#c0c0c0] pl-3";
-    case "gold":
-      return "border-l-4 border-l-[#ffd700] pl-3";
-    default:
-      return "";
-  }
-}
-
+// Alias for full-card outline (previously a left accent). Kept for compatibility.
+export const donationAccentClass = donationBorderClass;
 
 export function donationRingClass(tier: DonationTier): string {
   switch (tier) {
     case "bronze":
-      return "ring-2 ring-[#cd7f32] ring-offset-1 ring-offset-background";
+      return "ring-2 ring-[#ff9a3c] ring-offset-1 ring-offset-background";
     case "silver":
-      return "ring-2 ring-[#c0c0c0] ring-offset-1 ring-offset-background";
+      return "ring-2 ring-[#e8e8f0] ring-offset-1 ring-offset-background";
     case "gold":
-      return "ring-2 ring-[#ffd700] ring-offset-1 ring-offset-background";
+      return "ring-2 ring-[#ffdf5a] ring-offset-1 ring-offset-background";
     default:
       return "";
   }
 }
+
 
 export function useDonationTier(userId: string | null | undefined): DonationTier {
   const { data } = useQuery({
