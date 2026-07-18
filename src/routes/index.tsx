@@ -22,6 +22,8 @@ import { AddressConsentBanner } from "@/components/AddressConsentBanner";
 import { UserAvatarOnly } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
 import { getCurrentWeekStartISO, shiftWeek, weekLabel, youtubeEmbedUrl } from "@/lib/overtaking-utils";
+import { DonorFrame } from "@/lib/donation-tier";
+
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
 const PAGE_DESC =
