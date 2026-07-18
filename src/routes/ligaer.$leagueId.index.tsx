@@ -678,7 +678,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
       <CardContent className="pt-0 space-y-3">
         <ul className="divide-y divide-border">
           {visibleGrid.map((e) => (
-            <li key={e.id} className="flex items-center gap-3 py-2 text-sm">
+            <DonorFrame as="li" userId={e.user_id} key={e.id} bare className="flex items-center gap-3 py-2 text-sm">
               <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
                 #{e.car_number}
               </span>
@@ -715,7 +715,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
                   <CheckCircle2 className="h-3 w-3" />Godkendt
                 </Badge>
               )}
-            </li>
+            </DonorFrame>
           ))}
         </ul>
         {grid.length > LIMIT && (
