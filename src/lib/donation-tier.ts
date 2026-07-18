@@ -23,6 +23,19 @@ export function donationBorderClass(tier: DonationTier): string {
   }
 }
 
+// Left-accent for list rows where a full border would be too heavy.
+export function donationAccentClass(tier: DonationTier): string {
+  switch (tier) {
+    case "bronze":
+      return "border-l-4 border-l-[#cd7f32] pl-3";
+    case "silver":
+      return "border-l-4 border-l-[#c0c0c0] pl-3";
+    case "gold":
+      return "border-l-4 border-l-[#ffd700] pl-3";
+    default:
+      return "";
+  }
+
 export function donationRingClass(tier: DonationTier): string {
   switch (tier) {
     case "bronze":
