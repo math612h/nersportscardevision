@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { RatingBadge } from "@/components/RatingBadge";
 import { UserAvatar } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
+import { DonorFrame } from "@/lib/donation-tier";
 import { computeTeamRacePoints } from "@/lib/team-points";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
