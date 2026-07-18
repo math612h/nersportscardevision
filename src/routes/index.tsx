@@ -380,9 +380,7 @@ function NewsHome() {
                           ? "bg-orange-500/15 text-orange-700 ring-1 ring-orange-500/30 dark:text-orange-300"
                           : "bg-background";
                       return (
-                        <DonorFrame
-                          as="li"
-                          userId={row.user_id ?? null}
+                        <li
                           key={`${group.key}-${row.class_position}-${row.driver_name}`}
                           className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
                         >
@@ -396,7 +394,7 @@ function NewsHome() {
                           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
                             {row.points ?? 0} p
                           </span>
-                        </DonorFrame>
+                        </li>
 
                       );
                     })}
