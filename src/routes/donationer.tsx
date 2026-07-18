@@ -21,6 +21,26 @@ export const Route = createFileRoute("/donationer")({
 
 const MOBILEPAY_BOX = "4412ZQ";
 
+const TIER_LABEL: Record<Exclude<DonationTier, null>, string> = {
+  bronze: "Bronze",
+  silver: "Sølv",
+  gold: "Guld",
+};
+const TIER_COLOR: Record<Exclude<DonationTier, null>, string> = {
+  bronze: "#cd7f32",
+  silver: "#c0c0c0",
+  gold: "#ffd700",
+};
+
+const DEMO_ROWS: Array<{ name: string; tier: DonationTier }> = [
+  { name: "Mikkel Rasmussen", tier: "gold" },
+  { name: "Jonas Sørensen", tier: null },
+  { name: "Anders Kjær", tier: "silver" },
+  { name: "Thomas Berg", tier: null },
+  { name: "Kasper Lund", tier: "bronze" },
+  { name: "Frederik Holm", tier: null },
+];
+
 function TierCard({ label, range, color }: { label: string; range: string; color: string }) {
   return (
     <Card className="border-2" style={{ borderColor: color }}>
