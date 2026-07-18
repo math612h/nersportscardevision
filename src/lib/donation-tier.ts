@@ -1,5 +1,8 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+
 
 export type DonationTier = "bronze" | "silver" | "gold" | null;
 
