@@ -624,9 +624,15 @@ function DivisionDetail() {
 function DriverEntryRow({ userId, absent, children }: { userId: string; absent: boolean; children: React.ReactNode }) {
   const tier = useDonationTier(userId);
   return (
-    <li className={cn("flex items-center gap-3 py-2 text-sm", absent && "opacity-60", donationAccentClass(tier))}>
+    <li className={cn(
+      "flex items-center gap-3 py-2 text-sm",
+      absent && "opacity-60",
+      tier && "px-3 my-1",
+      donationAccentClass(tier),
+    )}>
       {children}
     </li>
+
   );
 }
 
