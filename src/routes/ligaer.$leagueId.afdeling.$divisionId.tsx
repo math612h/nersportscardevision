@@ -14,6 +14,8 @@ import { PracticeSessionsList } from "@/components/PracticeSessionsList";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_NUMERIC_FIELDS } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DriverLink } from "@/components/DriverLink";
+import { useDonationTier, donationAccentClass } from "@/lib/donation-tier";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -563,7 +565,11 @@ function DivisionDetail() {
                     {sorted.map((e) => {
                       const ab = absenceByUser.get(e.user_id);
                       return (
-                        <li key={e.id} className={`flex items-center gap-3 py-2 text-sm ${ab ? "opacity-60" : ""}`}>
+                        <DriverEntryRow
+                          key={e.id}
+                          userId={e.user_id}
+                          absent={!!ab}
+                        >
                           <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
                             #{e.car_number}
                           </span>
@@ -584,7 +590,7 @@ function DivisionDetail() {
                               <UserX className="h-3 w-3" /> Deltager ikke
                             </Badge>
                           )}
-                        </li>
+                        </DriverEntryRow>
                       );
                     })}
                   </ul>
@@ -614,6 +620,17 @@ function DivisionDetail() {
     </div>
   );
 }
+
+function DriverEntryRow({ userId, absent, children }: { userId: string; absent: boolean; children: React.ReactNode }) {
+  const tier = useDonationTier(userId);
+  return (
+    <li className={cn("flex items-center gap-3 py-2 text-sm", absent && "opacity-60", donationAccentClass(tier))}>
+      {children}
+    </li>
+  );
+}
+
+
 
 function AbsenceDialog({ divisionId, userId }: { divisionId: string; userId: string }) {
   const qc = useQueryClient();

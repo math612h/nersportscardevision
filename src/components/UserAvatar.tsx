@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { donationRingClass, type DonationTier } from "@/lib/donation-tier";
+import type { DonationTier } from "@/lib/donation-tier";
 
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl";
@@ -76,7 +76,7 @@ export function UserAvatarOnly({
   const name = brief?.display_name || brief?.lmu_name || fallbackName || "?";
   const initials = name.slice(0, 2).toUpperCase();
   return (
-    <Avatar className={cn(sizeMap[size], "shrink-0", donationRingClass(brief?.donation_tier ?? null), className)}>
+    <Avatar className={cn(sizeMap[size], "shrink-0", className)}>
       {url ? <AvatarImage src={url} alt={name} /> : null}
       <AvatarFallback>{initials}</AvatarFallback>
     </Avatar>
