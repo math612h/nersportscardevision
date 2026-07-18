@@ -262,7 +262,7 @@ function TeamDetailPage() {
               const av = avatars?.[m.user_id];
               const name = p?.display_name ?? "Uden navn";
               return (
-                <li key={m.id} className="flex items-center gap-3 py-2">
+                <DonorFrame as="li" userId={m.user_id} key={m.id} className="flex items-center gap-3 py-2">
                   <Avatar className="h-8 w-8">
                     {av ? <AvatarImage src={av} alt="" /> : null}
                     <AvatarFallback>{name.slice(0, 2).toUpperCase()}</AvatarFallback>
@@ -299,7 +299,8 @@ function TeamDetailPage() {
                       <X className="h-4 w-4" />
                     </Button>
                   )}
-                </li>
+                </DonorFrame>
+
               );
             })}
           </ul>
