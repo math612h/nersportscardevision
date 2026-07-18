@@ -12,6 +12,8 @@ import { searchUsersForAdmin, adminAddEntryToLeague, adminPromoteWaitlistEntry }
 import { adminDeleteEntryWithRoleCleanup } from "@/lib/discord-sync.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
 import { CARS_BY_CLASS } from "@/lib/lmu-cars";
+import { DonorFrame } from "@/lib/donation-tier";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -147,7 +149,7 @@ function AdminEntries() {
                   const grid = sorted.filter((x) => !x.waitlist);
                   const wait = sorted.filter((x) => x.waitlist);
                   const renderRow = (e: any, opts: { waitlist: boolean; pos?: number }) => (
-                    <li key={e.id} className={`flex items-center justify-between rounded border px-3 py-1.5 text-sm ${opts.waitlist ? "border-amber-500/40 bg-amber-500/5" : e.profileApproved ? "border-emerald-500/40 bg-emerald-500/5" : "border-border"}`}>
+                    <DonorFrame as="li" userId={e.user_id} key={e.id} bare className={`flex items-center justify-between rounded border px-3 py-1.5 text-sm ${opts.waitlist ? "border-amber-500/40 bg-amber-500/5" : e.profileApproved ? "border-emerald-500/40 bg-emerald-500/5" : "border-border"}`}>
                       <span className="flex items-center gap-2 min-w-0">
                         {opts.waitlist && opts.pos != null && (
                           <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-amber-500/20 px-1.5 font-mono text-xs text-amber-700 dark:text-amber-300" title="Placering på ventelisten">V{opts.pos}</span>
@@ -210,7 +212,7 @@ function AdminEntries() {
                           </AlertDialogContent>
                         </AlertDialog>
                       </div>
-                    </li>
+                    </DonorFrame>
                   );
                   return (
                     <div key={cat} className="ml-2">

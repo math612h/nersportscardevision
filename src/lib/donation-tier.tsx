@@ -1,5 +1,8 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
+
 
 export type DonationTier = "bronze" | "silver" | "gold" | null;
 
@@ -58,3 +61,31 @@ export function useDonationTier(userId: string | null | undefined): DonationTier
   });
   return (data ?? null) as DonationTier;
 }
+
+/**
+ * Wraps any element (li, div, tr, etc.) with the donor tier border/glow.
+ * Applies extra padding+margin so the outline sits nicely around the row/card.
+ * Renders as the given element (defaults to div) and forwards all extra props.
+ */
+type DonorFrameProps = {
+  userId: string | null | undefined;
+  as?: keyof React.JSX.IntrinsicElements;
+  className?: string;
+  /** When true, no extra padding/margin is added. Use when parent already sets spacing. */
+  bare?: boolean;
+  children?: React.ReactNode;
+} & Record<string, any>;
+
+export function DonorFrame({ userId, as = "div", className, bare = false, children, ...rest }: DonorFrameProps) {
+  const tier = useDonationTier(userId);
+  const Comp = as as any;
+  return (
+    <Comp
+      className={cn(className, tier && !bare && "px-3 my-1", donationBorderClass(tier))}
+      {...rest}
+    >
+      {children}
+    </Comp>
+  );
+}
+
