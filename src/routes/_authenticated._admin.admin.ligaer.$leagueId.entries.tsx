@@ -12,6 +12,8 @@ import { searchUsersForAdmin, adminAddEntryToLeague, adminPromoteWaitlistEntry }
 import { adminDeleteEntryWithRoleCleanup } from "@/lib/discord-sync.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
 import { CARS_BY_CLASS } from "@/lib/lmu-cars";
+import { DonorFrame } from "@/lib/donation-tier";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
