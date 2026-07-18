@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { donationBorderClass, type DonationTier } from "@/lib/donation-tier";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/donationer")({
   head: () => ({
