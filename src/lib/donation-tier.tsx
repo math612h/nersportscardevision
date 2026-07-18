@@ -12,17 +12,16 @@ export const TIER_LABEL: Record<Exclude<DonationTier, null>, string> = {
   gold: "Guld",
 };
 
-// Ring/border classes tuned to match the design system tokens where possible.
-// Full glamorous border for cards/rows. Uses layered box-shadows to create
-// a metallic sheen with an outer glow.
+// Subtle 1px border with a strong glossy inner sheen and soft outer glow.
+// Uses layered inset shadows to fake a metallic highlight along the top edge.
 export function donationBorderClass(tier: DonationTier): string {
   switch (tier) {
     case "bronze":
-      return "rounded-lg border-2 border-[#ff9a3c] shadow-[inset_0_1px_0_0_rgba(255,220,180,0.6),0_0_12px_0_rgba(255,140,50,0.45),0_0_24px_0_rgba(255,120,40,0.25)]";
+      return "rounded-lg border border-[#c97a2b]/80 shadow-[inset_0_1px_0_0_rgba(255,220,180,0.6),inset_0_-1px_0_0_rgba(120,60,10,0.4),inset_0_0_10px_0_rgba(255,160,70,0.28),0_0_6px_0_rgba(255,140,50,0.35)]";
     case "silver":
-      return "rounded-lg border-2 border-[#e8e8f0] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8),0_0_12px_0_rgba(220,225,240,0.55),0_0_24px_0_rgba(200,210,230,0.3)]";
+      return "rounded-lg border border-[#cfd3dc]/90 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9),inset_0_-1px_0_0_rgba(120,130,150,0.35),inset_0_0_10px_0_rgba(220,225,240,0.4),0_0_6px_0_rgba(210,220,240,0.4)]";
     case "gold":
-      return "rounded-lg border-2 border-[#ffdf5a] shadow-[inset_0_1px_0_0_rgba(255,245,190,0.85),0_0_14px_0_rgba(255,200,50,0.6),0_0_28px_0_rgba(255,180,30,0.35)]";
+      return "rounded-lg border border-[#e6b422]/90 shadow-[inset_0_1px_0_0_rgba(255,245,190,0.95),inset_0_-1px_0_0_rgba(140,90,10,0.4),inset_0_0_12px_0_rgba(255,210,80,0.45),0_0_8px_0_rgba(255,190,40,0.45)]";
     default:
       return "";
   }
