@@ -35,6 +35,8 @@ export function donationAccentClass(tier: DonationTier): string {
     default:
       return "";
   }
+}
+
 
 export function donationRingClass(tier: DonationTier): string {
   switch (tier) {
