@@ -53,7 +53,7 @@ async function sendThankYou(userId: string, amountDkk: number, source: "donation
   } catch (_) {}
 }
 
-async function handleCheckoutCompleted(session: any) {
+async function handleCheckoutCompleted(session: any, env: StripeEnv) {
   const sb = getSupabase() as any;
   const md = session.metadata ?? {};
   const kind = md.kind as string | undefined;
@@ -81,6 +81,7 @@ async function handleCheckoutCompleted(session: any) {
       note: "Betalt via Stripe",
       stripe_session_id: session.id,
       stripe_payment_intent_id: paymentIntentId,
+      environment: env,
     });
     if (error && !error.message.includes("duplicate")) {
       console.error("[payments-webhook] donation insert error", error);
@@ -89,6 +90,7 @@ async function handleCheckoutCompleted(session: any) {
     await sendThankYou(userId, amountDkk, "donation");
     return;
   }
+
 
   if (kind === "coaching") {
     const bookingId = md.booking_id as string | undefined;

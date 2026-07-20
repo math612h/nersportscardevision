@@ -21,6 +21,7 @@ import {
   BookOpen,
   Video,
   Coffee,
+  Receipt,
 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -92,6 +93,7 @@ export function AdminSidebar() {
         { title: "Afventer godkendelse", url: "/admin/afventer", icon: UserCheck, badge: pendingCount },
         { title: "Alle brugere", url: "/admin/brugere", icon: Users },
         { title: "Donationer", url: "/admin/donationer", icon: Coffee },
+        { title: "Betalinger", url: "/admin/betalinger", icon: Receipt },
         { title: "Gæstekoder", url: "/admin/gaester", icon: KeyRound },
       ],
     },
