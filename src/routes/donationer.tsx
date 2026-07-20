@@ -18,7 +18,7 @@ export const Route = createFileRoute("/donationer")({
   head: () => ({
     meta: [
       { title: "Donationer – LMU Danmark" },
-      { name: "description", content: "Støt driften af LMU Danmark via MobilePay eller kort." },
+      { name: "description", content: "Støt driften af LMU Danmark med kort eller MobilePay via sikker betaling." },
       { property: "og:title", content: "Donationer – LMU Danmark" },
       { property: "og:description", content: "Alle bidrag hjælper med at holde platformen kørende." },
     ],
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/donationer")({
   component: DonationsPage,
 });
 
-const MOBILEPAY_BOX = "4412ZQ";
+
 
 const TIER_LABEL: Record<Exclude<DonationTier, null>, string> = {
   bronze: "Bronze",
