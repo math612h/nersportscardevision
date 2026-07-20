@@ -35,7 +35,7 @@ export const listAllPayments = createServerFn({ method: "GET" })
     let query = (supabaseAdmin as any)
       .from("donations")
       .select(
-        "id, user_id, amount_dkk, refunded_amount_dkk, refunded_at, stripe_refund_id, source, note, donated_at, stripe_session_id, stripe_payment_intent_id, environment, created_by, profiles:profiles!donations_user_id_fkey(display_name, lmu_name, donation_tier)",
+        "id, user_id, amount_dkk, refunded_amount_dkk, refunded_at, stripe_refund_id, source, note, donated_at, stripe_session_id, stripe_payment_intent_id, environment, created_by",
       )
       .order("donated_at", { ascending: false })
       .limit(data.limit ?? 200);
@@ -55,7 +55,23 @@ export const listAllPayments = createServerFn({ method: "GET" })
     const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
 
-    let filtered = (rows ?? []) as any[];
+    const rowList = (rows ?? []) as any[];
+    const userIds = Array.from(new Set(rowList.map((r) => r.user_id).filter(Boolean)));
+    let profilesById = new Map<string, { display_name: string | null; lmu_name: string | null; donation_tier: string | null }>();
+    if (userIds.length > 0) {
+      const { data: profiles } = await (supabaseAdmin as any)
+        .from("profiles")
+        .select("id, display_name, lmu_name, donation_tier")
+        .in("id", userIds);
+      for (const p of (profiles ?? []) as any[]) {
+        profilesById.set(p.id, { display_name: p.display_name, lmu_name: p.lmu_name, donation_tier: p.donation_tier });
+      }
+    }
+
+    let filtered = rowList.map((r) => ({
+      ...r,
+      profiles: profilesById.get(r.user_id) ?? null,
+    }));
     if (data.q?.trim()) {
       const needle = data.q.toLowerCase();
       filtered = filtered.filter((r) => {
@@ -71,6 +87,7 @@ export const listAllPayments = createServerFn({ method: "GET" })
     }
     return { rows: filtered };
   });
+
 
 /** Aggregate totals used at the top of the admin page. */
 export const getPaymentsStats = createServerFn({ method: "GET" })
