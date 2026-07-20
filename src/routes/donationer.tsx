@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Coffee, Copy, Check, CreditCard } from "lucide-react";
+import { Coffee, CreditCard } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { createDonationCheckout } from "@/lib/payments.functions";
 import { getStripeEnvironment, hasStripeConfigured } from "@/lib/stripe";
 import { StripeEmbeddedCheckoutBox } from "@/components/StripeEmbeddedCheckoutBox";
+
 
 export const Route = createFileRoute("/donationer")({
   head: () => ({
