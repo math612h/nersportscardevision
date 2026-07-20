@@ -14,7 +14,7 @@ function getSupabase() {
 }
 
 async function sendThankYou(userId: string, amountDkk: number, source: "donation" | "coaching") {
-  const sb = getSupabase();
+  const sb = getSupabase() as any;
   const { data: profile } = await sb
     .from("profiles")
     .select("display_name")
@@ -54,7 +54,7 @@ async function sendThankYou(userId: string, amountDkk: number, source: "donation
 }
 
 async function handleCheckoutCompleted(session: any) {
-  const sb = getSupabase();
+  const sb = getSupabase() as any;
   const md = session.metadata ?? {};
   const kind = md.kind as string | undefined;
   const userId = md.userId as string | undefined;
