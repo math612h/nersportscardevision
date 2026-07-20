@@ -79,6 +79,52 @@ export const addDonation = createServerFn({ method: "POST" })
       created_by: context.userId,
     });
     if (error) throw new Error(error.message);
+
+    // Send a thank-you message to the donor (notification + Discord DM).
+    try {
+      const { data: profile } = await (supabaseAdmin as any)
+        .from("profiles")
+        .select("display_name")
+        .eq("id", data.userId)
+        .maybeSingle();
+      const name = (profile?.display_name as string | null)?.trim() || "ven";
+      const amountStr = `${data.amountDkk} kr.`;
+      const title = "Tusind tak for din donation 🙏";
+      const body =
+        `Hej ${name}!\n\n` +
+        `Tusind tak for din donation på ${amountStr}. Din donation er med til at bære os videre mod at blive et endnu bedre fællesskab.\n\n` +
+        `Din donation vil gå til blandt andet hjemmeside, domæne, servere, administration og stream.\n\n` +
+        `Igen tusind tak 🙏`;
+      const link = "/donationer";
+
+      await (supabaseAdmin as any).from("notifications").insert({
+        user_id: data.userId,
+        title,
+        body,
+        link,
+      });
+
+      try {
+        const { sendPushToUser } = await import("./push.server");
+        void sendPushToUser(data.userId, { title, body: body.slice(0, 140), url: link }).catch(() => {});
+      } catch (_) {}
+
+      try {
+        const { data: priv } = await (supabaseAdmin as any)
+          .from("profiles_private")
+          .select("discord_user_id")
+          .eq("user_id", data.userId)
+          .maybeSingle();
+        const discordUserId = (priv as { discord_user_id?: string | null } | null)?.discord_user_id ?? null;
+        if (discordUserId) {
+          const { sendDiscordDM } = await import("./discord.server");
+          await sendDiscordDM(discordUserId, `**${title}**\n\n${body}`).catch(() => {});
+        }
+      } catch (_) {}
+    } catch (e) {
+      console.error("Thank-you message failed", e);
+    }
+
     return { ok: true };
   });
 
