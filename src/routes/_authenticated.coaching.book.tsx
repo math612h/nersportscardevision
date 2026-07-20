@@ -26,8 +26,7 @@ export const Route = createFileRoute("/_authenticated/coaching/book")({
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 function BookCoachingPage() {
-  const navigate = useNavigate();
-  const qc = useQueryClient();
+  const _navigate = useNavigate();
   const [step, setStep] = useState<Step>(1);
   const [focus, setFocus] = useState<string[]>([]);
   const [coach, setCoach] = useState<CoachListItem | null>(null);
