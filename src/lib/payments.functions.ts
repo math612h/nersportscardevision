@@ -160,6 +160,7 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
           amount_dkk: String(amountDkk),
         },
         ...(email && { customer_email: email }),
+        managed_payments: { enabled: false },
       } as any);
 
       // Persist the session id so we can resume the same checkout on refresh.
