@@ -640,10 +640,14 @@ export type Database = {
           created_at: string
           created_by: string | null
           donated_at: string
+          environment: string | null
           id: string
           note: string | null
+          refunded_amount_dkk: number | null
+          refunded_at: string | null
           source: string
           stripe_payment_intent_id: string | null
+          stripe_refund_id: string | null
           stripe_session_id: string | null
           user_id: string
         }
@@ -652,10 +656,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           donated_at?: string
+          environment?: string | null
           id?: string
           note?: string | null
+          refunded_amount_dkk?: number | null
+          refunded_at?: string | null
           source?: string
           stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
           stripe_session_id?: string | null
           user_id: string
         }
@@ -664,10 +672,14 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           donated_at?: string
+          environment?: string | null
           id?: string
           note?: string | null
+          refunded_amount_dkk?: number | null
+          refunded_at?: string | null
           source?: string
           stripe_payment_intent_id?: string | null
+          stripe_refund_id?: string | null
           stripe_session_id?: string | null
           user_id?: string
         }
