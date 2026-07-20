@@ -357,17 +357,30 @@ function BookCoachingPage() {
             </CardContent>
           </Card>
 
-          <MobilePayBox amount={duration === 30 ? 30 : duration === 45 ? 40 : 50} />
-
-
           <div className="mt-6">
             <label className="mb-1 flex items-center gap-1 text-sm font-medium"><MessageSquare className="h-4 w-4" /> Ekstra info (valgfri)</label>
             <Textarea rows={4} value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Fx: 'Jeg har specifikt problemer med sektor 2 i Eau Rouge…'" />
           </div>
 
-          <Button className="mt-6 w-full" size="lg" disabled={createMut.isPending} onClick={() => createMut.mutate()}>
-            BOOK tid med {coach.display_name}
-          </Button>
+          <div className="mt-6 rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
+            <p>Betaling foregår sikkert via kort eller MobilePay. Din booking sendes først til coachen når betalingen er gennemført — coachen bekræfter derefter tid, server-navn, server-kode og kommunikationskanal på Discord.</p>
+            <p className="mt-2">Serveren sættes op specifikt til din session — det er inkluderet i prisen.</p>
+          </div>
+
+          {!checkoutSecret && (
+            <Button className="mt-6 w-full" size="lg" onClick={startCheckout}>
+              Betal {duration === 30 ? 30 : duration === 45 ? 40 : 50} kr. og book
+            </Button>
+          )}
+
+          {checkoutSecret && (
+            <div className="mt-6">
+              <StripeEmbeddedCheckoutBox fetchClientSecret={fetchClientSecret} />
+              <Button variant="ghost" className="mt-3 w-full" onClick={() => setCheckoutSecret(null)}>
+                Annullér betaling
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
