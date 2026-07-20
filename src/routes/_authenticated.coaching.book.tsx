@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Calendar as CalIcon, CheckCircle2, Clock, Copy, Check, MapPin, MessageSquare, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar as CalIcon, CheckCircle2, Clock, MapPin, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -12,7 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { COACHING_FOCUS_POINTS, COACHING_DURATIONS } from "@/lib/coaching-focus-points";
-import { listCoaches, getCoachAvailableDays, getCoachSlots, createCoachingBooking, type CoachListItem } from "@/lib/coaching.functions";
+import { listCoaches, getCoachAvailableDays, getCoachSlots, type CoachListItem } from "@/lib/coaching.functions";
+import { createCoachingCheckout } from "@/lib/payments.functions";
+import { getStripeEnvironment, hasStripeConfigured } from "@/lib/stripe";
+import { StripeEmbeddedCheckoutBox } from "@/components/StripeEmbeddedCheckoutBox";
 import { LMU_TRACKS } from "@/lib/tracks";
 import { cn } from "@/lib/utils";
 
@@ -23,8 +26,7 @@ export const Route = createFileRoute("/_authenticated/coaching/book")({
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 function BookCoachingPage() {
-  const navigate = useNavigate();
-  const qc = useQueryClient();
+  const _navigate = useNavigate();
   const [step, setStep] = useState<Step>(1);
   const [focus, setFocus] = useState<string[]>([]);
   const [coach, setCoach] = useState<CoachListItem | null>(null);
@@ -40,7 +42,8 @@ function BookCoachingPage() {
   const coachesFn = useServerFn(listCoaches);
   const daysFn = useServerFn(getCoachAvailableDays);
   const slotsFn = useServerFn(getCoachSlots);
-  const createFn = useServerFn(createCoachingBooking);
+  const checkoutFn = useServerFn(createCoachingCheckout);
+  const [checkoutSecret, setCheckoutSecret] = useState<string | null>(null);
 
   const { data: coaches = [] } = useQuery({ queryKey: ["coaches"], queryFn: () => coachesFn() });
 
@@ -64,23 +67,32 @@ function BookCoachingPage() {
     enabled: !!coach && !!day,
   });
 
-  const createMut = useMutation({
-    mutationFn: () => createFn({ data: {
-      coach_user_id: coach!.user_id,
-      focus_points: focus,
-      duration_minutes: duration,
-      track,
-      layout: layout || null,
-      starts_at: slot,
-      extra_info: extra || null,
-    } }),
-    onSuccess: () => {
-      toast.success("Booking sendt! Coachen får en besked på Discord.");
-      qc.invalidateQueries({ queryKey: ["my-coaching-bookings"] });
-      navigate({ to: "/coaching/mine-bookinger" });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const fetchClientSecret = useCallback(async (): Promise<string> => {
+    const result = await checkoutFn({
+      data: {
+        coach_user_id: coach!.user_id,
+        focus_points: focus,
+        duration_minutes: duration,
+        track,
+        layout: layout || null,
+        starts_at: slot,
+        extra_info: extra || null,
+        returnUrl: `${window.location.origin}/coaching/mine-bookinger?paid=1`,
+        environment: getStripeEnvironment(),
+      },
+    });
+    if ("error" in result) throw new Error(result.error);
+    if (!result.clientSecret) throw new Error("Stripe returnerede intet client secret");
+    return result.clientSecret;
+  }, [checkoutFn, coach, focus, duration, track, layout, slot, extra]);
+
+  const startCheckout = () => {
+    if (!hasStripeConfigured()) {
+      toast.error("Betaling er ikke konfigureret endnu. Kontakt en admin.");
+      return;
+    }
+    setCheckoutSecret("loading");
+  };
 
   const canNext = (() => {
     if (step === 1) return focus.length > 0;
@@ -344,17 +356,30 @@ function BookCoachingPage() {
             </CardContent>
           </Card>
 
-          <MobilePayBox amount={duration === 30 ? 30 : duration === 45 ? 40 : 50} />
-
-
           <div className="mt-6">
             <label className="mb-1 flex items-center gap-1 text-sm font-medium"><MessageSquare className="h-4 w-4" /> Ekstra info (valgfri)</label>
             <Textarea rows={4} value={extra} onChange={(e) => setExtra(e.target.value)} placeholder="Fx: 'Jeg har specifikt problemer med sektor 2 i Eau Rouge…'" />
           </div>
 
-          <Button className="mt-6 w-full" size="lg" disabled={createMut.isPending} onClick={() => createMut.mutate()}>
-            BOOK tid med {coach.display_name}
-          </Button>
+          <div className="mt-6 rounded-lg border bg-muted/30 p-4 text-xs text-muted-foreground">
+            <p>Betaling foregår sikkert via kort eller MobilePay. Din booking sendes først til coachen når betalingen er gennemført — coachen bekræfter derefter tid, server-navn, server-kode og kommunikationskanal på Discord.</p>
+            <p className="mt-2">Serveren sættes op specifikt til din session — det er inkluderet i prisen.</p>
+          </div>
+
+          {!checkoutSecret && (
+            <Button className="mt-6 w-full" size="lg" onClick={startCheckout}>
+              Betal {duration === 30 ? 30 : duration === 45 ? 40 : 50} kr. og book
+            </Button>
+          )}
+
+          {checkoutSecret && (
+            <div className="mt-6">
+              <StripeEmbeddedCheckoutBox fetchClientSecret={fetchClientSecret} />
+              <Button variant="ghost" className="mt-3 w-full" onClick={() => setCheckoutSecret(null)}>
+                Annullér betaling
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -378,39 +403,6 @@ function matchCount(c: CoachListItem, focus: string[]) {
   return focus.filter((f) => c.specialties.includes(f)).length;
 }
 
-function MobilePayBox({ amount }: { amount: number }) {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    await navigator.clipboard.writeText("4412ZQ");
-    setCopied(true);
-    toast.success("MobilePay-boks kopieret");
-    setTimeout(() => setCopied(false), 2000);
-  };
-  return (
-    <Card className="mt-6">
-      <CardContent className="space-y-3 pt-6">
-        <div className="text-sm font-semibold">Betaling via MobilePay</div>
-        <p className="text-sm text-muted-foreground">
-          Send <strong>{amount} kr.</strong> til vores MobilePay-boks. Skriv gerne dit LMU-navn og
-          "coaching" i beskeden.
-        </p>
-        <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-4">
-          <span className="text-2xl font-bold tracking-widest">4412ZQ</span>
-          <Button size="sm" variant="outline" onClick={copy} className="ml-auto" type="button">
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            <span className="ml-1">{copied ? "Kopieret" : "Kopiér"}</span>
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Vi sætter en server op specifikt til din session — det er inkluderet i prisen.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Bemærk: Din booking bekræftes først, når vi har modtaget betalingen.
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
 
 
 function MonthCalendar({

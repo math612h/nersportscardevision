@@ -237,6 +237,7 @@ export type Database = {
       }
       coaching_bookings: {
         Row: {
+          amount_dkk: number | null
           coach_notified_channel_id: string | null
           coach_notified_message_id: string | null
           coach_user_id: string
@@ -247,15 +248,19 @@ export type Database = {
           focus_points: string[]
           id: string
           layout: string | null
+          paid_at: string | null
           rejection_reason: string | null
           reminder_sent_at: string | null
           starts_at: string
           status: Database["public"]["Enums"]["coaching_booking_status"]
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           track: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          amount_dkk?: number | null
           coach_notified_channel_id?: string | null
           coach_notified_message_id?: string | null
           coach_user_id: string
@@ -266,15 +271,19 @@ export type Database = {
           focus_points?: string[]
           id?: string
           layout?: string | null
+          paid_at?: string | null
           rejection_reason?: string | null
           reminder_sent_at?: string | null
           starts_at: string
           status?: Database["public"]["Enums"]["coaching_booking_status"]
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           track: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          amount_dkk?: number | null
           coach_notified_channel_id?: string | null
           coach_notified_message_id?: string | null
           coach_user_id?: string
@@ -285,10 +294,13 @@ export type Database = {
           focus_points?: string[]
           id?: string
           layout?: string | null
+          paid_at?: string | null
           rejection_reason?: string | null
           reminder_sent_at?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["coaching_booking_status"]
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           track?: string
           updated_at?: string
           user_id?: string
@@ -630,6 +642,9 @@ export type Database = {
           donated_at: string
           id: string
           note: string | null
+          source: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
           user_id: string
         }
         Insert: {
@@ -639,6 +654,9 @@ export type Database = {
           donated_at?: string
           id?: string
           note?: string | null
+          source?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           user_id: string
         }
         Update: {
@@ -648,6 +666,9 @@ export type Database = {
           donated_at?: string
           id?: string
           note?: string | null
+          source?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
           user_id?: string
         }
         Relationships: []
