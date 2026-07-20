@@ -402,6 +402,9 @@ function MobilePayBox({ amount }: { amount: number }) {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">
+          Vi sætter en server op specifikt til din session — det er inkluderet i prisen.
+        </p>
+        <p className="text-xs text-muted-foreground">
           Bemærk: Din booking bekræftes først, når vi har modtaget betalingen.
         </p>
       </CardContent>
