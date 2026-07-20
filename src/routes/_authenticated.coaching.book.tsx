@@ -108,7 +108,7 @@ function BookCoachingPage() {
       {step === 1 && (
         <div>
           <h1 className="text-2xl font-bold">Hvad vil du gerne have hjælp til?</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Vælg ét eller flere fokuspunkter.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Vælg mellem 1-3 fokuspunkter. Jo færre fokuspunkter, jo mere dybdegående kan vi gå.</p>
           <div className="mt-6 flex flex-wrap gap-2">
             {COACHING_FOCUS_POINTS.map((fp) => {
               const sel = focus.includes(fp);
