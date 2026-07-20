@@ -89,7 +89,7 @@ function StripeDonation() {
       return;
     }
     if (!hasStripeConfigured()) {
-      toast.error("Kort/MobilePay-betaling er ikke aktiveret endnu. Brug MobilePay-boksen ovenfor.");
+      toast.error("Kort/MobilePay-betaling er ikke aktiveret endnu. Prøv igen senere.");
       return;
     }
     if (activeAmount < 5) {
