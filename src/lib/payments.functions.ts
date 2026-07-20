@@ -57,6 +57,7 @@ export const createDonationCheckout = createServerFn({ method: "POST" })
           amount_dkk: String(data.amountDkk),
         },
         ...(email && { customer_email: email }),
+        managed_payments: { enabled: false },
       } as any);
 
       return { clientSecret: session.client_secret ?? "" };
