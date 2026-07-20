@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Calendar as CalIcon, CheckCircle2, Clock, Copy, Check, MapPin, MessageSquare, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar as CalIcon, CheckCircle2, Clock, MapPin, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -12,7 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { COACHING_FOCUS_POINTS, COACHING_DURATIONS } from "@/lib/coaching-focus-points";
-import { listCoaches, getCoachAvailableDays, getCoachSlots, createCoachingBooking, type CoachListItem } from "@/lib/coaching.functions";
+import { listCoaches, getCoachAvailableDays, getCoachSlots, type CoachListItem } from "@/lib/coaching.functions";
+import { createCoachingCheckout } from "@/lib/payments.functions";
+import { getStripeEnvironment, hasStripeConfigured } from "@/lib/stripe";
+import { StripeEmbeddedCheckoutBox } from "@/components/StripeEmbeddedCheckoutBox";
 import { LMU_TRACKS } from "@/lib/tracks";
 import { cn } from "@/lib/utils";
 
