@@ -43,7 +43,8 @@ function BookCoachingPage() {
   const coachesFn = useServerFn(listCoaches);
   const daysFn = useServerFn(getCoachAvailableDays);
   const slotsFn = useServerFn(getCoachSlots);
-  const createFn = useServerFn(createCoachingBooking);
+  const checkoutFn = useServerFn(createCoachingCheckout);
+  const [checkoutSecret, setCheckoutSecret] = useState<string | null>(null);
 
   const { data: coaches = [] } = useQuery({ queryKey: ["coaches"], queryFn: () => coachesFn() });
 
@@ -67,23 +68,32 @@ function BookCoachingPage() {
     enabled: !!coach && !!day,
   });
 
-  const createMut = useMutation({
-    mutationFn: () => createFn({ data: {
-      coach_user_id: coach!.user_id,
-      focus_points: focus,
-      duration_minutes: duration,
-      track,
-      layout: layout || null,
-      starts_at: slot,
-      extra_info: extra || null,
-    } }),
-    onSuccess: () => {
-      toast.success("Booking sendt! Coachen får en besked på Discord.");
-      qc.invalidateQueries({ queryKey: ["my-coaching-bookings"] });
-      navigate({ to: "/coaching/mine-bookinger" });
-    },
-    onError: (e: Error) => toast.error(e.message),
-  });
+  const fetchClientSecret = useCallback(async (): Promise<string> => {
+    const result = await checkoutFn({
+      data: {
+        coach_user_id: coach!.user_id,
+        focus_points: focus,
+        duration_minutes: duration,
+        track,
+        layout: layout || null,
+        starts_at: slot,
+        extra_info: extra || null,
+        returnUrl: `${window.location.origin}/coaching/mine-bookinger?paid=1`,
+        environment: getStripeEnvironment(),
+      },
+    });
+    if ("error" in result) throw new Error(result.error);
+    if (!result.clientSecret) throw new Error("Stripe returnerede intet client secret");
+    return result.clientSecret;
+  }, [checkoutFn, coach, focus, duration, track, layout, slot, extra]);
+
+  const startCheckout = () => {
+    if (!hasStripeConfigured()) {
+      toast.error("Betaling er ikke konfigureret endnu. Kontakt en admin.");
+      return;
+    }
+    setCheckoutSecret("loading");
+  };
 
   const canNext = (() => {
     if (step === 1) return focus.length > 0;
