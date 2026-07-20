@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Coffee, Copy, Check, CreditCard } from "lucide-react";
+import { Coffee, CreditCard } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,12 @@ import { createDonationCheckout } from "@/lib/payments.functions";
 import { getStripeEnvironment, hasStripeConfigured } from "@/lib/stripe";
 import { StripeEmbeddedCheckoutBox } from "@/components/StripeEmbeddedCheckoutBox";
 
+
 export const Route = createFileRoute("/donationer")({
   head: () => ({
     meta: [
       { title: "Donationer – LMU Danmark" },
-      { name: "description", content: "Støt driften af LMU Danmark via MobilePay eller kort." },
+      { name: "description", content: "Støt driften af LMU Danmark med kort eller MobilePay via sikker betaling." },
       { property: "og:title", content: "Donationer – LMU Danmark" },
       { property: "og:description", content: "Alle bidrag hjælper med at holde platformen kørende." },
     ],
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/donationer")({
   component: DonationsPage,
 });
 
-const MOBILEPAY_BOX = "4412ZQ";
+
 
 const TIER_LABEL: Record<Exclude<DonationTier, null>, string> = {
   bronze: "Bronze",
@@ -88,7 +89,7 @@ function StripeDonation() {
       return;
     }
     if (!hasStripeConfigured()) {
-      toast.error("Kort/MobilePay-betaling er ikke aktiveret endnu. Brug MobilePay-boksen ovenfor.");
+      toast.error("Kort/MobilePay-betaling er ikke aktiveret endnu. Prøv igen senere.");
       return;
     }
     if (activeAmount < 5) {
@@ -168,14 +169,6 @@ function StripeDonation() {
 }
 
 function DonationsPage() {
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    await navigator.clipboard.writeText(MOBILEPAY_BOX);
-    setCopied(true);
-    toast.success("MobilePay-boks kopieret");
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   const paid = typeof window !== "undefined" && new URL(window.location.href).searchParams.get("paid") === "1";
 
   return (
@@ -206,24 +199,7 @@ function DonationsPage() {
 
       <StripeDonation />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>MobilePay (manuel)</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            Foretrækker du at sende direkte til vores MobilePay-boks? Skriv gerne dit LMU-navn i
-            beskeden — vi registrerer donationen manuelt bagefter.
-          </p>
-          <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-4">
-            <span className="text-2xl font-bold tracking-widest">{MOBILEPAY_BOX}</span>
-            <Button size="sm" variant="outline" onClick={copy} className="ml-auto">
-              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              <span className="ml-1">{copied ? "Kopieret" : "Kopiér"}</span>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Anerkendelse</h2>
