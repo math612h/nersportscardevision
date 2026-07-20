@@ -3,7 +3,7 @@ import { ArrowRight, CheckCircle2, Flame, Target, Trophy, UserCog, Zap } from "l
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { COACHING_FOCUS_POINTS } from "@/lib/coaching-focus-points";
-import { CoachingAccessGate } from "@/components/CoachingAccessGate";
+
 import { useAuth } from "@/hooks/use-auth";
 
 
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/coaching/")({
       { property: "og:description", content: "Bliv hurtigere, mere stabil og bedre forberedt til race." },
     ],
   }),
-  component: () => <CoachingAccessGate><CoachingLanding /></CoachingAccessGate>,
+  component: CoachingLanding,
 });
 
 function CoachingLanding() {
