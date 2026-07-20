@@ -332,7 +332,7 @@ function BookCoachingPage() {
           <Card className="mt-6">
             <CardContent className="space-y-2 pt-6 text-sm">
               <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /><strong>Coach:</strong> {coach.display_name}</div>
-              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /><strong>Varighed:</strong> {duration} min</div>
+              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /><strong>Varighed:</strong> {duration} min ({duration === 30 ? 30 : duration === 45 ? 40 : 50} kr.)</div>
               <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /><strong>Bane:</strong> {track}{layout ? ` — ${layout}` : ""}</div>
               <div className="flex items-center gap-2"><CalIcon className="h-4 w-4 text-primary" /><strong>Tid:</strong> {slot ? new Date(slot).toLocaleString("da-DK", { dateStyle: "full", timeStyle: "short" }) : ""}</div>
               <div>
@@ -343,6 +343,9 @@ function BookCoachingPage() {
               </div>
             </CardContent>
           </Card>
+
+          <MobilePayBox amount={duration === 30 ? 30 : duration === 45 ? 40 : 50} />
+
 
           <div className="mt-6">
             <label className="mb-1 flex items-center gap-1 text-sm font-medium"><MessageSquare className="h-4 w-4" /> Ekstra info (valgfri)</label>
