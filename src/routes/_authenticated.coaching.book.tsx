@@ -401,6 +401,9 @@ function MobilePayBox({ amount }: { amount: number }) {
             <span className="ml-1">{copied ? "Kopieret" : "Kopiér"}</span>
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Bemærk: Din booking bekræftes først, når vi har modtaget betalingen.
+        </p>
       </CardContent>
     </Card>
   );
