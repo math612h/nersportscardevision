@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Calendar as CalIcon, CheckCircle2, Clock, MapPin, MessageSquare, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar as CalIcon, CheckCircle2, Clock, Copy, Check, MapPin, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
