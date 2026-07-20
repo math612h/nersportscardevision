@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, Calendar as CalIcon, CheckCircle2, Clock, MapPin, MessageSquare, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Calendar as CalIcon, CheckCircle2, Clock, Copy, Check, MapPin, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -229,21 +229,26 @@ function BookCoachingPage() {
           </p>
           <p className="mt-2 text-xs text-muted-foreground">Du har valgt <strong>{focus.length}</strong> fokuspunkter.</p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {COACHING_DURATIONS.map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setDuration(d)}
-                className={cn(
-                  "rounded-xl border p-6 text-center transition-colors",
-                  duration === d ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
-                )}
-              >
-                <Clock className="mx-auto h-6 w-6 text-primary" />
-                <div className="mt-2 text-2xl font-bold">{d} min</div>
-              </button>
-            ))}
+            {COACHING_DURATIONS.map((d) => {
+              const price = d === 30 ? 30 : d === 45 ? 40 : 50;
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDuration(d)}
+                  className={cn(
+                    "rounded-xl border p-6 text-center transition-colors",
+                    duration === d ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
+                  )}
+                >
+                  <Clock className="mx-auto h-6 w-6 text-primary" />
+                  <div className="mt-2 text-2xl font-bold">{d} min</div>
+                  <div className="mt-1 text-sm font-medium text-primary">{price} kr.</div>
+                </button>
+              );
+            })}
           </div>
+
         </div>
       )}
 
@@ -327,7 +332,7 @@ function BookCoachingPage() {
           <Card className="mt-6">
             <CardContent className="space-y-2 pt-6 text-sm">
               <div className="flex items-center gap-2"><Sparkles className="h-4 w-4 text-primary" /><strong>Coach:</strong> {coach.display_name}</div>
-              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /><strong>Varighed:</strong> {duration} min</div>
+              <div className="flex items-center gap-2"><Clock className="h-4 w-4 text-primary" /><strong>Varighed:</strong> {duration} min ({duration === 30 ? 30 : duration === 45 ? 40 : 50} kr.)</div>
               <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-primary" /><strong>Bane:</strong> {track}{layout ? ` — ${layout}` : ""}</div>
               <div className="flex items-center gap-2"><CalIcon className="h-4 w-4 text-primary" /><strong>Tid:</strong> {slot ? new Date(slot).toLocaleString("da-DK", { dateStyle: "full", timeStyle: "short" }) : ""}</div>
               <div>
@@ -338,6 +343,9 @@ function BookCoachingPage() {
               </div>
             </CardContent>
           </Card>
+
+          <MobilePayBox amount={duration === 30 ? 30 : duration === 45 ? 40 : 50} />
+
 
           <div className="mt-6">
             <label className="mb-1 flex items-center gap-1 text-sm font-medium"><MessageSquare className="h-4 w-4" /> Ekstra info (valgfri)</label>
@@ -369,6 +377,35 @@ function matchCount(c: CoachListItem, focus: string[]) {
   if (!focus.length) return 0;
   return focus.filter((f) => c.specialties.includes(f)).length;
 }
+
+function MobilePayBox({ amount }: { amount: number }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    await navigator.clipboard.writeText("4412ZQ");
+    setCopied(true);
+    toast.success("MobilePay-boks kopieret");
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <Card className="mt-6">
+      <CardContent className="space-y-3 pt-6">
+        <div className="text-sm font-semibold">Betaling via MobilePay</div>
+        <p className="text-sm text-muted-foreground">
+          Send <strong>{amount} kr.</strong> til vores MobilePay-boks. Skriv gerne dit LMU-navn og
+          "coaching" i beskeden.
+        </p>
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-4">
+          <span className="text-2xl font-bold tracking-widest">4412ZQ</span>
+          <Button size="sm" variant="outline" onClick={copy} className="ml-auto" type="button">
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            <span className="ml-1">{copied ? "Kopieret" : "Kopiér"}</span>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 function MonthCalendar({
   cursor, setCursor, availableDays, selected, onPick,
