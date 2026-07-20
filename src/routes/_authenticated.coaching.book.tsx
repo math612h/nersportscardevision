@@ -229,21 +229,26 @@ function BookCoachingPage() {
           </p>
           <p className="mt-2 text-xs text-muted-foreground">Du har valgt <strong>{focus.length}</strong> fokuspunkter.</p>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            {COACHING_DURATIONS.map((d) => (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setDuration(d)}
-                className={cn(
-                  "rounded-xl border p-6 text-center transition-colors",
-                  duration === d ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
-                )}
-              >
-                <Clock className="mx-auto h-6 w-6 text-primary" />
-                <div className="mt-2 text-2xl font-bold">{d} min</div>
-              </button>
-            ))}
+            {COACHING_DURATIONS.map((d) => {
+              const price = d === 30 ? 30 : d === 45 ? 40 : 50;
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => setDuration(d)}
+                  className={cn(
+                    "rounded-xl border p-6 text-center transition-colors",
+                    duration === d ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
+                  )}
+                >
+                  <Clock className="mx-auto h-6 w-6 text-primary" />
+                  <div className="mt-2 text-2xl font-bold">{d} min</div>
+                  <div className="mt-1 text-sm font-medium text-primary">{price} kr.</div>
+                </button>
+              );
+            })}
           </div>
+
         </div>
       )}
 
