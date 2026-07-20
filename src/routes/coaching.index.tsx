@@ -99,7 +99,7 @@ function CoachingLanding() {
         <div className="mx-auto max-w-5xl px-4 py-16">
           <h2 className="text-3xl font-bold tracking-tight">Vi tilbyder coaching i</h2>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            Vælg de fokuspunkter du har brug for. Jo flere punkter, desto længere session anbefales.
+            Vælg de fokuspunkter du har brug for. Vi anbefaler 1-3 fokuspunkter — jo færre, desto mere dybdegående kan vi gå.
           </p>
           <ul className="mt-8 grid gap-2 sm:grid-cols-2">
             {COACHING_FOCUS_POINTS.map((fp) => (
