@@ -378,6 +378,35 @@ function matchCount(c: CoachListItem, focus: string[]) {
   return focus.filter((f) => c.specialties.includes(f)).length;
 }
 
+function MobilePayBox({ amount }: { amount: number }) {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    await navigator.clipboard.writeText("4412ZQ");
+    setCopied(true);
+    toast.success("MobilePay-boks kopieret");
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <Card className="mt-6">
+      <CardContent className="space-y-3 pt-6">
+        <div className="text-sm font-semibold">Betaling via MobilePay</div>
+        <p className="text-sm text-muted-foreground">
+          Send <strong>{amount} kr.</strong> til vores MobilePay-boks. Skriv gerne dit LMU-navn og
+          "coaching" i beskeden.
+        </p>
+        <div className="flex items-center gap-3 rounded-lg border bg-muted/40 p-4">
+          <span className="text-2xl font-bold tracking-widest">4412ZQ</span>
+          <Button size="sm" variant="outline" onClick={copy} className="ml-auto" type="button">
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            <span className="ml-1">{copied ? "Kopieret" : "Kopiér"}</span>
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+
 function MonthCalendar({
   cursor, setCursor, availableDays, selected, onPick,
 }: {
