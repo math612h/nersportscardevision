@@ -78,6 +78,7 @@ import { Route as AuthenticatedAdminAdminDonationerRouteImport } from './routes/
 import { Route as AuthenticatedAdminAdminCronRouteImport } from './routes/_authenticated._admin.admin.cron'
 import { Route as AuthenticatedAdminAdminCoachesRouteImport } from './routes/_authenticated._admin.admin.coaches'
 import { Route as AuthenticatedAdminAdminBriefingRouteImport } from './routes/_authenticated._admin.admin.briefing'
+import { Route as AuthenticatedAdminAdminBetalingerRouteImport } from './routes/_authenticated._admin.admin.betalinger'
 import { Route as AuthenticatedAdminAdminBeskederRouteImport } from './routes/_authenticated._admin.admin.beskeder'
 import { Route as AuthenticatedAdminAdminAuditRouteImport } from './routes/_authenticated._admin.admin.audit'
 import { Route as AuthenticatedAdminAdminAfventerRouteImport } from './routes/_authenticated._admin.admin.afventer'
@@ -473,6 +474,12 @@ const AuthenticatedAdminAdminBriefingRoute =
     path: '/admin/briefing',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminBetalingerRoute =
+  AuthenticatedAdminAdminBetalingerRouteImport.update({
+    id: '/admin/betalinger',
+    path: '/admin/betalinger',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminBeskederRoute =
   AuthenticatedAdminAdminBeskederRouteImport.update({
     id: '/admin/beskeder',
@@ -591,6 +598,7 @@ export interface FileRoutesByFullPath {
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/admin/beskeder': typeof AuthenticatedAdminAdminBeskederRoute
+  '/admin/betalinger': typeof AuthenticatedAdminAdminBetalingerRoute
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
@@ -672,6 +680,7 @@ export interface FileRoutesByTo {
   '/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/admin/beskeder': typeof AuthenticatedAdminAdminBeskederRoute
+  '/admin/betalinger': typeof AuthenticatedAdminAdminBetalingerRoute
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
@@ -756,6 +765,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/afventer': typeof AuthenticatedAdminAdminAfventerRoute
   '/_authenticated/_admin/admin/audit': typeof AuthenticatedAdminAdminAuditRoute
   '/_authenticated/_admin/admin/beskeder': typeof AuthenticatedAdminAdminBeskederRoute
+  '/_authenticated/_admin/admin/betalinger': typeof AuthenticatedAdminAdminBetalingerRoute
   '/_authenticated/_admin/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/_authenticated/_admin/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/_authenticated/_admin/admin/cron': typeof AuthenticatedAdminAdminCronRoute
@@ -840,6 +850,7 @@ export interface FileRouteTypes {
     | '/admin/afventer'
     | '/admin/audit'
     | '/admin/beskeder'
+    | '/admin/betalinger'
     | '/admin/briefing'
     | '/admin/coaches'
     | '/admin/cron'
@@ -921,6 +932,7 @@ export interface FileRouteTypes {
     | '/admin/afventer'
     | '/admin/audit'
     | '/admin/beskeder'
+    | '/admin/betalinger'
     | '/admin/briefing'
     | '/admin/coaches'
     | '/admin/cron'
@@ -1004,6 +1016,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/afventer'
     | '/_authenticated/_admin/admin/audit'
     | '/_authenticated/_admin/admin/beskeder'
+    | '/_authenticated/_admin/admin/betalinger'
     | '/_authenticated/_admin/admin/briefing'
     | '/_authenticated/_admin/admin/coaches'
     | '/_authenticated/_admin/admin/cron'
@@ -1575,6 +1588,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminBriefingRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/betalinger': {
+      id: '/_authenticated/_admin/admin/betalinger'
+      path: '/admin/betalinger'
+      fullPath: '/admin/betalinger'
+      preLoaderRoute: typeof AuthenticatedAdminAdminBetalingerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/beskeder': {
       id: '/_authenticated/_admin/admin/beskeder'
       path: '/admin/beskeder'
@@ -1715,6 +1735,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminAfventerRoute: typeof AuthenticatedAdminAdminAfventerRoute
   AuthenticatedAdminAdminAuditRoute: typeof AuthenticatedAdminAdminAuditRoute
   AuthenticatedAdminAdminBeskederRoute: typeof AuthenticatedAdminAdminBeskederRoute
+  AuthenticatedAdminAdminBetalingerRoute: typeof AuthenticatedAdminAdminBetalingerRoute
   AuthenticatedAdminAdminBriefingRoute: typeof AuthenticatedAdminAdminBriefingRoute
   AuthenticatedAdminAdminCoachesRoute: typeof AuthenticatedAdminAdminCoachesRoute
   AuthenticatedAdminAdminCronRoute: typeof AuthenticatedAdminAdminCronRoute
@@ -1738,6 +1759,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminAfventerRoute: AuthenticatedAdminAdminAfventerRoute,
   AuthenticatedAdminAdminAuditRoute: AuthenticatedAdminAdminAuditRoute,
   AuthenticatedAdminAdminBeskederRoute: AuthenticatedAdminAdminBeskederRoute,
+  AuthenticatedAdminAdminBetalingerRoute:
+    AuthenticatedAdminAdminBetalingerRoute,
   AuthenticatedAdminAdminBriefingRoute: AuthenticatedAdminAdminBriefingRoute,
   AuthenticatedAdminAdminCoachesRoute: AuthenticatedAdminAdminCoachesRoute,
   AuthenticatedAdminAdminCronRoute: AuthenticatedAdminAdminCronRoute,
