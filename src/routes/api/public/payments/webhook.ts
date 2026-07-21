@@ -13,6 +13,27 @@ function getSupabase() {
   return _supabase;
 }
 
+const PAYMENT_CHANNEL_ID = "1529100842420928633";
+
+async function postPaymentToDiscord(userId: string, amountDkk: number, source: "donation" | "coaching") {
+  try {
+    const sb = getSupabase() as any;
+    const { data: profile } = await sb
+      .from("profiles")
+      .select("display_name, lmu_name")
+      .eq("id", userId)
+      .maybeSingle();
+    const name = (profile as any)?.display_name?.trim() || (profile as any)?.lmu_name?.trim() || "Ukendt bruger";
+    const { sendDiscordChannelMessage } = await import("@/lib/discord.server");
+    const emoji = source === "coaching" ? "🏁" : "☕";
+    const label = source === "coaching" ? "Ny coaching-session solgt" : "Ny donation modtaget";
+    const content = `${emoji} **${label}**\n**${name}** har betalt **${amountDkk} kr.** 🙏`;
+    await sendDiscordChannelMessage(PAYMENT_CHANNEL_ID, content).catch(() => {});
+  } catch (e) {
+    console.error("[payments-webhook] postPaymentToDiscord failed", e);
+  }
+}
+
 async function sendThankYou(userId: string, amountDkk: number, source: "donation" | "coaching") {
   const sb = getSupabase() as any;
   const { data: profile } = await sb
