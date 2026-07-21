@@ -167,6 +167,7 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     }
 
     await sendThankYou(userId, amountDkk, "coaching");
+    await postPaymentToDiscord(userId, amountDkk, "coaching");
     return;
   }
 
