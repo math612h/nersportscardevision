@@ -162,6 +162,7 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
         },
         ...(email && { customer_email: email }),
         managed_payments: { enabled: false },
+        payment_method_types: ["card", "mobilepay"],
       } as any);
 
       // Persist the session id so we can resume the same checkout on refresh.
