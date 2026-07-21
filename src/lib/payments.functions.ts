@@ -58,6 +58,7 @@ export const createDonationCheckout = createServerFn({ method: "POST" })
         },
         ...(email && { customer_email: email }),
         managed_payments: { enabled: false },
+        payment_method_types: ["card", "mobilepay"],
       } as any);
 
       return { clientSecret: session.client_secret ?? "" };
