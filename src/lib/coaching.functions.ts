@@ -611,7 +611,7 @@ export const adminSendTestRatingDM = createServerFn({ method: "POST" })
           layout: "Grand Prix",
           focus_points: ["Racecraft"],
           status: "completed",
-          price_dkk: 0,
+          amount_dkk: 0,
         })
         .select("id").single();
       if (error) throw new Error(error.message);
