@@ -59,9 +59,14 @@ function AdminCoachesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Coaches</h1>
-        <p className="text-sm text-muted-foreground">Tildel eller fjern coach-rollen.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Coaches</h1>
+          <p className="text-sm text-muted-foreground">Tildel eller fjern coach-rollen.</p>
+        </div>
+        <Button size="sm" variant="outline" disabled={testDmMut.isPending} onClick={() => testDmMut.mutate()}>
+          {testDmMut.isPending ? "Sender…" : "Send test-rating DM til mig"}
+        </Button>
       </div>
 
       <Card>
