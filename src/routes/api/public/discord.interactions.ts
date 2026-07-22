@@ -515,6 +515,41 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             });
           }
 
+          // Coaching: user pressed a star rating button in DM → open modal for optional comment
+          if (kind === "coaching_rate" && invitationId) {
+            const stars = Math.max(1, Math.min(5, parseInt(customId.split(":")[2] ?? "0", 10) || 0));
+            if (!stars) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: "Ugyldig bedømmelse." },
+              });
+            }
+            return Response.json({
+              type: MODAL,
+              data: {
+                custom_id: `coaching_rate_modal:${invitationId}:${stars}`,
+                title: `Bedømmelse: ${stars} ${stars === 1 ? "stjerne" : "stjerner"}`,
+                components: [
+                  {
+                    type: 1,
+                    components: [
+                      {
+                        type: 4,
+                        custom_id: "comment",
+                        label: "Kommentar (valgfri)",
+                        style: 2,
+                        required: false,
+                        min_length: 0,
+                        max_length: 2000,
+                        placeholder: "Hvad var særligt godt? Hvad kunne være bedre?",
+                      },
+                    ],
+                  },
+                ],
+              },
+            });
+          }
+
           // Coaching: coach picked a channel from CHANNEL_SELECT → confirm booking
           if (kind === "coaching_channel" && invitationId) {
             const channelId = (payload?.data?.values?.[0] ?? "").toString();
