@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { adminListCoaches, adminSetCoachRole } from "@/lib/coaching.functions";
+import { adminListCoaches, adminSetCoachRole, adminSendTestRatingDM } from "@/lib/coaching.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/coaches")({
   component: AdminCoachesPage,
