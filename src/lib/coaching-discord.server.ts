@@ -200,20 +200,29 @@ export async function sendRatingRequestDM(
   if (!userDid) return { ok: false, reason: "user has no discord linked" };
   const coachName = await getDisplayName(supabaseAdmin, b.coach_user_id);
   const unix = Math.floor(new Date(b.starts_at).getTime() / 1000);
-  const rateUrl = `https://lmudanmark.dk/coaching/rate/${b.id}`;
   const lines = [
     opts.testMode ? "⭐ **Test — hvordan gik din coaching-session?**" : "⭐ **Hvordan gik din coaching-session?**",
     `Coach: **${coachName}**`,
     `Tid: <t:${unix}:F>`,
     `Bane: **${b.track}${b.layout ? ` — ${b.layout}` : ""}**`,
     "",
-    "Giv en stjernebedømmelse (1–5) og skriv gerne et par ord — det tager 20 sekunder og hjælper andre med at vælge coach:",
-    rateUrl,
+    "Tryk på antallet af stjerner nedenfor — du får derefter mulighed for at skrive en valgfri kommentar.",
   ];
   if (opts.testMode) {
     lines.push("", "_Dette er en test-DM sendt fra admin-panelet._");
   }
-  const res = await sendDiscordDM(userDid, lines.join("\n"));
+  const components = [
+    {
+      type: 1,
+      components: [1, 2, 3, 4, 5].map((n) => ({
+        type: 2,
+        style: 2, // secondary
+        label: `${"⭐".repeat(n)}`,
+        custom_id: `coaching_rate:${b.id}:${n}`,
+      })),
+    },
+  ];
+  const res = await sendDiscordDM(userDid, lines.join("\n"), components);
   if (!res.ok) return { ok: false, reason: "discord DM failed" };
   if (!opts.testMode) {
     await supabaseAdmin.from("coaching_bookings")
