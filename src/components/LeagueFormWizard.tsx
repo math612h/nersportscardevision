@@ -282,8 +282,12 @@ function ClassConfigsEditor({
                   })
                 }
               />
-            </div>
           </div>
+          <CarPicker
+            carClass={c.car_class}
+            allowed={c.allowed_cars}
+            onChange={(next) => update(i, { allowed_cars: next })}
+          />
         </div>
       ))}
       <Button
