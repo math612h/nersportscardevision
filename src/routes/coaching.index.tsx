@@ -1,15 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Flame, Target, Trophy, UserCog, Zap, Trophy as TrophyIcon } from "lucide-react";
+import { ArrowRight, CheckCircle2, Flame, Star, Target, Trophy, UserCog, Zap, Trophy as TrophyIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { COACHING_FOCUS_POINTS } from "@/lib/coaching-focus-points";
-import { listCoachesPublic, type CoachListItem } from "@/lib/coaching.functions";
+import {
+  listCoachesPublic,
+  getCoachRatingsSummaries,
+  listCoachRatings,
+  type CoachListItem,
+} from "@/lib/coaching.functions";
+import { cn } from "@/lib/utils";
 
 import { useAuth } from "@/hooks/use-auth";
+
+
 
 
 export const Route = createFileRoute("/coaching/")({
