@@ -11,6 +11,7 @@ import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTrackImageFile } from "@/lib/tracks";
+import { DonateButton } from "@/components/DonateButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
