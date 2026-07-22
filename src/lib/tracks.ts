@@ -29,6 +29,7 @@ export type ClassConfig = {
   number_to: number;
   max_drivers?: number; // optional grid cap (waitlist activates when exceeded)
   dns_limit?: number;   // optional max DNS before driver auto-moves to waitlist
+  allowed_cars?: string[]; // optional subset of cars from CARS_BY_CLASS. Empty/undefined = all allowed.
 };
 
 export type OnOff = "On" | "Off";
