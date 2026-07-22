@@ -151,52 +151,67 @@ function CoachingLanding() {
               Kig deres profiler igennem og find den coach hvis specialer matcher dine behov.
             </p>
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
-              {coaches.map((c) => (
-                <Card key={c.user_id} className="flex flex-col border-border/60 bg-card/40 backdrop-blur">
-                  <CardContent className="flex flex-1 flex-col pt-6">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-14 w-14">
-                        {c.avatar_url && <AvatarImage src={c.avatar_url} />}
-                        <AvatarFallback>{c.display_name?.[0] ?? "?"}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="text-lg font-semibold">{c.display_name}</div>
-                        <div className="text-xs text-muted-foreground">Coach</div>
+              {coaches.map((c) => {
+                const s = (summaries as any)[c.user_id] as { avg: number; count: number } | undefined;
+                return (
+                  <Card key={c.user_id} className="flex flex-col border-border/60 bg-card/40 backdrop-blur">
+                    <CardContent className="flex flex-1 flex-col pt-6">
+                      <button
+                        type="button"
+                        onClick={() => setDetailCoach(c)}
+                        className="group flex items-center gap-3 text-left"
+                      >
+                        <Avatar className="h-14 w-14">
+                          {c.avatar_url && <AvatarImage src={c.avatar_url} />}
+                          <AvatarFallback>{c.display_name?.[0] ?? "?"}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="text-lg font-semibold group-hover:underline">{c.display_name}</div>
+                          <div className="flex items-center gap-1 text-xs">
+                            <StarRow value={s?.avg ?? 0} />
+                            <span className="ml-1 text-muted-foreground">
+                              {s && s.count > 0 ? `${s.avg.toFixed(1)} · ${s.count} ${s.count === 1 ? "bedømmelse" : "bedømmelser"}` : "Ingen bedømmelser endnu"}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                      {c.bio && (
+                        <p className="mt-4 line-clamp-4 text-sm text-muted-foreground">{c.bio}</p>
+                      )}
+                      {c.specialties.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-1.5">
+                          {c.specialties.slice(0, 6).map((sp) => (
+                            <Badge key={sp} variant="secondary" className="text-[11px]">{sp}</Badge>
+                          ))}
+                          {c.specialties.length > 6 && (
+                            <Badge variant="outline" className="text-[11px]">+{c.specialties.length - 6}</Badge>
+                          )}
+                        </div>
+                      )}
+                      {c.achievements.length > 0 && (
+                        <ul className="mt-4 space-y-1.5">
+                          {c.achievements.slice(0, 3).map((a, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                              <TrophyIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                              <span>{a}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="mt-auto flex gap-2 pt-5">
+                        <Button size="sm" variant="outline" className="flex-1" onClick={() => setDetailCoach(c)}>
+                          Se profil
+                        </Button>
+                        <Button asChild size="sm" className="flex-1">
+                          <Link to="/coaching/book">
+                            Book <ArrowRight className="ml-1 h-4 w-4" />
+                          </Link>
+                        </Button>
                       </div>
-                    </div>
-                    {c.bio && (
-                      <p className="mt-4 line-clamp-4 text-sm text-muted-foreground">{c.bio}</p>
-                    )}
-                    {c.specialties.length > 0 && (
-                      <div className="mt-4 flex flex-wrap gap-1.5">
-                        {c.specialties.slice(0, 6).map((s) => (
-                          <Badge key={s} variant="secondary" className="text-[11px]">{s}</Badge>
-                        ))}
-                        {c.specialties.length > 6 && (
-                          <Badge variant="outline" className="text-[11px]">+{c.specialties.length - 6}</Badge>
-                        )}
-                      </div>
-                    )}
-                    {c.achievements.length > 0 && (
-                      <ul className="mt-4 space-y-1.5">
-                        {c.achievements.slice(0, 3).map((a, i) => (
-                          <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                            <TrophyIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                            <span>{a}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    <div className="mt-auto pt-5">
-                      <Button asChild size="sm" className="w-full">
-                        <Link to="/coaching/book">
-                          Book hos {c.display_name.split(" ")[0]} <ArrowRight className="ml-1 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
             <div className="mt-10 flex justify-center">
               <Button asChild size="lg">
@@ -209,6 +224,132 @@ function CoachingLanding() {
         </section>
       )}
 
+      <CoachDetailDialog coach={detailCoach} onOpenChange={(o) => !o && setDetailCoach(null)} summary={detailCoach ? (summaries as any)[detailCoach.user_id] : undefined} />
+
     </div>
   );
 }
+
+function StarRow({ value, size = 14 }: { value: number; size?: number }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Star
+          key={n}
+          style={{ width: size, height: size }}
+          className={cn(n <= Math.round(value) ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30")}
+        />
+      ))}
+    </div>
+  );
+}
+
+function CoachDetailDialog({
+  coach,
+  onOpenChange,
+  summary,
+}: {
+  coach: CoachListItem | null;
+  onOpenChange: (open: boolean) => void;
+  summary?: { avg: number; count: number };
+}) {
+  const listFn = useServerFn(listCoachRatings);
+  const { data: ratings = [], isLoading } = useQuery({
+    queryKey: ["coach-ratings", coach?.user_id],
+    queryFn: () => listFn({ data: { coach_user_id: coach!.user_id } }),
+    enabled: !!coach,
+  });
+
+  return (
+    <Dialog open={!!coach} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        {coach && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  {coach.avatar_url && <AvatarImage src={coach.avatar_url} />}
+                  <AvatarFallback>{coach.display_name?.[0] ?? "?"}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div>{coach.display_name}</div>
+                  <div className="flex items-center gap-2 text-xs font-normal">
+                    <StarRow value={summary?.avg ?? 0} />
+                    <span className="text-muted-foreground">
+                      {summary && summary.count > 0 ? `${summary.avg.toFixed(1)} · ${summary.count} ${summary.count === 1 ? "bedømmelse" : "bedømmelser"}` : "Ingen bedømmelser endnu"}
+                    </span>
+                  </div>
+                </div>
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-5">
+              {coach.bio && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{coach.bio}</p>}
+
+              {coach.specialties.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-sm font-semibold">Specialer</h4>
+                  <div className="flex flex-wrap gap-1.5">
+                    {coach.specialties.map((s) => (
+                      <Badge key={s} variant="secondary" className="text-[11px]">{s}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {coach.achievements.length > 0 && (
+                <div>
+                  <h4 className="mb-2 text-sm font-semibold">Achievements</h4>
+                  <ul className="space-y-1.5">
+                    {coach.achievements.map((a, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <TrophyIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                        <span>{a}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div>
+                <h4 className="mb-2 text-sm font-semibold">Bedømmelser</h4>
+                {isLoading ? (
+                  <p className="text-xs text-muted-foreground">Indlæser…</p>
+                ) : ratings.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Der er endnu ikke afgivet bedømmelser for denne coach.</p>
+                ) : (
+                  <ul className="space-y-3">
+                    {ratings.map((r: any) => (
+                      <li key={r.id} className="rounded-lg border border-border/60 bg-card/40 p-3">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-7 w-7">
+                            {r.rater_avatar_url && <AvatarImage src={r.rater_avatar_url} />}
+                            <AvatarFallback>{r.rater_display_name?.[0] ?? "?"}</AvatarFallback>
+                          </Avatar>
+                          <div className="text-sm font-medium">{r.rater_display_name}</div>
+                          <div className="ml-auto"><StarRow value={r.stars} size={12} /></div>
+                        </div>
+                        {r.comment && <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">{r.comment}</p>}
+                        <div className="mt-1 text-[10px] text-muted-foreground">
+                          {new Date(r.created_at).toLocaleDateString("da-DK", { day: "2-digit", month: "long", year: "numeric" })}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button asChild>
+                  <Link to="/coaching/book">
+                    Book hos {coach.display_name.split(" ")[0]} <ArrowRight className="ml-1 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
