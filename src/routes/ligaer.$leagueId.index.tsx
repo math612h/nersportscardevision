@@ -1824,7 +1824,7 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("car_lock_never,car_lock_at")
+        .select("car_lock_never,car_lock_at,class_configs")
         .eq("id", leagueId)
         .single();
       if (error) throw error;
