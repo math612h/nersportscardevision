@@ -1,8 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, CheckCircle2, Flame, Target, Trophy, UserCog, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, Flame, Target, Trophy, UserCog, Zap, Trophy as TrophyIcon } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { COACHING_FOCUS_POINTS } from "@/lib/coaching-focus-points";
+import { listCoachesPublic, type CoachListItem } from "@/lib/coaching.functions";
 
 import { useAuth } from "@/hooks/use-auth";
 
@@ -21,6 +26,12 @@ export const Route = createFileRoute("/coaching/")({
 
 function CoachingLanding() {
   const { isAdmin, isCoach } = useAuth();
+  const coachesFn = useServerFn(listCoachesPublic);
+  const { data: coaches = [] } = useQuery<CoachListItem[]>({
+    queryKey: ["coaches-public"],
+    queryFn: () => coachesFn(),
+  });
+
   return (
     <div className="min-h-screen bg-background">
       {(isAdmin || isCoach) && (
@@ -67,7 +78,7 @@ function CoachingLanding() {
               <Link to="/coaching/mine-bookinger">Mine bookinger</Link>
             </Button>
             <Button asChild size="lg" variant="ghost">
-              <a href="#tilbyder">Vi tilbyder</a>
+              <a href="#coaches">Mød coaches</a>
             </Button>
           </div>
         </div>
@@ -109,17 +120,76 @@ function CoachingLanding() {
               </li>
             ))}
           </ul>
-          <div className="mt-10 flex justify-center">
-            <Button asChild size="lg">
-              <Link to="/coaching/book">
-                Book coaching nu <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
         </div>
       </section>
+
+      {/* Coaches */}
+      {coaches.length > 0 && (
+        <section id="coaches" className="border-t border-border">
+          <div className="mx-auto max-w-5xl px-4 py-16">
+            <h2 className="text-3xl font-bold tracking-tight">Mød vores coaches</h2>
+            <p className="mt-2 max-w-2xl text-muted-foreground">
+              Kig deres profiler igennem og find den coach hvis specialer matcher dine behov.
+            </p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {coaches.map((c) => (
+                <Card key={c.user_id} className="flex flex-col border-border/60 bg-card/40 backdrop-blur">
+                  <CardContent className="flex flex-1 flex-col pt-6">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-14 w-14">
+                        {c.avatar_url && <AvatarImage src={c.avatar_url} />}
+                        <AvatarFallback>{c.display_name?.[0] ?? "?"}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="text-lg font-semibold">{c.display_name}</div>
+                        <div className="text-xs text-muted-foreground">Coach</div>
+                      </div>
+                    </div>
+                    {c.bio && (
+                      <p className="mt-4 line-clamp-4 text-sm text-muted-foreground">{c.bio}</p>
+                    )}
+                    {c.specialties.length > 0 && (
+                      <div className="mt-4 flex flex-wrap gap-1.5">
+                        {c.specialties.slice(0, 6).map((s) => (
+                          <Badge key={s} variant="secondary" className="text-[11px]">{s}</Badge>
+                        ))}
+                        {c.specialties.length > 6 && (
+                          <Badge variant="outline" className="text-[11px]">+{c.specialties.length - 6}</Badge>
+                        )}
+                      </div>
+                    )}
+                    {c.achievements.length > 0 && (
+                      <ul className="mt-4 space-y-1.5">
+                        {c.achievements.slice(0, 3).map((a, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <TrophyIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                            <span>{a}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <div className="mt-auto pt-5">
+                      <Button asChild size="sm" className="w-full">
+                        <Link to="/coaching/book">
+                          Book hos {c.display_name.split(" ")[0]} <ArrowRight className="ml-1 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            <div className="mt-10 flex justify-center">
+              <Button asChild size="lg">
+                <Link to="/coaching/book">
+                  Book coaching nu <ArrowRight className="ml-1 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
 
     </div>
   );
 }
-
