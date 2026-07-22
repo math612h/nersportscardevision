@@ -109,7 +109,7 @@ export const updateFeedback = createServerFn({ method: "POST" })
   .inputValidator((d: { id: string; status?: string; admin_notes?: string | null }) => d)
   .handler(async ({ data, context }) => {
     if (!(await isAdmin(context))) throw new Error("Forbidden");
-    const patch: Record<string, unknown> = {};
+    const patch: { status?: string; admin_notes?: string | null } = {};
     if (typeof data.status === "string") patch.status = data.status;
     if (data.admin_notes !== undefined) patch.admin_notes = data.admin_notes;
     if (Object.keys(patch).length === 0) return { ok: true };
