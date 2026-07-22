@@ -75,6 +75,134 @@ export const listCoachesPublic = createServerFn({ method: "GET" })
     })) as CoachListItem[];
   });
 
+// Public: aggregated rating summary (avg + count) for a coach — used on coach cards
+export const getCoachRatingsSummary = createServerFn({ method: "GET" })
+  .inputValidator((d: { coach_user_id: string }) => ({ coach_user_id: String(d.coach_user_id) }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("coaching_ratings")
+      .select("stars")
+      .eq("coach_user_id", data.coach_user_id);
+    const count = rows?.length ?? 0;
+    const avg = count > 0 ? (rows!.reduce((s: number, r: any) => s + r.stars, 0) / count) : 0;
+    return { avg: Math.round(avg * 10) / 10, count };
+  });
+
+// Public: aggregated summaries for many coaches in one round-trip
+export const getCoachRatingsSummaries = createServerFn({ method: "GET" })
+  .inputValidator((d: { coach_user_ids: string[] }) => ({
+    coach_user_ids: (d.coach_user_ids ?? []).map(String).slice(0, 100),
+  }))
+  .handler(async ({ data }) => {
+    if (data.coach_user_ids.length === 0) return {} as Record<string, { avg: number; count: number }>;
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("coaching_ratings")
+      .select("coach_user_id, stars")
+      .in("coach_user_id", data.coach_user_ids);
+    const agg: Record<string, { sum: number; count: number }> = {};
+    for (const r of rows ?? []) {
+      const key = (r as any).coach_user_id as string;
+      const s = (r as any).stars as number;
+      agg[key] ??= { sum: 0, count: 0 };
+      agg[key].sum += s;
+      agg[key].count += 1;
+    }
+    const out: Record<string, { avg: number; count: number }> = {};
+    for (const [k, v] of Object.entries(agg)) {
+      out[k] = { avg: Math.round((v.sum / v.count) * 10) / 10, count: v.count };
+    }
+    return out;
+  });
+
+// Public: list ratings with commenter display name for a coach
+export const listCoachRatings = createServerFn({ method: "GET" })
+  .inputValidator((d: { coach_user_id: string }) => ({ coach_user_id: String(d.coach_user_id) }))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows } = await supabaseAdmin
+      .from("coaching_ratings")
+      .select("id, stars, comment, created_at, rater_user_id")
+      .eq("coach_user_id", data.coach_user_id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    const ids = Array.from(new Set((rows ?? []).map((r: any) => r.rater_user_id)));
+    let people: Record<string, { display_name: string; avatar_url: string | null }> = {};
+    if (ids.length > 0) {
+      const { data: ppl } = await supabaseAdmin
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", ids);
+      people = Object.fromEntries((ppl ?? []).map((p: any) => [p.id, { display_name: p.display_name, avatar_url: p.avatar_url }]));
+    }
+    return (rows ?? []).map((r: any) => ({
+      id: r.id,
+      stars: r.stars,
+      comment: r.comment,
+      created_at: r.created_at,
+      rater_display_name: people[r.rater_user_id]?.display_name ?? "Anonym",
+      rater_avatar_url: people[r.rater_user_id]?.avatar_url ?? null,
+    }));
+  });
+
+// Rater: fetch the booking they're allowed to rate + existing rating (if any)
+export const getBookingForRating = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { booking_id: string }) => ({ booking_id: String(d.booking_id) }))
+  .handler(async ({ data, context }) => {
+    const { data: booking } = await context.supabase
+      .from("coaching_bookings")
+      .select("id, coach_user_id, user_id, starts_at, duration_minutes, track, layout, focus_points, status")
+      .eq("id", data.booking_id)
+      .maybeSingle();
+    if (!booking) throw new Error("Booking blev ikke fundet");
+    if (booking.user_id !== context.userId) throw new Error("Du kan kun rate dine egne sessions");
+    const endsAt = new Date(booking.starts_at).getTime() + (booking.duration_minutes ?? 0) * 60_000;
+    if (Date.now() < endsAt) throw new Error("Du kan først rate når sessionen er slut");
+    const { data: coach } = await context.supabase
+      .from("profiles").select("id, display_name, avatar_url").eq("id", booking.coach_user_id).maybeSingle();
+    const { data: existing } = await context.supabase
+      .from("coaching_ratings")
+      .select("id, stars, comment")
+      .eq("booking_id", booking.id)
+      .maybeSingle();
+    return { booking, coach, existing };
+  });
+
+// Submit or update a rating
+export const submitCoachingRating = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { booking_id: string; stars: number; comment?: string | null }) => ({
+    booking_id: String(d.booking_id),
+    stars: Math.max(1, Math.min(5, Math.round(Number(d.stars ?? 0)))),
+    comment: (d.comment ?? "").toString().slice(0, 2000).trim() || null,
+  }))
+  .handler(async ({ data, context }) => {
+    const { data: booking } = await context.supabase
+      .from("coaching_bookings")
+      .select("id, coach_user_id, user_id, starts_at, duration_minutes")
+      .eq("id", data.booking_id)
+      .maybeSingle();
+    if (!booking) throw new Error("Booking blev ikke fundet");
+    if (booking.user_id !== context.userId) throw new Error("Du kan kun rate dine egne sessions");
+    const endsAt = new Date(booking.starts_at).getTime() + (booking.duration_minutes ?? 0) * 60_000;
+    if (Date.now() < endsAt) throw new Error("Du kan først rate når sessionen er slut");
+
+    const { error } = await context.supabase
+      .from("coaching_ratings")
+      .upsert({
+        booking_id: booking.id,
+        coach_user_id: booking.coach_user_id,
+        rater_user_id: context.userId,
+        stars: data.stars,
+        comment: data.comment,
+      }, { onConflict: "booking_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+
 // My coach profile (for the coach themselves)
 export const getMyCoachProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
