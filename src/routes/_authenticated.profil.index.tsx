@@ -20,6 +20,7 @@ import { RatingBadge } from "@/components/RatingBadge";
 import { startDiscordLink, unlinkDiscord } from "@/lib/discord.functions";
 import { notifyAdminNameUpdated } from "@/lib/admin-name-notify.functions";
 import { deleteMyAccount } from "@/lib/account.functions";
+import { updateMyEmail } from "@/lib/update-email.functions";
 import {
   AlertDialog,
   AlertDialogAction,
