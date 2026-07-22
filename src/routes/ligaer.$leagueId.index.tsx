@@ -1849,7 +1849,13 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
 
   if (!user || !myEntry) return null;
 
-  const cars = CARS_BY_CLASS[myEntry.car_class] ?? [];
+  const allCars = CARS_BY_CLASS[myEntry.car_class] ?? [];
+  const classCfgs = Array.isArray((league as any)?.class_configs) ? (league as any).class_configs as any[] : [];
+  const cfgForClass = classCfgs.find((c) => c?.car_class === myEntry.car_class);
+  const allowedList: string[] | undefined = Array.isArray(cfgForClass?.allowed_cars) && cfgForClass.allowed_cars.length > 0
+    ? cfgForClass.allowed_cars
+    : undefined;
+  const cars = allowedList ? allCars.filter((c) => allowedList.includes(c)) : allCars;
 
   const save = async () => {
     if (locked) return toastError("Bilvalg er låst.");
