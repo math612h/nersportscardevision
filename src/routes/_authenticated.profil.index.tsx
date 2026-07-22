@@ -119,7 +119,7 @@ function ProfilePage() {
     setCountry((profile as any).country || "Danmark");
     setAcceptsDanish((profile as any).accepts_danish === true);
     setMediaConsent((profile as any).media_consent === true);
-  }, [profile]);
+  }, [profile, user]);
 
   const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
