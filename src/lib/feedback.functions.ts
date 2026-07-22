@@ -84,13 +84,13 @@ export const listAllFeedback = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     const rows = (data ?? []) as any[];
     const ids = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
-    let authors: Record<string, any> = {};
+    const authors: Record<string, any> = {};
     if (ids.length) {
       const { data: profs } = await context.supabase
         .from("profiles")
-        .select("id, display_name, avatar_url, email")
+        .select("id, display_name, avatar_url")
         .in("id", ids);
-      for (const p of profs ?? []) authors[p.id] = p;
+      for (const p of (profs ?? []) as any[]) authors[p.id] = p;
     }
     return rows.map((r) => ({
       ...r,
