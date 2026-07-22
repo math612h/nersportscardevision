@@ -37,10 +37,19 @@ export const Route = createFileRoute("/coaching/")({
 function CoachingLanding() {
   const { isAdmin, isCoach } = useAuth();
   const coachesFn = useServerFn(listCoachesPublic);
+  const summariesFn = useServerFn(getCoachRatingsSummaries);
   const { data: coaches = [] } = useQuery<CoachListItem[]>({
     queryKey: ["coaches-public"],
     queryFn: () => coachesFn(),
   });
+  const coachIds = useMemo(() => coaches.map((c) => c.user_id), [coaches]);
+  const { data: summaries = {} } = useQuery({
+    queryKey: ["coach-rating-summaries", coachIds],
+    queryFn: () => summariesFn({ data: { coach_user_ids: coachIds } }),
+    enabled: coachIds.length > 0,
+  });
+  const [detailCoach, setDetailCoach] = useState<CoachListItem | null>(null);
+
 
   return (
     <div className="min-h-screen bg-background">
