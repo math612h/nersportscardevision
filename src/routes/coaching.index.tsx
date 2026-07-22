@@ -252,17 +252,32 @@ function CoachDetailDialog({
   coach,
   onOpenChange,
   summary,
+  isAdmin,
 }: {
   coach: CoachListItem | null;
   onOpenChange: (open: boolean) => void;
   summary?: { avg: number; count: number };
+  isAdmin?: boolean;
 }) {
+  const qc = useQueryClient();
   const listFn = useServerFn(listCoachRatings);
+  const deleteFn = useServerFn(adminDeleteCoachingRating);
   const { data: ratings = [], isLoading } = useQuery({
     queryKey: ["coach-ratings", coach?.user_id],
     queryFn: () => listFn({ data: { coach_user_id: coach!.user_id } }),
     enabled: !!coach,
   });
+  async function onDelete(id: string) {
+    if (!confirm("Slet denne bedømmelse?")) return;
+    try {
+      await deleteFn({ data: { rating_id: id } });
+      toast.success("Bedømmelse slettet");
+      qc.invalidateQueries({ queryKey: ["coach-ratings", coach?.user_id] });
+      qc.invalidateQueries({ queryKey: ["coach-rating-summaries"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke slette");
+    }
+  }
 
   return (
     <Dialog open={!!coach} onOpenChange={onOpenChange}>
