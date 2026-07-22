@@ -20,6 +20,7 @@ import { RatingBadge } from "@/components/RatingBadge";
 import { startDiscordLink, unlinkDiscord } from "@/lib/discord.functions";
 import { notifyAdminNameUpdated } from "@/lib/admin-name-notify.functions";
 import { deleteMyAccount } from "@/lib/account.functions";
+import { updateMyEmail } from "@/lib/update-email.functions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -92,6 +93,8 @@ function ProfilePage() {
   const [bio, setBio] = useState("");
   const [achievements, setAchievements] = useState("");
   const [discord, setDiscord] = useState("");
+  const [email, setEmail] = useState("");
+  const updateEmail = useServerFn(updateMyEmail);
   const [address, setAddress] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
@@ -109,13 +112,14 @@ function ProfilePage() {
     setBio(profile.bio ?? "");
     setAchievements(profile.achievements ?? "");
     setDiscord(profile.discord_username ?? "");
+    setEmail((user?.email && !user.email.endsWith("@no-email.lmudanmark.dk")) ? user.email : "");
     setAddress((profile as any).address ?? "");
     setPostalCode((profile as any).postal_code ?? "");
     setCity((profile as any).city ?? "");
     setCountry((profile as any).country || "Danmark");
     setAcceptsDanish((profile as any).accepts_danish === true);
     setMediaConsent((profile as any).media_consent === true);
-  }, [profile]);
+  }, [profile, user]);
 
   const onSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,6 +169,17 @@ function ProfilePage() {
       }, { onConflict: "user_id" });
     setSaving(false);
     if (privErr) return toast.error(privErr.message);
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && trimmedEmail.toLowerCase() !== (user.email ?? "").toLowerCase()) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        return toast.error("Indtast en gyldig email.");
+      }
+      try {
+        await updateEmail({ data: { email: trimmedEmail } });
+      } catch (err) {
+        return toast.error(err instanceof Error ? err.message : "Kunne ikke opdatere email.");
+      }
+    }
     toast.success("Profil opdateret.");
     try {
       const res = await notifyAdminNameUpdated();
@@ -253,7 +268,8 @@ function ProfilePage() {
                   </div>
                   <div>
                     <Label>Email</Label>
-                    <Input value={user?.email ?? ""} disabled />
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} placeholder="din@email.dk" />
+                    <p className="mt-1 text-xs text-muted-foreground">Bruges til notifikationer. Ændres med det samme når du gemmer.</p>
                   </div>
                 </div>
                 <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
