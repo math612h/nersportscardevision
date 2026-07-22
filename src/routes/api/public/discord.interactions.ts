@@ -515,6 +515,41 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             });
           }
 
+          // Coaching: user pressed a star rating button in DM → open modal for optional comment
+          if (kind === "coaching_rate" && invitationId) {
+            const stars = Math.max(1, Math.min(5, parseInt(customId.split(":")[2] ?? "0", 10) || 0));
+            if (!stars) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: "Ugyldig bedømmelse." },
+              });
+            }
+            return Response.json({
+              type: MODAL,
+              data: {
+                custom_id: `coaching_rate_modal:${invitationId}:${stars}`,
+                title: `Bedømmelse: ${stars} ${stars === 1 ? "stjerne" : "stjerner"}`,
+                components: [
+                  {
+                    type: 1,
+                    components: [
+                      {
+                        type: 4,
+                        custom_id: "comment",
+                        label: "Kommentar (valgfri)",
+                        style: 2,
+                        required: false,
+                        min_length: 0,
+                        max_length: 2000,
+                        placeholder: "Hvad var særligt godt? Hvad kunne være bedre?",
+                      },
+                    ],
+                  },
+                ],
+              },
+            });
+          }
+
           // Coaching: coach picked a channel from CHANNEL_SELECT → confirm booking
           if (kind === "coaching_channel" && invitationId) {
             const channelId = (payload?.data?.values?.[0] ?? "").toString();
@@ -803,6 +838,71 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               });
             }
           }
+
+          if (customId.startsWith("coaching_rate_modal:")) {
+            const parts = customId.split(":");
+            const bookingId = parts[1];
+            const stars = Math.max(1, Math.min(5, parseInt(parts[2] ?? "0", 10) || 0));
+            if (!bookingId || !stars || !discordUserId) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: "Ugyldig bedømmelse." },
+              });
+            }
+            const rows = (payload?.data?.components ?? []) as Array<{
+              components: Array<{ custom_id: string; value: string }>;
+            }>;
+            let comment = "";
+            for (const row of rows) {
+              for (const c of row.components ?? []) {
+                if (c.custom_id === "comment") comment = (c.value ?? "").trim();
+              }
+            }
+            try {
+              const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+              const { data: booking } = await (supabaseAdmin as any)
+                .from("coaching_bookings")
+                .select("id, user_id, coach_user_id, starts_at, duration_minutes")
+                .eq("id", bookingId)
+                .maybeSingle();
+              if (!booking) throw new Error("Booking blev ikke fundet");
+              // Verify caller is the booking's user via linked Discord ID
+              const { data: prof } = await (supabaseAdmin as any)
+                .from("profiles_private")
+                .select("user_id")
+                .eq("discord_user_id", discordUserId)
+                .maybeSingle();
+              if (!prof?.user_id || prof.user_id !== booking.user_id) {
+                return Response.json({
+                  type: CHANNEL_MESSAGE_WITH_SOURCE,
+                  data: { flags: FLAG_EPHEMERAL, content: "Du kan kun rate dine egne sessions." },
+                });
+              }
+              const { error } = await (supabaseAdmin as any)
+                .from("coaching_ratings")
+                .upsert({
+                  booking_id: booking.id,
+                  coach_user_id: booking.coach_user_id,
+                  rater_user_id: booking.user_id,
+                  stars,
+                  comment: comment.slice(0, 2000) || null,
+                }, { onConflict: "booking_id" });
+              if (error) throw error;
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: {
+                  flags: FLAG_EPHEMERAL,
+                  content: `✅ Tak for din bedømmelse (${stars} ${stars === 1 ? "stjerne" : "stjerner"})!`,
+                },
+              });
+            } catch (e) {
+              return Response.json({
+                type: CHANNEL_MESSAGE_WITH_SOURCE,
+                data: { flags: FLAG_EPHEMERAL, content: `Noget gik galt: ${(e as Error).message}` },
+              });
+            }
+          }
+
 
           return Response.json({
             type: CHANNEL_MESSAGE_WITH_SOURCE,
