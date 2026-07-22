@@ -282,6 +282,7 @@ function ClassConfigsEditor({
                   })
                 }
               />
+            </div>
           </div>
           <CarPicker
             carClass={c.car_class}
