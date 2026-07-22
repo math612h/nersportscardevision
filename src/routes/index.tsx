@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, Coffee, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
+import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getTrackImageFile } from "@/lib/tracks";
+import { DonateButton } from "@/components/DonateButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -214,16 +215,9 @@ function NewsHome() {
       {user && !isGuest && <ProfileCompletionGate />}
       {user && !isGuest && <AddressConsentBanner />}
       <header className="relative space-y-3">
-        <Button
-          asChild
-          size="sm"
-          variant="outline"
-          className="absolute right-0 top-0 h-8 gap-1.5 border-primary/40 px-2.5 text-xs text-primary hover:bg-primary/10"
-        >
-          <Link to="/donationer">
-            <Coffee className="h-3.5 w-3.5" /> Køb os en kaffe
-          </Link>
-        </Button>
+        <div className="absolute right-0 top-0 flex items-center gap-1.5">
+          <DonateButton size="sm" variant="primary" />
+        </div>
 
         <div className="space-y-1 pr-32">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">

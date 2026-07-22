@@ -1,11 +1,12 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Flag, Gauge, GraduationCap, Handshake, Home, LayoutGrid, LogOut, Menu, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
+import { Flag, Gauge, GraduationCap, Handshake, Home, LayoutGrid, LogOut, Menu, MessageSquare, Shield, Trophy, User as UserIcon, UserCircle2, Users } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
+import { DonateButton } from "@/components/DonateButton";
 import { GuestLanguageSwitcher } from "@/components/GuestLanguageSwitcher";
 import {
   DropdownMenu,
@@ -33,6 +34,7 @@ export function AppHeader() {
     { to: "/teams", label: t("nav.teams"), icon: <Shield className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/brugere", label: t("nav.users"), icon: <Users className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/partnerfordele", label: t("nav.partnerBenefits", "Partnerfordele"), icon: <Handshake className="h-4 w-4" />, show: !isAdminRoute },
+    { to: "/feedback", label: "Feedback", icon: <MessageSquare className="h-4 w-4" />, show: !isAdminRoute && !!user && !isGuest },
     { to: "/coaching", label: t("nav.coaching", "Coaching"), icon: <GraduationCap className="h-4 w-4" />, show: !isAdminRoute && (!!isAdmin || !!isCoach) },
     { to: "/", label: t("nav.participantPage"), icon: <LayoutGrid className="h-4 w-4" />, show: !!isAdmin && isAdminRoute },
     { to: "/admin", label: t("nav.controlPanel"), icon: <Gauge className="h-4 w-4" />, show: !!isAdmin && !isAdminRoute, highlight: true },
@@ -93,6 +95,7 @@ export function AppHeader() {
         <div className="flex-1 sm:hidden" />
 
         <div className="flex shrink-0 items-center gap-1">
+          {!isAdminRoute && <DonateButton size="sm" variant="primary" className="hidden h-8 sm:inline-flex" />}
           {isGuest && <GuestLanguageSwitcher compact />}
 
           {user ? (

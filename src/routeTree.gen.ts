@@ -31,6 +31,7 @@ import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
 import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
+import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated.feedback'
 import { Route as AuthenticatedBeskederRouteImport } from './routes/_authenticated.beskeder'
 import { Route as AuthenticatedArkivRouteImport } from './routes/_authenticated.arkiv'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
@@ -74,6 +75,7 @@ import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
 import { Route as AuthenticatedAdminAdminGaesterRouteImport } from './routes/_authenticated._admin.admin.gaester'
 import { Route as AuthenticatedAdminAdminFejlRouteImport } from './routes/_authenticated._admin.admin.fejl'
+import { Route as AuthenticatedAdminAdminFeedbackRouteImport } from './routes/_authenticated._admin.admin.feedback'
 import { Route as AuthenticatedAdminAdminDonationerRouteImport } from './routes/_authenticated._admin.admin.donationer'
 import { Route as AuthenticatedAdminAdminCronRouteImport } from './routes/_authenticated._admin.admin.cron'
 import { Route as AuthenticatedAdminAdminCoachesRouteImport } from './routes/_authenticated._admin.admin.coaches'
@@ -203,6 +205,11 @@ const AuthenticatedMineProtestsRoute =
     path: '/mine-protests',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedBeskederRoute = AuthenticatedBeskederRouteImport.update({
   id: '/beskeder',
   path: '/beskeder',
@@ -450,6 +457,12 @@ const AuthenticatedAdminAdminFejlRoute =
     path: '/admin/fejl',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminFeedbackRoute =
+  AuthenticatedAdminAdminFeedbackRouteImport.update({
+    id: '/admin/feedback',
+    path: '/admin/feedback',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminDonationerRoute =
   AuthenticatedAdminAdminDonationerRouteImport.update({
     id: '/admin/donationer',
@@ -572,6 +585,7 @@ export interface FileRoutesByFullPath {
   '/ugens-overhaling': typeof UgensOverhalingRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
+  '/feedback': typeof AuthenticatedFeedbackRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -603,6 +617,7 @@ export interface FileRoutesByFullPath {
   '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/admin/donationer': typeof AuthenticatedAdminAdminDonationerRoute
+  '/admin/feedback': typeof AuthenticatedAdminAdminFeedbackRoute
   '/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
@@ -655,6 +670,7 @@ export interface FileRoutesByTo {
   '/ugens-overhaling': typeof UgensOverhalingRoute
   '/arkiv': typeof AuthenticatedArkivRoute
   '/beskeder': typeof AuthenticatedBeskederRouteWithChildren
+  '/feedback': typeof AuthenticatedFeedbackRoute
   '/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -685,6 +701,7 @@ export interface FileRoutesByTo {
   '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/admin/donationer': typeof AuthenticatedAdminAdminDonationerRoute
+  '/admin/feedback': typeof AuthenticatedAdminAdminFeedbackRoute
   '/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
@@ -739,6 +756,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/arkiv': typeof AuthenticatedArkivRoute
   '/_authenticated/beskeder': typeof AuthenticatedBeskederRouteWithChildren
+  '/_authenticated/feedback': typeof AuthenticatedFeedbackRoute
   '/_authenticated/mine-protests': typeof AuthenticatedMineProtestsRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
@@ -770,6 +788,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
   '/_authenticated/_admin/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/_authenticated/_admin/admin/donationer': typeof AuthenticatedAdminAdminDonationerRoute
+  '/_authenticated/_admin/admin/feedback': typeof AuthenticatedAdminAdminFeedbackRoute
   '/_authenticated/_admin/admin/fejl': typeof AuthenticatedAdminAdminFejlRoute
   '/_authenticated/_admin/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
@@ -824,6 +843,7 @@ export interface FileRouteTypes {
     | '/ugens-overhaling'
     | '/arkiv'
     | '/beskeder'
+    | '/feedback'
     | '/mine-protests'
     | '/onboarding'
     | '/email/unsubscribe'
@@ -855,6 +875,7 @@ export interface FileRouteTypes {
     | '/admin/coaches'
     | '/admin/cron'
     | '/admin/donationer'
+    | '/admin/feedback'
     | '/admin/fejl'
     | '/admin/gaester'
     | '/admin/ligaer'
@@ -907,6 +928,7 @@ export interface FileRouteTypes {
     | '/ugens-overhaling'
     | '/arkiv'
     | '/beskeder'
+    | '/feedback'
     | '/mine-protests'
     | '/onboarding'
     | '/email/unsubscribe'
@@ -937,6 +959,7 @@ export interface FileRouteTypes {
     | '/admin/coaches'
     | '/admin/cron'
     | '/admin/donationer'
+    | '/admin/feedback'
     | '/admin/fejl'
     | '/admin/gaester'
     | '/admin/ligaer'
@@ -990,6 +1013,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin'
     | '/_authenticated/arkiv'
     | '/_authenticated/beskeder'
+    | '/_authenticated/feedback'
     | '/_authenticated/mine-protests'
     | '/_authenticated/onboarding'
     | '/email/unsubscribe'
@@ -1021,6 +1045,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/coaches'
     | '/_authenticated/_admin/admin/cron'
     | '/_authenticated/_admin/admin/donationer'
+    | '/_authenticated/_admin/admin/feedback'
     | '/_authenticated/_admin/admin/fejl'
     | '/_authenticated/_admin/admin/gaester'
     | '/_authenticated/_admin/admin/ligaer'
@@ -1257,6 +1282,13 @@ declare module '@tanstack/react-router' {
       path: '/mine-protests'
       fullPath: '/mine-protests'
       preLoaderRoute: typeof AuthenticatedMineProtestsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/feedback': {
+      id: '/_authenticated/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/beskeder': {
@@ -1560,6 +1592,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminFejlRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/feedback': {
+      id: '/_authenticated/_admin/admin/feedback'
+      path: '/admin/feedback'
+      fullPath: '/admin/feedback'
+      preLoaderRoute: typeof AuthenticatedAdminAdminFeedbackRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/donationer': {
       id: '/_authenticated/_admin/admin/donationer'
       path: '/admin/donationer'
@@ -1740,6 +1779,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminCoachesRoute: typeof AuthenticatedAdminAdminCoachesRoute
   AuthenticatedAdminAdminCronRoute: typeof AuthenticatedAdminAdminCronRoute
   AuthenticatedAdminAdminDonationerRoute: typeof AuthenticatedAdminAdminDonationerRoute
+  AuthenticatedAdminAdminFeedbackRoute: typeof AuthenticatedAdminAdminFeedbackRoute
   AuthenticatedAdminAdminFejlRoute: typeof AuthenticatedAdminAdminFejlRoute
   AuthenticatedAdminAdminGaesterRoute: typeof AuthenticatedAdminAdminGaesterRoute
   AuthenticatedAdminAdminLigaerRoute: typeof AuthenticatedAdminAdminLigaerRouteWithChildren
@@ -1766,6 +1806,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminCronRoute: AuthenticatedAdminAdminCronRoute,
   AuthenticatedAdminAdminDonationerRoute:
     AuthenticatedAdminAdminDonationerRoute,
+  AuthenticatedAdminAdminFeedbackRoute: AuthenticatedAdminAdminFeedbackRoute,
   AuthenticatedAdminAdminFejlRoute: AuthenticatedAdminAdminFejlRoute,
   AuthenticatedAdminAdminGaesterRoute: AuthenticatedAdminAdminGaesterRoute,
   AuthenticatedAdminAdminLigaerRoute:
@@ -1815,6 +1856,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedArkivRoute: typeof AuthenticatedArkivRoute
   AuthenticatedBeskederRoute: typeof AuthenticatedBeskederRouteWithChildren
+  AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute
   AuthenticatedMineProtestsRoute: typeof AuthenticatedMineProtestsRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedCoachingBookRoute: typeof AuthenticatedCoachingBookRoute
@@ -1829,6 +1871,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedArkivRoute: AuthenticatedArkivRoute,
   AuthenticatedBeskederRoute: AuthenticatedBeskederRouteWithChildren,
+  AuthenticatedFeedbackRoute: AuthenticatedFeedbackRoute,
   AuthenticatedMineProtestsRoute: AuthenticatedMineProtestsRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedCoachingBookRoute: AuthenticatedCoachingBookRoute,

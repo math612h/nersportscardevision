@@ -22,8 +22,9 @@ import {
   Video,
   Coffee,
   Receipt,
+  MessageSquare,
 
-} from "lucide-react";
+}  from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
@@ -116,6 +117,7 @@ export function AdminSidebar() {
         { title: "Partnerfordele", url: "/admin/partnerfordele", icon: Handshake },
         { title: "Besked Hub", url: "/admin/beskeder", icon: MessageCircle },
         { title: "Briefing-rum", url: "/admin/briefing", icon: Headphones },
+        { title: "Feedback & undersøgelser", url: "/admin/feedback", icon: MessageSquare },
       ],
     },
     {
