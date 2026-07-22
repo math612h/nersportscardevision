@@ -28,6 +28,8 @@ import {
   type EventSettings,
   type OnOff,
 } from "@/lib/tracks";
+import { CARS_BY_CLASS } from "@/lib/lmu-cars";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
