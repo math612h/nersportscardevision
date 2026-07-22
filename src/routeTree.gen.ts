@@ -67,6 +67,7 @@ import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './ro
 import { Route as ApiPublicCronCoachingRemindersRouteImport } from './routes/api/public/cron/coaching-reminders'
 import { Route as ApiPublicCronCoachingRatingRequestsRouteImport } from './routes/api/public/cron/coaching-rating-requests'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
+import { Route as AuthenticatedCoachingRateBookingIdRouteImport } from './routes/_authenticated.coaching.rate.$bookingId'
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
@@ -410,6 +411,12 @@ const ApiPublicCompanionVerifyTokenRoute =
     path: '/api/public/companion/verify-token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedCoachingRateBookingIdRoute =
+  AuthenticatedCoachingRateBookingIdRouteImport.update({
+    id: '/coaching/rate/$bookingId',
+    path: '/coaching/rate/$bookingId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBeskederGruppeGroupIdRoute =
   AuthenticatedBeskederGruppeGroupIdRouteImport.update({
     id: '/gruppe/$groupId',
@@ -634,6 +641,7 @@ export interface FileRoutesByFullPath {
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
+  '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
@@ -718,6 +726,7 @@ export interface FileRoutesByTo {
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
+  '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
@@ -807,6 +816,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
+  '/_authenticated/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
@@ -895,6 +905,7 @@ export interface FileRouteTypes {
     | '/admin/protests'
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
+    | '/coaching/rate/$bookingId'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
@@ -979,6 +990,7 @@ export interface FileRouteTypes {
     | '/admin/partnerfordele'
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
+    | '/coaching/rate/$bookingId'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
@@ -1067,6 +1079,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/protests'
     | '/_authenticated/_admin/admin/storage'
     | '/_authenticated/beskeder/gruppe/$groupId'
+    | '/_authenticated/coaching/rate/$bookingId'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
@@ -1550,6 +1563,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCompanionVerifyTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/coaching/rate/$bookingId': {
+      id: '/_authenticated/coaching/rate/$bookingId'
+      path: '/coaching/rate/$bookingId'
+      fullPath: '/coaching/rate/$bookingId'
+      preLoaderRoute: typeof AuthenticatedCoachingRateBookingIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/beskeder/gruppe/$groupId': {
       id: '/_authenticated/beskeder/gruppe/$groupId'
       path: '/gruppe/$groupId'
@@ -1886,6 +1906,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedCoachingMineBookingerRoute: typeof AuthenticatedCoachingMineBookingerRoute
   AuthenticatedProfilUserIdRoute: typeof AuthenticatedProfilUserIdRoute
   AuthenticatedProfilIndexRoute: typeof AuthenticatedProfilIndexRoute
+  AuthenticatedCoachingRateBookingIdRoute: typeof AuthenticatedCoachingRateBookingIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -1902,6 +1923,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedCoachingMineBookingerRoute,
   AuthenticatedProfilUserIdRoute: AuthenticatedProfilUserIdRoute,
   AuthenticatedProfilIndexRoute: AuthenticatedProfilIndexRoute,
+  AuthenticatedCoachingRateBookingIdRoute:
+    AuthenticatedCoachingRateBookingIdRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
