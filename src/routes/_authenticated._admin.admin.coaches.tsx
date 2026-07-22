@@ -22,8 +22,15 @@ function AdminCoachesPage() {
 
   const listFn = useServerFn(adminListCoaches);
   const setFn = useServerFn(adminSetCoachRole);
+  const testDmFn = useServerFn(adminSendTestRatingDM);
 
   const { data: coaches = [] } = useQuery({ queryKey: ["admin-coaches"], queryFn: () => listFn() });
+
+  const testDmMut = useMutation({
+    mutationFn: () => testDmFn(),
+    onSuccess: () => toast.success("Test-DM sendt via Discord"),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const { data: users = [] } = useQuery({
     queryKey: ["admin-coach-search", search],
