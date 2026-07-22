@@ -214,16 +214,9 @@ function NewsHome() {
       {user && !isGuest && <ProfileCompletionGate />}
       {user && !isGuest && <AddressConsentBanner />}
       <header className="relative space-y-3">
-        <Button
-          asChild
-          size="sm"
-          variant="outline"
-          className="absolute right-0 top-0 h-8 gap-1.5 border-primary/40 px-2.5 text-xs text-primary hover:bg-primary/10"
-        >
-          <Link to="/donationer">
-            <Coffee className="h-3.5 w-3.5" /> Køb os en kaffe
-          </Link>
-        </Button>
+        <div className="absolute right-0 top-0 flex items-center gap-1.5">
+          <DonateButton size="sm" variant="primary" />
+        </div>
 
         <div className="space-y-1 pr-32">
           <p className="text-xs font-medium uppercase tracking-[0.18em] text-primary">
