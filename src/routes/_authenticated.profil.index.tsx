@@ -112,6 +112,7 @@ function ProfilePage() {
     setBio(profile.bio ?? "");
     setAchievements(profile.achievements ?? "");
     setDiscord(profile.discord_username ?? "");
+    setEmail((user?.email && !user.email.endsWith("@no-email.lmudanmark.dk")) ? user.email : "");
     setAddress((profile as any).address ?? "");
     setPostalCode((profile as any).postal_code ?? "");
     setCity((profile as any).city ?? "");
