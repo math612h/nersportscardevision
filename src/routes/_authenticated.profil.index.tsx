@@ -169,6 +169,17 @@ function ProfilePage() {
       }, { onConflict: "user_id" });
     setSaving(false);
     if (privErr) return toast.error(privErr.message);
+    const trimmedEmail = email.trim();
+    if (trimmedEmail && trimmedEmail.toLowerCase() !== (user.email ?? "").toLowerCase()) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+        return toast.error("Indtast en gyldig email.");
+      }
+      try {
+        await updateEmail({ data: { email: trimmedEmail } });
+      } catch (err) {
+        return toast.error(err instanceof Error ? err.message : "Kunne ikke opdatere email.");
+      }
+    }
     toast.success("Profil opdateret.");
     try {
       const res = await notifyAdminNameUpdated();
