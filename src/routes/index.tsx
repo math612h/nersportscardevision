@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
+import { ArrowUpRight, Calendar, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquare, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -216,6 +216,14 @@ function NewsHome() {
       {user && !isGuest && <AddressConsentBanner />}
       <header className="relative space-y-3">
         <div className="absolute right-0 top-0 flex items-center gap-1.5">
+          {user && !isGuest && (
+            <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
+              <Link to="/feedback">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden xs:inline">Feedback</span>
+              </Link>
+            </Button>
+          )}
           <DonateButton size="sm" variant="primary" />
         </div>
 
