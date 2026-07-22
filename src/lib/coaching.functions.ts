@@ -49,6 +49,32 @@ export const listCoaches = createServerFn({ method: "GET" })
     })) as CoachListItem[];
   });
 
+// Public: list active coaches (no auth) — safe fields only
+export const listCoachesPublic = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profiles } = await supabaseAdmin
+      .from("coach_profiles")
+      .select("user_id, bio, specialties, achievements, active")
+      .eq("active", true);
+    const ids = (profiles ?? []).map((p: any) => p.user_id);
+    if (ids.length === 0) return [] as CoachListItem[];
+    const { data: ppl } = await supabaseAdmin
+      .from("profiles")
+      .select("id, display_name, avatar_url")
+      .in("id", ids);
+    const map = new Map((ppl ?? []).map((p: any) => [p.id, p]));
+    return (profiles ?? []).map((p: any) => ({
+      user_id: p.user_id,
+      display_name: map.get(p.user_id)?.display_name ?? "Coach",
+      avatar_url: map.get(p.user_id)?.avatar_url ?? null,
+      bio: p.bio,
+      specialties: p.specialties ?? [],
+      achievements: p.achievements ?? [],
+      active: p.active,
+    })) as CoachListItem[];
+  });
+
 // My coach profile (for the coach themselves)
 export const getMyCoachProfile = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
