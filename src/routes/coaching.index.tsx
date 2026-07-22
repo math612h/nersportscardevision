@@ -345,7 +345,20 @@ function CoachDetailDialog({
                             <AvatarFallback>{r.rater_display_name?.[0] ?? "?"}</AvatarFallback>
                           </Avatar>
                           <div className="text-sm font-medium">{r.rater_display_name}</div>
-                          <div className="ml-auto"><StarRow value={r.stars} size={12} /></div>
+                          <div className="ml-auto flex items-center gap-2">
+                            <StarRow value={r.stars} size={12} />
+                            {isAdmin && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6 text-destructive hover:text-destructive"
+                                onClick={() => onDelete(r.id)}
+                                title="Slet bedømmelse (admin)"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                         {r.comment && <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">{r.comment}</p>}
                         <div className="mt-1 text-[10px] text-muted-foreground">
