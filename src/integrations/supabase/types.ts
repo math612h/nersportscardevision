@@ -249,6 +249,7 @@ export type Database = {
           id: string
           layout: string | null
           paid_at: string | null
+          rating_request_sent_at: string | null
           rejection_reason: string | null
           reminder_sent_at: string | null
           starts_at: string
@@ -272,6 +273,7 @@ export type Database = {
           id?: string
           layout?: string | null
           paid_at?: string | null
+          rating_request_sent_at?: string | null
           rejection_reason?: string | null
           reminder_sent_at?: string | null
           starts_at: string
@@ -295,6 +297,7 @@ export type Database = {
           id?: string
           layout?: string | null
           paid_at?: string | null
+          rating_request_sent_at?: string | null
           rejection_reason?: string | null
           reminder_sent_at?: string | null
           starts_at?: string
@@ -318,6 +321,47 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      coaching_ratings: {
+        Row: {
+          booking_id: string
+          coach_user_id: string
+          comment: string | null
+          created_at: string
+          id: string
+          rater_user_id: string
+          stars: number
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          coach_user_id: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rater_user_id: string
+          stars: number
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          coach_user_id?: string
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rater_user_id?: string
+          stars?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_ratings_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "coaching_bookings"
             referencedColumns: ["id"]
           },
         ]
