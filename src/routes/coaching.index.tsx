@@ -228,7 +228,7 @@ function CoachingLanding() {
         </section>
       )}
 
-      <CoachDetailDialog coach={detailCoach} onOpenChange={(o) => !o && setDetailCoach(null)} summary={detailCoach ? (summaries as any)[detailCoach.user_id] : undefined} />
+      <CoachDetailDialog isAdmin={isAdmin} coach={detailCoach} onOpenChange={(o) => !o && setDetailCoach(null)} summary={detailCoach ? (summaries as any)[detailCoach.user_id] : undefined} />
 
     </div>
   );
