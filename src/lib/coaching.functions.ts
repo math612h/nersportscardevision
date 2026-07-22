@@ -562,3 +562,70 @@ export const adminListCoaches = createServerFn({ method: "GET" })
     const { data: ppl } = await supabaseAdmin.from("profiles").select("id, display_name, avatar_url").in("id", ids);
     return (ppl ?? []) as any[];
   });
+
+// Admin: delete a coaching rating/comment
+export const adminDeleteCoachingRating = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { rating_id: string }) => ({ rating_id: String(d.rating_id) }))
+  .handler(async ({ data, context }) => {
+    if (!(await isAdmin(context))) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("coaching_ratings").delete().eq("id", data.rating_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// Admin: send a test rating-request DM to the calling admin.
+// Uses the admin's most recent booking-as-customer if any, otherwise a fake one.
+export const adminSendTestRatingDM = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!(await isAdmin(context))) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { sendRatingRequestDM } = await import("@/lib/coaching-discord.server");
+
+    // Try latest real booking where the admin is the customer
+    const { data: existing } = await supabaseAdmin
+      .from("coaching_bookings")
+      .select("id")
+      .eq("user_id", context.userId)
+      .order("starts_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let bookingId = existing?.id as string | undefined;
+    let ephemeral = false;
+    if (!bookingId) {
+      // Create a synthetic booking so the DM has real data to render; delete after.
+      const { data: coach } = await supabaseAdmin
+        .from("user_roles").select("user_id").eq("role", "coach").limit(1).maybeSingle();
+      const coachId = (coach?.user_id as string | undefined) ?? context.userId;
+      const { data: created, error } = await supabaseAdmin
+        .from("coaching_bookings")
+        .insert({
+          user_id: context.userId,
+          coach_user_id: coachId,
+          starts_at: new Date(Date.now() - 60 * 60_000).toISOString(),
+          duration_minutes: 60,
+          track: "Spa-Francorchamps",
+          layout: "Grand Prix",
+          focus_points: ["Racecraft"],
+          status: "completed",
+          amount_dkk: 0,
+        })
+        .select("id").single();
+      if (error) throw new Error(error.message);
+      bookingId = created.id as string;
+      ephemeral = true;
+    }
+
+    const res = await sendRatingRequestDM(bookingId!, { testMode: true });
+
+    if (ephemeral && bookingId) {
+      await supabaseAdmin.from("coaching_bookings").delete().eq("id", bookingId);
+    }
+
+    if (!res.ok) throw new Error(res.reason ?? "DM failed");
+    return { ok: true };
+  });
+

@@ -183,6 +183,47 @@ export async function sendCoachingReminders(): Promise<{ sent: number }> {
   return { sent };
 }
 
+// Rating-request DM sent after a session has ended.
+// Set testMode=true to always send (bypass rating_request_sent_at bookkeeping); test DM is tagged.
+export async function sendRatingRequestDM(
+  bookingId: string,
+  opts: { testMode?: boolean } = {}
+): Promise<{ ok: boolean; reason?: string }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { sendDiscordDM } = await import("./discord.server");
+  const { data: b } = await supabaseAdmin
+    .from("coaching_bookings")
+    .select("id, user_id, coach_user_id, starts_at, duration_minutes, track, layout, status, rating_request_sent_at")
+    .eq("id", bookingId).maybeSingle();
+  if (!b) return { ok: false, reason: "booking not found" };
+  const userDid = await getDiscordId(supabaseAdmin, b.user_id);
+  if (!userDid) return { ok: false, reason: "user has no discord linked" };
+  const coachName = await getDisplayName(supabaseAdmin, b.coach_user_id);
+  const unix = Math.floor(new Date(b.starts_at).getTime() / 1000);
+  const rateUrl = `https://lmudanmark.dk/coaching/rate/${b.id}`;
+  const lines = [
+    opts.testMode ? "⭐ **Test — hvordan gik din coaching-session?**" : "⭐ **Hvordan gik din coaching-session?**",
+    `Coach: **${coachName}**`,
+    `Tid: <t:${unix}:F>`,
+    `Bane: **${b.track}${b.layout ? ` — ${b.layout}` : ""}**`,
+    "",
+    "Giv en stjernebedømmelse (1–5) og skriv gerne et par ord — det tager 20 sekunder og hjælper andre med at vælge coach:",
+    rateUrl,
+  ];
+  if (opts.testMode) {
+    lines.push("", "_Dette er en test-DM sendt fra admin-panelet._");
+  }
+  const res = await sendDiscordDM(userDid, lines.join("\n"));
+  if (!res.ok) return { ok: false, reason: "discord DM failed" };
+  if (!opts.testMode) {
+    await supabaseAdmin.from("coaching_bookings")
+      .update({ rating_request_sent_at: new Date().toISOString() })
+      .eq("id", b.id);
+  }
+  return { ok: true };
+}
+
+
 // List text/voice channels the bot can access in the guild (for coach to pick after confirm)
 export async function listSelectableChannelsForCoach(): Promise<Array<{ id: string; name: string; type: number }>> {
   const guildId = process.env.DISCORD_GUILD_ID;

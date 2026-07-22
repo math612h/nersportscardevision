@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { adminListCoaches, adminSetCoachRole } from "@/lib/coaching.functions";
+import { adminListCoaches, adminSetCoachRole, adminSendTestRatingDM } from "@/lib/coaching.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/coaches")({
   component: AdminCoachesPage,
@@ -22,8 +22,15 @@ function AdminCoachesPage() {
 
   const listFn = useServerFn(adminListCoaches);
   const setFn = useServerFn(adminSetCoachRole);
+  const testDmFn = useServerFn(adminSendTestRatingDM);
 
   const { data: coaches = [] } = useQuery({ queryKey: ["admin-coaches"], queryFn: () => listFn() });
+
+  const testDmMut = useMutation({
+    mutationFn: () => testDmFn(),
+    onSuccess: () => toast.success("Test-DM sendt via Discord"),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   const { data: users = [] } = useQuery({
     queryKey: ["admin-coach-search", search],
@@ -52,9 +59,14 @@ function AdminCoachesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Coaches</h1>
-        <p className="text-sm text-muted-foreground">Tildel eller fjern coach-rollen.</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Coaches</h1>
+          <p className="text-sm text-muted-foreground">Tildel eller fjern coach-rollen.</p>
+        </div>
+        <Button size="sm" variant="outline" disabled={testDmMut.isPending} onClick={() => testDmMut.mutate()}>
+          {testDmMut.isPending ? "Sender…" : "Send test-rating DM til mig"}
+        </Button>
       </div>
 
       <Card>

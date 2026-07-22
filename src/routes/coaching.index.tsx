@@ -1,7 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2, Flame, Star, Target, Trophy, UserCog, Zap, Trophy as TrophyIcon } from "lucide-react";
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { Trash2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +15,7 @@ import {
   listCoachesPublic,
   getCoachRatingsSummaries,
   listCoachRatings,
+  adminDeleteCoachingRating,
   type CoachListItem,
 } from "@/lib/coaching.functions";
 import { cn } from "@/lib/utils";
@@ -224,7 +227,7 @@ function CoachingLanding() {
         </section>
       )}
 
-      <CoachDetailDialog coach={detailCoach} onOpenChange={(o) => !o && setDetailCoach(null)} summary={detailCoach ? (summaries as any)[detailCoach.user_id] : undefined} />
+      <CoachDetailDialog isAdmin={isAdmin} coach={detailCoach} onOpenChange={(o) => !o && setDetailCoach(null)} summary={detailCoach ? (summaries as any)[detailCoach.user_id] : undefined} />
 
     </div>
   );
@@ -248,17 +251,32 @@ function CoachDetailDialog({
   coach,
   onOpenChange,
   summary,
+  isAdmin,
 }: {
   coach: CoachListItem | null;
   onOpenChange: (open: boolean) => void;
   summary?: { avg: number; count: number };
+  isAdmin?: boolean;
 }) {
+  const qc = useQueryClient();
   const listFn = useServerFn(listCoachRatings);
+  const deleteFn = useServerFn(adminDeleteCoachingRating);
   const { data: ratings = [], isLoading } = useQuery({
     queryKey: ["coach-ratings", coach?.user_id],
     queryFn: () => listFn({ data: { coach_user_id: coach!.user_id } }),
     enabled: !!coach,
   });
+  async function onDelete(id: string) {
+    if (!confirm("Slet denne bedømmelse?")) return;
+    try {
+      await deleteFn({ data: { rating_id: id } });
+      toast.success("Bedømmelse slettet");
+      qc.invalidateQueries({ queryKey: ["coach-ratings", coach?.user_id] });
+      qc.invalidateQueries({ queryKey: ["coach-rating-summaries"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke slette");
+    }
+  }
 
   return (
     <Dialog open={!!coach} onOpenChange={onOpenChange}>
@@ -326,7 +344,20 @@ function CoachDetailDialog({
                             <AvatarFallback>{r.rater_display_name?.[0] ?? "?"}</AvatarFallback>
                           </Avatar>
                           <div className="text-sm font-medium">{r.rater_display_name}</div>
-                          <div className="ml-auto"><StarRow value={r.stars} size={12} /></div>
+                          <div className="ml-auto flex items-center gap-2">
+                            <StarRow value={r.stars} size={12} />
+                            {isAdmin && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-6 w-6 text-destructive hover:text-destructive"
+                                onClick={() => onDelete(r.id)}
+                                title="Slet bedømmelse (admin)"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                         {r.comment && <p className="mt-2 text-sm text-muted-foreground whitespace-pre-wrap">{r.comment}</p>}
                         <div className="mt-1 text-[10px] text-muted-foreground">
