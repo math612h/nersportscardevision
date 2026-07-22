@@ -93,6 +93,8 @@ function ProfilePage() {
   const [bio, setBio] = useState("");
   const [achievements, setAchievements] = useState("");
   const [discord, setDiscord] = useState("");
+  const [email, setEmail] = useState("");
+  const updateEmail = useServerFn(updateMyEmail);
   const [address, setAddress] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [city, setCity] = useState("");
