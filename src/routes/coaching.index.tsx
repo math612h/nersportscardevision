@@ -13,6 +13,7 @@ import {
   listCoachesPublic,
   getCoachRatingsSummaries,
   listCoachRatings,
+  adminDeleteCoachingRating,
   type CoachListItem,
 } from "@/lib/coaching.functions";
 import { cn } from "@/lib/utils";
