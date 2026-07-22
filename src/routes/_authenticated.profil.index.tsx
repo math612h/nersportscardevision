@@ -268,7 +268,8 @@ function ProfilePage() {
                   </div>
                   <div>
                     <Label>Email</Label>
-                    <Input value={user?.email ?? ""} disabled />
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={255} placeholder="din@email.dk" />
+                    <p className="mt-1 text-xs text-muted-foreground">Bruges til notifikationer. Ændres med det samme når du gemmer.</p>
                   </div>
                 </div>
                 <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3">
