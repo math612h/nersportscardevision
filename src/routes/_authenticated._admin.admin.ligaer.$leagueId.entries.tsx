@@ -511,7 +511,7 @@ function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: ()
       return data;
     },
   });
-  const configs: Array<{ car_class: string; driver_category: string; number_from: number; number_to: number }> =
+  const configs: Array<{ car_class: string; driver_category: string; number_from: number; number_to: number; allowed_cars?: string[] }> =
     Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
 
   const selectedCfg = configs.find((c) => c.car_class === carClass && c.driver_category === category);
