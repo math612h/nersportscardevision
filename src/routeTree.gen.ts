@@ -65,6 +65,7 @@ import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public
 import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
 import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './routes/api/public/cron/delete-expired-host-sessions'
 import { Route as ApiPublicCronCoachingRemindersRouteImport } from './routes/api/public/cron/coaching-reminders'
+import { Route as ApiPublicCronCoachingRatingRequestsRouteImport } from './routes/api/public/cron/coaching-rating-requests'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
@@ -397,6 +398,12 @@ const ApiPublicCronCoachingRemindersRoute =
     path: '/api/public/cron/coaching-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronCoachingRatingRequestsRoute =
+  ApiPublicCronCoachingRatingRequestsRouteImport.update({
+    id: '/api/public/cron/coaching-rating-requests',
+    path: '/api/public/cron/coaching-rating-requests',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCompanionVerifyTokenRoute =
   ApiPublicCompanionVerifyTokenRouteImport.update({
     id: '/api/public/companion/verify-token',
@@ -628,6 +635,7 @@ export interface FileRoutesByFullPath {
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
@@ -711,6 +719,7 @@ export interface FileRoutesByTo {
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
@@ -799,6 +808,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
+  '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
@@ -886,6 +896,7 @@ export interface FileRouteTypes {
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
     | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
@@ -969,6 +980,7 @@ export interface FileRouteTypes {
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
     | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
@@ -1056,6 +1068,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/storage'
     | '/_authenticated/beskeder/gruppe/$groupId'
     | '/api/public/companion/verify-token'
+    | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
     | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
@@ -1110,6 +1123,7 @@ export interface RootRouteChildren {
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
+  ApiPublicCronCoachingRatingRequestsRoute: typeof ApiPublicCronCoachingRatingRequestsRoute
   ApiPublicCronCoachingRemindersRoute: typeof ApiPublicCronCoachingRemindersRoute
   ApiPublicCronDeleteExpiredHostSessionsRoute: typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   ApiPublicCronExpireReserveOffersRoute: typeof ApiPublicCronExpireReserveOffersRoute
@@ -1522,6 +1536,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronCoachingRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/coaching-rating-requests': {
+      id: '/api/public/cron/coaching-rating-requests'
+      path: '/api/public/cron/coaching-rating-requests'
+      fullPath: '/api/public/cron/coaching-rating-requests'
+      preLoaderRoute: typeof ApiPublicCronCoachingRatingRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/companion/verify-token': {
       id: '/api/public/companion/verify-token'
       path: '/api/public/companion/verify-token'
@@ -1927,6 +1948,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
+  ApiPublicCronCoachingRatingRequestsRoute:
+    ApiPublicCronCoachingRatingRequestsRoute,
   ApiPublicCronCoachingRemindersRoute: ApiPublicCronCoachingRemindersRoute,
   ApiPublicCronDeleteExpiredHostSessionsRoute:
     ApiPublicCronDeleteExpiredHostSessionsRoute,

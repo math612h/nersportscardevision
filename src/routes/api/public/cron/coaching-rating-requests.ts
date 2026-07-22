@@ -11,7 +11,7 @@ async function run() {
       .select("id, user_id, coach_user_id, starts_at, duration_minutes, status, rating_request_sent_at")
       .is("rating_request_sent_at", null)
       .gte("starts_at", dayAgo)
-      .in("status", ["confirmed", "accepted", "completed"]) // ignore cancelled/rejected
+      .in("status", ["confirmed", "completed"])
       .limit(200);
 
     let sent = 0;
