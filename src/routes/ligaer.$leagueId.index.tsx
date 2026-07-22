@@ -1504,20 +1504,27 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
             </div>
           ) : (
             <>
-              {selected && (CARS_BY_CLASS[selected.car_class]?.length ?? 0) > 0 && (
-                <div>
-                  <Label>Bil</Label>
-                  <Select value={carModel} onValueChange={setCarModel}>
-                    <SelectTrigger><SelectValue placeholder={`Vælg ${selected.car_class}-bil`} /></SelectTrigger>
-                    <SelectContent>
-                      {CARS_BY_CLASS[selected.car_class].map((car) => (
-                        <SelectItem key={car} value={car}>{car}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="mt-1 text-xs text-muted-foreground">Du kan ændre bil indtil bilvalget låses (se ligaens indstillinger).</p>
-                </div>
-              )}
+              {selected && (() => {
+                const all = CARS_BY_CLASS[selected.car_class] ?? [];
+                const allowed = Array.isArray((selected as any).allowed_cars) && (selected as any).allowed_cars.length > 0
+                  ? (all.filter((c) => (selected as any).allowed_cars.includes(c)))
+                  : all;
+                if (allowed.length === 0) return null;
+                return (
+                  <div>
+                    <Label>Bil</Label>
+                    <Select value={carModel} onValueChange={setCarModel}>
+                      <SelectTrigger><SelectValue placeholder={`Vælg ${selected.car_class}-bil`} /></SelectTrigger>
+                      <SelectContent>
+                        {allowed.map((car) => (
+                          <SelectItem key={car} value={car}>{car}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="mt-1 text-xs text-muted-foreground">Du kan ændre bil indtil bilvalget låses (se ligaens indstillinger).</p>
+                  </div>
+                );
+              })()}
               {(myTeams ?? []).length > 0 && (
                 <div>
                   <Label>Team (valgfri)</Label>
