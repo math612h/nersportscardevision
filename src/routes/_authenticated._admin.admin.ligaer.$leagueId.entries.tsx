@@ -511,7 +511,7 @@ function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: ()
       return data;
     },
   });
-  const configs: Array<{ car_class: string; driver_category: string; number_from: number; number_to: number }> =
+  const configs: Array<{ car_class: string; driver_category: string; number_from: number; number_to: number; allowed_cars?: string[] }> =
     Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
 
   const selectedCfg = configs.find((c) => c.car_class === carClass && c.driver_category === category);
@@ -539,7 +539,11 @@ function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: ()
     return { taken: t, available: a };
   }, [allSignups, selectedCfg]);
 
-  const cars = CARS_BY_CLASS[carClass] ?? [];
+  const allCars = CARS_BY_CLASS[carClass] ?? [];
+  const cfgAllowed = configs.find((c) => c.car_class === carClass)?.allowed_cars;
+  const cars = Array.isArray(cfgAllowed) && cfgAllowed.length > 0
+    ? allCars.filter((c) => cfgAllowed.includes(c))
+    : allCars;
 
   const addMut = useMutation({
     mutationFn: async () => {
