@@ -176,6 +176,68 @@ function BannerPicker({
   );
 }
 
+function CarPicker({
+  carClass,
+  allowed,
+  onChange,
+}: {
+  carClass: string;
+  allowed?: string[];
+  onChange: (next: string[] | undefined) => void;
+}) {
+  const cars = CARS_BY_CLASS[carClass] ?? [];
+  if (cars.length === 0) return null;
+  // undefined/empty allowed = all cars allowed
+  const allSelected = !allowed || allowed.length === 0 || allowed.length === cars.length;
+  const isChecked = (car: string) =>
+    !allowed || allowed.length === 0 ? true : allowed.includes(car);
+
+  const toggleAll = (on: boolean) => {
+    if (on) onChange(undefined);
+    else onChange([]);
+  };
+  const toggleCar = (car: string, on: boolean) => {
+    const current = !allowed || allowed.length === 0 ? [...cars] : allowed.filter((c) => cars.includes(c));
+    let next: string[];
+    if (on) next = Array.from(new Set([...current, car]));
+    else next = current.filter((c) => c !== car);
+    if (next.length === cars.length) onChange(undefined);
+    else onChange(next);
+  };
+
+  return (
+    <div className="space-y-2 rounded-md border border-border p-2">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs">Tilladte biler i klassen</Label>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted-foreground">
+            {allSelected ? "Alle" : `${allowed!.length}/${cars.length}`}
+          </span>
+          <Switch checked={allSelected} onCheckedChange={toggleAll} aria-label="Vælg alle biler" />
+        </div>
+      </div>
+      <div className="grid max-h-48 grid-cols-1 gap-1 overflow-y-auto rounded border border-border/50 p-2 sm:grid-cols-2">
+        {cars.map((car) => (
+          <label
+            key={car}
+            className="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs hover:bg-muted/50"
+          >
+            <Checkbox
+              checked={isChecked(car)}
+              onCheckedChange={(v) => toggleCar(car, !!v)}
+            />
+            <span className="truncate">{car}</span>
+          </label>
+        ))}
+      </div>
+      <p className="text-[10px] text-muted-foreground">
+        Kørere kan kun vælge en bil fra denne liste ved tilmelding. Slå "Alle" til for at tillade alle biler i klassen.
+      </p>
+    </div>
+  );
+}
+
+
 function ClassConfigsEditor({
   configs,
   setConfigs,
