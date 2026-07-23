@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { COACHING_FOCUS_POINTS, COACHING_DURATIONS } from "@/lib/coaching-focus-points";
-import { listCoaches, getCoachAvailableDays, getCoachSlots, type CoachListItem } from "@/lib/coaching.functions";
+import { getAllCoachesAvailableDays, getAllCoachesSlots, type AggregatedSlot } from "@/lib/coaching.functions";
 import { createCoachingCheckout } from "@/lib/payments.functions";
 import { getStripeEnvironment, hasStripeConfigured } from "@/lib/stripe";
 import { StripeEmbeddedCheckoutBox } from "@/components/StripeEmbeddedCheckoutBox";
@@ -23,49 +23,43 @@ export const Route = createFileRoute("/_authenticated/coaching/book")({
   component: BookCoachingPage,
 });
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6;
+type Step = 1 | 2 | 3 | 4 | 5;
+
+type SelectedCoach = { user_id: string; display_name: string; avatar_url: string | null };
 
 function BookCoachingPage() {
   const _navigate = useNavigate();
   const [step, setStep] = useState<Step>(1);
   const [focus, setFocus] = useState<string[]>([]);
-  const [coach, setCoach] = useState<CoachListItem | null>(null);
-  const [viewingCoach, setViewingCoach] = useState<CoachListItem | null>(null);
   const [duration, setDuration] = useState<30 | 45 | 60>(45);
   const [track, setTrack] = useState<string>("");
   const [layout, setLayout] = useState<string>("");
   const [day, setDay] = useState<string>(""); // YYYY-MM-DD
   const [slot, setSlot] = useState<string>(""); // ISO
+  const [coach, setCoach] = useState<SelectedCoach | null>(null);
   const [extra, setExtra] = useState("");
   const [calCursor, setCalCursor] = useState(() => new Date());
 
-  const coachesFn = useServerFn(listCoaches);
-  const daysFn = useServerFn(getCoachAvailableDays);
-  const slotsFn = useServerFn(getCoachSlots);
+  const daysFn = useServerFn(getAllCoachesAvailableDays);
+  const slotsFn = useServerFn(getAllCoachesSlots);
   const checkoutFn = useServerFn(createCoachingCheckout);
   const [checkoutSecret, setCheckoutSecret] = useState<string | null>(null);
-
-  const { data: coaches = [] } = useQuery({ queryKey: ["coaches"], queryFn: () => coachesFn() });
-
-  const sortedCoaches = useMemo(() => {
-    const list = [...coaches] as CoachListItem[];
-    list.sort((a, b) => matchCount(b, focus) - matchCount(a, focus));
-    return list;
-  }, [coaches, focus]);
 
   const trackInfo = LMU_TRACKS.find((t) => t.name === track);
 
   const { data: availableDays = [] } = useQuery({
-    queryKey: ["coach-days", coach?.user_id, calCursor.getFullYear(), calCursor.getMonth(), duration],
-    queryFn: () => daysFn({ data: { coach_user_id: coach!.user_id, year: calCursor.getFullYear(), month: calCursor.getMonth(), duration_minutes: duration } }),
-    enabled: !!coach && step >= 5,
+    queryKey: ["all-coach-days", calCursor.getFullYear(), calCursor.getMonth(), duration],
+    queryFn: () => daysFn({ data: { year: calCursor.getFullYear(), month: calCursor.getMonth(), duration_minutes: duration } }),
+    enabled: step >= 4,
   });
 
-  const { data: slots = [] } = useQuery({
-    queryKey: ["coach-slots", coach?.user_id, day, duration],
-    queryFn: () => slotsFn({ data: { coach_user_id: coach!.user_id, date: day, duration_minutes: duration } }),
-    enabled: !!coach && !!day,
+  const { data: slots = [] } = useQuery<AggregatedSlot[]>({
+    queryKey: ["all-coach-slots", day, duration],
+    queryFn: () => slotsFn({ data: { date: day, duration_minutes: duration } }),
+    enabled: !!day,
   });
+
+  const selectedSlot = useMemo(() => slots.find((s) => s.starts_at === slot), [slots, slot]);
 
   const fetchClientSecret = useCallback(async (): Promise<string> => {
     const result = await checkoutFn({
@@ -96,10 +90,9 @@ function BookCoachingPage() {
 
   const canNext = (() => {
     if (step === 1) return focus.length > 0;
-    if (step === 2) return !!coach;
-    if (step === 3) return true;
-    if (step === 4) return !!track;
-    if (step === 5) return !!slot;
+    if (step === 2) return true;
+    if (step === 3) return !!track;
+    if (step === 4) return !!slot && !!coach;
     return true;
   })();
 
@@ -110,7 +103,7 @@ function BookCoachingPage() {
           <Link to="/coaching"><ArrowLeft className="mr-1 h-4 w-4" /> Tilbage</Link>
         </Button>
         <div className="flex items-center gap-1.5">
-          {[1, 2, 3, 4, 5, 6].map((n) => (
+          {[1, 2, 3, 4, 5].map((n) => (
             <div key={n} className={cn("h-2 w-8 rounded-full", n <= step ? "bg-primary" : "bg-muted")} />
           ))}
         </div>
@@ -143,97 +136,8 @@ function BookCoachingPage() {
         </div>
       )}
 
-      {/* Step 2: choose coach */}
-      {step === 2 && !viewingCoach && (
-        <div>
-          <h1 className="text-2xl font-bold">Vælg en coach</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Sorteret efter bedste match.</p>
-          {sortedCoaches.length === 0 && (
-            <p className="mt-6 text-sm text-muted-foreground">Ingen aktive coaches lige nu.</p>
-          )}
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            {sortedCoaches.map((c) => {
-              const m = matchCount(c, focus);
-              return (
-                <Card key={c.user_id} className="overflow-hidden">
-                  <CardContent className="pt-6">
-                    <button type="button" onClick={() => setViewingCoach(c)} className="flex w-full items-start gap-3 text-left">
-                      <Avatar className="h-12 w-12">
-                        {c.avatar_url && <AvatarImage src={c.avatar_url} />}
-                        <AvatarFallback>{c.display_name?.[0] ?? "C"}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-semibold">{c.display_name}</div>
-                        <div className="line-clamp-2 text-xs text-muted-foreground">{c.bio || "Coach hos LMU Danmark"}</div>
-                      </div>
-                    </button>
-                    {focus.length > 0 && (
-                      <p className={cn("mt-3 text-xs font-medium", m > 0 ? "text-emerald-500" : "text-muted-foreground")}>
-                        {m} ud af dine {focus.length} valgte fokuspunkter matcher denne coach
-                      </p>
-                    )}
-                    <Button size="sm" className="mt-3 w-full" onClick={() => { setCoach(c); setStep(3); }}>
-                      Vælg coach
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {step === 2 && viewingCoach && (
-        <div>
-          <Button variant="ghost" size="sm" onClick={() => setViewingCoach(null)}>
-            <ArrowLeft className="mr-1 h-4 w-4" /> Tilbage til coaches
-          </Button>
-          <div className="mt-4 flex items-start gap-4">
-            <Avatar className="h-20 w-20">
-              {viewingCoach.avatar_url && <AvatarImage src={viewingCoach.avatar_url} />}
-              <AvatarFallback className="text-2xl">{viewingCoach.display_name?.[0]}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-2xl font-bold">{viewingCoach.display_name}</h1>
-              {focus.length > 0 && (
-                <p className="mt-1 text-sm text-emerald-500">
-                  {matchCount(viewingCoach, focus)} ud af dine {focus.length} valgte fokuspunkter matcher
-                </p>
-              )}
-            </div>
-          </div>
-          {viewingCoach.bio && (
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold uppercase text-muted-foreground">Bio</h3>
-              <p className="mt-1 whitespace-pre-wrap text-sm">{viewingCoach.bio}</p>
-            </div>
-          )}
-          {viewingCoach.specialties.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold uppercase text-muted-foreground">Specialer</h3>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {viewingCoach.specialties.map((s) => (
-                  <Badge key={s} variant={focus.includes(s) ? "default" : "secondary"}>{s}</Badge>
-                ))}
-              </div>
-            </div>
-          )}
-          {viewingCoach.achievements.length > 0 && (
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold uppercase text-muted-foreground">Achievements</h3>
-              <ul className="mt-2 list-inside list-disc text-sm">
-                {viewingCoach.achievements.map((a, i) => <li key={i}>{a}</li>)}
-              </ul>
-            </div>
-          )}
-          <Button className="mt-8" onClick={() => { setCoach(viewingCoach); setViewingCoach(null); setStep(3); }}>
-            Vælg {viewingCoach.display_name} <ArrowRight className="ml-1 h-4 w-4" />
-          </Button>
-        </div>
-      )}
-
-      {/* Step 3: duration */}
-      {step === 3 && (
+      {/* Step 2: duration */}
+      {step === 2 && (
         <div>
           <h1 className="text-2xl font-bold">Hvor lang en session?</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -260,12 +164,11 @@ function BookCoachingPage() {
               );
             })}
           </div>
-
         </div>
       )}
 
-      {/* Step 4: track + layout */}
-      {step === 4 && (
+      {/* Step 3: track + layout */}
+      {step === 3 && (
         <div>
           <h1 className="text-2xl font-bold">Hvilken bane?</h1>
           <p className="mt-1 text-sm text-muted-foreground">Vælg den bane sessionen skal handle om.</p>
@@ -292,12 +195,12 @@ function BookCoachingPage() {
         </div>
       )}
 
-      {/* Step 5: pick date + slot */}
-      {step === 5 && coach && (
+      {/* Step 4: calendar → slot → coach */}
+      {step === 4 && (
         <div>
           <h1 className="text-2xl font-bold">Vælg tidspunkt</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Grønne dage = {coach.display_name} har ledige tider. Klik en dag for at se tidsrum.
+            Grønne dage har mindst én coach ledig. Klik en dag for at se ledige tidsrum — og hvilke coaches der tilbyder dem.
           </p>
           <div className="mt-6 grid gap-6 sm:grid-cols-2">
             <MonthCalendar
@@ -305,7 +208,7 @@ function BookCoachingPage() {
               setCursor={setCalCursor}
               availableDays={availableDays}
               selected={day}
-              onPick={(d) => { setDay(d); setSlot(""); }}
+              onPick={(d) => { setDay(d); setSlot(""); setCoach(null); }}
             />
             <div>
               <h3 className="mb-2 text-sm font-semibold">Ledige tider</h3>
@@ -313,30 +216,64 @@ function BookCoachingPage() {
               {day && slots.length === 0 && <p className="text-sm text-muted-foreground">Ingen ledige tidsrum denne dag.</p>}
               <div className="flex flex-wrap gap-2">
                 {slots.map((s) => {
-                  const d = new Date(s);
+                  const d = new Date(s.starts_at);
                   const label = d.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+                  const isSel = slot === s.starts_at;
                   return (
                     <button
-                      key={s}
+                      key={s.starts_at}
                       type="button"
-                      onClick={() => setSlot(s)}
+                      onClick={() => { setSlot(s.starts_at); setCoach(s.coaches.length === 1 ? s.coaches[0] : null); }}
                       className={cn(
                         "rounded-md border px-3 py-1.5 text-sm",
-                        slot === s ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-accent",
+                        isSel ? "border-primary bg-primary text-primary-foreground" : "border-border hover:bg-accent",
                       )}
+                      title={`${s.coaches.length} coach${s.coaches.length === 1 ? "" : "es"} ledig`}
                     >
                       {label}
+                      <span className="ml-1 text-[10px] opacity-75">({s.coaches.length})</span>
                     </button>
                   );
                 })}
               </div>
+
+              {selectedSlot && (
+                <div className="mt-6">
+                  <h3 className="mb-2 text-sm font-semibold">
+                    {selectedSlot.coaches.length === 1 ? "Coach" : "Vælg coach"}
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedSlot.coaches.map((c) => {
+                      const sel = coach?.user_id === c.user_id;
+                      return (
+                        <button
+                          key={c.user_id}
+                          type="button"
+                          onClick={() => setCoach(c)}
+                          className={cn(
+                            "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
+                            sel ? "border-primary bg-primary/5" : "border-border hover:bg-accent",
+                          )}
+                        >
+                          <Avatar className="h-9 w-9">
+                            {c.avatar_url && <AvatarImage src={c.avatar_url} />}
+                            <AvatarFallback>{c.display_name?.[0] ?? "C"}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 text-sm font-medium">{c.display_name}</div>
+                          {sel && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Step 6: extra + confirm */}
-      {step === 6 && coach && (
+      {/* Step 5: extra + confirm */}
+      {step === 5 && coach && (
         <div>
           <h1 className="text-2xl font-bold">Sidste detaljer</h1>
           <p className="mt-1 text-sm text-muted-foreground">Skriv eventuelt noget coachen bør vide.</p>
@@ -384,7 +321,7 @@ function BookCoachingPage() {
       )}
 
       {/* Nav buttons */}
-      {step < 6 && !viewingCoach && (
+      {step < 5 && (
         <div className="mt-10 flex justify-between">
           <Button variant="ghost" disabled={step === 1} onClick={() => setStep((s) => (s - 1) as Step)}>
             <ArrowLeft className="mr-1 h-4 w-4" /> Forrige
@@ -397,13 +334,6 @@ function BookCoachingPage() {
     </div>
   );
 }
-
-function matchCount(c: CoachListItem, focus: string[]) {
-  if (!focus.length) return 0;
-  return focus.filter((f) => c.specialties.includes(f)).length;
-}
-
-
 
 function MonthCalendar({
   cursor, setCursor, availableDays, selected, onPick,

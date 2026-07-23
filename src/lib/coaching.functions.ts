@@ -395,6 +395,148 @@ export const getCoachAvailableDays = createServerFn({ method: "POST" })
     return result;
   });
 
+// --- Aggregated availability across all active coaches ---
+
+export const getAllCoachesAvailableDays = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { year: number; month: number; duration_minutes: number; coach_ids?: string[] }) => ({
+    year: Number(d.year),
+    month: Number(d.month),
+    duration_minutes: Number(d.duration_minutes),
+    coach_ids: Array.isArray(d.coach_ids) ? d.coach_ids.map(String) : undefined,
+  }))
+  .handler(async ({ data, context }) => {
+    const { data: coaches } = await context.supabase
+      .from("coach_profiles").select("user_id").eq("active", true);
+    let ids: string[] = (coaches ?? []).map((c: any) => c.user_id as string);
+    if (data.coach_ids && data.coach_ids.length > 0) {
+      const filter = new Set(data.coach_ids);
+      ids = ids.filter((id) => filter.has(id));
+    }
+    if (ids.length === 0) return [] as string[];
+
+    const { data: avail } = await context.supabase
+      .from("coach_availability")
+      .select("coach_user_id, weekday, specific_date, start_time, end_time")
+      .in("coach_user_id", ids);
+    if (!avail || avail.length === 0) return [] as string[];
+
+    const monthStart = new Date(data.year, data.month, 1);
+    const monthEnd = new Date(data.year, data.month + 1, 0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const result: string[] = [];
+    for (let day = new Date(monthStart); day <= monthEnd; day.setDate(day.getDate() + 1)) {
+      if (day < today) continue;
+      const iso = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+      const wd = day.getDay();
+      const has = avail.some((a: any) => {
+        if (a.specific_date === iso) return true;
+        if (a.specific_date == null && a.weekday === wd) {
+          const [sh, sm] = a.start_time.split(":").map(Number);
+          const [eh, em] = a.end_time.split(":").map(Number);
+          return (eh - sh) * 60 + (em - sm) >= data.duration_minutes;
+        }
+        return false;
+      });
+      if (has) result.push(iso);
+    }
+    return result;
+  });
+
+export type AggregatedSlot = {
+  starts_at: string;
+  coaches: { user_id: string; display_name: string; avatar_url: string | null }[];
+};
+
+export const getAllCoachesSlots = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { date: string; duration_minutes: number; coach_ids?: string[] }) => ({
+    date: String(d.date),
+    duration_minutes: Number(d.duration_minutes),
+    coach_ids: Array.isArray(d.coach_ids) ? d.coach_ids.map(String) : undefined,
+  }))
+  .handler(async ({ data, context }) => {
+    if (!(COACHING_DURATIONS as readonly number[]).includes(data.duration_minutes)) throw new Error("Ugyldig varighed");
+    const [yStr, mStr, dStr] = data.date.split("-");
+    const y = Number(yStr), m0 = Number(mStr) - 1, dd = Number(dStr);
+    if (!y || isNaN(m0) || !dd) throw new Error("Ugyldig dato");
+    const noonUtc = copenhagenWallclockToUtc(y, m0, dd, 12, 0);
+    const wdShort = new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Copenhagen", weekday: "short" }).format(noonUtc);
+    const weekday = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(wdShort);
+
+    const { data: coaches } = await context.supabase
+      .from("coach_profiles").select("user_id").eq("active", true);
+    let ids: string[] = (coaches ?? []).map((c: any) => c.user_id as string);
+    if (data.coach_ids && data.coach_ids.length > 0) {
+      const filter = new Set(data.coach_ids);
+      ids = ids.filter((id) => filter.has(id));
+    }
+    if (ids.length === 0) return [] as AggregatedSlot[];
+
+    const { data: profs } = await context.supabase
+      .from("profiles").select("id, display_name, avatar_url").in("id", ids);
+    const profMap = new Map((profs ?? []).map((p: any) => [p.id, p]));
+
+    const { data: avail } = await context.supabase
+      .from("coach_availability")
+      .select("coach_user_id, weekday, specific_date, start_time, end_time")
+      .in("coach_user_id", ids);
+
+    const dayStart = copenhagenWallclockToUtc(y, m0, dd, 0, 0);
+    const dayEnd = copenhagenWallclockToUtc(y, m0, dd, 23, 59);
+    const { data: existing } = await context.supabase
+      .from("coaching_bookings")
+      .select("coach_user_id, starts_at, duration_minutes, status")
+      .in("coach_user_id", ids)
+      .gte("starts_at", dayStart.toISOString())
+      .lte("starts_at", dayEnd.toISOString())
+      .in("status", ["pending", "confirmed"]);
+
+    const takenByCoach: Record<string, [number, number][]> = {};
+    for (const b of existing ?? []) {
+      const s = new Date((b as any).starts_at).getTime();
+      const arr = takenByCoach[(b as any).coach_user_id] ??= [];
+      arr.push([s, s + Number((b as any).duration_minutes) * 60_000]);
+    }
+
+    const step = 15;
+    const dur = data.duration_minutes;
+    const slotsMap = new Map<string, Set<string>>();
+
+    for (const w of (avail ?? []).filter((a: any) =>
+      a.specific_date === data.date || (a.specific_date == null && a.weekday === weekday)
+    )) {
+      const cid = (w as any).coach_user_id as string;
+      const [sh, sm] = (w as any).start_time.split(":").map(Number);
+      const [eh, em] = (w as any).end_time.split(":").map(Number);
+      const winStart = copenhagenWallclockToUtc(y, m0, dd, sh, sm).getTime();
+      const winEnd = copenhagenWallclockToUtc(y, m0, dd, eh, em).getTime();
+      const taken = takenByCoach[cid] ?? [];
+      for (let cursor = winStart; cursor + dur * 60_000 <= winEnd; cursor += step * 60_000) {
+        const slotEnd = cursor + dur * 60_000;
+        if (cursor < Date.now() + 30 * 60_000) continue;
+        if (taken.some(([s, e]) => cursor < e && slotEnd > s)) continue;
+        const iso = new Date(cursor).toISOString();
+        const entry = slotsMap.get(iso) ?? new Set<string>();
+        entry.add(cid);
+        slotsMap.set(iso, entry);
+      }
+    }
+
+    const out: AggregatedSlot[] = [];
+    for (const [iso, set] of slotsMap.entries()) {
+      out.push({
+        starts_at: iso,
+        coaches: Array.from(set).map((id) => {
+          const p = profMap.get(id) as any;
+          return { user_id: id, display_name: p?.display_name ?? "Coach", avatar_url: p?.avatar_url ?? null };
+        }),
+      });
+    }
+    out.sort((a, b) => a.starts_at.localeCompare(b.starts_at));
+    return out;
+  });
+
 // Bookings
 export const createCoachingBooking = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
