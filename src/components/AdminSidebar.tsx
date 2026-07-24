@@ -87,6 +87,7 @@ export function AdminSidebar() {
       label: "Oversigt",
       items: [
         { title: "Dashboard", url: "/admin", icon: LayoutDashboard, exact: true },
+        { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
       ],
     },
     {
