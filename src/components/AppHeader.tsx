@@ -35,7 +35,7 @@ export function AppHeader() {
     { to: "/brugere", label: t("nav.users"), icon: <Users className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/partnerfordele", label: t("nav.partnerBenefits", "Partnerfordele"), icon: <Handshake className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/feedback", label: "Feedback", icon: <MessageSquare className="h-4 w-4" />, show: !isAdminRoute && !!user && !isGuest },
-    { to: "/coaching", label: t("nav.coaching", "Coaching"), icon: <GraduationCap className="h-4 w-4" />, show: !isAdminRoute && (!!isAdmin || !!isCoach) },
+    { to: "/coaching", label: t("nav.coaching", "Coaching"), icon: <GraduationCap className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/", label: t("nav.participantPage"), icon: <LayoutGrid className="h-4 w-4" />, show: !!isAdmin && isAdminRoute },
     { to: "/admin", label: t("nav.controlPanel"), icon: <Gauge className="h-4 w-4" />, show: !!isAdmin && !isAdminRoute, highlight: true },
   ];
