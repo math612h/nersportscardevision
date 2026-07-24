@@ -20,6 +20,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { SplashScreen } from "@/components/SplashScreen";
 import "@/i18n";
 import { useApplyGuestLanguage } from "@/components/GuestLanguageSwitcher";
+import { initAnalytics, trackPageview, setAnalyticsUser } from "@/lib/analytics-tracker";
+import { useAuth } from "@/hooks/use-auth";
 
 function NotFoundComponent() {
   return (
