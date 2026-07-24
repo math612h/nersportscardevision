@@ -80,6 +80,7 @@ import { Route as AuthenticatedAdminAdminFejlRouteImport } from './routes/_authe
 import { Route as AuthenticatedAdminAdminFeedbackRouteImport } from './routes/_authenticated._admin.admin.feedback'
 import { Route as AuthenticatedAdminAdminDonationerRouteImport } from './routes/_authenticated._admin.admin.donationer'
 import { Route as AuthenticatedAdminAdminCronRouteImport } from './routes/_authenticated._admin.admin.cron'
+import { Route as AuthenticatedAdminAdminCoachingBookingsRouteImport } from './routes/_authenticated._admin.admin.coaching-bookings'
 import { Route as AuthenticatedAdminAdminCoachesRouteImport } from './routes/_authenticated._admin.admin.coaches'
 import { Route as AuthenticatedAdminAdminBriefingRouteImport } from './routes/_authenticated._admin.admin.briefing'
 import { Route as AuthenticatedAdminAdminBetalingerRouteImport } from './routes/_authenticated._admin.admin.betalinger'
@@ -490,6 +491,12 @@ const AuthenticatedAdminAdminCronRoute =
     path: '/admin/cron',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminCoachingBookingsRoute =
+  AuthenticatedAdminAdminCoachingBookingsRouteImport.update({
+    id: '/admin/coaching-bookings',
+    path: '/admin/coaching-bookings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminCoachesRoute =
   AuthenticatedAdminAdminCoachesRouteImport.update({
     id: '/admin/coaches',
@@ -637,6 +644,7 @@ export interface FileRoutesByFullPath {
   '/admin/betalinger': typeof AuthenticatedAdminAdminBetalingerRoute
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
+  '/admin/coaching-bookings': typeof AuthenticatedAdminAdminCoachingBookingsRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/admin/donationer': typeof AuthenticatedAdminAdminDonationerRoute
   '/admin/feedback': typeof AuthenticatedAdminAdminFeedbackRoute
@@ -724,6 +732,7 @@ export interface FileRoutesByTo {
   '/admin/betalinger': typeof AuthenticatedAdminAdminBetalingerRoute
   '/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
+  '/admin/coaching-bookings': typeof AuthenticatedAdminAdminCoachingBookingsRoute
   '/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/admin/donationer': typeof AuthenticatedAdminAdminDonationerRoute
   '/admin/feedback': typeof AuthenticatedAdminAdminFeedbackRoute
@@ -814,6 +823,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/betalinger': typeof AuthenticatedAdminAdminBetalingerRoute
   '/_authenticated/_admin/admin/briefing': typeof AuthenticatedAdminAdminBriefingRoute
   '/_authenticated/_admin/admin/coaches': typeof AuthenticatedAdminAdminCoachesRoute
+  '/_authenticated/_admin/admin/coaching-bookings': typeof AuthenticatedAdminAdminCoachingBookingsRoute
   '/_authenticated/_admin/admin/cron': typeof AuthenticatedAdminAdminCronRoute
   '/_authenticated/_admin/admin/donationer': typeof AuthenticatedAdminAdminDonationerRoute
   '/_authenticated/_admin/admin/feedback': typeof AuthenticatedAdminAdminFeedbackRoute
@@ -904,6 +914,7 @@ export interface FileRouteTypes {
     | '/admin/betalinger'
     | '/admin/briefing'
     | '/admin/coaches'
+    | '/admin/coaching-bookings'
     | '/admin/cron'
     | '/admin/donationer'
     | '/admin/feedback'
@@ -991,6 +1002,7 @@ export interface FileRouteTypes {
     | '/admin/betalinger'
     | '/admin/briefing'
     | '/admin/coaches'
+    | '/admin/coaching-bookings'
     | '/admin/cron'
     | '/admin/donationer'
     | '/admin/feedback'
@@ -1080,6 +1092,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/betalinger'
     | '/_authenticated/_admin/admin/briefing'
     | '/_authenticated/_admin/admin/coaches'
+    | '/_authenticated/_admin/admin/coaching-bookings'
     | '/_authenticated/_admin/admin/cron'
     | '/_authenticated/_admin/admin/donationer'
     | '/_authenticated/_admin/admin/feedback'
@@ -1667,6 +1680,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminCronRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/coaching-bookings': {
+      id: '/_authenticated/_admin/admin/coaching-bookings'
+      path: '/admin/coaching-bookings'
+      fullPath: '/admin/coaching-bookings'
+      preLoaderRoute: typeof AuthenticatedAdminAdminCoachingBookingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/coaches': {
       id: '/_authenticated/_admin/admin/coaches'
       path: '/admin/coaches'
@@ -1839,6 +1859,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminBetalingerRoute: typeof AuthenticatedAdminAdminBetalingerRoute
   AuthenticatedAdminAdminBriefingRoute: typeof AuthenticatedAdminAdminBriefingRoute
   AuthenticatedAdminAdminCoachesRoute: typeof AuthenticatedAdminAdminCoachesRoute
+  AuthenticatedAdminAdminCoachingBookingsRoute: typeof AuthenticatedAdminAdminCoachingBookingsRoute
   AuthenticatedAdminAdminCronRoute: typeof AuthenticatedAdminAdminCronRoute
   AuthenticatedAdminAdminDonationerRoute: typeof AuthenticatedAdminAdminDonationerRoute
   AuthenticatedAdminAdminFeedbackRoute: typeof AuthenticatedAdminAdminFeedbackRoute
@@ -1866,6 +1887,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminAdminBetalingerRoute,
   AuthenticatedAdminAdminBriefingRoute: AuthenticatedAdminAdminBriefingRoute,
   AuthenticatedAdminAdminCoachesRoute: AuthenticatedAdminAdminCoachesRoute,
+  AuthenticatedAdminAdminCoachingBookingsRoute:
+    AuthenticatedAdminAdminCoachingBookingsRoute,
   AuthenticatedAdminAdminCronRoute: AuthenticatedAdminAdminCronRoute,
   AuthenticatedAdminAdminDonationerRoute:
     AuthenticatedAdminAdminDonationerRoute,

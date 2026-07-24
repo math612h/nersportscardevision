@@ -109,6 +109,7 @@ export function AdminSidebar() {
         { title: "Protester", url: "/admin/protests", icon: MessageSquareWarning, badge: openProtestsCount },
         { title: "Teams", url: "/teams", icon: Shield },
         { title: "Coaches", url: "/admin/coaches", icon: GraduationCap },
+        { title: "Coaching bookinger", url: "/admin/coaching-bookings", icon: CalendarDays },
       ],
     },
     {
