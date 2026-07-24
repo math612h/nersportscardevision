@@ -169,6 +169,10 @@ function RootComponent() {
 function Shell() {
   useApplyGuestLanguage();
   const location = useLocation();
+  const { user } = useAuth();
+  useEffect(() => { initAnalytics(); }, []);
+  useEffect(() => { setAnalyticsUser(user?.id ?? null); }, [user?.id]);
+  useEffect(() => { trackPageview(location.pathname); }, [location.pathname]);
   const isLogin = location.pathname.startsWith("/login");
   if (isLogin) return <Outlet />;
   return (
