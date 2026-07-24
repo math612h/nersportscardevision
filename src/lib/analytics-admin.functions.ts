@@ -21,7 +21,8 @@ export const getAdminAnalytics = createServerFn({ method: "POST" })
   .inputValidator(rangeSchema)
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: roleRow } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+    const { data: roleRow } = await supabase
+      .from("user_roles").select("role").eq("user_id", userId).eq("role", "admin").maybeSingle();
     if (!roleRow) throw new Error("Forbidden");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
