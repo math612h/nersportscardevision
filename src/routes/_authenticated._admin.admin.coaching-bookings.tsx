@@ -66,19 +66,27 @@ function AdminCoachingBookingsPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const now = Date.now();
-    return data.filter((b) => {
-      if (status !== "all" && b.status !== status) return false;
-      const starts = new Date(b.starts_at).getTime();
-      const endsAt = starts + (b.duration_minutes ?? 0) * 60_000;
-      if (timeframe === "upcoming" && endsAt < now) return false;
-      if (timeframe === "past" && endsAt >= now) return false;
-      if (!q) return true;
-      return (
-        b.coach?.display_name.toLowerCase().includes(q) ||
-        b.user?.display_name.toLowerCase().includes(q) ||
-        b.track.toLowerCase().includes(q)
-      );
-    });
+    return data
+      .filter((b) => {
+        if (b.status === "cancelled" && status !== "cancelled") return false;
+        if (status !== "all" && b.status !== status) return false;
+        const starts = new Date(b.starts_at).getTime();
+        const endsAt = starts + (b.duration_minutes ?? 0) * 60_000;
+        if (timeframe === "upcoming" && endsAt < now) return false;
+        if (timeframe === "past" && endsAt >= now) return false;
+        if (!q) return true;
+        return (
+          b.coach?.display_name.toLowerCase().includes(q) ||
+          b.user?.display_name.toLowerCase().includes(q) ||
+          b.track.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        const ta = new Date(a.starts_at).getTime();
+        const tb = new Date(b.starts_at).getTime();
+        if (timeframe === "past") return tb - ta;
+        return ta - tb;
+      });
   }, [data, search, status, timeframe]);
 
   return (
