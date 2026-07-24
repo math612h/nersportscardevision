@@ -705,6 +705,29 @@ export const adminListCoaches = createServerFn({ method: "GET" })
     return (ppl ?? []) as any[];
   });
 
+// Admin: list all coaching bookings with coach + user info
+export const adminListCoachingBookings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!(await isAdmin(context))) throw new Error("Kun admins");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: bookings, error } = await supabaseAdmin
+      .from("coaching_bookings")
+      .select("id, coach_user_id, user_id, starts_at, duration_minutes, track, layout, focus_points, extra_info, status, amount_dkk, created_at, rejection_reason")
+      .order("starts_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    const ids = Array.from(new Set((bookings ?? []).flatMap((b: any) => [b.coach_user_id, b.user_id])));
+    const { data: profiles } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id, display_name, avatar_url").in("id", ids)
+      : { data: [] as any[] };
+    const pMap = new Map((profiles ?? []).map((p: any) => [p.id, p]));
+    return (bookings ?? []).map((b: any) => ({
+      ...b,
+      coach: pMap.get(b.coach_user_id) ?? null,
+      user: pMap.get(b.user_id) ?? null,
+    }));
+  });
+
 // Admin: delete a coaching rating/comment
 export const adminDeleteCoachingRating = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
