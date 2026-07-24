@@ -61,11 +61,17 @@ function AdminCoachingBookingsPage() {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("all");
+  const [timeframe, setTimeframe] = useState<"upcoming" | "past" | "all">("upcoming");
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const now = Date.now();
     return data.filter((b) => {
       if (status !== "all" && b.status !== status) return false;
+      const starts = new Date(b.starts_at).getTime();
+      const endsAt = starts + (b.duration_minutes ?? 0) * 60_000;
+      if (timeframe === "upcoming" && endsAt < now) return false;
+      if (timeframe === "past" && endsAt >= now) return false;
       if (!q) return true;
       return (
         b.coach?.display_name.toLowerCase().includes(q) ||
@@ -73,7 +79,7 @@ function AdminCoachingBookingsPage() {
         b.track.toLowerCase().includes(q)
       );
     });
-  }, [data, search, status]);
+  }, [data, search, status, timeframe]);
 
   return (
     <div className="space-y-6">
@@ -89,6 +95,14 @@ function AdminCoachingBookingsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="sm:max-w-xs"
         />
+        <Select value={timeframe} onValueChange={(v) => setTimeframe(v as "upcoming" | "past" | "all")}>
+          <SelectTrigger className="sm:w-48"><SelectValue placeholder="Tidsrum" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="upcoming">Kommende sessioner</SelectItem>
+            <SelectItem value="past">Tidligere sessioner</SelectItem>
+            <SelectItem value="all">Alle sessioner</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="sm:w-56"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
