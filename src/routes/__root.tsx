@@ -20,6 +20,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { SplashScreen } from "@/components/SplashScreen";
 import "@/i18n";
 import { useApplyGuestLanguage } from "@/components/GuestLanguageSwitcher";
+import { initAnalytics, trackPageview, setAnalyticsUser } from "@/lib/analytics-tracker";
+import { useAuth } from "@/hooks/use-auth";
 
 function NotFoundComponent() {
   return (
@@ -167,6 +169,10 @@ function RootComponent() {
 function Shell() {
   useApplyGuestLanguage();
   const location = useLocation();
+  const { user } = useAuth();
+  useEffect(() => { initAnalytics(); }, []);
+  useEffect(() => { setAnalyticsUser(user?.id ?? null); }, [user?.id]);
+  useEffect(() => { trackPageview(location.pathname); }, [location.pathname]);
   const isLogin = location.pathname.startsWith("/login");
   if (isLogin) return <Outlet />;
   return (

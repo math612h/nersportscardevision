@@ -23,6 +23,7 @@ import {
   Coffee,
   Receipt,
   MessageSquare,
+  BarChart3,
 
 }  from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,6 +87,7 @@ export function AdminSidebar() {
       label: "Oversigt",
       items: [
         { title: "Dashboard", url: "/admin", icon: LayoutDashboard, exact: true },
+        { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
       ],
     },
     {
