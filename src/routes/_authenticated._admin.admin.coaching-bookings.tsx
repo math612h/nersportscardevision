@@ -95,6 +95,14 @@ function AdminCoachingBookingsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="sm:max-w-xs"
         />
+        <Select value={timeframe} onValueChange={(v) => setTimeframe(v as "upcoming" | "past" | "all")}>
+          <SelectTrigger className="sm:w-48"><SelectValue placeholder="Tidsrum" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="upcoming">Kommende sessioner</SelectItem>
+            <SelectItem value="past">Tidligere sessioner</SelectItem>
+            <SelectItem value="all">Alle sessioner</SelectItem>
+          </SelectContent>
+        </Select>
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger className="sm:w-56"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
