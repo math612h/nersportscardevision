@@ -121,6 +121,17 @@ export const addDonation = createServerFn({ method: "POST" })
           await sendDiscordDM(discordUserId, `**${title}**\n\n${body}`).catch(() => {});
         }
       } catch (_) {}
+
+      // Post to donations Discord channel (same as Stripe donations).
+      try {
+        const displayName =
+          (profile?.display_name as string | null)?.trim() || "Ukendt bruger";
+        const { sendDiscordChannelMessage } = await import("./discord.server");
+        await sendDiscordChannelMessage(
+          "1529100885794488461",
+          `☕ **Ny donation modtaget**\n**${displayName}** har doneret **${data.amountDkk} kr.** 🙏`,
+        ).catch(() => {});
+      } catch (_) {}
     } catch (e) {
       console.error("Thank-you message failed", e);
     }
