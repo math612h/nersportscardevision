@@ -158,9 +158,8 @@ export const deleteDonation = createServerFn({ method: "POST" })
   });
 
 /**
- * Backfill: post any donations that haven't been announced in Discord yet
- * (discord_posted_at IS NULL). Covers both Stripe and manual donations,
- * and both 'donation' and 'coaching' sources.
+ * Backfill: post donation rows that haven't been announced in Discord yet.
+ * Coaching payments are intentionally excluded and have their own channel.
  */
 export const backfillDonationDiscordPosts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -171,16 +170,16 @@ export const backfillDonationDiscordPosts = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await (supabaseAdmin as any)
       .from("donations")
-      .select("id, user_id, amount_dkk, source")
+      .select("id, user_id, amount_dkk")
+      .eq("source", "donation")
       .is("discord_posted_at", null)
       .order("donated_at", { ascending: true });
     if (error) throw new Error(error.message);
 
-    const COACHING_CHANNEL_ID = "1529100842420928633";
     const DONATION_CHANNEL_ID = "1529100885794488461";
 
     let posted = 0;
-    for (const row of (rows ?? []) as Array<{ id: string; user_id: string; amount_dkk: number; source: string }>) {
+    for (const row of (rows ?? []) as Array<{ id: string; user_id: string; amount_dkk: number }>) {
       const { data: profile } = await (supabaseAdmin as any)
         .from("profiles")
         .select("display_name, lmu_name")
@@ -190,14 +189,10 @@ export const backfillDonationDiscordPosts = createServerFn({ method: "POST" })
         (profile?.display_name as string | null)?.trim() ||
         (profile?.lmu_name as string | null)?.trim() ||
         "Ukendt bruger";
-      const isCoaching = row.source === "coaching";
-      const emoji = isCoaching ? "🏁" : "☕";
-      const label = isCoaching ? "Ny coaching-session solgt" : "Ny donation modtaget";
-      const channelId = isCoaching ? COACHING_CHANNEL_ID : DONATION_CHANNEL_ID;
       try {
         await sendDiscordChannelMessage(
-          channelId,
-          `${emoji} **${label}**\n**${name}** har betalt **${row.amount_dkk} kr.** 🙏`,
+          DONATION_CHANNEL_ID,
+          `☕ **Ny donation modtaget**\n**${name}** har doneret **${row.amount_dkk} kr.** 🙏`,
         );
         await (supabaseAdmin as any)
           .from("donations")
