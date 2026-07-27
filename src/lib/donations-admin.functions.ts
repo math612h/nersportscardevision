@@ -121,6 +121,17 @@ export const addDonation = createServerFn({ method: "POST" })
           await sendDiscordDM(discordUserId, `**${title}**\n\n${body}`).catch(() => {});
         }
       } catch (_) {}
+
+      // Post to donations Discord channel (same as Stripe donations).
+      try {
+        const displayName =
+          (profile?.display_name as string | null)?.trim() || "Ukendt bruger";
+        const { sendDiscordChannelMessage } = await import("./discord.server");
+        await sendDiscordChannelMessage(
+          "1529100885794488461",
+          `☕ **Ny donation modtaget**\n**${displayName}** har doneret **${data.amountDkk} kr.** 🙏`,
+        ).catch(() => {});
+      } catch (_) {}
     } catch (e) {
       console.error("Thank-you message failed", e);
     }
@@ -137,4 +148,44 @@ export const deleteDonation = createServerFn({ method: "POST" })
     const { error } = await (supabaseAdmin as any).from("donations").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/**
+ * One-off backfill: post donations to Discord that were never announced.
+ * Targets rows where source='donation' and stripe_session_id IS NULL
+ * (manual admin donations added before Discord-posting was wired in).
+ */
+export const backfillDonationDiscordPosts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { sendDiscordChannelMessage } = await import("./discord.server");
+
+    const { data: rows, error } = await (supabaseAdmin as any)
+      .from("donations")
+      .select("id, user_id, amount_dkk")
+      .is("stripe_session_id", null)
+      .eq("source", "donation")
+      .order("created_at", { ascending: true });
+    if (error) throw new Error(error.message);
+
+    let posted = 0;
+    for (const row of (rows ?? []) as Array<{ id: string; user_id: string; amount_dkk: number }>) {
+      const { data: profile } = await (supabaseAdmin as any)
+        .from("profiles")
+        .select("display_name, lmu_name")
+        .eq("id", row.user_id)
+        .maybeSingle();
+      const name =
+        (profile?.display_name as string | null)?.trim() ||
+        (profile?.lmu_name as string | null)?.trim() ||
+        "Ukendt bruger";
+      await sendDiscordChannelMessage(
+        "1529100885794488461",
+        `☕ **Ny donation modtaget**\n**${name}** har doneret **${row.amount_dkk} kr.** 🙏`,
+      ).catch((e) => console.error("backfill post failed", e));
+      posted += 1;
+    }
+    return { ok: true, posted };
   });
