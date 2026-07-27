@@ -256,6 +256,9 @@ function AdminDonationsPage() {
 
       <AddDonationPanel onAdded={refresh} />
 
+      <BackfillDiscordButton />
+
+
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Donorer</h2>
         <span className="text-sm text-muted-foreground">I alt: {total} kr.</span>
