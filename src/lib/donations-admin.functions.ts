@@ -72,13 +72,14 @@ export const addDonation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await (supabaseAdmin as any).from("donations").insert({
+    const { data: inserted, error } = await (supabaseAdmin as any).from("donations").insert({
       user_id: data.userId,
       amount_dkk: data.amountDkk,
       note: data.note ?? null,
       created_by: context.userId,
-    });
+    }).select("id").single();
     if (error) throw new Error(error.message);
+    const donationId = (inserted as { id: string } | null)?.id ?? null;
 
     // Send a thank-you message to the donor (notification + Discord DM).
     try {
@@ -130,7 +131,13 @@ export const addDonation = createServerFn({ method: "POST" })
         await sendDiscordChannelMessage(
           "1529100885794488461",
           `☕ **Ny donation modtaget**\n**${displayName}** har doneret **${data.amountDkk} kr.** 🙏`,
-        ).catch(() => {});
+        );
+        if (donationId) {
+          await (supabaseAdmin as any)
+            .from("donations")
+            .update({ discord_posted_at: new Date().toISOString() })
+            .eq("id", donationId);
+        }
       } catch (_) {}
     } catch (e) {
       console.error("Thank-you message failed", e);
