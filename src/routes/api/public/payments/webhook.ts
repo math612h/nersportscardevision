@@ -114,7 +114,7 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
       return;
     }
     await sendThankYou(userId, amountDkk, "donation");
-    await postPaymentToDiscord(userId, amountDkk, "donation");
+    await postPaymentToDiscord(userId, amountDkk, "donation", session.id);
     return;
   }
 
