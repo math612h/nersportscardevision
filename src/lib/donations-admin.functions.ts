@@ -177,7 +177,7 @@ export const backfillDonationDiscordPosts = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     const COACHING_CHANNEL_ID = "1529100842420928633";
-    const DONATION_CHANNEL_ID = "1529100885794488461";
+    const DONATION_CHANNEL_ID = "1529100842420928633";
 
     let posted = 0;
     for (const row of (rows ?? []) as Array<{ id: string; user_id: string; amount_dkk: number; source: string }>) {
