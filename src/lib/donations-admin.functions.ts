@@ -72,13 +72,14 @@ export const addDonation = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await (supabaseAdmin as any).from("donations").insert({
+    const { data: inserted, error } = await (supabaseAdmin as any).from("donations").insert({
       user_id: data.userId,
       amount_dkk: data.amountDkk,
       note: data.note ?? null,
       created_by: context.userId,
-    });
+    }).select("id").single();
     if (error) throw new Error(error.message);
+    const donationId = (inserted as { id: string } | null)?.id ?? null;
 
     // Send a thank-you message to the donor (notification + Discord DM).
     try {
@@ -130,7 +131,13 @@ export const addDonation = createServerFn({ method: "POST" })
         await sendDiscordChannelMessage(
           "1529100885794488461",
           `☕ **Ny donation modtaget**\n**${displayName}** har doneret **${data.amountDkk} kr.** 🙏`,
-        ).catch(() => {});
+        );
+        if (donationId) {
+          await (supabaseAdmin as any)
+            .from("donations")
+            .update({ discord_posted_at: new Date().toISOString() })
+            .eq("id", donationId);
+        }
       } catch (_) {}
     } catch (e) {
       console.error("Thank-you message failed", e);
@@ -151,9 +158,9 @@ export const deleteDonation = createServerFn({ method: "POST" })
   });
 
 /**
- * One-off backfill: post donations to Discord that were never announced.
- * Targets rows where source='donation' and stripe_session_id IS NULL
- * (manual admin donations added before Discord-posting was wired in).
+ * Backfill: post any donations that haven't been announced in Discord yet
+ * (discord_posted_at IS NULL). Covers both Stripe and manual donations,
+ * and both 'donation' and 'coaching' sources.
  */
 export const backfillDonationDiscordPosts = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -164,14 +171,16 @@ export const backfillDonationDiscordPosts = createServerFn({ method: "POST" })
 
     const { data: rows, error } = await (supabaseAdmin as any)
       .from("donations")
-      .select("id, user_id, amount_dkk")
-      .is("stripe_session_id", null)
-      .eq("source", "donation")
-      .order("created_at", { ascending: true });
+      .select("id, user_id, amount_dkk, source")
+      .is("discord_posted_at", null)
+      .order("donated_at", { ascending: true });
     if (error) throw new Error(error.message);
 
+    const COACHING_CHANNEL_ID = "1529100842420928633";
+    const DONATION_CHANNEL_ID = "1529100885794488461";
+
     let posted = 0;
-    for (const row of (rows ?? []) as Array<{ id: string; user_id: string; amount_dkk: number }>) {
+    for (const row of (rows ?? []) as Array<{ id: string; user_id: string; amount_dkk: number; source: string }>) {
       const { data: profile } = await (supabaseAdmin as any)
         .from("profiles")
         .select("display_name, lmu_name")
@@ -181,11 +190,23 @@ export const backfillDonationDiscordPosts = createServerFn({ method: "POST" })
         (profile?.display_name as string | null)?.trim() ||
         (profile?.lmu_name as string | null)?.trim() ||
         "Ukendt bruger";
-      await sendDiscordChannelMessage(
-        "1529100885794488461",
-        `☕ **Ny donation modtaget**\n**${name}** har doneret **${row.amount_dkk} kr.** 🙏`,
-      ).catch((e) => console.error("backfill post failed", e));
-      posted += 1;
+      const isCoaching = row.source === "coaching";
+      const emoji = isCoaching ? "🏁" : "☕";
+      const label = isCoaching ? "Ny coaching-session solgt" : "Ny donation modtaget";
+      const channelId = isCoaching ? COACHING_CHANNEL_ID : DONATION_CHANNEL_ID;
+      try {
+        await sendDiscordChannelMessage(
+          channelId,
+          `${emoji} **${label}**\n**${name}** har betalt **${row.amount_dkk} kr.** 🙏`,
+        );
+        await (supabaseAdmin as any)
+          .from("donations")
+          .update({ discord_posted_at: new Date().toISOString() })
+          .eq("id", row.id);
+        posted += 1;
+      } catch (e) {
+        console.error("backfill post failed", e);
+      }
     }
     return { ok: true, posted };
   });

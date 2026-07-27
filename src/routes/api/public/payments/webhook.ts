@@ -16,7 +16,7 @@ function getSupabase() {
 const COACHING_CHANNEL_ID = "1529100842420928633";
 const DONATION_CHANNEL_ID = "1529100885794488461";
 
-async function postPaymentToDiscord(userId: string, amountDkk: number, source: "donation" | "coaching") {
+async function postPaymentToDiscord(userId: string, amountDkk: number, source: "donation" | "coaching", stripeSessionId?: string | null) {
   try {
     const sb = getSupabase() as any;
     const { data: profile } = await sb
@@ -30,7 +30,10 @@ async function postPaymentToDiscord(userId: string, amountDkk: number, source: "
     const label = source === "coaching" ? "Ny coaching-session solgt" : "Ny donation modtaget";
     const content = `${emoji} **${label}**\n**${name}** har betalt **${amountDkk} kr.** 🙏`;
     const channelId = source === "coaching" ? COACHING_CHANNEL_ID : DONATION_CHANNEL_ID;
-    await sendDiscordChannelMessage(channelId, content).catch(() => {});
+    await sendDiscordChannelMessage(channelId, content);
+    if (stripeSessionId) {
+      await sb.from("donations").update({ discord_posted_at: new Date().toISOString() }).eq("stripe_session_id", stripeSessionId);
+    }
   } catch (e) {
     console.error("[payments-webhook] postPaymentToDiscord failed", e);
   }
@@ -111,7 +114,7 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
       return;
     }
     await sendThankYou(userId, amountDkk, "donation");
-    await postPaymentToDiscord(userId, amountDkk, "donation");
+    await postPaymentToDiscord(userId, amountDkk, "donation", session.id);
     return;
   }
 
@@ -169,7 +172,7 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
     }
 
     await sendThankYou(userId, amountDkk, "coaching");
-    await postPaymentToDiscord(userId, amountDkk, "coaching");
+    await postPaymentToDiscord(userId, amountDkk, "coaching", session.id);
     return;
   }
 

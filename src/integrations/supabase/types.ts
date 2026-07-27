@@ -719,6 +719,7 @@ export type Database = {
           amount_dkk: number
           created_at: string
           created_by: string | null
+          discord_posted_at: string | null
           donated_at: string
           environment: string | null
           id: string
@@ -735,6 +736,7 @@ export type Database = {
           amount_dkk: number
           created_at?: string
           created_by?: string | null
+          discord_posted_at?: string | null
           donated_at?: string
           environment?: string | null
           id?: string
@@ -751,6 +753,7 @@ export type Database = {
           amount_dkk?: number
           created_at?: string
           created_by?: string | null
+          discord_posted_at?: string | null
           donated_at?: string
           environment?: string | null
           id?: string
