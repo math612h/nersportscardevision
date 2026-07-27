@@ -227,6 +227,31 @@ function DonorCard({ row, onChange }: { row: DonorRow; onChange: () => void }) {
   );
 }
 
+function BackfillDiscordButton() {
+  const fn = useServerFn(backfillDonationDiscordPosts);
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          const r = await fn();
+          toast.success(`Sendte ${(r as any).posted ?? 0} donation(er) til Discord`);
+        } catch (e: any) {
+          toast.error(e?.message ?? "Backfill fejlede");
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      {busy ? "Sender…" : "Send manglende donationer til Discord"}
+    </Button>
+  );
+}
+
 function AdminDonationsPage() {
   const qc = useQueryClient();
   const fetchList = useServerFn(listDonationProfiles);
