@@ -14,7 +14,7 @@ function getSupabase() {
 }
 
 const COACHING_CHANNEL_ID = "1529100842420928633";
-const DONATION_CHANNEL_ID = "1529100842420928633";
+const DONATION_CHANNEL_ID = "1529100885794488461";
 
 async function postPaymentToDiscord(userId: string, amountDkk: number, source: "donation" | "coaching", stripeSessionId?: string | null) {
   try {
