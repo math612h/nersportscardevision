@@ -454,7 +454,7 @@ export function PersonalBestPanel() {
             ) : (
               <BestTable rows={filteredViewed} />
             )
-          ) : isLoading ? (
+          ) : (isLoading || (allTime && loadingAllTime)) ? (
             <p className="text-sm text-muted-foreground">Indlæser…</p>
           ) : (
             <BestTable rows={filteredViewed} />
