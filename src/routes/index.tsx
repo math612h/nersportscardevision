@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, Calendar, CalendarClock, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquare, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -732,61 +732,89 @@ function NextEventCard() {
     },
   });
 
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   if (!next?.race_date) return null;
 
   const eventDate = new Date(next.race_date);
-  const dayNames = ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"];
-  const days = Array.from({ length: 5 }, (_, i) => {
-    const d = new Date(eventDate);
-    d.setDate(eventDate.getDate() + (i - 2));
-    return d;
-  });
-  const dateStr = eventDate.toLocaleDateString("da-DK", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const diffMs = eventDate.getTime() - nowTick;
+  const totalMin = Math.max(0, Math.floor(diffMs / 60_000));
+  const days = Math.floor(totalMin / (60 * 24));
+  const hours = Math.floor((totalMin % (60 * 24)) / 60);
+  const mins = totalMin % 60;
+  const dateStr = eventDate.toLocaleDateString("da-DK", { weekday: "short", day: "2-digit", month: "short" });
   const timeStr = eventDate.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+
+  const Unit = ({ v, label }: { v: number; label: string }) => (
+    <div className="flex flex-col items-center">
+      <span className="font-mono text-lg font-bold tabular-nums leading-none text-primary sm:text-xl">
+        {String(v).padStart(2, "0")}
+      </span>
+      <span className="mt-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground">{label}</span>
+    </div>
+  );
 
   return (
     <section>
       <Link
         to="/ligaer/$leagueId"
         params={{ leagueId: next.league_id }}
-        className="group block overflow-hidden rounded-xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card p-3 shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] transition hover:border-primary"
+        className="group relative block overflow-hidden rounded-xl border border-primary/30 bg-card p-3 transition hover:border-primary"
       >
-        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-          <CalendarClock className="h-3 w-3" />
-          Næste event · {dateStr} · Kl {timeStr}
-        </p>
-        <h2 className="mt-1 text-sm font-bold tracking-tight sm:text-base">
-          {next.leagues?.name ? `${next.leagues.name} — ` : ""}{next.name}
-        </h2>
-        {next.track && (
-          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
-            <MapPin className="h-3 w-3" />
-            {next.track}{next.layout ? ` · ${next.layout}` : ""}
-          </p>
-        )}
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-          {days.map((d) => {
-            const isEvent = d.toDateString() === eventDate.toDateString();
-            return (
-              <div
-                key={d.toISOString()}
-                className={
-                  "flex h-10 w-10 flex-col items-center justify-center rounded-lg border text-center transition " +
-                  (isEvent
-                    ? "border-primary bg-primary/20 text-foreground"
-                    : "border-border bg-background/50 text-muted-foreground")
-                }
-              >
-                <span className="text-[9px] uppercase tracking-wide leading-none">{dayNames[d.getDay()]}</span>
-                <span className={"mt-0.5 text-xs font-bold tabular-nums leading-none " + (isEvent ? "text-foreground" : "text-foreground/80")}>
-                  {String(d.getDate()).padStart(2, "0")}
-                </span>
-              </div>
-            );
-          })}
-          <span className="ml-auto inline-flex h-10 items-center gap-1 rounded-full border border-border px-3 text-xs font-medium text-foreground transition group-hover:border-primary group-hover:text-primary">
-            Vis mere <ArrowUpRight className="h-3 w-3" />
-          </span>
+        {/* checker stripe */}
+        <div
+          className="absolute inset-y-0 left-0 w-1.5 opacity-90"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, hsl(var(--foreground)) 0 6px, transparent 6px 12px), repeating-linear-gradient(90deg, hsl(var(--foreground)) 0 6px, transparent 6px 12px)",
+            backgroundSize: "6px 12px, 12px 6px",
+          }}
+          aria-hidden
+        />
+        {/* speed glow */}
+        <div
+          className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/20 blur-3xl transition group-hover:bg-primary/30"
+          aria-hidden
+        />
+
+        <div className="relative pl-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+              På gridden
+            </p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              {dateStr} · {timeStr}
+            </p>
+          </div>
+
+          <h2 className="mt-1.5 text-base font-black tracking-tight sm:text-lg">
+            {next.leagues?.name ? `${next.leagues.name} — ` : ""}{next.name}
+          </h2>
+
+          {next.track && (
+            <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              {next.track}{next.layout ? ` · ${next.layout}` : ""}
+            </p>
+          )}
+
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-background/40 px-3 py-2">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Unit v={days} label="dg" />
+              <span className="font-mono text-lg font-bold text-primary/40">:</span>
+              <Unit v={hours} label="tm" />
+              <span className="font-mono text-lg font-bold text-primary/40">:</span>
+              <Unit v={mins} label="min" />
+            </div>
+            <span className="hidden items-center gap-1 text-xs font-semibold text-primary transition group-hover:translate-x-0.5 sm:inline-flex">
+              Se liga <ArrowUpRight className="h-3.5 w-3.5" />
+            </span>
+          </div>
         </div>
       </Link>
     </section>
