@@ -239,20 +239,26 @@ function DriverSearch({ onSelect, placeholder }: { onSelect: (p: ProfileHit) => 
       </div>
       {open && q.trim().length >= 2 && hits && hits.length > 0 && (
         <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border bg-popover shadow-md">
-          {hits.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); onSelect(p); setQ(""); setOpen(false); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
-            >
-              <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="font-medium">{p.display_name ?? p.lmu_name ?? "Ukendt"}</span>
-              {p.lmu_name && p.display_name && p.lmu_name !== p.display_name && (
-                <span className="text-xs text-muted-foreground">· {p.lmu_name}</span>
-              )}
-            </button>
-          ))}
+          {hits.map((p, i) => {
+            const label = p.display_name ?? p.lmu_name ?? p.driver_name ?? "Ukendt";
+            return (
+              <button
+                key={p.id ?? `guest:${p.driver_name}:${i}`}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); onSelect(p); setQ(""); setOpen(false); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
+              >
+                <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="font-medium">{label}</span>
+                {p.lmu_name && p.display_name && p.lmu_name !== p.display_name && (
+                  <span className="text-xs text-muted-foreground">· {p.lmu_name}</span>
+                )}
+                {!p.id && (
+                  <span className="ml-auto text-[10px] text-muted-foreground">Gæst</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
       {open && q.trim().length >= 2 && hits && hits.length === 0 && (
