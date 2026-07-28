@@ -391,7 +391,7 @@ export function PersonalBestPanel() {
   }, [compareMode, compareWith, myBest, compareBests, classFilter]);
 
   const inCompare = compareMode && !selected;
-  const otherLabel = compareWith?.display_name ?? compareWith?.lmu_name ?? "Modstander";
+  const otherLabel = compareWith?.display_name ?? compareWith?.lmu_name ?? compareWith?.driver_name ?? "Modstander";
 
   return (
     <div className="space-y-4">
