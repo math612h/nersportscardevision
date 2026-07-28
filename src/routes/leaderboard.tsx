@@ -126,13 +126,10 @@ function LeaderboardPage() {
   const [carClass, setCarClass] = useState<string>(ALL);
   const [track, setTrack] = useState<string>(ALL);
   const [layout, setLayout] = useState<string>(ALL);
-  // Patch-versioner: tomt sæt = "alle". Brugeren kan til-/fravælge enkelte versioner.
-  const [excludedVersions, setExcludedVersions] = useState<Set<string>>(new Set());
-  const [versionPickerOpen, setVersionPickerOpen] = useState(false);
 
   const trackLayoutMap = useMemo(() => {
     const m = new Map<string, Set<string>>();
-    // Seed with canonical tracks/layouts so alle definerede layouts (fx Fuji Classic)
+    // Seed with canonical tracks/layouts så alle definerede layouts (fx Fuji Classic)
     // altid kan vælges, også uden uploadede tider endnu.
     for (const t of LMU_TRACKS) {
       const set = new Set<string>();
@@ -154,48 +151,27 @@ function LeaderboardPage() {
     [rows],
   );
 
-  const versions = useMemo(() => {
+  // Aktuel patch = nyeste kendte version. Kun tider fra denne patch vises;
+  // ældre tider bevares i databasen (bruges stadig til klasse-inddeling m.m.).
+  const currentVersion = useMemo(() => {
     const set = new Set<string>();
-    for (const r of rows ?? []) set.add(normalizeVersion(r.game_version));
-    return Array.from(set).sort(compareVersionsDesc);
+    for (const r of rows ?? []) {
+      const v = normalizeVersion(r.game_version);
+      if (v !== UNKNOWN_VERSION) set.add(v);
+    }
+    const sorted = Array.from(set).sort(compareVersionsDesc);
+    return sorted[0] ?? null;
   }, [rows]);
-
-  // Pæne labels for LMU's gamle Early Access-build-numre (de 4-cifrede versioner).
-  const EA_BUILD_LABELS: Record<string, string> = {
-    "0.1000": "EA v0.1",
-    "1.0000": "EA v1.0",
-    "1.0110": "EA v1.0.1",
-    "1.0200": "EA v1.0.2",
-    "1.2000": "EA v1.2",
-    "1.3000": "EA v1.3",
-  };
-  const versionLabel = (v: string) => (v === UNKNOWN_VERSION ? "Ukendt" : (EA_BUILD_LABELS[v] ?? v));
-
-  // Default: kun nyeste patch valgt. Sættes når versions er hentet første gang.
-  const versionDefaultsApplied = useRef(false);
-  useEffect(() => {
-    if (versionDefaultsApplied.current) return;
-    if (versions.length === 0) return;
-    const newest = versions.find((v) => v !== UNKNOWN_VERSION) ?? versions[0];
-    setExcludedVersions(new Set(versions.filter((v) => v !== newest)));
-    versionDefaultsApplied.current = true;
-  }, [versions]);
-
-  const toggleVersion = (v: string) => {
-    setExcludedVersions((prev) => {
-      const next = new Set(prev);
-      if (next.has(v)) next.delete(v); else next.add(v);
-      return next;
-    });
-  };
+  const currentVersionLabel = currentVersion
+    ? (({ "0.1000": "EA v0.1", "1.0000": "EA v1.0", "1.0110": "EA v1.0.1", "1.0200": "EA v1.0.2", "1.2000": "EA v1.2", "1.3000": "EA v1.3" } as Record<string, string>)[currentVersion] ?? currentVersion)
+    : null;
 
   const filtered = useMemo(() => {
     const list = (rows ?? []).filter((r) => {
       if (carClass !== ALL && r.car_class !== carClass) return false;
       if (track !== ALL && r.track !== track) return false;
       if (layout !== ALL && (r.layout ?? "") !== layout) return false;
-      const v = normalizeVersion(r.game_version);
-      if (excludedVersions.has(v)) return false;
+      if (currentVersion && normalizeVersion(r.game_version) !== currentVersion) return false;
       return true;
     });
     // Best lap per driver pr. bilklasse + bane + layout (uanset bil-model)
@@ -214,7 +190,7 @@ function LeaderboardPage() {
       countByGroup.set(g, n);
       return n <= 10;
     });
-  }, [rows, carClass, track, layout, excludedVersions]);
+  }, [rows, carClass, track, layout, currentVersion]);
 
   const handleFiles = async (files: FileList) => {
     if (!user) { toast.error("Log ind for at uploade din egen tid."); return; }
