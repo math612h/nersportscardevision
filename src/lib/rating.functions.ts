@@ -88,7 +88,7 @@ export const getMyArchive = createServerFn({ method: "GET" })
     const [{ data: timesData, error: tErr }, { data: resultsData, error: rErr }] = await Promise.all([
       supabaseAdmin
         .from("leaderboard_times")
-        .select("track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at")
+        .select("track,layout,car_class,car_model,best_lap_ms,source,recorded_at,created_at,game_version")
         .eq("user_id", userId)
         .order("recorded_at", { ascending: true }),
       supabaseAdmin
@@ -103,11 +103,44 @@ export const getMyArchive = createServerFn({ method: "GET" })
     const times = (timesData ?? []) as Array<{
       track: string; layout: string | null; car_class: string; car_model: string | null;
       best_lap_ms: number; source: string; recorded_at: string | null; created_at: string;
+      game_version: string | null;
     }>;
 
-    // Best per (track, layout, car_class)
+    // Beregn nyeste patch på tværs af ALLE brugere for at holde det konsistent med leaderboardet.
+    const { data: allVersionsData } = await supabaseAdmin
+      .from("leaderboard_times")
+      .select("game_version")
+      .not("game_version", "is", null);
+    const normalize = (raw: string | null | undefined): string | null => {
+      const v = (raw ?? "").trim();
+      if (!v) return null;
+      const parts = v.split(".");
+      if (parts.length <= 2) return v;
+      return parts.slice(0, -1).join(".");
+    };
+    const cmp = (a: string, b: string) => {
+      const pa = a.split(".").map((n) => parseInt(n, 10));
+      const pb = b.split(".").map((n) => parseInt(n, 10));
+      const len = Math.max(pa.length, pb.length);
+      for (let i = 0; i < len; i++) {
+        const x = pa[i] ?? 0; const y = pb[i] ?? 0;
+        if (x !== y) return y - x;
+      }
+      return 0;
+    };
+    const versionSet = new Set<string>();
+    for (const r of (allVersionsData ?? []) as Array<{ game_version: string | null }>) {
+      const v = normalize(r.game_version);
+      if (v) versionSet.add(v);
+    }
+    const currentVersion = Array.from(versionSet).sort(cmp)[0] ?? null;
+    const timesCurrent = currentVersion
+      ? times.filter((t) => normalize(t.game_version) === currentVersion)
+      : times;
+
+    // Best per (track, layout, car_class) — kun fra nyeste patch
     const bestMap = new Map<string, ArchiveBestRow>();
-    for (const t of times) {
+    for (const t of timesCurrent) {
       const key = `${t.track}|${t.layout ?? ""}|${t.car_class}`;
       const cur = bestMap.get(key);
       if (!cur || t.best_lap_ms < cur.best_lap_ms) {
@@ -123,6 +156,7 @@ export const getMyArchive = createServerFn({ method: "GET" })
       a.car_class.localeCompare(b.car_class) || a.track.localeCompare(b.track),
     );
 
+    // Historik viser alle patches (så udvikling over tid er komplet)
     const history: ArchiveHistoryRow[] = times.map((t) => ({
       recorded_at: t.recorded_at ?? t.created_at,
       track: t.track,
