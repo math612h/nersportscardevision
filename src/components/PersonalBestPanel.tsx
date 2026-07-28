@@ -41,7 +41,7 @@ type BestRow = {
   recorded_at: string | null;
 };
 
-type ProfileHit = { id: string; display_name: string | null; lmu_name: string | null };
+type ProfileHit = { id: string | null; display_name: string | null; lmu_name: string | null; driver_name?: string | null };
 
 const CLASS_ORDER = Object.keys(CARS_BY_CLASS);
 
@@ -188,13 +188,39 @@ function DriverSearch({ onSelect, placeholder }: { onSelect: (p: ProfileHit) => 
     enabled: q.trim().length >= 2,
     queryFn: async () => {
       const term = `%${q.trim()}%`;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, display_name, lmu_name")
-        .or(`display_name.ilike.${term},lmu_name.ilike.${term}`)
-        .limit(8);
-      if (error) throw error;
-      return (data ?? []) as ProfileHit[];
+      const [profRes, lbRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, display_name, lmu_name")
+          .or(`display_name.ilike.${term},lmu_name.ilike.${term}`)
+          .limit(8),
+        supabase
+          .from("leaderboard_times")
+          .select("user_id, driver_name")
+          .ilike("driver_name", term)
+          .limit(50),
+      ]);
+      if (profRes.error) throw profRes.error;
+      if (lbRes.error) throw lbRes.error;
+      const results: ProfileHit[] = [];
+      const seenIds = new Set<string>();
+      const seenNames = new Set<string>();
+      for (const p of (profRes.data ?? []) as ProfileHit[]) {
+        if (p.id) { seenIds.add(p.id); results.push(p); }
+      }
+      for (const r of (lbRes.data ?? []) as { user_id: string | null; driver_name: string }[]) {
+        if (r.user_id) {
+          if (seenIds.has(r.user_id)) continue;
+          seenIds.add(r.user_id);
+          results.push({ id: r.user_id, display_name: r.driver_name, lmu_name: null, driver_name: r.driver_name });
+        } else {
+          const key = r.driver_name.toLowerCase();
+          if (seenNames.has(key)) continue;
+          seenNames.add(key);
+          results.push({ id: null, display_name: null, lmu_name: null, driver_name: r.driver_name });
+        }
+      }
+      return results.slice(0, 12);
     },
   });
 
@@ -213,20 +239,26 @@ function DriverSearch({ onSelect, placeholder }: { onSelect: (p: ProfileHit) => 
       </div>
       {open && q.trim().length >= 2 && hits && hits.length > 0 && (
         <div className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border bg-popover shadow-md">
-          {hits.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onMouseDown={(e) => { e.preventDefault(); onSelect(p); setQ(""); setOpen(false); }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
-            >
-              <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="font-medium">{p.display_name ?? p.lmu_name ?? "Ukendt"}</span>
-              {p.lmu_name && p.display_name && p.lmu_name !== p.display_name && (
-                <span className="text-xs text-muted-foreground">· {p.lmu_name}</span>
-              )}
-            </button>
-          ))}
+          {hits.map((p, i) => {
+            const label = p.display_name ?? p.lmu_name ?? p.driver_name ?? "Ukendt";
+            return (
+              <button
+                key={p.id ?? `guest:${p.driver_name}:${i}`}
+                type="button"
+                onMouseDown={(e) => { e.preventDefault(); onSelect(p); setQ(""); setOpen(false); }}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent"
+              >
+                <UserIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="font-medium">{label}</span>
+                {p.lmu_name && p.display_name && p.lmu_name !== p.display_name && (
+                  <span className="text-xs text-muted-foreground">· {p.lmu_name}</span>
+                )}
+                {!p.id && (
+                  <span className="ml-auto text-[10px] text-muted-foreground">Gæst</span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
       {open && q.trim().length >= 2 && hits && hits.length === 0 && (
@@ -238,16 +270,25 @@ function DriverSearch({ onSelect, placeholder }: { onSelect: (p: ProfileHit) => 
   );
 }
 
-function useDriverBests(userId: string | null, currentPatch: string | null, allTime = false) {
+function useDriverBests(
+  target: { userId: string | null; driverName?: string | null } | null,
+  currentPatch: string | null,
+  allTime = false,
+) {
+  const userId = target?.userId ?? null;
+  const driverName = target?.driverName ?? null;
+  const hasTarget = !!userId || !!driverName;
   return useQuery({
-    queryKey: ["pb-driver-bests", userId, allTime, currentPatch],
-    enabled: !!userId && (allTime || !!currentPatch),
+    queryKey: ["pb-driver-bests", userId, driverName, allTime, currentPatch],
+    enabled: hasTarget && (allTime || !!currentPatch),
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("leaderboard_times")
         .select("track,layout,car_class,car_model,best_lap_ms,recorded_at,created_at,game_version")
-        .eq("user_id", userId!)
         .order("best_lap_ms", { ascending: true });
+      if (userId) query = query.eq("user_id", userId);
+      else if (driverName) query = query.is("user_id", null).ilike("driver_name", driverName);
+      const { data, error } = await query;
       if (error) throw error;
       const rows = (data ?? []) as any[];
       // Filtrer på GLOBAL nyeste patch (major.minor). Hotfixes tæller som samme patch.
@@ -299,10 +340,16 @@ export function PersonalBestPanel() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: otherBests, isLoading: loadingOther } = useDriverBests(selected?.id ?? null, currentPatch ?? null);
-  const { data: compareBests, isLoading: loadingCompare } = useDriverBests(compareWith?.id ?? null, currentPatch ?? null);
+  const { data: otherBests, isLoading: loadingOther } = useDriverBests(
+    selected ? { userId: selected.id, driverName: selected.driver_name ?? null } : null,
+    currentPatch ?? null,
+  );
+  const { data: compareBests, isLoading: loadingCompare } = useDriverBests(
+    compareWith ? { userId: compareWith.id, driverName: compareWith.driver_name ?? null } : null,
+    currentPatch ?? null,
+  );
   const { data: myAllTime, isLoading: loadingAllTime } = useDriverBests(
-    allTime && !selected && !compareMode ? user?.id ?? null : null,
+    allTime && !selected && !compareMode && user?.id ? { userId: user.id } : null,
     currentPatch ?? null,
     true,
   );
@@ -344,7 +391,7 @@ export function PersonalBestPanel() {
   }, [compareMode, compareWith, myBest, compareBests, classFilter]);
 
   const inCompare = compareMode && !selected;
-  const otherLabel = compareWith?.display_name ?? compareWith?.lmu_name ?? "Modstander";
+  const otherLabel = compareWith?.display_name ?? compareWith?.lmu_name ?? compareWith?.driver_name ?? "Modstander";
 
   return (
     <div className="space-y-4">
@@ -354,7 +401,7 @@ export function PersonalBestPanel() {
             <div>
               <CardTitle>
                 {selected
-                  ? `${selected.display_name ?? selected.lmu_name}'s bedste tider`
+                  ? `${selected.display_name ?? selected.lmu_name ?? selected.driver_name}'s bedste tider`
                   : inCompare
                     ? "Sammenlign tider"
                     : "Mine personlige bedste tider"}
