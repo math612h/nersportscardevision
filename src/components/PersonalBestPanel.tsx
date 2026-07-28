@@ -238,29 +238,10 @@ function DriverSearch({ onSelect, placeholder }: { onSelect: (p: ProfileHit) => 
   );
 }
 
-function normalizeVersion(raw: string | null | undefined): string | null {
-  const v = (raw ?? "").trim();
-  if (!v) return null;
-  const parts = v.split(".");
-  if (parts.length <= 2) return v;
-  return parts.slice(0, -1).join(".");
-}
-function compareVersionsDesc(a: string, b: string): number {
-  const pa = a.split(".").map((n) => parseInt(n, 10));
-  const pb = b.split(".").map((n) => parseInt(n, 10));
-  const len = Math.max(pa.length, pb.length);
-  for (let i = 0; i < len; i++) {
-    const x = pa[i] ?? 0;
-    const y = pb[i] ?? 0;
-    if (x !== y) return y - x;
-  }
-  return 0;
-}
-
-function useDriverBests(userId: string | null, allTime = false) {
+function useDriverBests(userId: string | null, currentPatch: string | null, allTime = false) {
   return useQuery({
-    queryKey: ["pb-driver-bests", userId, allTime],
-    enabled: !!userId,
+    queryKey: ["pb-driver-bests", userId, allTime, currentPatch],
+    enabled: !!userId && (allTime || !!currentPatch),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leaderboard_times")
@@ -269,16 +250,10 @@ function useDriverBests(userId: string | null, allTime = false) {
         .order("best_lap_ms", { ascending: true });
       if (error) throw error;
       const rows = (data ?? []) as any[];
-      let filtered = rows;
-      if (!allTime) {
-        const versions = new Set<string>();
-        for (const t of rows) {
-          const v = normalizeVersion(t.game_version);
-          if (v) versions.add(v);
-        }
-        const current = Array.from(versions).sort(compareVersionsDesc)[0] ?? null;
-        filtered = current ? rows.filter((t) => normalizeVersion(t.game_version) === current) : rows;
-      }
+      // Filtrer på GLOBAL nyeste patch (major.minor). Hotfixes tæller som samme patch.
+      const filtered = allTime || !currentPatch
+        ? rows
+        : rows.filter((t) => normalizePatch(t.game_version) === currentPatch);
       const map = new Map<string, BestRow>();
       for (const t of filtered) {
         const normTrack = normalizeTrackName(t.track) || t.track;
