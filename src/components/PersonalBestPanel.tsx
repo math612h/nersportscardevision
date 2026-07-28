@@ -314,9 +314,14 @@ export function PersonalBestPanel() {
   const [compareMode, setCompareMode] = useState(false);
   const [compareWith, setCompareWith] = useState<ProfileHit | null>(null);
   const [classFilter, setClassFilter] = useState<string | null>(null);
+  const [allTime, setAllTime] = useState(false);
 
   const { data: otherBests, isLoading: loadingOther } = useDriverBests(selected?.id ?? null);
   const { data: compareBests, isLoading: loadingCompare } = useDriverBests(compareWith?.id ?? null);
+  const { data: myAllTime, isLoading: loadingAllTime } = useDriverBests(
+    allTime && !selected && !compareMode ? user?.id ?? null : null,
+    true,
+  );
 
   if (!user) {
     return (
