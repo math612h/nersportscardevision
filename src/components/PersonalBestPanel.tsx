@@ -237,6 +237,25 @@ function DriverSearch({ onSelect, placeholder }: { onSelect: (p: ProfileHit) => 
   );
 }
 
+function normalizeVersion(raw: string | null | undefined): string | null {
+  const v = (raw ?? "").trim();
+  if (!v) return null;
+  const parts = v.split(".");
+  if (parts.length <= 2) return v;
+  return parts.slice(0, -1).join(".");
+}
+function compareVersionsDesc(a: string, b: string): number {
+  const pa = a.split(".").map((n) => parseInt(n, 10));
+  const pb = b.split(".").map((n) => parseInt(n, 10));
+  const len = Math.max(pa.length, pb.length);
+  for (let i = 0; i < len; i++) {
+    const x = pa[i] ?? 0;
+    const y = pb[i] ?? 0;
+    if (x !== y) return y - x;
+  }
+  return 0;
+}
+
 function useDriverBests(userId: string | null) {
   return useQuery({
     queryKey: ["pb-driver-bests", userId],
@@ -244,12 +263,21 @@ function useDriverBests(userId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leaderboard_times")
-        .select("track,layout,car_class,car_model,best_lap_ms,recorded_at,created_at")
+        .select("track,layout,car_class,car_model,best_lap_ms,recorded_at,created_at,game_version")
         .eq("user_id", userId!)
         .order("best_lap_ms", { ascending: true });
       if (error) throw error;
+      const rows = (data ?? []) as any[];
+      // Kun tider fra nyeste kendte patch
+      const versions = new Set<string>();
+      for (const t of rows) {
+        const v = normalizeVersion(t.game_version);
+        if (v) versions.add(v);
+      }
+      const current = Array.from(versions).sort(compareVersionsDesc)[0] ?? null;
+      const filtered = current ? rows.filter((t) => normalizeVersion(t.game_version) === current) : rows;
       const map = new Map<string, BestRow>();
-      for (const t of (data ?? []) as any[]) {
+      for (const t of filtered) {
         const normTrack = normalizeTrackName(t.track) || t.track;
         const key = `${normTrack}|${t.layout ?? ""}|${t.car_class}`;
         const cur = map.get(key);
