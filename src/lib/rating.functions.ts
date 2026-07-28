@@ -1,5 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { normalizePatch, pickCurrentPatch } from "@/lib/lmu-version";
+
+export const getCurrentPatch = createServerFn({ method: "GET" }).handler(async (): Promise<string | null> => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("leaderboard_times")
+    .select("game_version")
+    .not("game_version", "is", null);
+  if (error) throw new Error(error.message);
+  return pickCurrentPatch(((data ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version));
+});
 
 type AllowedResult = {
   allowed: string[];
