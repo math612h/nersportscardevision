@@ -401,7 +401,7 @@ export function PersonalBestPanel() {
             <div>
               <CardTitle>
                 {selected
-                  ? `${selected.display_name ?? selected.lmu_name}'s bedste tider`
+                  ? `${selected.display_name ?? selected.lmu_name ?? selected.driver_name}'s bedste tider`
                   : inCompare
                     ? "Sammenlign tider"
                     : "Mine personlige bedste tider"}
