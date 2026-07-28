@@ -256,9 +256,9 @@ function compareVersionsDesc(a: string, b: string): number {
   return 0;
 }
 
-function useDriverBests(userId: string | null) {
+function useDriverBests(userId: string | null, allTime = false) {
   return useQuery({
-    queryKey: ["pb-driver-bests", userId],
+    queryKey: ["pb-driver-bests", userId, allTime],
     enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -268,14 +268,16 @@ function useDriverBests(userId: string | null) {
         .order("best_lap_ms", { ascending: true });
       if (error) throw error;
       const rows = (data ?? []) as any[];
-      // Kun tider fra nyeste kendte patch
-      const versions = new Set<string>();
-      for (const t of rows) {
-        const v = normalizeVersion(t.game_version);
-        if (v) versions.add(v);
+      let filtered = rows;
+      if (!allTime) {
+        const versions = new Set<string>();
+        for (const t of rows) {
+          const v = normalizeVersion(t.game_version);
+          if (v) versions.add(v);
+        }
+        const current = Array.from(versions).sort(compareVersionsDesc)[0] ?? null;
+        filtered = current ? rows.filter((t) => normalizeVersion(t.game_version) === current) : rows;
       }
-      const current = Array.from(versions).sort(compareVersionsDesc)[0] ?? null;
-      const filtered = current ? rows.filter((t) => normalizeVersion(t.game_version) === current) : rows;
       const map = new Map<string, BestRow>();
       for (const t of filtered) {
         const normTrack = normalizeTrackName(t.track) || t.track;
@@ -312,9 +314,14 @@ export function PersonalBestPanel() {
   const [compareMode, setCompareMode] = useState(false);
   const [compareWith, setCompareWith] = useState<ProfileHit | null>(null);
   const [classFilter, setClassFilter] = useState<string | null>(null);
+  const [allTime, setAllTime] = useState(false);
 
   const { data: otherBests, isLoading: loadingOther } = useDriverBests(selected?.id ?? null);
   const { data: compareBests, isLoading: loadingCompare } = useDriverBests(compareWith?.id ?? null);
+  const { data: myAllTime, isLoading: loadingAllTime } = useDriverBests(
+    allTime && !selected && !compareMode ? user?.id ?? null : null,
+    true,
+  );
 
   if (!user) {
     return (
@@ -326,8 +333,9 @@ export function PersonalBestPanel() {
     );
   }
 
+  const ownShown = allTime && !selected && !compareMode ? (myAllTime ?? []) : ((data?.best ?? []) as BestRow[]);
   const myBest = (data?.best ?? []) as BestRow[];
-  const viewedBests: BestRow[] = selected ? (otherBests ?? []) : myBest;
+  const viewedBests: BestRow[] = selected ? (otherBests ?? []) : ownShown;
   const filteredViewed = classFilter ? viewedBests.filter((r) => r.car_class === classFilter) : viewedBests;
 
   // Build compare rows by union of (track|layout|class)
@@ -372,22 +380,35 @@ export function PersonalBestPanel() {
                   ? "Hurtigste runde pr. bane og bilklasse for den valgte kører."
                   : inCompare
                     ? "Vælg en kører for at sammenligne dine bedste tider."
-                    : "Din hurtigste runde pr. bane og bilklasse, uanset session."}
+                    : allTime
+                      ? "All-time bedste – inkluderer tider fra alle patches."
+                      : "Din hurtigste runde pr. bane og bilklasse på nyeste patch."}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              {!selected && !compareMode && (
+                <Button
+                  variant={allTime ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setAllTime((v) => !v)}
+                  className="gap-1"
+                  title="Vis din bedste tid nogensinde – på tværs af alle patches"
+                >
+                  {allTime ? "Nyeste patch" : "All-time PB"}
+                </Button>
+              )}
               {!selected && (
                 <Button
-                  variant={compareMode ? "default" : "outline"}
+                  variant={compareMode ? "secondary" : "default"}
                   size="sm"
                   onClick={() => {
                     setCompareMode((v) => !v);
                     if (compareMode) setCompareWith(null);
                   }}
-                  className="gap-1"
+                  className="gap-1.5 shadow-sm"
                 >
-                  <GitCompare className="h-3.5 w-3.5" />
-                  {compareMode ? "Luk compare" : "Compare"}
+                  <GitCompare className="h-4 w-4" />
+                  {compareMode ? "Luk sammenligning" : "Sammenlign med kører"}
                 </Button>
               )}
               {selected && (
@@ -433,7 +454,7 @@ export function PersonalBestPanel() {
             ) : (
               <BestTable rows={filteredViewed} />
             )
-          ) : isLoading ? (
+          ) : (isLoading || (allTime && loadingAllTime)) ? (
             <p className="text-sm text-muted-foreground">Indlæser…</p>
           ) : (
             <BestTable rows={filteredViewed} />
