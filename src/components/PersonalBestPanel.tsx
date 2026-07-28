@@ -270,16 +270,25 @@ function DriverSearch({ onSelect, placeholder }: { onSelect: (p: ProfileHit) => 
   );
 }
 
-function useDriverBests(userId: string | null, currentPatch: string | null, allTime = false) {
+function useDriverBests(
+  target: { userId: string | null; driverName?: string | null } | null,
+  currentPatch: string | null,
+  allTime = false,
+) {
+  const userId = target?.userId ?? null;
+  const driverName = target?.driverName ?? null;
+  const hasTarget = !!userId || !!driverName;
   return useQuery({
-    queryKey: ["pb-driver-bests", userId, allTime, currentPatch],
-    enabled: !!userId && (allTime || !!currentPatch),
+    queryKey: ["pb-driver-bests", userId, driverName, allTime, currentPatch],
+    enabled: hasTarget && (allTime || !!currentPatch),
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("leaderboard_times")
         .select("track,layout,car_class,car_model,best_lap_ms,recorded_at,created_at,game_version")
-        .eq("user_id", userId!)
         .order("best_lap_ms", { ascending: true });
+      if (userId) query = query.eq("user_id", userId);
+      else if (driverName) query = query.is("user_id", null).ilike("driver_name", driverName);
+      const { data, error } = await query;
       if (error) throw error;
       const rows = (data ?? []) as any[];
       // Filtrer på GLOBAL nyeste patch (major.minor). Hotfixes tæller som samme patch.
