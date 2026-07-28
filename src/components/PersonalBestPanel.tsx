@@ -340,10 +340,16 @@ export function PersonalBestPanel() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: otherBests, isLoading: loadingOther } = useDriverBests(selected?.id ?? null, currentPatch ?? null);
-  const { data: compareBests, isLoading: loadingCompare } = useDriverBests(compareWith?.id ?? null, currentPatch ?? null);
+  const { data: otherBests, isLoading: loadingOther } = useDriverBests(
+    selected ? { userId: selected.id, driverName: selected.driver_name ?? null } : null,
+    currentPatch ?? null,
+  );
+  const { data: compareBests, isLoading: loadingCompare } = useDriverBests(
+    compareWith ? { userId: compareWith.id, driverName: compareWith.driver_name ?? null } : null,
+    currentPatch ?? null,
+  );
   const { data: myAllTime, isLoading: loadingAllTime } = useDriverBests(
-    allTime && !selected && !compareMode ? user?.id ?? null : null,
+    allTime && !selected && !compareMode && user?.id ? { userId: user.id } : null,
     currentPatch ?? null,
     true,
   );
