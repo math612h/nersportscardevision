@@ -117,36 +117,16 @@ export const getMyArchive = createServerFn({ method: "GET" })
       game_version: string | null;
     }>;
 
-    // Beregn nyeste patch på tværs af ALLE brugere for at holde det konsistent med leaderboardet.
+    // Beregn nyeste patch globalt (major.minor). Hotfixes tæller som samme patch.
     const { data: allVersionsData } = await supabaseAdmin
       .from("leaderboard_times")
       .select("game_version")
       .not("game_version", "is", null);
-    const normalize = (raw: string | null | undefined): string | null => {
-      const v = (raw ?? "").trim();
-      if (!v) return null;
-      const parts = v.split(".");
-      if (parts.length <= 2) return v;
-      return parts.slice(0, -1).join(".");
-    };
-    const cmp = (a: string, b: string) => {
-      const pa = a.split(".").map((n) => parseInt(n, 10));
-      const pb = b.split(".").map((n) => parseInt(n, 10));
-      const len = Math.max(pa.length, pb.length);
-      for (let i = 0; i < len; i++) {
-        const x = pa[i] ?? 0; const y = pb[i] ?? 0;
-        if (x !== y) return y - x;
-      }
-      return 0;
-    };
-    const versionSet = new Set<string>();
-    for (const r of (allVersionsData ?? []) as Array<{ game_version: string | null }>) {
-      const v = normalize(r.game_version);
-      if (v) versionSet.add(v);
-    }
-    const currentVersion = Array.from(versionSet).sort(cmp)[0] ?? null;
+    const currentVersion = pickCurrentPatch(
+      ((allVersionsData ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version),
+    );
     const timesCurrent = currentVersion
-      ? times.filter((t) => normalize(t.game_version) === currentVersion)
+      ? times.filter((t) => normalizePatch(t.game_version) === currentVersion)
       : times;
 
     // Best per (track, layout, car_class) — kun fra nyeste patch
