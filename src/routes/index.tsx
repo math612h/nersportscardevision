@@ -747,51 +747,52 @@ function NextEventCard() {
   return (
     <section>
       <Link
-        to="/ligaer/$leagueId/afdeling/$divisionId"
-        params={{ leagueId: next.league_id, divisionId: next.id }}
-        className="group block overflow-hidden rounded-2xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card p-4 shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] transition hover:border-primary sm:p-5"
+        to="/ligaer/$leagueId"
+        params={{ leagueId: next.league_id }}
+        className="group block overflow-hidden rounded-xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card p-3 shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] transition hover:border-primary"
       >
-        <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
-          <CalendarClock className="h-3.5 w-3.5" />
+        <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+          <CalendarClock className="h-3 w-3" />
           Næste event · {dateStr} · Kl {timeStr}
         </p>
-        <h2 className="mt-1.5 text-lg font-bold tracking-tight sm:text-xl">
+        <h2 className="mt-1 text-sm font-bold tracking-tight sm:text-base">
           {next.leagues?.name ? `${next.leagues.name} — ` : ""}{next.name}
         </h2>
         {next.track && (
-          <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+          <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
             <MapPin className="h-3 w-3" />
             {next.track}{next.layout ? ` · ${next.layout}` : ""}
           </p>
         )}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           {days.map((d) => {
             const isEvent = d.toDateString() === eventDate.toDateString();
             return (
               <div
                 key={d.toISOString()}
                 className={
-                  "flex h-14 w-14 flex-col items-center justify-center rounded-xl border text-center transition " +
+                  "flex h-10 w-10 flex-col items-center justify-center rounded-lg border text-center transition " +
                   (isEvent
-                    ? "border-primary bg-primary/20 text-foreground shadow-[0_0_0_1px_hsl(var(--primary)/0.5)]"
+                    ? "border-primary bg-primary/20 text-foreground"
                     : "border-border bg-background/50 text-muted-foreground")
                 }
               >
-                <span className="text-[10px] uppercase tracking-wide">{dayNames[d.getDay()]}</span>
-                <span className={"text-base font-bold tabular-nums " + (isEvent ? "text-foreground" : "text-foreground/80")}>
+                <span className="text-[9px] uppercase tracking-wide leading-none">{dayNames[d.getDay()]}</span>
+                <span className={"mt-0.5 text-xs font-bold tabular-nums leading-none " + (isEvent ? "text-foreground" : "text-foreground/80")}>
                   {String(d.getDate()).padStart(2, "0")}
                 </span>
               </div>
             );
           })}
-          <span className="ml-auto inline-flex h-14 items-center gap-1 rounded-full border border-border px-4 text-sm font-medium text-foreground transition group-hover:border-primary group-hover:text-primary">
-            Vis mere <ArrowUpRight className="h-3.5 w-3.5" />
+          <span className="ml-auto inline-flex h-10 items-center gap-1 rounded-full border border-border px-3 text-xs font-medium text-foreground transition group-hover:border-primary group-hover:text-primary">
+            Vis mere <ArrowUpRight className="h-3 w-3" />
           </span>
         </div>
       </Link>
     </section>
   );
 }
+
 
 
 
