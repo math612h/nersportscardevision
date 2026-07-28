@@ -11,9 +11,10 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { getMyArchive } from "@/lib/rating.functions";
+import { getMyArchive, getCurrentPatch } from "@/lib/rating.functions";
 import { classColor, CARS_BY_CLASS } from "@/lib/lmu-cars";
 import { normalizeTrackName } from "@/lib/tracks";
+import { normalizePatch } from "@/lib/lmu-version";
 
 function fmtLap(ms: number | null | undefined) {
   if (ms == null) return "—";
