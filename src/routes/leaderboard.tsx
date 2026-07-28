@@ -132,10 +132,10 @@ function LeaderboardPage() {
   const currentVersion = useMemo(() => {
     const set = new Set<string>();
     for (const r of rows ?? []) {
-      const v = normalizeVersion(r.game_version);
-      if (v !== UNKNOWN_VERSION) set.add(v);
+      const v = normalizePatch(r.game_version);
+      if (v) set.add(v);
     }
-    const sorted = Array.from(set).sort(compareVersionsDesc);
+    const sorted = Array.from(set).sort(comparePatchDesc);
     return sorted[0] ?? null;
   }, [rows]);
   const currentVersionLabel = currentVersion
