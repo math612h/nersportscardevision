@@ -712,5 +712,87 @@ function OvertakingWinnerSection() {
   );
 }
 
+function NextEventCard() {
+  const { data: next } = useQuery({
+    queryKey: ["home-next-event"],
+    refetchInterval: 5 * 60_000,
+    queryFn: async () => {
+      const nowIso = new Date().toISOString();
+      const { data, error } = await supabase
+        .from("divisions")
+        .select("id,league_id,name,track,layout,race_date,settings,leagues(name)")
+        .gte("race_date", nowIso)
+        .order("race_date", { ascending: true })
+        .limit(10);
+      if (error) throw error;
+      const first = (data ?? []).find(
+        (d: any) => !d.settings?.completed && !d.settings?.hidden_from_home,
+      );
+      return first ?? null;
+    },
+  });
+
+  if (!next?.race_date) return null;
+
+  const eventDate = new Date(next.race_date);
+  const dayNames = ["Søn", "Man", "Tir", "Ons", "Tor", "Fre", "Lør"];
+  const days = Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(eventDate);
+    d.setDate(eventDate.getDate() + (i - 2));
+    return d;
+  });
+  const dateStr = eventDate.toLocaleDateString("da-DK", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const timeStr = eventDate.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <section>
+      <Link
+        to="/ligaer/$leagueId/afdeling/$divisionId"
+        params={{ leagueId: next.league_id, divisionId: next.id }}
+        className="group block overflow-hidden rounded-2xl border border-primary/40 bg-gradient-to-br from-primary/15 via-card to-card p-4 shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] transition hover:border-primary sm:p-5"
+      >
+        <p className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+          <CalendarClock className="h-3.5 w-3.5" />
+          Næste event · {dateStr} · Kl {timeStr}
+        </p>
+        <h2 className="mt-1.5 text-lg font-bold tracking-tight sm:text-xl">
+          {next.leagues?.name ? `${next.leagues.name} — ` : ""}{next.name}
+        </h2>
+        {next.track && (
+          <p className="mt-0.5 flex items-center gap-1 truncate text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3" />
+            {next.track}{next.layout ? ` · ${next.layout}` : ""}
+          </p>
+        )}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {days.map((d) => {
+            const isEvent = d.toDateString() === eventDate.toDateString();
+            return (
+              <div
+                key={d.toISOString()}
+                className={
+                  "flex h-14 w-14 flex-col items-center justify-center rounded-xl border text-center transition " +
+                  (isEvent
+                    ? "border-primary bg-primary/20 text-foreground shadow-[0_0_0_1px_hsl(var(--primary)/0.5)]"
+                    : "border-border bg-background/50 text-muted-foreground")
+                }
+              >
+                <span className="text-[10px] uppercase tracking-wide">{dayNames[d.getDay()]}</span>
+                <span className={"text-base font-bold tabular-nums " + (isEvent ? "text-foreground" : "text-foreground/80")}>
+                  {String(d.getDate()).padStart(2, "0")}
+                </span>
+              </div>
+            );
+          })}
+          <span className="ml-auto inline-flex h-14 items-center gap-1 rounded-full border border-border px-4 text-sm font-medium text-foreground transition group-hover:border-primary group-hover:text-primary">
+            Vis mere <ArrowUpRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      </Link>
+    </section>
+  );
+}
+
+
 
 
