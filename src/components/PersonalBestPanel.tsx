@@ -380,7 +380,9 @@ export function PersonalBestPanel() {
                   ? "Hurtigste runde pr. bane og bilklasse for den valgte kører."
                   : inCompare
                     ? "Vælg en kører for at sammenligne dine bedste tider."
-                    : "Din hurtigste runde pr. bane og bilklasse, uanset session."}
+                    : allTime
+                      ? "All-time bedste – inkluderer tider fra alle patches."
+                      : "Din hurtigste runde pr. bane og bilklasse på nyeste patch."}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
