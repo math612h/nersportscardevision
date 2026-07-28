@@ -188,13 +188,39 @@ function DriverSearch({ onSelect, placeholder }: { onSelect: (p: ProfileHit) => 
     enabled: q.trim().length >= 2,
     queryFn: async () => {
       const term = `%${q.trim()}%`;
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, display_name, lmu_name")
-        .or(`display_name.ilike.${term},lmu_name.ilike.${term}`)
-        .limit(8);
-      if (error) throw error;
-      return (data ?? []) as ProfileHit[];
+      const [profRes, lbRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, display_name, lmu_name")
+          .or(`display_name.ilike.${term},lmu_name.ilike.${term}`)
+          .limit(8),
+        supabase
+          .from("leaderboard_times")
+          .select("user_id, driver_name")
+          .ilike("driver_name", term)
+          .limit(50),
+      ]);
+      if (profRes.error) throw profRes.error;
+      if (lbRes.error) throw lbRes.error;
+      const results: ProfileHit[] = [];
+      const seenIds = new Set<string>();
+      const seenNames = new Set<string>();
+      for (const p of (profRes.data ?? []) as ProfileHit[]) {
+        if (p.id) { seenIds.add(p.id); results.push(p); }
+      }
+      for (const r of (lbRes.data ?? []) as { user_id: string | null; driver_name: string }[]) {
+        if (r.user_id) {
+          if (seenIds.has(r.user_id)) continue;
+          seenIds.add(r.user_id);
+          results.push({ id: r.user_id, display_name: r.driver_name, lmu_name: null, driver_name: r.driver_name });
+        } else {
+          const key = r.driver_name.toLowerCase();
+          if (seenNames.has(key)) continue;
+          seenNames.add(key);
+          results.push({ id: null, display_name: null, lmu_name: null, driver_name: r.driver_name });
+        }
+      }
+      return results.slice(0, 12);
     },
   });
 
