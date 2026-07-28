@@ -292,10 +292,18 @@ export function PersonalBestPanel() {
   const [classFilter, setClassFilter] = useState<string | null>(null);
   const [allTime, setAllTime] = useState(false);
 
-  const { data: otherBests, isLoading: loadingOther } = useDriverBests(selected?.id ?? null);
-  const { data: compareBests, isLoading: loadingCompare } = useDriverBests(compareWith?.id ?? null);
+  const fetchCurrentPatch = useServerFn(getCurrentPatch);
+  const { data: currentPatch } = useQuery({
+    queryKey: ["lmu-current-patch"],
+    queryFn: () => fetchCurrentPatch(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: otherBests, isLoading: loadingOther } = useDriverBests(selected?.id ?? null, currentPatch ?? null);
+  const { data: compareBests, isLoading: loadingCompare } = useDriverBests(compareWith?.id ?? null, currentPatch ?? null);
   const { data: myAllTime, isLoading: loadingAllTime } = useDriverBests(
     allTime && !selected && !compareMode ? user?.id ?? null : null,
+    currentPatch ?? null,
     true,
   );
 
