@@ -4,12 +4,21 @@ import { normalizePatch, pickCurrentPatch } from "@/lib/lmu-version";
 
 export const getCurrentPatch = createServerFn({ method: "GET" }).handler(async (): Promise<string | null> => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("leaderboard_times")
-    .select("game_version")
-    .not("game_version", "is", null);
-  if (error) throw new Error(error.message);
-  return pickCurrentPatch(((data ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version));
+  const versions: Array<string | null> = [];
+  const pageSize = 1000;
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabaseAdmin
+      .from("leaderboard_times")
+      .select("game_version")
+      .not("game_version", "is", null)
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    versions.push(...((data ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version));
+    if ((data?.length ?? 0) < pageSize) break;
+  }
+
+  return pickCurrentPatch(versions);
 });
 
 export type DriverSearchHit = {
@@ -230,13 +239,19 @@ export const getMyArchive = createServerFn({ method: "GET" })
     }>;
 
     // Beregn nyeste patch globalt (major.minor). Hotfixes tæller som samme patch.
-    const { data: allVersionsData } = await supabaseAdmin
-      .from("leaderboard_times")
-      .select("game_version")
-      .not("game_version", "is", null);
-    const currentVersion = pickCurrentPatch(
-      ((allVersionsData ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version),
-    );
+    const versions: Array<string | null> = [];
+    const pageSize = 1000;
+    for (let from = 0; ; from += pageSize) {
+      const { data: allVersionsData, error: allVersionsError } = await supabaseAdmin
+        .from("leaderboard_times")
+        .select("game_version")
+        .not("game_version", "is", null)
+        .range(from, from + pageSize - 1);
+      if (allVersionsError) throw new Error(allVersionsError.message);
+      versions.push(...((allVersionsData ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version));
+      if ((allVersionsData?.length ?? 0) < pageSize) break;
+    }
+    const currentVersion = pickCurrentPatch(versions);
     const timesCurrent = currentVersion
       ? times.filter((t) => normalizePatch(t.game_version) === currentVersion)
       : times;
