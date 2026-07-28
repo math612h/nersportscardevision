@@ -386,18 +386,29 @@ export function PersonalBestPanel() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              {!selected && !compareMode && (
+                <Button
+                  variant={allTime ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setAllTime((v) => !v)}
+                  className="gap-1"
+                  title="Vis din bedste tid nogensinde – på tværs af alle patches"
+                >
+                  {allTime ? "Nyeste patch" : "All-time PB"}
+                </Button>
+              )}
               {!selected && (
                 <Button
-                  variant={compareMode ? "default" : "outline"}
+                  variant={compareMode ? "secondary" : "default"}
                   size="sm"
                   onClick={() => {
                     setCompareMode((v) => !v);
                     if (compareMode) setCompareWith(null);
                   }}
-                  className="gap-1"
+                  className="gap-1.5 shadow-sm"
                 >
-                  <GitCompare className="h-3.5 w-3.5" />
-                  {compareMode ? "Luk compare" : "Compare"}
+                  <GitCompare className="h-4 w-4" />
+                  {compareMode ? "Luk sammenligning" : "Sammenlign med kører"}
                 </Button>
               )}
               {selected && (
