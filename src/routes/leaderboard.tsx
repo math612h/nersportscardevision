@@ -147,7 +147,7 @@ function LeaderboardPage() {
       if (carClass !== ALL && r.car_class !== carClass) return false;
       if (track !== ALL && r.track !== track) return false;
       if (layout !== ALL && (r.layout ?? "") !== layout) return false;
-      if (currentVersion && normalizeVersion(r.game_version) !== currentVersion) return false;
+      if (currentVersion && normalizePatch(r.game_version) !== currentVersion) return false;
       return true;
     });
     // Best lap per driver pr. bilklasse + bane + layout (uanset bil-model)
