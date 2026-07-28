@@ -333,8 +333,9 @@ export function PersonalBestPanel() {
     );
   }
 
+  const ownShown = allTime && !selected && !compareMode ? (myAllTime ?? []) : ((data?.best ?? []) as BestRow[]);
   const myBest = (data?.best ?? []) as BestRow[];
-  const viewedBests: BestRow[] = selected ? (otherBests ?? []) : myBest;
+  const viewedBests: BestRow[] = selected ? (otherBests ?? []) : ownShown;
   const filteredViewed = classFilter ? viewedBests.filter((r) => r.car_class === classFilter) : viewedBests;
 
   // Build compare rows by union of (track|layout|class)
