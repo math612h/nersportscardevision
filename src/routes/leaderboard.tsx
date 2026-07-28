@@ -540,11 +540,6 @@ function LeaderboardPage() {
               </PopoverContent>
             </Popover>
           </div>
-          {currentVersionLabel && (
-            <div className="sm:col-span-2 rounded-md border border-dashed border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-              Viser kun tider fra nyeste patch (<span className="font-mono text-foreground">{currentVersionLabel}</span>). Ældre tider gemmes fortsat i systemet og bruges til klasseinddeling m.m.
-            </div>
-          )}
         </div>
       </section>
 
