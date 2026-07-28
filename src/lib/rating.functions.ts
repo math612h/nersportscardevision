@@ -4,13 +4,134 @@ import { normalizePatch, pickCurrentPatch } from "@/lib/lmu-version";
 
 export const getCurrentPatch = createServerFn({ method: "GET" }).handler(async (): Promise<string | null> => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("leaderboard_times")
-    .select("game_version")
-    .not("game_version", "is", null);
-  if (error) throw new Error(error.message);
-  return pickCurrentPatch(((data ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version));
+  const versions: Array<string | null> = [];
+  const pageSize = 1000;
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabaseAdmin
+      .from("leaderboard_times")
+      .select("game_version")
+      .not("game_version", "is", null)
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    versions.push(...((data ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version));
+    if ((data?.length ?? 0) < pageSize) break;
+  }
+
+  return pickCurrentPatch(versions);
 });
+
+export type DriverSearchHit = {
+  id: string | null;
+  display_name: string | null;
+  lmu_name: string | null;
+  driver_name?: string | null;
+};
+
+export type DriverBestSourceRow = {
+  id: string;
+  track: string;
+  layout: string | null;
+  car_class: string;
+  car_model: string | null;
+  best_lap_ms: number;
+  recorded_at: string | null;
+  created_at: string;
+  game_version: string | null;
+};
+
+export const searchLeaderboardDrivers = createServerFn({ method: "POST" })
+  .inputValidator((input: { q: string }) => {
+    const q = (input?.q ?? "").trim();
+    if (q.length < 2) return { q: "" };
+    return { q: q.slice(0, 80) };
+  })
+  .handler(async ({ data }): Promise<DriverSearchHit[]> => {
+    if (!data.q) return [];
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const term = `%${data.q}%`;
+    const [{ data: profData, error: profErr }, { data: lbData, error: lbErr }] = await Promise.all([
+      supabaseAdmin
+        .from("profiles")
+        .select("id, display_name, lmu_name")
+        .or(`display_name.ilike.${term},lmu_name.ilike.${term}`)
+        .limit(8),
+      supabaseAdmin
+        .from("leaderboard_times")
+        .select("user_id, driver_name")
+        .ilike("driver_name", term)
+        .limit(200),
+    ]);
+    if (profErr) throw new Error(profErr.message);
+    if (lbErr) throw new Error(lbErr.message);
+
+    const results: DriverSearchHit[] = [];
+    const seenIds = new Set<string>();
+    const seenNames = new Set<string>();
+
+    for (const p of (profData ?? []) as DriverSearchHit[]) {
+      if (!p.id) continue;
+      seenIds.add(p.id);
+      results.push(p);
+    }
+
+    for (const row of (lbData ?? []) as Array<{ user_id: string | null; driver_name: string | null }>) {
+      const driverName = (row.driver_name ?? "").trim();
+      if (!driverName) continue;
+      const nameKey = driverName.toLowerCase();
+      if (seenNames.has(nameKey)) continue;
+      seenNames.add(nameKey);
+
+      if (row.user_id) {
+        if (seenIds.has(row.user_id)) continue;
+        seenIds.add(row.user_id);
+        results.push({ id: row.user_id, display_name: driverName, lmu_name: null, driver_name: driverName });
+      } else {
+        results.push({ id: null, display_name: null, lmu_name: null, driver_name: driverName });
+      }
+    }
+
+    return results.slice(0, 12);
+  });
+
+export const getDriverLeaderboardRows = createServerFn({ method: "POST" })
+  .inputValidator((input: { userId?: string | null; driverName?: string | null }) => ({
+    userId: input?.userId ?? null,
+    driverName: (input?.driverName ?? "").trim().slice(0, 120) || null,
+  }))
+  .handler(async ({ data }): Promise<DriverBestSourceRow[]> => {
+    if (!data.userId && !data.driverName) return [];
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const select = "id,track,layout,car_class,car_model,best_lap_ms,recorded_at,created_at,game_version";
+    const queries = [];
+
+    if (data.userId) {
+      queries.push(
+        supabaseAdmin
+          .from("leaderboard_times")
+          .select(select)
+          .eq("user_id", data.userId)
+          .order("best_lap_ms", { ascending: true }),
+      );
+    }
+    if (data.driverName) {
+      queries.push(
+        supabaseAdmin
+          .from("leaderboard_times")
+          .select(select)
+          .ilike("driver_name", data.driverName)
+          .order("best_lap_ms", { ascending: true }),
+      );
+    }
+
+    const responses = await Promise.all(queries);
+    const byId = new Map<string, DriverBestSourceRow>();
+    for (const res of responses) {
+      if (res.error) throw new Error(res.error.message);
+      for (const row of (res.data ?? []) as DriverBestSourceRow[]) byId.set(row.id, row);
+    }
+    return Array.from(byId.values()).sort((a, b) => a.best_lap_ms - b.best_lap_ms);
+  });
 
 type AllowedResult = {
   allowed: string[];
@@ -118,13 +239,19 @@ export const getMyArchive = createServerFn({ method: "GET" })
     }>;
 
     // Beregn nyeste patch globalt (major.minor). Hotfixes tæller som samme patch.
-    const { data: allVersionsData } = await supabaseAdmin
-      .from("leaderboard_times")
-      .select("game_version")
-      .not("game_version", "is", null);
-    const currentVersion = pickCurrentPatch(
-      ((allVersionsData ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version),
-    );
+    const versions: Array<string | null> = [];
+    const pageSize = 1000;
+    for (let from = 0; ; from += pageSize) {
+      const { data: allVersionsData, error: allVersionsError } = await supabaseAdmin
+        .from("leaderboard_times")
+        .select("game_version")
+        .not("game_version", "is", null)
+        .range(from, from + pageSize - 1);
+      if (allVersionsError) throw new Error(allVersionsError.message);
+      versions.push(...((allVersionsData ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version));
+      if ((allVersionsData?.length ?? 0) < pageSize) break;
+    }
+    const currentVersion = pickCurrentPatch(versions);
     const timesCurrent = currentVersion
       ? times.filter((t) => normalizePatch(t.game_version) === currentVersion)
       : times;
