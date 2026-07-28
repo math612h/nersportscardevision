@@ -76,32 +76,8 @@ type Row = {
 };
 
 const ALL = "__all__";
-const UNKNOWN_VERSION = "__unknown__";
 
-// Normaliser version: dropper sidste segment (hotfix). 1.3.3.4 → 1.3.3.
-// Versioner med 1-2 segmenter bevares som de er.
-function normalizeVersion(raw: string | null | undefined): string {
-  const v = (raw ?? "").trim();
-  if (!v) return UNKNOWN_VERSION;
-  const parts = v.split(".");
-  if (parts.length <= 2) return v;
-  return parts.slice(0, -1).join(".");
-}
-
-// Sortér patch-versioner nyest først (numerisk pr. dot-segment, ukendt sidst).
-function compareVersionsDesc(a: string, b: string): number {
-  if (a === UNKNOWN_VERSION) return 1;
-  if (b === UNKNOWN_VERSION) return -1;
-  const pa = a.split(".").map((n) => parseInt(n, 10));
-  const pb = b.split(".").map((n) => parseInt(n, 10));
-  const len = Math.max(pa.length, pb.length);
-  for (let i = 0; i < len; i++) {
-    const x = pa[i] ?? 0;
-    const y = pb[i] ?? 0;
-    if (x !== y) return y - x;
-  }
-  return 0;
-}
+import { normalizePatch, comparePatchDesc } from "@/lib/lmu-version";
 
 function LeaderboardPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -156,10 +132,10 @@ function LeaderboardPage() {
   const currentVersion = useMemo(() => {
     const set = new Set<string>();
     for (const r of rows ?? []) {
-      const v = normalizeVersion(r.game_version);
-      if (v !== UNKNOWN_VERSION) set.add(v);
+      const v = normalizePatch(r.game_version);
+      if (v) set.add(v);
     }
-    const sorted = Array.from(set).sort(compareVersionsDesc);
+    const sorted = Array.from(set).sort(comparePatchDesc);
     return sorted[0] ?? null;
   }, [rows]);
   const currentVersionLabel = currentVersion
@@ -171,7 +147,7 @@ function LeaderboardPage() {
       if (carClass !== ALL && r.car_class !== carClass) return false;
       if (track !== ALL && r.track !== track) return false;
       if (layout !== ALL && (r.layout ?? "") !== layout) return false;
-      if (currentVersion && normalizeVersion(r.game_version) !== currentVersion) return false;
+      if (currentVersion && normalizePatch(r.game_version) !== currentVersion) return false;
       return true;
     });
     // Best lap per driver pr. bilklasse + bane + layout (uanset bil-model)
