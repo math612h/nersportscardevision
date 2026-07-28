@@ -10,8 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
-import { getMyArchive, getCurrentPatch } from "@/lib/rating.functions";
+import {
+  getMyArchive,
+  getCurrentPatch,
+  searchLeaderboardDrivers,
+  getDriverLeaderboardRows,
+  type DriverBestSourceRow,
+  type DriverSearchHit,
+} from "@/lib/rating.functions";
 import { classColor, CARS_BY_CLASS } from "@/lib/lmu-cars";
 import { normalizeTrackName } from "@/lib/tracks";
 import { normalizePatch } from "@/lib/lmu-version";
@@ -41,7 +47,7 @@ type BestRow = {
   recorded_at: string | null;
 };
 
-type ProfileHit = { id: string | null; display_name: string | null; lmu_name: string | null; driver_name?: string | null };
+type ProfileHit = DriverSearchHit;
 
 const CLASS_ORDER = Object.keys(CARS_BY_CLASS);
 
@@ -183,45 +189,11 @@ function CompareTable({ rows, otherLabel }: { rows: CompareRow[]; otherLabel: st
 function DriverSearch({ onSelect, placeholder }: { onSelect: (p: ProfileHit) => void; placeholder?: string }) {
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
+  const searchDrivers = useServerFn(searchLeaderboardDrivers);
   const { data: hits } = useQuery({
     queryKey: ["pb-driver-search", q.trim().toLowerCase()],
     enabled: q.trim().length >= 2,
-    queryFn: async () => {
-      const term = `%${q.trim()}%`;
-      const [profRes, lbRes] = await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, display_name, lmu_name")
-          .or(`display_name.ilike.${term},lmu_name.ilike.${term}`)
-          .limit(8),
-        supabase
-          .from("leaderboard_times")
-          .select("user_id, driver_name")
-          .ilike("driver_name", term)
-          .limit(50),
-      ]);
-      if (profRes.error) throw profRes.error;
-      if (lbRes.error) throw lbRes.error;
-      const results: ProfileHit[] = [];
-      const seenIds = new Set<string>();
-      const seenNames = new Set<string>();
-      for (const p of (profRes.data ?? []) as ProfileHit[]) {
-        if (p.id) { seenIds.add(p.id); results.push(p); }
-      }
-      for (const r of (lbRes.data ?? []) as { user_id: string | null; driver_name: string }[]) {
-        if (r.user_id) {
-          if (seenIds.has(r.user_id)) continue;
-          seenIds.add(r.user_id);
-          results.push({ id: r.user_id, display_name: r.driver_name, lmu_name: null, driver_name: r.driver_name });
-        } else {
-          const key = r.driver_name.toLowerCase();
-          if (seenNames.has(key)) continue;
-          seenNames.add(key);
-          results.push({ id: null, display_name: null, lmu_name: null, driver_name: r.driver_name });
-        }
-      }
-      return results.slice(0, 12);
-    },
+    queryFn: () => searchDrivers({ data: { q: q.trim() } }),
   });
 
   return (
@@ -278,19 +250,12 @@ function useDriverBests(
   const userId = target?.userId ?? null;
   const driverName = target?.driverName ?? null;
   const hasTarget = !!userId || !!driverName;
+  const fetchDriverRows = useServerFn(getDriverLeaderboardRows);
   return useQuery({
     queryKey: ["pb-driver-bests", userId, driverName, allTime, currentPatch],
     enabled: hasTarget && (allTime || !!currentPatch),
     queryFn: async () => {
-      let query = supabase
-        .from("leaderboard_times")
-        .select("track,layout,car_class,car_model,best_lap_ms,recorded_at,created_at,game_version")
-        .order("best_lap_ms", { ascending: true });
-      if (userId) query = query.eq("user_id", userId);
-      else if (driverName) query = query.is("user_id", null).ilike("driver_name", driverName);
-      const { data, error } = await query;
-      if (error) throw error;
-      const rows = (data ?? []) as any[];
+      const rows = (await fetchDriverRows({ data: { userId, driverName } })) as DriverBestSourceRow[];
       // Filtrer på GLOBAL nyeste patch (major.minor). Hotfixes tæller som samme patch.
       const filtered = allTime || !currentPatch
         ? rows
