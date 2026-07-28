@@ -41,7 +41,7 @@ type BestRow = {
   recorded_at: string | null;
 };
 
-type ProfileHit = { id: string; display_name: string | null; lmu_name: string | null };
+type ProfileHit = { id: string | null; display_name: string | null; lmu_name: string | null; driver_name?: string | null };
 
 const CLASS_ORDER = Object.keys(CARS_BY_CLASS);
 
