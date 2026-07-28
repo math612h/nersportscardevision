@@ -256,9 +256,9 @@ function compareVersionsDesc(a: string, b: string): number {
   return 0;
 }
 
-function useDriverBests(userId: string | null) {
+function useDriverBests(userId: string | null, allTime = false) {
   return useQuery({
-    queryKey: ["pb-driver-bests", userId],
+    queryKey: ["pb-driver-bests", userId, allTime],
     enabled: !!userId,
     queryFn: async () => {
       const { data, error } = await supabase
@@ -268,14 +268,16 @@ function useDriverBests(userId: string | null) {
         .order("best_lap_ms", { ascending: true });
       if (error) throw error;
       const rows = (data ?? []) as any[];
-      // Kun tider fra nyeste kendte patch
-      const versions = new Set<string>();
-      for (const t of rows) {
-        const v = normalizeVersion(t.game_version);
-        if (v) versions.add(v);
+      let filtered = rows;
+      if (!allTime) {
+        const versions = new Set<string>();
+        for (const t of rows) {
+          const v = normalizeVersion(t.game_version);
+          if (v) versions.add(v);
+        }
+        const current = Array.from(versions).sort(compareVersionsDesc)[0] ?? null;
+        filtered = current ? rows.filter((t) => normalizeVersion(t.game_version) === current) : rows;
       }
-      const current = Array.from(versions).sort(compareVersionsDesc)[0] ?? null;
-      const filtered = current ? rows.filter((t) => normalizeVersion(t.game_version) === current) : rows;
       const map = new Map<string, BestRow>();
       for (const t of filtered) {
         const normTrack = normalizeTrackName(t.track) || t.track;
