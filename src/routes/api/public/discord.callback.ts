@@ -139,6 +139,44 @@ export const Route = createFileRoute("/api/public/discord/callback")({
               .eq("id", targetUserId);
           }
 
+          // Notify admins as soon as a not-yet-approved user has linked Discord
+          // (previously this only fired when they finished onboarding).
+          if (targetUserId) {
+            try {
+              const { data: prof } = await supabaseAdmin
+                .from("profiles")
+                .select("approved, display_name, lmu_name")
+                .eq("id", targetUserId)
+                .maybeSingle();
+              const p = prof as { approved?: boolean | null; display_name?: string | null; lmu_name?: string | null } | null;
+              const { data: privRow } = await supabaseAdmin
+                .from("profiles_private")
+                .select("pending_discord_message_id")
+                .eq("user_id", targetUserId)
+                .maybeSingle();
+              const alreadyPosted = (privRow as { pending_discord_message_id?: string | null } | null)?.pending_discord_message_id;
+              if (p && p.approved !== true && !alreadyPosted) {
+                const ADMIN_ROLE_ID = "1336285632066097233";
+                const content =
+                  `<@&${ADMIN_ROLE_ID}> **Ny bruger afventer godkendelse**\n` +
+                  `Navn: ${p.display_name ?? discord_username}\n` +
+                  `LMU: ${p.lmu_name || "(mangler endnu)"}\n` +
+                  `Discord: ${discord_server_nickname || discord_username}`;
+                const { sendDiscordChannelMessage } = await import("@/lib/discord.server");
+                const res = await sendDiscordChannelMessage("1516138512209018890", content, [ADMIN_ROLE_ID]);
+                if (res.ok && res.messageId) {
+                  await supabaseAdmin
+                    .from("profiles_private")
+                    .update({ pending_discord_message_id: res.messageId })
+                    .eq("user_id", targetUserId);
+                }
+              }
+            } catch (e) {
+              console.error("pending-approval notify (callback) failed", e);
+            }
+          }
+
+
           // Generate a magic link to actually sign the user in (creates a real session).
           // We need the email currently on the auth user.
           const { data: userRes, error: getErr } = await supabaseAdmin.auth.admin.getUserById(targetUserId);
