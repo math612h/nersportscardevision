@@ -142,6 +142,8 @@ const TRACK_NAME_ALIASES: { match: string; canonical: string }[] = [
   { match: "fuji", canonical: "Fuji" },
   { match: "paul ricard", canonical: "Paul Ricard" },
   { match: "silverstone", canonical: "Silverstone" },
+  { match: "laguna", canonical: "Laguna Seca" },
+  { match: "daytona", canonical: "Daytona" },
 ];
 
 export function normalizeTrackName(track?: string | null): string {
