@@ -17,6 +17,8 @@ export const LMU_TRACKS: TrackInfo[] = [
   { name: "Silverstone", layouts: ["International", "National", "GP Circuit"] },
   { name: "Barcelona", layouts: ["Barcelona"] },
   { name: "Paul Ricard", layouts: ["Paul Ricard", "1a", "1av2", "1av2-short"] },
+  { name: "Laguna Seca", layouts: ["Laguna Seca"] },
+  { name: "Daytona", layouts: ["Road Course", "Oval"] },
 ];
 
 export const CAR_CLASSES = ["Hypercar", "LMP2", "LMP3", "GT-E", "LMGT3"] as const;
@@ -140,6 +142,8 @@ const TRACK_NAME_ALIASES: { match: string; canonical: string }[] = [
   { match: "fuji", canonical: "Fuji" },
   { match: "paul ricard", canonical: "Paul Ricard" },
   { match: "silverstone", canonical: "Silverstone" },
+  { match: "laguna", canonical: "Laguna Seca" },
+  { match: "daytona", canonical: "Daytona" },
 ];
 
 export function normalizeTrackName(track?: string | null): string {
