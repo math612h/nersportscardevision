@@ -1,0 +1,1 @@
+UPDATE public.profiles_private SET pending_discord_message_id = '1532822597316640858' WHERE user_id = 'b26cef9a-beaa-40f5-8833-342925c16147';
