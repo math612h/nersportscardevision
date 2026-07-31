@@ -169,6 +169,8 @@ export const Route = createFileRoute("/api/public/discord/callback")({
                     .from("profiles_private")
                     .update({ pending_discord_message_id: res.messageId })
                     .eq("user_id", targetUserId);
+                } else if (!res.ok) {
+                  console.error("pending-approval post failed", res.status, res.message);
                 }
               }
             } catch (e) {
