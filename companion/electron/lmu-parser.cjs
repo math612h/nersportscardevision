@@ -303,4 +303,4 @@ function nameSimilarity(a, b) {
   return 1 - prev[n] / Math.max(m, n);
 }
 
-module.exports = { parseLmuRaceFile, normalizeCarClass, nameSimilarity };
+module.exports = { parseLmuRaceFile, normalizeCarClass, nameSimilarity, computeStints, expandDriverStints };
