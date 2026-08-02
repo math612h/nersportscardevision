@@ -24,6 +24,8 @@ export type ParsedDriver = {
   laps: number | null;
   /** Per-kører bedste omgang når filen indeholder <Swap>; ellers null. */
   stints?: ParsedStint[] | null;
+  /** Omgangsnummer for bedste omgang (kun sat ved udfoldede stints). */
+  bestLapNum?: number | null;
 };
 
 export type ParsedRace = {
@@ -110,7 +112,7 @@ export function computeStints(
 export function expandDriverStints(drivers: ParsedDriver[]): ParsedDriver[] {
   return drivers.flatMap((d) => {
     if (!d.stints || d.stints.length === 0) return [d];
-    return d.stints.map((s) => ({ ...d, name: s.name, bestLapMs: s.bestLapMs, stints: null }));
+    return d.stints.map((s) => ({ ...d, name: s.name, bestLapMs: s.bestLapMs, bestLapNum: s.bestLapNum, stints: null }));
   });
 }
 
