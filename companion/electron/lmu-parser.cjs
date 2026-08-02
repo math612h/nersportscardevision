@@ -148,6 +148,54 @@ function findDriversDeep(node, seen = new Set()) {
   return [];
 }
 
+// Fordeler bilens omgange på faktiske kørere ud fra <Swap>-intervaller.
+function computeStints(laps, swaps, ctx) {
+  const label = `[lmu-parser] ${(ctx && ctx.car) || "bil"}${ctx && ctx.driverName ? ` (${ctx.driverName})` : ""}`;
+  const valid = swaps
+    .map((s) => ({ ...s, name: String(s.name || "").trim() }))
+    .filter((s) => {
+      if (!s.name || s.startLap == null || s.endLap == null || s.startLap < 1 || s.endLap < s.startLap) {
+        console.warn(`${label}: ugyldigt <Swap>-interval sprunget over`, s);
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => a.startLap - b.startLap);
+  if (valid.length === 0) return null;
+  for (let i = 1; i < valid.length; i++) {
+    if (valid[i].startLap <= valid[i - 1].endLap) console.warn(`${label}: overlappende <Swap>-intervaller`, valid[i - 1], valid[i]);
+  }
+  const byName = new Map();
+  const unassigned = [];
+  for (const lap of laps) {
+    const seconds = parseFloat(String(lap.value || "").trim());
+    if (lap.num == null || !Number.isFinite(lap.num) || lap.num < 1) continue;
+    if (!Number.isFinite(seconds) || seconds <= 0) continue;
+    const swap = valid.find((s) => lap.num >= s.startLap && lap.num <= s.endLap);
+    if (!swap) { unassigned.push(lap.num); continue; }
+    const ms = Math.round(seconds * 1000);
+    const cur = byName.get(swap.name);
+    if (!cur) byName.set(swap.name, { bestMs: ms, bestNum: lap.num, count: 1 });
+    else {
+      cur.count += 1;
+      if (ms < cur.bestMs) { cur.bestMs = ms; cur.bestNum = lap.num; }
+    }
+  }
+  if (unassigned.length) console.warn(`${label}: ${unassigned.length} omgange kunne ikke fordeles`, unassigned.slice(0, 20));
+  if (byName.size === 0) return null;
+  const stints = [...byName.entries()].map(([name, v]) => ({ name, bestLapMs: v.bestMs, bestLapNum: v.bestNum, validLaps: v.count }));
+  console.info(`${label}:`, stints.map((s) => `${s.name}: ${s.validLaps} omgange, bedst ${(s.bestLapMs / 1000).toFixed(4)}s (omgang ${s.bestLapNum})`).join(" | "));
+  return stints;
+}
+
+function expandDriverStints(drivers) {
+  return drivers.flatMap((d) => {
+    if (!d.stints || d.stints.length === 0) return [d];
+    return d.stints.map((s) => ({ ...d, name: s.name, bestLapMs: s.bestLapMs, stints: null }));
+  });
+}
+
+
 function parseLmuRaceFile(xml) {
   const doc = parser.parse(xml);
   const rr = findRaceResultsNode(doc);
