@@ -198,6 +198,22 @@ function parseLmuRaceFile(xml) {
         : carType;
     } else if (manufacturer) carModel = manufacturer;
     else if (vehFile) carModel = vehFile;
+    const rawLaps = asArray(el.Lap ?? el.lap).map((lap) => {
+      if (lap == null) return { num: null, value: "" };
+      if (typeof lap !== "object") return { num: null, value: String(lap) };
+      const n = parseInt(String(lap["@_num"] ?? lap.num ?? ""), 10);
+      return { num: Number.isFinite(n) ? n : null, value: String(lap["#text"] ?? "") };
+    });
+    const rawSwaps = asArray(el.Swap ?? el.swap).map((sw) => {
+      if (sw == null) return { startLap: null, endLap: null, name: "" };
+      if (typeof sw !== "object") return { startLap: null, endLap: null, name: String(sw) };
+      const s = parseInt(String(sw["@_startLap"] ?? sw.startLap ?? ""), 10);
+      const e = parseInt(String(sw["@_endLap"] ?? sw.endLap ?? ""), 10);
+      return { startLap: Number.isFinite(s) ? s : null, endLap: Number.isFinite(e) ? e : null, name: String(sw["#text"] ?? "").trim() };
+    });
+    const stints = rawSwaps.length
+      ? computeStints(rawLaps, rawSwaps, { car: childValue(el, "TeamName") || childValue(el, "VehName"), driverName: childValue(el, "Name") })
+      : null;
     return {
       name: childValue(el, "Name").trim(),
       carClass,
@@ -206,8 +222,10 @@ function parseLmuRaceFile(xml) {
       bestLapMs,
       finishMs: Number.isFinite(fin) && fin > 0 ? Math.round(fin * 1000) : null,
       finished: finishStatus.toLowerCase().startsWith("finished"),
+      stints,
     };
   });
+
 
   if (drivers.length === 0) throw new Error("Ingen kørere fundet i filen");
   return { track, layout, recordedAt, gameVersion, drivers };
