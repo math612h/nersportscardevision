@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity } from "@/lib/lmu-parser";
+import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity, expandDriverStints } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
 import { getLeaderboardRows } from "@/lib/leaderboard.functions";
@@ -199,7 +199,9 @@ function LeaderboardPage() {
       for (const file of xmlFiles) {
         try {
           const text = await file.text();
-          const parsed = parseLmuRaceFile(text);
+          const parsedRaw = parseLmuRaceFile(text);
+          // Endurance: udfold <Swap>-stints så hver kører får sin egen tid
+          const parsed = { ...parsedRaw, drivers: expandDriverStints(parsedRaw.drivers) };
 
           let me = parsed.drivers.find((d) => d.name.trim().toLowerCase() === lmu);
           if (!me) {

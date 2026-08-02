@@ -2,7 +2,7 @@
 // Mirrors the logic in src/routes/leaderboard.tsx so the same rules apply.
 const { createClient } = require("@supabase/supabase-js");
 const { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, APP_URL } = require("./config.cjs");
-const { normalizeCarClass, nameSimilarity } = require("./lmu-parser.cjs");
+const { normalizeCarClass, nameSimilarity, expandDriverStints } = require("./lmu-parser.cjs");
 
 function makeClient(session) {
   const ws = require("ws");
