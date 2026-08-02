@@ -245,6 +245,20 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     const pos = parseInt(get("Position"), 10);
     const classPos = parseInt(get("ClassPosition"), 10);
     const laps = parseInt(get("Laps") || get("LapsCompleted"), 10);
+    const rawLaps: RawLap[] = Array.from(el.children)
+      .filter((c) => c.tagName.replace(/^.*:/, "").toLowerCase() === "lap")
+      .map((c) => {
+        const n = parseInt(c.getAttribute("num") ?? "", 10);
+        return { num: Number.isFinite(n) ? n : null, value: c.textContent?.trim() ?? "" };
+      });
+    const rawSwaps: RawSwap[] = Array.from(el.children)
+      .filter((c) => c.tagName.replace(/^.*:/, "").toLowerCase() === "swap")
+      .map((c) => {
+        const s = parseInt(c.getAttribute("startLap") ?? "", 10);
+        const e = parseInt(c.getAttribute("endLap") ?? "", 10);
+        return { startLap: Number.isFinite(s) ? s : null, endLap: Number.isFinite(e) ? e : null, name: c.textContent?.trim() ?? "" };
+      });
+    const stints = rawSwaps.length ? computeStints(rawLaps, rawSwaps, { car: get("TeamName") || get("VehName"), driverName: get("Name") }) : null;
     return {
       name: get("Name"),
       carClass,
@@ -256,6 +270,7 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
       position: Number.isFinite(pos) && pos > 0 ? pos : null,
       classPosition: Number.isFinite(classPos) && classPos > 0 ? classPos : null,
       laps: Number.isFinite(laps) && laps >= 0 ? laps : null,
+      stints,
     };
   });
 
