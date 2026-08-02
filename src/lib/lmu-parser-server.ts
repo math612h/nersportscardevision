@@ -1,7 +1,7 @@
 // Worker-safe variant of parseLmuRaceFile — uses fast-xml-parser instead of DOMParser
 // so it runs in the Cloudflare Worker runtime that powers the public upload endpoint.
 import { XMLParser } from "fast-xml-parser";
-import { normalizeCarClass, type ParsedRace, type ParsedDriver } from "./lmu-parser";
+import { normalizeCarClass, computeStints, type ParsedRace, type ParsedDriver, type RawLap, type RawSwap } from "./lmu-parser";
 
 function parseLayoutFromTrackData(trackData: unknown): string | null {
   if (trackData == null) return null;
