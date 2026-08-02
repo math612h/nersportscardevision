@@ -179,6 +179,22 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
     const pos = parseInt(childValue(d, "Position"), 10);
     const classPos = parseInt(childValue(d, "ClassPosition"), 10);
     const laps = parseInt(childValue(d, "Laps") || childValue(d, "LapsCompleted"), 10);
+    const rawLaps: RawLap[] = asArray((d.Lap ?? d.lap) as any).map((lap: any) => {
+      if (lap == null) return { num: null, value: "" };
+      if (typeof lap !== "object") return { num: null, value: String(lap) };
+      const n = parseInt(String(lap["@_num"] ?? lap["num"] ?? ""), 10);
+      return { num: Number.isFinite(n) ? n : null, value: String(lap["#text"] ?? "") };
+    });
+    const rawSwaps: RawSwap[] = asArray((d.Swap ?? d.swap) as any).map((sw: any) => {
+      if (sw == null) return { startLap: null, endLap: null, name: "" };
+      if (typeof sw !== "object") return { startLap: null, endLap: null, name: String(sw) };
+      const s = parseInt(String(sw["@_startLap"] ?? sw["startLap"] ?? ""), 10);
+      const e = parseInt(String(sw["@_endLap"] ?? sw["endLap"] ?? ""), 10);
+      return { startLap: Number.isFinite(s) ? s : null, endLap: Number.isFinite(e) ? e : null, name: String(sw["#text"] ?? "").trim() };
+    });
+    const stints = rawSwaps.length
+      ? computeStints(rawLaps, rawSwaps, { car: childValue(d, "TeamName") || childValue(d, "VehName"), driverName: childValue(d, "Name") })
+      : null;
     return {
       name: childValue(d, "Name"),
       carClass,
@@ -190,6 +206,7 @@ export function parseLmuRaceFileServer(xml: string): ParsedRace {
       position: Number.isFinite(pos) && pos > 0 ? pos : null,
       classPosition: Number.isFinite(classPos) && classPos > 0 ? classPos : null,
       laps: Number.isFinite(laps) && laps >= 0 ? laps : null,
+      stints,
     };
   });
 
