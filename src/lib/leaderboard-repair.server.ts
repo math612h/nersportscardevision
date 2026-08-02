@@ -51,13 +51,14 @@ export async function recomputeFromResultFile(xml: string, apply: boolean): Prom
   if (!raw.recordedAt) {
     throw new Error("Filen mangler tidsstempel (SessionTime) — kan ikke kobles sikkert til eksisterende poster.");
   }
+  const recordedAt: string = raw.recordedAt;
   const parsed = { ...raw, drivers: expandDriverStints(raw.drivers) };
 
   // 1) Poster der dokumenterbart stammer fra netop denne fil
   let q = supabaseAdmin
     .from("leaderboard_times")
     .select("id,user_id,driver_name,track,layout,car_class,car_model,best_lap_ms,source,uploaded_by,recorded_at,game_version")
-    .eq("recorded_at", parsed.recordedAt)
+    .eq("recorded_at", recordedAt)
     .eq("track", parsed.track);
   q = parsed.layout === null ? q.is("layout", null) : q.eq("layout", parsed.layout);
   const { data: scoped, error: sErr } = await q;
@@ -151,18 +152,18 @@ export async function recomputeFromResultFile(xml: string, apply: boolean): Prom
         best_lap_ms: exp.ms,
         source: "user" as const,
         uploaded_by: rows[0]?.uploaded_by ?? exp.userId,
-        recorded_at: parsed.recordedAt,
+        recorded_at: recordedAt,
         game_version: parsed.gameVersion,
       }], { onConflict: "user_id,track,layout,car_class,recorded_at", ignoreDuplicates: true });
       if (error) throw new Error(error.message);
     }
   }
 
-  console.info("[leaderboard-repair]", JSON.stringify({ apply, recordedAt: parsed.recordedAt, track: parsed.track, changes }));
+  console.info("[leaderboard-repair]", JSON.stringify({ apply, recordedAt, track: parsed.track, changes }));
 
   return {
     applied: apply,
-    file: { track: parsed.track, layout: parsed.layout, recordedAt: parsed.recordedAt, gameVersion: parsed.gameVersion },
+    file: { track: parsed.track, layout: parsed.layout, recordedAt, gameVersion: parsed.gameVersion },
     scopedRows: rows.length,
     changes,
   };
