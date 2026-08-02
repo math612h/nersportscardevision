@@ -24,6 +24,8 @@ export type ParsedDriver = {
   laps: number | null;
   /** Per-kører bedste omgang når filen indeholder <Swap>; ellers null. */
   stints?: ParsedStint[] | null;
+  /** Omgangsnummer for bedste omgang (kun sat ved udfoldede stints). */
+  bestLapNum?: number | null;
 };
 
 export type ParsedRace = {
