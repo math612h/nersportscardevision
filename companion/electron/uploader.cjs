@@ -89,6 +89,9 @@ async function uploadParsedResults({ session, parsed }) {
   const lmu = (profile.lmu_name || "").trim().toLowerCase();
   if (!lmu) return { uploaded: 0, skipped: 0, reason: "missing_lmu_name" };
 
+  // Endurance: udfold <Swap>-stints så hver kører får sin egen tid
+  parsed = { ...parsed, drivers: expandDriverStints(parsed.drivers) };
+
   // Uploader must be in the file (fuzzy ≥85%)
   let me = parsed.drivers.find((d) => d.name.trim().toLowerCase() === lmu);
   if (!me) {
@@ -150,6 +153,7 @@ async function verifyDeviceToken(token) {
 
 async function uploadParsedResultsViaToken({ token, parsed, lmuName }) {
   if (!parsed || !Array.isArray(parsed.drivers)) throw new Error("Companion kunne ikke læse filen lokalt");
+  parsed = { ...parsed, drivers: expandDriverStints(parsed.drivers) };
   const wantedName = String(lmuName || "").trim().toLowerCase();
   if (!wantedName) return { uploaded: 0, skipped: parsed.drivers.length, reason: "missing_lmu_name", note: "LMU-navn mangler på profilen" };
 
