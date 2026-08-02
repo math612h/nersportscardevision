@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { parseLmuRaceFileServer } from "@/lib/lmu-parser-server";
-import { normalizeCarClass, nameSimilarity, type ParsedRace } from "@/lib/lmu-parser";
+import { normalizeCarClass, nameSimilarity, expandDriverStints, type ParsedRace } from "@/lib/lmu-parser";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -76,6 +76,8 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
             console.warn("[leaderboard-upload] parse failed:", e?.message ?? e);
             return Response.json({ error: e?.message ?? "Kunne ikke læse filen" }, { status: 400, headers: CORS });
           }
+
+          parsed = { ...parsed, drivers: expandDriverStints(parsed.drivers) };
 
           // Uploader must be present in the file (exact or fuzzy ≥85%)
           let me = parsed.drivers.find((d) => d.name.trim().toLowerCase() === lmuName);

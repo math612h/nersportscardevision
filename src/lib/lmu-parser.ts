@@ -2,6 +2,15 @@
 // Used by both the admin "import official result" flow and the user
 // "upload your own race" flow on the leaderboard.
 
+// Endurance-løb: ét <Driver>-element indeholder alle bilens omgange, og
+// <Swap startLap endLap>Navn</Swap> fortæller hvem der kørte hvilke omgange.
+export type ParsedStint = {
+  name: string;
+  bestLapMs: number;
+  bestLapNum: number;
+  validLaps: number;
+};
+
 export type ParsedDriver = {
   name: string;
   carClass: string;
@@ -13,6 +22,8 @@ export type ParsedDriver = {
   position: number | null;
   classPosition: number | null;
   laps: number | null;
+  /** Per-kører bedste omgang når filen indeholder <Swap>; ellers null. */
+  stints?: ParsedStint[] | null;
 };
 
 export type ParsedRace = {
@@ -22,6 +33,87 @@ export type ParsedRace = {
   gameVersion: string | null;
   drivers: ParsedDriver[];
 };
+
+export type RawLap = { num: number | null; value: string };
+export type RawSwap = { startLap: number | null; endLap: number | null; name: string };
+
+/**
+ * Fordeler bilens omgange på de faktiske kørere ud fra <Swap>-intervaller
+ * (inklusive grænser) og returnerer hver kørers hurtigste gyldige omgang.
+ * Returnerer null hvis der ikke er brugbare swaps — så bruges den normale
+ * enkeltkører-logik uændret.
+ */
+export function computeStints(
+  laps: RawLap[],
+  swaps: RawSwap[],
+  ctx?: { car?: string | null; driverName?: string | null },
+): ParsedStint[] | null {
+  const label = `[lmu-parser] ${ctx?.car ?? "bil"}${ctx?.driverName ? ` (${ctx.driverName})` : ""}`;
+  const valid = swaps
+    .map((s) => ({ ...s, name: (s.name ?? "").trim() }))
+    .filter((s) => {
+      if (!s.name || s.startLap == null || s.endLap == null || !Number.isFinite(s.startLap) || !Number.isFinite(s.endLap) || s.startLap < 1 || s.endLap < s.startLap) {
+        console.warn(`${label}: ugyldigt <Swap>-interval sprunget over`, s);
+        return false;
+      }
+      return true;
+    })
+    .sort((a, b) => (a.startLap as number) - (b.startLap as number));
+  if (valid.length === 0) return null;
+
+  for (let i = 1; i < valid.length; i++) {
+    if ((valid[i].startLap as number) <= (valid[i - 1].endLap as number)) {
+      console.warn(`${label}: overlappende <Swap>-intervaller`, valid[i - 1], valid[i]);
+    }
+  }
+
+  const byName = new Map<string, { bestMs: number; bestNum: number; count: number }>();
+  const unassigned: number[] = [];
+  for (const lap of laps) {
+    const seconds = Number.parseFloat(String(lap.value ?? "").trim());
+    if (lap.num == null || !Number.isFinite(lap.num) || lap.num < 1) continue;
+    if (!Number.isFinite(seconds) || seconds <= 0) continue;
+    const swap = valid.find((s) => (lap.num as number) >= (s.startLap as number) && (lap.num as number) <= (s.endLap as number));
+    if (!swap) { unassigned.push(lap.num); continue; }
+    const ms = Math.round(seconds * 1000);
+    const cur = byName.get(swap.name);
+    if (!cur) byName.set(swap.name, { bestMs: ms, bestNum: lap.num, count: 1 });
+    else {
+      cur.count += 1;
+      if (ms < cur.bestMs) { cur.bestMs = ms; cur.bestNum = lap.num; }
+    }
+  }
+  if (unassigned.length) {
+    console.warn(`${label}: ${unassigned.length} omgange kunne ikke fordeles til en kører`, unassigned.slice(0, 20));
+  }
+  if (byName.size === 0) return null;
+
+  const stints: ParsedStint[] = [...byName.entries()].map(([name, v]) => ({
+    name,
+    bestLapMs: v.bestMs,
+    bestLapNum: v.bestNum,
+    validLaps: v.count,
+  }));
+  console.info(
+    `${label}: kørere fundet →`,
+    stints.map((s) => `${s.name}: ${s.validLaps} omgange, bedst ${(s.bestLapMs / 1000).toFixed(4)}s (omgang ${s.bestLapNum})`).join(" | "),
+    "| intervaller:",
+    valid.map((s) => `${s.name} ${s.startLap}-${s.endLap}`).join(", "),
+  );
+  return stints;
+}
+
+/**
+ * Udfolder en bil til én leaderboard-post pr. faktisk kører når der findes
+ * <Swap>-data. Uden swaps returneres køreren uændret.
+ */
+export function expandDriverStints(drivers: ParsedDriver[]): ParsedDriver[] {
+  return drivers.flatMap((d) => {
+    if (!d.stints || d.stints.length === 0) return [d];
+    return d.stints.map((s) => ({ ...d, name: s.name, bestLapMs: s.bestLapMs, stints: null }));
+  });
+}
+
 
 const CLASS_NORMALIZATION: Record<string, string> = {
   hyper: "Hypercar",
@@ -153,6 +245,20 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
     const pos = parseInt(get("Position"), 10);
     const classPos = parseInt(get("ClassPosition"), 10);
     const laps = parseInt(get("Laps") || get("LapsCompleted"), 10);
+    const rawLaps: RawLap[] = Array.from(el.children)
+      .filter((c) => c.tagName.replace(/^.*:/, "").toLowerCase() === "lap")
+      .map((c) => {
+        const n = parseInt(c.getAttribute("num") ?? "", 10);
+        return { num: Number.isFinite(n) ? n : null, value: c.textContent?.trim() ?? "" };
+      });
+    const rawSwaps: RawSwap[] = Array.from(el.children)
+      .filter((c) => c.tagName.replace(/^.*:/, "").toLowerCase() === "swap")
+      .map((c) => {
+        const s = parseInt(c.getAttribute("startLap") ?? "", 10);
+        const e = parseInt(c.getAttribute("endLap") ?? "", 10);
+        return { startLap: Number.isFinite(s) ? s : null, endLap: Number.isFinite(e) ? e : null, name: c.textContent?.trim() ?? "" };
+      });
+    const stints = rawSwaps.length ? computeStints(rawLaps, rawSwaps, { car: get("TeamName") || get("VehName"), driverName: get("Name") }) : null;
     return {
       name: get("Name"),
       carClass,
@@ -164,6 +270,7 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
       position: Number.isFinite(pos) && pos > 0 ? pos : null,
       classPosition: Number.isFinite(classPos) && classPos > 0 ? classPos : null,
       laps: Number.isFinite(laps) && laps >= 0 ? laps : null,
+      stints,
     };
   });
 
