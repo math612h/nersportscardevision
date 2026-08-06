@@ -41,6 +41,9 @@ export function AppHeader() {
   ];
 
   const visibleItems = navItems.filter((i) => i.show && (!gated || (i.to === "/" && i.exact)));
+  const primarySet = new Set(["/", "/lmu/liga", "/leaderboard", "/admin"]);
+  const primaryItems = visibleItems.filter((i) => primarySet.has(i.to) || i.highlight);
+  const secondaryItems = visibleItems.filter((i) => !primaryItems.includes(i));
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
