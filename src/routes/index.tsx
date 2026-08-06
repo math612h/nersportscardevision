@@ -657,7 +657,7 @@ function OvertakingWinnerSection() {
   const winner = (() => {
     if (clips.length === 0) return null;
     const counts = new Map<string, number>();
-    votes.forEach((v) => counts.set(v.clip_id, (counts.get(v.clip_id) ?? 0) + 1));
+    votes.forEach((v) => counts.set(v.clip_id, Number(v.votes) || 0));
     let best: (typeof clips)[number] | null = null;
     let bestCount = 0;
     for (const c of clips) {
