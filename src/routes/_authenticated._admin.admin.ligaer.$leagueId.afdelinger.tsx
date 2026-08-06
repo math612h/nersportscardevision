@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrig
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { PracticeSessionsAdmin } from "@/components/PracticeSessionsAdmin";
+import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger")({
   component: AdminDivisions,
@@ -79,6 +80,7 @@ function AdminDivisions() {
                   <CardTitle className="text-base flex items-center gap-2">
                     {d.name}
                     {completed && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" />Afsluttet</Badge>}
+                    {completed && <ResultsStatusBadge confirmed={!!d.settings?.results_confirmed} />}
                   </CardTitle>
                   <div className="flex gap-1">
                     <ReplayFileButton divisionId={d.id} />
@@ -287,10 +289,12 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const prev = (division.settings ?? {}) as any;
     const newSettings = {
-      ...(division.settings ?? {}),
+      ...prev,
       temperature,
       completed,
+      completed_at: completed ? (prev.completed && prev.completed_at ? prev.completed_at : new Date().toISOString()) : null,
       event_settings: eventSettings,
     };
     // Ensure stale lobby fields aren't kept in settings

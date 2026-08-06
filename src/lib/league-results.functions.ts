@@ -234,11 +234,16 @@ export const publishLeagueRaceResult = createServerFn({ method: "POST" })
         dnf: !!r.dnf,
         dsq: !!r.dsq,
       }));
+      const prev = ((division.settings as any) ?? {});
       const newSettings = {
-        ...((division.settings as any) ?? {}),
+        ...prev,
         completed: true,
+        completed_at: prev.completed && prev.completed_at ? prev.completed_at : new Date().toISOString(),
+        results_confirmed: false,
+        results_confirmed_at: null,
         results: settingsResults,
       };
+
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
 
@@ -343,7 +348,15 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
           laps: r.laps, points: r.points, dns: false, dnf: !!r._dnf,
         };
       });
-      const newSettings = { ...(division.settings as any ?? {}), completed: true, results: settingsResults };
+      const prevSettings = ((division.settings as any) ?? {});
+      const newSettings = {
+        ...prevSettings,
+        completed: true,
+        completed_at: prevSettings.completed && prevSettings.completed_at ? prevSettings.completed_at : new Date().toISOString(),
+        results_confirmed: false,
+        results_confirmed_at: null,
+        results: settingsResults,
+      };
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
     return { inserted: resultRows.length, leaderboard_inserted: 0, unmatched, track, layout };
@@ -386,3 +399,38 @@ export const deleteLeagueRaceResults = createServerFn({ method: "POST" })
     return { deleted: count ?? 0 };
   });
 
+
+// =============================================================
+// Bekræft / afbekræft resultater for en afdeling.
+// "Bekræftet" betyder at resultaterne er endelige (straffe tilføjet).
+// =============================================================
+const confirmSchema = z.object({
+  leagueId: z.string().uuid(),
+  divisionId: z.string().uuid(),
+  confirmed: z.boolean(),
+});
+
+export const setResultsConfirmed = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => confirmSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: division, error: dErr } = await supabaseAdmin
+      .from("divisions").select("id,league_id,settings").eq("id", data.divisionId).maybeSingle();
+    if (dErr) throw new Error(dErr.message);
+    if (!division || division.league_id !== data.leagueId) throw new Error("Afdeling tilhører ikke ligaen.");
+
+    const prev = ((division.settings as any) ?? {});
+    const newSettings = {
+      ...prev,
+      results_confirmed: data.confirmed,
+      results_confirmed_at: data.confirmed ? new Date().toISOString() : null,
+      results_confirmed_by: data.confirmed ? context.userId : null,
+    };
+    const { error: uErr } = await supabaseAdmin
+      .from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
+    if (uErr) throw new Error(uErr.message);
+    return { confirmed: data.confirmed };
+  });

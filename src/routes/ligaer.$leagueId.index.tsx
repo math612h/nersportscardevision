@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -828,9 +829,16 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   const teamIds = useMemo(() => Object.values(entryTeamMap).filter(Boolean) as string[], [entryTeamMap]);
   const { data: teamMap } = useTeamLookup(teamIds);
 
-  const completed = (divisions ?? []).filter((d: any) => d.settings?.completed && Array.isArray(d.settings?.results));
+  const allCompleted = (divisions ?? []).filter((d: any) => d.settings?.completed && Array.isArray(d.settings?.results));
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string | null>(null);
+  const selectedDivision = separateDivisionStandings
+    ? (allCompleted.find((d: any) => d.id === selectedDivisionId) ?? allCompleted[allCompleted.length - 1])
+    : null;
+  const completed: any[] = separateDivisionStandings
+    ? (selectedDivision ? [selectedDivision] : [])
+    : allCompleted;
 
-  if (completed.length === 0) {
+  if (allCompleted.length === 0) {
     return (
       <section id="stillinger" className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
@@ -896,9 +904,27 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   if (separateDivisionStandings) {
     return (
       <section id="stillinger" className="space-y-4">
-        <div className="flex items-center gap-2 text-primary">
-          <Trophy className="h-4 w-4" />
-          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger pr. afdeling</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-primary">
+          <div className="flex items-center gap-2">
+            <Trophy className="h-4 w-4" />
+            <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger pr. afdeling</h2>
+          </div>
+          <Select
+            value={selectedDivision?.id ?? ""}
+            onValueChange={(v) => setSelectedDivisionId(v)}
+          >
+            <SelectTrigger className="h-8 w-[220px] text-xs">
+              <SelectValue placeholder="Vælg afdeling" />
+            </SelectTrigger>
+            <SelectContent>
+              {allCompleted.map((d: any) => (
+                <SelectItem key={d.id} value={d.id} className="text-xs">
+                  {d.name}
+                  {d.race_date ? ` · ${format(new Date(d.race_date), "dd MMM yyyy")}` : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         {completed.map((d: any) => {
           const flPts = leagueFlPoints;
@@ -910,9 +936,10 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
           if (classKeys.length === 0) return null;
           return (
             <div key={d.id} className="space-y-3">
-              <div className="flex items-center gap-2 text-sm font-semibold">
+              <div className="flex flex-wrap items-center gap-2 text-sm font-semibold">
                 <span>{d.name}</span>
                 {d.race_date && <span className="text-xs font-normal text-muted-foreground">{format(new Date(d.race_date), "dd MMM yyyy")}</span>}
+                <ResultsStatusBadge confirmed={!!d.settings?.results_confirmed} />
               </div>
               {classKeys.map((k) => {
                 const [cls, cat] = k.split(" · ");

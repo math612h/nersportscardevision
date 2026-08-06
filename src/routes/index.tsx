@@ -24,6 +24,7 @@ import { UserAvatarOnly } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
 import { getCurrentWeekStartISO, shiftWeek, weekLabel, youtubeEmbedUrl } from "@/lib/overtaking-utils";
 import { DonorFrame } from "@/lib/donation-tier";
+import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
@@ -100,13 +101,19 @@ function NewsHome() {
         .order("race_date", { ascending: false, nullsFirst: false })
         .limit(50);
       if (error) throw error;
-      return (data ?? []).filter(
+      const completed = (data ?? []).filter(
         (d: any) =>
           d.settings?.completed &&
           !d.settings?.hidden_from_home &&
           Array.isArray(d.settings?.results) &&
           d.settings.results.some((r: ResultRow) => Number(r.class_position) > 0 && !r.dns && !r.dnf),
       );
+      // Sortér efter hvornår afdelingen blev meldt afsluttet (fallback: løbsdato)
+      const ts = (d: any) => {
+        const c = d.settings?.completed_at ?? d.race_date ?? d.created_at;
+        return c ? new Date(c).getTime() : 0;
+      };
+      return completed.sort((a: any, b: any) => ts(b) - ts(a));
     },
   });
 
@@ -330,6 +337,8 @@ function NewsHome() {
               <div className="absolute bottom-0 left-0 right-0 space-y-3 p-4 sm:p-6">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary">Afsluttet</Badge>
+                  <ResultsStatusBadge confirmed={!!latest.settings?.results_confirmed} />
+
                   {latest.leagues?.name && <Badge variant="outline">{latest.leagues.name}</Badge>}
                   {latest.race_date && (
                     <Badge variant="outline" className="gap-1">

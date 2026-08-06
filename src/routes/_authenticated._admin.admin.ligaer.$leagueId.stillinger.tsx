@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
-import { deleteLeagueRaceResults } from "@/lib/league-results.functions";
+import { deleteLeagueRaceResults, setResultsConfirmed } from "@/lib/league-results.functions";
+import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/stillinger")({
   component: AdminStandings,
@@ -237,16 +238,20 @@ function DivisionEditor({
   const [session, setSession] = useState<SessionKind>("race");
   const flPoints = leagueFlPoints;
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
+  const [confirmed, setConfirmed] = useState<boolean>(!!division.settings?.results_confirmed);
+  const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [importedInfo, setImportedInfo] = useState<{ track: string; layout: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
   const deleteResults = useServerFn(deleteLeagueRaceResults);
+  const confirmResults = useServerFn(setResultsConfirmed);
 
   useEffect(() => {
     setRows(buildInitial());
     setCompleted(!!division.settings?.completed);
+    setConfirmed(!!division.settings?.results_confirmed);
     setImportedInfo(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
@@ -541,15 +546,23 @@ function DivisionEditor({
       const hasRaceData = raceResults.some((r) => r.class_position > 0);
       const effectiveCompleted = hasRaceData || (completed && hasRaceData);
 
+      const prevSettings = (division.settings ?? {}) as any;
       const newSettings = {
-        ...(division.settings ?? {}),
+        ...prevSettings,
         completed: effectiveCompleted,
+        completed_at: effectiveCompleted
+          ? (prevSettings.completed && prevSettings.completed_at ? prevSettings.completed_at : new Date().toISOString())
+          : null,
+        // Nye/ændrede resultater er ikke endelige før admin bekræfter igen
+        results_confirmed: false,
+        results_confirmed_at: null,
         results: raceResults,
         quali_results: qualiResults,
       };
       const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
       if (error) throw error;
       if (effectiveCompleted && !completed) setCompleted(true);
+      setConfirmed(false);
 
       // Compute round number from division order (by race_date)
       const sortedDivs = [...allDivisions].sort((a, b) => {
@@ -654,6 +667,7 @@ function DivisionEditor({
             <CardTitle className="text-base flex items-center gap-2">
               {division.name}
               {completed && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" /> Afsluttet</Badge>}
+              {completed && <ResultsStatusBadge confirmed={confirmed} />}
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
               {division.track}{division.layout ? ` · ${division.layout}` : ""}
@@ -661,12 +675,39 @@ function DivisionEditor({
                 <span className="ml-2 opacity-70">· Læst: {importedInfo.track}{importedInfo.layout ? ` · ${importedInfo.layout}` : ""}</span>
               )}
             </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {confirmed
+                ? "Resultaterne er markeret som endelige og vises som bekræftede."
+                : "Resultaterne vises som ikke bekræftede, indtil du trykker Bekræft."}
+            </p>
           </div>
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex items-center gap-2 text-sm pb-2">
               <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
               Afsluttet
             </label>
+            <Button
+              type="button"
+              variant={confirmed ? "outline" : "default"}
+              disabled={confirming || saving}
+              className="gap-2"
+              onClick={async () => {
+                setConfirming(true);
+                try {
+                  const next = !confirmed;
+                  await confirmResults({ data: { leagueId: division.league_id, divisionId: division.id, confirmed: next } });
+                  setConfirmed(next);
+                  toast.success(next ? "Resultater bekræftet" : "Bekræftelse fjernet");
+                  onSaved();
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Kunne ikke opdatere bekræftelse");
+                } finally {
+                  setConfirming(false);
+                }
+              }}
+            >
+              <Check className="h-4 w-4" /> {confirming ? "Gemmer…" : confirmed ? "Fjern bekræftelse" : "Bekræft resultater"}
+            </Button>
             <input
               ref={fileInputRef}
               type="file"
@@ -699,7 +740,13 @@ function DivisionEditor({
                   // Also clear from settings
                   const key = session === "race" ? "results" : "quali_results";
                   const newSettings = { ...(division.settings ?? {}), [key]: [] };
-                  if (session === "race") newSettings.completed = false;
+                  if (session === "race") {
+                    newSettings.completed = false;
+                    newSettings.completed_at = null;
+                    newSettings.results_confirmed = false;
+                    newSettings.results_confirmed_at = null;
+                    setConfirmed(false);
+                  }
                   await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
                   toast.success(`${label} nulstillet (${res.deleted} rækker fjernet)`);
                   onSaved();
