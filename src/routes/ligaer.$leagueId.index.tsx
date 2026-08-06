@@ -828,9 +828,16 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   const teamIds = useMemo(() => Object.values(entryTeamMap).filter(Boolean) as string[], [entryTeamMap]);
   const { data: teamMap } = useTeamLookup(teamIds);
 
-  const completed = (divisions ?? []).filter((d: any) => d.settings?.completed && Array.isArray(d.settings?.results));
+  const allCompleted = (divisions ?? []).filter((d: any) => d.settings?.completed && Array.isArray(d.settings?.results));
+  const [selectedDivisionId, setSelectedDivisionId] = useState<string | null>(null);
+  const selectedDivision = separateDivisionStandings
+    ? (allCompleted.find((d: any) => d.id === selectedDivisionId) ?? allCompleted[allCompleted.length - 1])
+    : null;
+  const completed: any[] = separateDivisionStandings
+    ? (selectedDivision ? [selectedDivision] : [])
+    : allCompleted;
 
-  if (completed.length === 0) {
+  if (allCompleted.length === 0) {
     return (
       <section id="stillinger" className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
