@@ -75,11 +75,11 @@ export function AppHeader() {
           <img src={logoAsset.url} alt="LMU Danmark" className="h-8 w-8 object-contain" />
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto whitespace-nowrap text-sm sm:flex">
-          {visibleItems.map((item, idx) => (
+        {/* Desktop nav: primære punkter altid, sekundære i "Mere" under xl */}
+        <nav className="hidden min-w-0 flex-1 items-center gap-1 whitespace-nowrap text-sm sm:flex">
+          {primaryItems.map((item, idx) => (
             <Link
-              key={idx}
+              key={`p-${idx}`}
               to={item.to}
               activeOptions={item.exact ? { exact: true } : undefined}
               className={`flex shrink-0 items-center gap-1 rounded px-2 py-1 ${
@@ -89,7 +89,46 @@ export function AppHeader() {
               {item.icon} {item.label}
             </Link>
           ))}
+          {secondaryItems.map((item, idx) => (
+            <Link
+              key={`s-${idx}`}
+              to={item.to}
+              activeOptions={item.exact ? { exact: true } : undefined}
+              className={`hidden shrink-0 items-center gap-1 rounded px-2 py-1 xl:flex ${
+                item.highlight ? "bg-primary/10 text-primary hover:bg-primary/20" : "hover:bg-accent"
+              }`}
+            >
+              {item.icon} {item.label}
+            </Link>
+          ))}
+          {secondaryItems.length > 0 && (
+            <div className="xl:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1 px-2">
+                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                    {t("nav.more", "Mere")}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-52">
+                  {secondaryItems.map((item, idx) => (
+                    <DropdownMenuItem key={`m-${idx}`} asChild>
+                      <Link
+                        to={item.to}
+                        activeOptions={item.exact ? { exact: true } : undefined}
+                        className={item.highlight ? "text-primary" : ""}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </nav>
+
 
         {/* Spacer for mobile to push right items to the end */}
         <div className="flex-1 sm:hidden" />
