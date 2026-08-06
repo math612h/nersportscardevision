@@ -311,6 +311,7 @@ function BeskedHub() {
         prefill={creatingPrefill}
         leagues={leagues ?? []}
         roles={roles ?? []}
+        channels={channels ?? []}
         onClose={() => {
           setEditing(null);
           setCreatingKind(null);
