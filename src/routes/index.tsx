@@ -645,20 +645,19 @@ function OvertakingWinnerSection() {
   const clipIds = clips.map((c) => c.id);
 
   const { data: votes = [] } = useQuery({
-    queryKey: ["home-overtaking-votes", lastWeek, clipIds.join(",")],
+    queryKey: ["home-overtaking-vote-counts", lastWeek, clipIds.join(",")],
     enabled: clipIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("overtaking_votes").select("clip_id").in("clip_id", clipIds);
+      const { data, error } = await (supabase as any).rpc("overtaking_vote_counts", { _clip_ids: clipIds });
       if (error) throw error;
-      return (data ?? []) as Array<{ clip_id: string }>;
+      return (data ?? []) as Array<{ clip_id: string; votes: number }>;
     },
   });
 
   const winner = (() => {
     if (clips.length === 0) return null;
     const counts = new Map<string, number>();
-    votes.forEach((v) => counts.set(v.clip_id, (counts.get(v.clip_id) ?? 0) + 1));
+    votes.forEach((v) => counts.set(v.clip_id, Number(v.votes) || 0));
     let best: (typeof clips)[number] | null = null;
     let bestCount = 0;
     for (const c of clips) {

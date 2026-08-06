@@ -2727,6 +2727,13 @@ export type Database = {
         }[]
       }
       overtaking_current_week_start: { Args: never; Returns: string }
+      overtaking_vote_counts: {
+        Args: { _clip_ids: string[] }
+        Returns: {
+          clip_id: string
+          votes: number
+        }[]
+      }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
         Returns: {
