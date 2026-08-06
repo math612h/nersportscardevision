@@ -30,9 +30,20 @@ Menuen sidescroller i dag på almindelige skærme.
 - På brede skærme (xl og op) vises alle punkter direkte uden dropdown.
 - Indholdsbredden øges lidt, og vandret scroll fjernes, så udtrykket forbliver roligt og ensartet. Mobilmenuen er uændret.
 
+## 5. Mærkat "Bekræftet" / "Ikke bekræftet" på resultater
+
+Uploadede resultater vises fortsat automatisk på ligasiden og forsiden, men får nu en status.
+
+- Nye/opdaterede resultater starter som "Ikke bekræftet" – dvs. de kan stadig ændre sig (straffe mangler måske).
+- På admin-siden for resultater/stillinger kommer der en "Bekræft resultater"-knap pr. afdeling. Når den trykkes, markeres afdelingens resultater som endelige.
+- Admin kan også fortryde og sætte den tilbage til "Ikke bekræftet"; enhver ny upload for afdelingen nulstiller status til "Ikke bekræftet".
+- Mærkatet vises tydeligt: på forsidens resultatkort, i afdelings-dropdownens resultatvisning og i afdelingsoversigten i kontrolpanelet. Grøn/neutral for bekræftet, dæmpet/advarsel for ikke bekræftet.
+
 ## Teknisk
 
 - `settings.completed_at` sættes i `src/lib/league-results.functions.ts` (auto) og i afdelings-redigeringsdialogen i `src/routes/_authenticated._admin.admin.ligaer.$leagueId.afdelinger.tsx` (manuelt). Ingen databasemigrering nødvendig – feltet ligger i det eksisterende `settings`-JSON.
 - `src/routes/index.tsx`: sortering i `home-recent-results` efter `completed_at ?? race_date`.
 - `src/routes/ligaer.$leagueId.index.tsx`: fælles `selectedDivisionId`-state deles mellem `Standings`, `TeamStandings` og `RaceDataResults`; `RaceDataResults` filtrerer på valgt afdeling i stedet for at gruppere over alle.
 - `src/components/AppHeader.tsx`: nav-items får et `primary`-flag; sekundære punkter renderes i en `DropdownMenu` ("Mere") under `xl`.
+- Bekræftelse gemmes som `settings.results_confirmed` + `results_confirmed_at`/`results_confirmed_by` i afdelingens `settings`-JSON (ingen migrering). Publicering/upload sætter det til `false`; en ny server-funktion `setResultsConfirmed` (admin-only) skifter status.
+
