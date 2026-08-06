@@ -336,6 +336,8 @@ function NewsHome() {
               <div className="absolute bottom-0 left-0 right-0 space-y-3 p-4 sm:p-6">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary">Afsluttet</Badge>
+                  <ResultsStatusBadge confirmed={!!latest.settings?.results_confirmed} />
+
                   {latest.leagues?.name && <Badge variant="outline">{latest.leagues.name}</Badge>}
                   {latest.race_date && (
                     <Badge variant="outline" className="gap-1">
