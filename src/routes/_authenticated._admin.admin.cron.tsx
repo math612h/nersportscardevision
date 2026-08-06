@@ -2,12 +2,23 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Clock, Play } from "lucide-react";
+import { Clock, Play, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { listCronJobs, listCronRuns, listCronTriggers, runCronJob } from "@/lib/cron.functions";
+import { postOffseasonCalendar } from "@/lib/discord-offseason-calendar.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/cron")({
   component: CronPage,
