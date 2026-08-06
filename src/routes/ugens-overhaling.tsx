@@ -164,7 +164,8 @@ function UgensOverhalingPage() {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["overtaking-votes"] });
+      qc.invalidateQueries({ queryKey: ["overtaking-vote-counts"] });
+      qc.invalidateQueries({ queryKey: ["overtaking-my-vote"] });
     },
     onError: (e: any) => toast.error(e?.message ?? "Kunne ikke registrere stemme"),
   });
