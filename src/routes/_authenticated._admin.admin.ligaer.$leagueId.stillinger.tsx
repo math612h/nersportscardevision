@@ -667,6 +667,7 @@ function DivisionEditor({
             <CardTitle className="text-base flex items-center gap-2">
               {division.name}
               {completed && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" /> Afsluttet</Badge>}
+              {completed && <ResultsStatusBadge confirmed={confirmed} />}
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
               {division.track}{division.layout ? ` · ${division.layout}` : ""}
@@ -674,12 +675,39 @@ function DivisionEditor({
                 <span className="ml-2 opacity-70">· Læst: {importedInfo.track}{importedInfo.layout ? ` · ${importedInfo.layout}` : ""}</span>
               )}
             </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {confirmed
+                ? "Resultaterne er markeret som endelige og vises som bekræftede."
+                : "Resultaterne vises som ikke bekræftede, indtil du trykker Bekræft."}
+            </p>
           </div>
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex items-center gap-2 text-sm pb-2">
               <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
               Afsluttet
             </label>
+            <Button
+              type="button"
+              variant={confirmed ? "outline" : "default"}
+              disabled={confirming || saving}
+              className="gap-2"
+              onClick={async () => {
+                setConfirming(true);
+                try {
+                  const next = !confirmed;
+                  await confirmResults({ data: { leagueId: division.league_id, divisionId: division.id, confirmed: next } });
+                  setConfirmed(next);
+                  toast.success(next ? "Resultater bekræftet" : "Bekræftelse fjernet");
+                  onSaved();
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Kunne ikke opdatere bekræftelse");
+                } finally {
+                  setConfirming(false);
+                }
+              }}
+            >
+              <Check className="h-4 w-4" /> {confirming ? "Gemmer…" : confirmed ? "Fjern bekræftelse" : "Bekræft resultater"}
+            </Button>
             <input
               ref={fileInputRef}
               type="file"
