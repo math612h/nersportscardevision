@@ -234,11 +234,16 @@ export const publishLeagueRaceResult = createServerFn({ method: "POST" })
         dnf: !!r.dnf,
         dsq: !!r.dsq,
       }));
+      const prev = ((division.settings as any) ?? {});
       const newSettings = {
-        ...((division.settings as any) ?? {}),
+        ...prev,
         completed: true,
+        completed_at: prev.completed && prev.completed_at ? prev.completed_at : new Date().toISOString(),
+        results_confirmed: false,
+        results_confirmed_at: null,
         results: settingsResults,
       };
+
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
 
