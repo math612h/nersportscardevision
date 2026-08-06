@@ -2,12 +2,23 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Clock, Play } from "lucide-react";
+import { Clock, Play, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import { listCronJobs, listCronRuns, listCronTriggers, runCronJob } from "@/lib/cron.functions";
+import { postOffseasonCalendar } from "@/lib/discord-offseason-calendar.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/cron")({
   component: CronPage,
@@ -20,6 +31,38 @@ function CronPage() {
   const fetchTriggers = useServerFn(listCronTriggers);
   const trigger = useServerFn(runCronJob);
   const [running, setRunning] = useState<string | null>(null);
+  const postCalendar = useServerFn(postOffseasonCalendar);
+  const [leagueId, setLeagueId] = useState("");
+  const [channelId, setChannelId] = useState("");
+  const [posting, setPosting] = useState(false);
+
+  const { data: leagues = [] } = useQuery({
+    queryKey: ["cron-leagues"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("id,name")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const handlePostCalendar = async () => {
+    if (!leagueId || !/^\d{5,25}$/.test(channelId.trim())) {
+      toast.error("Vælg en liga og indtast et gyldigt kanal-ID (kun tal).");
+      return;
+    }
+    setPosting(true);
+    try {
+      const res = await postCalendar({ data: { leagueId, channelId: channelId.trim() } });
+      toast.success(`Kalender for ${res.league} postet (${res.posted} afdelinger).`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPosting(false);
+    }
+  };
 
   const { data: jobs = [] } = useQuery({ queryKey: ["cron-jobs"], queryFn: () => fetchJobs() });
   const { data: runs = [] } = useQuery({ queryKey: ["cron-runs"], queryFn: () => fetchRuns({ data: { limit: 50 } }) });
@@ -58,6 +101,44 @@ function CronPage() {
           ))}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-primary" />
+            Post liga-kalender på Discord
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Liga</Label>
+              <Select value={leagueId} onValueChange={setLeagueId}>
+                <SelectTrigger><SelectValue placeholder="Vælg liga" /></SelectTrigger>
+                <SelectContent>
+                  {(leagues as any[]).map((l) => (
+                    <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Discord kanal-ID</Label>
+              <Input
+                value={channelId}
+                onChange={(e) => setChannelId(e.target.value)}
+                placeholder="fx 1514985014255943881"
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+          <Button onClick={handlePostCalendar} disabled={posting} size="sm">
+            <CalendarDays className="h-3 w-3 mr-1" />
+            {posting ? "Poster…" : "Post kalender"}
+          </Button>
+        </CardContent>
+      </Card>
+
 
       <Card>
         <CardHeader><CardTitle>Skedulerede jobs ({jobs.length})</CardTitle></CardHeader>
