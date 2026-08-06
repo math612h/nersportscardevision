@@ -740,7 +740,13 @@ function DivisionEditor({
                   // Also clear from settings
                   const key = session === "race" ? "results" : "quali_results";
                   const newSettings = { ...(division.settings ?? {}), [key]: [] };
-                  if (session === "race") newSettings.completed = false;
+                  if (session === "race") {
+                    newSettings.completed = false;
+                    newSettings.completed_at = null;
+                    newSettings.results_confirmed = false;
+                    newSettings.results_confirmed_at = null;
+                    setConfirmed(false);
+                  }
                   await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
                   toast.success(`${label} nulstillet (${res.deleted} rækker fjernet)`);
                   onSaved();
