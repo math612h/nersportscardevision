@@ -645,13 +645,12 @@ function OvertakingWinnerSection() {
   const clipIds = clips.map((c) => c.id);
 
   const { data: votes = [] } = useQuery({
-    queryKey: ["home-overtaking-votes", lastWeek, clipIds.join(",")],
+    queryKey: ["home-overtaking-vote-counts", lastWeek, clipIds.join(",")],
     enabled: clipIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("overtaking_votes").select("clip_id").in("clip_id", clipIds);
+      const { data, error } = await (supabase as any).rpc("overtaking_vote_counts", { _clip_ids: clipIds });
       if (error) throw error;
-      return (data ?? []) as Array<{ clip_id: string }>;
+      return (data ?? []) as Array<{ clip_id: string; votes: number }>;
     },
   });
 
