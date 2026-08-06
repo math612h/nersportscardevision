@@ -76,13 +76,26 @@ function UgensOverhalingPage() {
   const clipIds = clips.map((c) => c.id);
   const userIds = Array.from(new Set(clips.map((c) => c.user_id)));
 
-  const { data: votes = [] } = useQuery({
-    queryKey: ["overtaking-votes", week, clipIds.join(",")],
+  // Aggregerede stemmetal (uden vælger-identitet)
+  const { data: voteCounts = [] } = useQuery({
+    queryKey: ["overtaking-vote-counts", week, clipIds.join(",")],
     enabled: clipIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).rpc("overtaking_vote_counts", { _clip_ids: clipIds });
+      if (error) throw error;
+      return (data ?? []) as Array<{ clip_id: string; votes: number }>;
+    },
+  });
+
+  // Egen stemme (kun brugerens egne rækker er læsbare)
+  const { data: myVotes = [] } = useQuery({
+    queryKey: ["overtaking-my-vote", week, user?.id ?? "anon", clipIds.join(",")],
+    enabled: clipIds.length > 0 && !!user,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("overtaking_votes")
         .select("id,clip_id,user_id,week_start")
+        .eq("user_id", user!.id)
         .in("clip_id", clipIds);
       if (error) throw error;
       return (data ?? []) as Vote[];
@@ -110,14 +123,11 @@ function UgensOverhalingPage() {
 
   const voteCount = useMemo(() => {
     const m = new Map<string, number>();
-    votes.forEach((v) => m.set(v.clip_id, (m.get(v.clip_id) ?? 0) + 1));
+    voteCounts.forEach((v) => m.set(v.clip_id, Number(v.votes) || 0));
     return m;
-  }, [votes]);
+  }, [voteCounts]);
 
-  const myVote = useMemo(
-    () => (user ? votes.find((v) => v.user_id === user.id) ?? null : null),
-    [votes, user],
-  );
+  const myVote = useMemo(() => myVotes[0] ?? null, [myVotes]);
 
   // Vinder for afsluttede uger (klip med flest stemmer, mindst 1)
   const winner = useMemo(() => {
