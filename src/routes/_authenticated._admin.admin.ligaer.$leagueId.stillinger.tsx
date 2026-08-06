@@ -237,16 +237,20 @@ function DivisionEditor({
   const [session, setSession] = useState<SessionKind>("race");
   const flPoints = leagueFlPoints;
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
+  const [confirmed, setConfirmed] = useState<boolean>(!!division.settings?.results_confirmed);
+  const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [importedInfo, setImportedInfo] = useState<{ track: string; layout: string | null } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
   const deleteResults = useServerFn(deleteLeagueRaceResults);
+  const confirmResults = useServerFn(setResultsConfirmed);
 
   useEffect(() => {
     setRows(buildInitial());
     setCompleted(!!division.settings?.completed);
+    setConfirmed(!!division.settings?.results_confirmed);
     setImportedInfo(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
