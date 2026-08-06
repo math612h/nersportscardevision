@@ -31,6 +31,38 @@ function CronPage() {
   const fetchTriggers = useServerFn(listCronTriggers);
   const trigger = useServerFn(runCronJob);
   const [running, setRunning] = useState<string | null>(null);
+  const postCalendar = useServerFn(postOffseasonCalendar);
+  const [leagueId, setLeagueId] = useState("");
+  const [channelId, setChannelId] = useState("");
+  const [posting, setPosting] = useState(false);
+
+  const { data: leagues = [] } = useQuery({
+    queryKey: ["cron-leagues"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("id,name")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const handlePostCalendar = async () => {
+    if (!leagueId || !/^\d{5,25}$/.test(channelId.trim())) {
+      toast.error("Vælg en liga og indtast et gyldigt kanal-ID (kun tal).");
+      return;
+    }
+    setPosting(true);
+    try {
+      const res = await postCalendar({ data: { leagueId, channelId: channelId.trim() } });
+      toast.success(`Kalender for ${res.league} postet (${res.posted} afdelinger).`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPosting(false);
+    }
+  };
 
   const { data: jobs = [] } = useQuery({ queryKey: ["cron-jobs"], queryFn: () => fetchJobs() });
   const { data: runs = [] } = useQuery({ queryKey: ["cron-runs"], queryFn: () => fetchRuns({ data: { limit: 50 } }) });
