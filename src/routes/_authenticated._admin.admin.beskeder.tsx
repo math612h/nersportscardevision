@@ -455,6 +455,7 @@ function TemplateEditor({
   prefill,
   leagues,
   roles,
+  channels,
   onClose,
   onSave,
   saving,
@@ -465,6 +466,7 @@ function TemplateEditor({
   prefill?: { title: string; body: string; leagueId: string | null; keySuggest: string } | null;
   leagues: LeagueLite[];
   roles: DiscordRole[];
+  channels: DiscordChannel[];
   onClose: () => void;
   onSave: (vals: {
     id?: string;
