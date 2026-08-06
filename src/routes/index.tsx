@@ -100,13 +100,19 @@ function NewsHome() {
         .order("race_date", { ascending: false, nullsFirst: false })
         .limit(50);
       if (error) throw error;
-      return (data ?? []).filter(
+      const completed = (data ?? []).filter(
         (d: any) =>
           d.settings?.completed &&
           !d.settings?.hidden_from_home &&
           Array.isArray(d.settings?.results) &&
           d.settings.results.some((r: ResultRow) => Number(r.class_position) > 0 && !r.dns && !r.dnf),
       );
+      // Sortér efter hvornår afdelingen blev meldt afsluttet (fallback: løbsdato)
+      const ts = (d: any) => {
+        const c = d.settings?.completed_at ?? d.race_date ?? d.created_at;
+        return c ? new Date(c).getTime() : 0;
+      };
+      return completed.sort((a: any, b: any) => ts(b) - ts(a));
     },
   });
 
