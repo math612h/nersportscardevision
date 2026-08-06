@@ -24,6 +24,7 @@ import { UserAvatarOnly } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
 import { getCurrentWeekStartISO, shiftWeek, weekLabel, youtubeEmbedUrl } from "@/lib/overtaking-utils";
 import { DonorFrame } from "@/lib/donation-tier";
+import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
