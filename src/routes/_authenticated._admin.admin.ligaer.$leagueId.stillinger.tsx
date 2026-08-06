@@ -14,7 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
-import { deleteLeagueRaceResults } from "@/lib/league-results.functions";
+import { deleteLeagueRaceResults, setResultsConfirmed } from "@/lib/league-results.functions";
+import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/stillinger")({
   component: AdminStandings,
