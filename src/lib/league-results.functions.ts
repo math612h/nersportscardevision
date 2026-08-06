@@ -348,7 +348,15 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
           laps: r.laps, points: r.points, dns: false, dnf: !!r._dnf,
         };
       });
-      const newSettings = { ...(division.settings as any ?? {}), completed: true, results: settingsResults };
+      const prevSettings = ((division.settings as any) ?? {});
+      const newSettings = {
+        ...prevSettings,
+        completed: true,
+        completed_at: prevSettings.completed && prevSettings.completed_at ? prevSettings.completed_at : new Date().toISOString(),
+        results_confirmed: false,
+        results_confirmed_at: null,
+        results: settingsResults,
+      };
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
     return { inserted: resultRows.length, leaderboard_inserted: 0, unmatched, track, layout };
