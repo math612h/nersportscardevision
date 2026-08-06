@@ -648,9 +648,29 @@ function TemplateEditor({
                 </div>
               </div>
             )}
+            {!isEmail && channels.length > 0 && (
+              <div className="mt-2 rounded-md border bg-muted/30 p-2">
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                  Tagge en kanal — klik for at indsætte ved markøren:
+                </p>
+                <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
+                  {channels.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => insertAtCursor(`<#${c.id}>`)}
+                      className="inline-flex items-center gap-1 rounded-full border bg-background px-2 py-0.5 text-xs hover:bg-accent"
+                      title={`Indsæt #${c.name}`}
+                    >
+                      #{c.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <p className="mt-1 text-xs text-muted-foreground">
               Du kan bruge <code>{"{discord_invite}"}</code> som placeholder — den erstattes automatisk med Discord-invitationslinket når beskeden bliver postet på Discord.
-              {!isEmail && " Rolle-tags vises som @rolle på Discord og pinger medlemmerne."}
+              {!isEmail && " Rolle-tags vises som @rolle og kanal-tags som #kanal (klikbart) på Discord."}
             </p>
           </div>
         </div>
