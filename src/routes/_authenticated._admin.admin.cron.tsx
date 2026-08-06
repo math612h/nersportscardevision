@@ -103,6 +103,44 @@ function CronPage() {
       </Card>
 
       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-primary" />
+            Post liga-kalender på Discord
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Liga</Label>
+              <Select value={leagueId} onValueChange={setLeagueId}>
+                <SelectTrigger><SelectValue placeholder="Vælg liga" /></SelectTrigger>
+                <SelectContent>
+                  {(leagues as any[]).map((l) => (
+                    <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Discord kanal-ID</Label>
+              <Input
+                value={channelId}
+                onChange={(e) => setChannelId(e.target.value)}
+                placeholder="fx 1514985014255943881"
+                inputMode="numeric"
+              />
+            </div>
+          </div>
+          <Button onClick={handlePostCalendar} disabled={posting} size="sm">
+            <CalendarDays className="h-3 w-3 mr-1" />
+            {posting ? "Poster…" : "Post kalender"}
+          </Button>
+        </CardContent>
+      </Card>
+
+
+      <Card>
         <CardHeader><CardTitle>Skedulerede jobs ({jobs.length})</CardTitle></CardHeader>
         <CardContent className="space-y-1 text-sm">
           {(jobs as any[]).map((j) => (
