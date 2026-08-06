@@ -79,6 +79,7 @@ function AdminDivisions() {
                   <CardTitle className="text-base flex items-center gap-2">
                     {d.name}
                     {completed && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" />Afsluttet</Badge>}
+                    {completed && <ResultsStatusBadge confirmed={!!d.settings?.results_confirmed} />}
                   </CardTitle>
                   <div className="flex gap-1">
                     <ReplayFileButton divisionId={d.id} />
