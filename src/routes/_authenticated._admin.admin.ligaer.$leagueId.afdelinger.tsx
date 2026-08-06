@@ -287,10 +287,12 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const prev = (division.settings ?? {}) as any;
     const newSettings = {
-      ...(division.settings ?? {}),
+      ...prev,
       temperature,
       completed,
+      completed_at: completed ? (prev.completed && prev.completed_at ? prev.completed_at : new Date().toISOString()) : null,
       event_settings: eventSettings,
     };
     // Ensure stale lobby fields aren't kept in settings
