@@ -546,15 +546,23 @@ function DivisionEditor({
       const hasRaceData = raceResults.some((r) => r.class_position > 0);
       const effectiveCompleted = hasRaceData || (completed && hasRaceData);
 
+      const prevSettings = (division.settings ?? {}) as any;
       const newSettings = {
-        ...(division.settings ?? {}),
+        ...prevSettings,
         completed: effectiveCompleted,
+        completed_at: effectiveCompleted
+          ? (prevSettings.completed && prevSettings.completed_at ? prevSettings.completed_at : new Date().toISOString())
+          : null,
+        // Nye/ændrede resultater er ikke endelige før admin bekræfter igen
+        results_confirmed: false,
+        results_confirmed_at: null,
         results: raceResults,
         quali_results: qualiResults,
       };
       const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
       if (error) throw error;
       if (effectiveCompleted && !completed) setCompleted(true);
+      setConfirmed(false);
 
       // Compute round number from division order (by race_date)
       const sortedDivs = [...allDivisions].sort((a, b) => {
