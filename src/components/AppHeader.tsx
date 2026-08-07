@@ -124,7 +124,9 @@ export function AppHeader() {
         <div className="flex-1 sm:hidden" />
 
         <div className="flex shrink-0 items-center gap-1">
-          {!isAdminRoute && <DonateButton size="sm" variant="primary" className="hidden h-8 sm:inline-flex" />}
+          {!isAdminRoute && location.pathname !== "/" && (
+            <DonateButton size="sm" variant="primary" className="hidden h-8 sm:inline-flex" />
+          )}
           {isGuest && <GuestLanguageSwitcher compact />}
 
           {user ? (
