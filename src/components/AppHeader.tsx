@@ -47,7 +47,7 @@ export function AppHeader() {
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-2 sm:px-4">
+      <div className="mx-auto flex h-14 w-full max-w-[1400px] items-center gap-2 overflow-hidden px-2 sm:px-4">
         {/* Mobile menu button */}
         <div className="sm:hidden">
           <DropdownMenu open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -79,7 +79,7 @@ export function AppHeader() {
         </Link>
 
         {/* Desktop nav: primære punkter altid, sekundære i "Mere" under xl */}
-        <nav className="hidden min-w-0 flex-1 items-center gap-1 whitespace-nowrap text-sm sm:flex">
+        <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-hidden whitespace-nowrap text-sm sm:flex">
           {primaryItems.map((item, idx) => (
             <Link
               key={`p-${idx}`}
@@ -92,45 +92,32 @@ export function AppHeader() {
               {item.icon} {item.label}
             </Link>
           ))}
-          {secondaryItems.map((item, idx) => (
-            <Link
-              key={`s-${idx}`}
-              to={item.to}
-              activeOptions={item.exact ? { exact: true } : undefined}
-              className={`hidden shrink-0 items-center gap-1 rounded px-2 py-1 xl:flex ${
-                item.highlight ? "bg-primary/10 text-primary hover:bg-primary/20" : "hover:bg-accent"
-              }`}
-            >
-              {item.icon} {item.label}
-            </Link>
-          ))}
           {secondaryItems.length > 0 && (
-            <div className="xl:hidden">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-1 px-2">
-                    <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-                    {t("nav.more", "Mere")}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-52">
-                  {secondaryItems.map((item, idx) => (
-                    <DropdownMenuItem key={`m-${idx}`} asChild>
-                      <Link
-                        to={item.to}
-                        activeOptions={item.exact ? { exact: true } : undefined}
-                        className={item.highlight ? "text-primary" : ""}
-                      >
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="shrink-0 gap-1 px-2">
+                  <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+                  {t("nav.more", "Mere")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52">
+                {secondaryItems.map((item, idx) => (
+                  <DropdownMenuItem key={`m-${idx}`} asChild>
+                    <Link
+                      to={item.to}
+                      activeOptions={item.exact ? { exact: true } : undefined}
+                      className={item.highlight ? "text-primary" : ""}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </nav>
+
 
 
         {/* Spacer for mobile to push right items to the end */}
