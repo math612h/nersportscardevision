@@ -1,0 +1,1 @@
+UPDATE public.sponsor_settings SET position = 'left' WHERE id = 1;
