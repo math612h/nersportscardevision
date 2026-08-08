@@ -407,6 +407,85 @@ function DriverAidsEditor({
   );
 }
 
+function PrizeListEditor({
+  label,
+  hint,
+  items,
+  onChange,
+}: {
+  label: string;
+  hint: string;
+  items: string[];
+  onChange: (next: string[]) => void;
+}) {
+  return (
+    <div className="space-y-2 rounded-md border border-border p-2">
+      <Label>{label}</Label>
+      <p className="text-xs text-muted-foreground">{hint}</p>
+      <div className="space-y-2">
+        {items.map((item, i) => (
+          <div key={i} className="flex gap-2">
+            <Input
+              value={item}
+              placeholder={`Præmie ${i + 1}`}
+              onChange={(e) => {
+                const next = [...items];
+                next[i] = e.target.value;
+                onChange(next);
+              }}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onChange(items.filter((_, idx) => idx !== i))}
+            >
+              Fjern
+            </Button>
+          </div>
+        ))}
+        {items.length === 0 && (
+          <p className="text-xs text-muted-foreground">Ingen præmier tilføjet endnu.</p>
+        )}
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="w-full gap-1"
+        onClick={() => onChange([...items, ""])}
+      >
+        <Plus className="h-3 w-3" /> Tilføj præmie
+      </Button>
+    </div>
+  );
+}
+
+function PrizesEditor({
+  value,
+  onChange,
+}: {
+  value: EventSettings;
+  onChange: (next: EventSettings) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <PrizeListEditor
+        label="Podiepræmier"
+        hint="Præmier til P1, P2, P3 osv. – én linje pr. placering."
+        items={value.podium_prizes ?? []}
+        onChange={(next) => onChange({ ...value, podium_prizes: next })}
+      />
+      <PrizeListEditor
+        label="Lodtrækningspræmier"
+        hint="Præmier der trækkes lod om blandt deltagerne."
+        items={value.raffle_prizes ?? []}
+        onChange={(next) => onChange({ ...value, raffle_prizes: next })}
+      />
+    </div>
+  );
+}
+
 function BriefingOpenEditor({
   value,
   onChange,
