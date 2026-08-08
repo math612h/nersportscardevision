@@ -103,6 +103,7 @@ export function SponsorBar() {
     return () => clearInterval(id);
   }, [list.length, rotate]);
 
+  if (location.pathname !== "/") return null;
   if (!settings?.enabled) return null;
 
   const sideClass = settings.position === "right" ? "right-3" : "left-3";
