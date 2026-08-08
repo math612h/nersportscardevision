@@ -169,9 +169,10 @@ export function SponsorBar() {
 
   return (
     <aside
-      className={`fixed top-24 z-30 w-40 ${sideClass} ${mobileClass} flex-col gap-2 rounded-lg border border-border bg-card/90 p-3 shadow-lg backdrop-blur`}
+      className={`${shellClass} border border-border bg-card/90`}
       aria-label="Sponsorer"
     >
+
       <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         Sponsor
       </p>
