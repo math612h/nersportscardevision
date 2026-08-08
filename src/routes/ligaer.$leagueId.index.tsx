@@ -513,7 +513,10 @@ function LeagueDetail() {
 
       <RaceDataResults leagueId={leagueId} />
 
+      <PrizesView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
+
       <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={!!(league as any)?.separate_division_standings} />
+
     </div>
   );
 }
