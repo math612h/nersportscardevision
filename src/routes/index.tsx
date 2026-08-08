@@ -322,7 +322,11 @@ function NewsHome() {
             )}
           </div>
           <article className="overflow-hidden rounded-xl border border-border bg-card">
-            <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted sm:aspect-[21/9]">
+            <Link
+              to="/ligaer/$leagueId"
+              params={{ leagueId: latest.league_id }}
+              className="group relative block aspect-[16/9] w-full overflow-hidden bg-muted transition-opacity hover:opacity-95 sm:aspect-[21/9]"
+            >
               {trackImageMap ? (
                 <img
                   src={trackImageMap}
@@ -357,8 +361,9 @@ function NewsHome() {
                     </p>
                   )}
                 </div>
+                <p className="text-xs font-medium text-primary">Se ligaside →</p>
               </div>
-            </div>
+            </Link>
 
             <div className="space-y-5 p-4 sm:p-6">
               {groupedResults.map((group) => {
