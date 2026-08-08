@@ -1725,6 +1725,73 @@ function DriverAidsView({ settings }: { settings: EventSettings }) {
   );
 }
 
+function PrizesView({ settings }: { settings: EventSettings }) {
+  const podium = (settings.podium_prizes ?? []).filter((p) => p.trim().length > 0);
+  const raffle = (settings.raffle_prizes ?? []).filter((p) => p.trim().length > 0);
+  const total = podium.length + raffle.length;
+
+  const renderList = (items: string[], podiumStyle: boolean) => (
+    <ul className="space-y-2">
+      {items.map((item, i) => (
+        <li
+          key={i}
+          className="flex items-start gap-3 rounded-md border border-border bg-muted/20 px-3 py-2 text-sm"
+        >
+          <span className="mt-0.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/15 px-1.5 text-[10px] font-semibold text-primary">
+            {podiumStyle ? `P${i + 1}` : i + 1}
+          </span>
+          <span className="leading-snug">{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
+  return (
+    <section id="praemier">
+      <Collapsible defaultOpen={total > 0}>
+        <Card>
+          <CollapsibleTrigger className="group flex w-full items-center justify-between gap-2 p-4 text-left hover:bg-muted/30">
+            <div className="flex items-center gap-2 text-primary">
+              <Gift className="h-4 w-4" />
+              <span className="text-xs font-semibold uppercase tracking-[0.18em]">Præmier</span>
+              {total > 0 && (
+                <Badge variant="outline" className="ml-1 text-[10px]">{total} præmier</Badge>
+              )}
+            </div>
+            <ChevronDown className="h-4 w-4 text-muted-foreground transition group-data-[state=open]:rotate-180" />
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="grid gap-4 border-t border-border py-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Podiepræmier
+                </h3>
+                {podium.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Ingen podiepræmier angivet endnu.</p>
+                ) : (
+                  renderList(podium, true)
+                )}
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  Lodtrækningspræmier
+                </h3>
+                {raffle.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    Ingen lodtrækningspræmier angivet endnu.
+                  </p>
+                ) : (
+                  renderList(raffle, false)
+                )}
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+    </section>
+  );
+}
+
 
 
 function league_name(_id: string) {
