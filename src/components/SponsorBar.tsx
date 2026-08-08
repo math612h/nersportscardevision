@@ -101,14 +101,35 @@ export function SponsorBar() {
     return () => clearInterval(id);
   }, [list.length, rotate]);
 
-  if (!settings?.enabled || list.length === 0) return null;
+  if (!settings?.enabled) return null;
+
+  const sideClass = settings.position === "left" ? "left-2" : "right-2";
+  const mobileClass = settings.show_on_mobile ? "" : "hidden xl:flex";
+
+  if (list.length === 0) {
+    return (
+      <aside
+        className={`fixed top-24 z-30 w-40 ${sideClass} ${mobileClass} flex-col gap-2 rounded-lg border border-dashed border-border bg-card/60 p-3 shadow-lg backdrop-blur`}
+        aria-label="Sponsorplads"
+      >
+        <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Sponsor
+        </p>
+        <div className="flex h-24 w-full items-center justify-center rounded bg-muted/50 text-[11px] text-muted-foreground">
+          Ledig plads
+        </div>
+        <p className="text-center text-[11px] leading-snug text-muted-foreground">
+          Her vises sponsorer, når de er oprettet.
+        </p>
+      </aside>
+    );
+  }
 
   const current = list[index % list.length];
   if (!current) return null;
 
-  const sideClass = settings.position === "left" ? "left-2" : "right-2";
-  const mobileClass = settings.show_on_mobile ? "" : "hidden xl:flex";
   const logo = current.logo_path ? images?.[current.logo_path] : undefined;
+
 
   const inner = (
     <div
