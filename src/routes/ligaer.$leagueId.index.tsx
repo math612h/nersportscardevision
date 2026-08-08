@@ -1646,7 +1646,9 @@ function QuickNav({ teamsAllowed = false }: { teamsAllowed?: boolean }) {
     ...(teamsAllowed ? [{ id: "teams", label: "Teams", icon: Shield }] : []),
     { id: "kalender", label: "Kalender", icon: Calendar },
     { id: "driveraids", label: "Driver Aids", icon: SettingsIcon },
+    { id: "praemier", label: "Præmier", icon: Gift },
     { id: "stillinger", label: "Stillinger", icon: Trophy },
+
   ];
 
   const scrollTo = (id: string) => {
