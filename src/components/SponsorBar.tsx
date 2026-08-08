@@ -162,7 +162,7 @@ export function SponsorBar() {
     );
 
     return (
-      <li key={s.id} className="w-full">
+      <li key={s.id} className="w-full border-b border-border py-3 first:pt-0 last:border-0 last:pb-0">
         {s.website_url ? (
           <a
             href={s.website_url}
@@ -184,13 +184,7 @@ export function SponsorBar() {
       <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {list.length > 1 ? "Sponsorer" : "Sponsor"}
       </p>
-      <ul className="flex w-full flex-col divide-y divide-border">
-        {list.map((s, i) => (
-          <div key={s.id} className={i === 0 ? "pb-3" : "py-3 last:pb-0"}>
-            {renderSponsor(s)}
-          </div>
-        ))}
-      </ul>
+      <ul className="flex w-full flex-col">{list.map(renderSponsor)}</ul>
     </aside>
   );
 }
