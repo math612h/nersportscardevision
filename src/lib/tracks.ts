@@ -53,7 +53,10 @@ export type EventSettings = {
   steering_help?: OnOff;
   auto_clutch?: OnOff;
   briefing_open_minutes_before?: number; // Drivers Briefing åbner X min før race_date
+  podium_prizes?: string[];
+  raffle_prizes?: string[];
 };
+
 
 export const EVENT_AID_FIELDS: { key: keyof EventSettings; label: string }[] = [
   { key: "anti_lock_brakes", label: "Anti Lock Brakes" },
