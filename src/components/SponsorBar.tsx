@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "lucide-react";
+import { useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 
 const BUCKET = "sponsor-images";
@@ -76,6 +77,7 @@ export function useSponsorImages(paths: string[]) {
 }
 
 export function SponsorBar() {
+  const location = useLocation();
   const { data: settings } = useSponsorSettings();
   const { data: sponsors } = useActiveSponsors();
   const paths = useMemo(
