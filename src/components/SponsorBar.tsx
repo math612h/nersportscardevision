@@ -105,7 +105,7 @@ export function SponsorBar() {
 
   const sideClass = settings.position === "right" ? "right-3" : "left-3";
   const mobileClass = settings.show_on_mobile ? "" : "hidden xl:flex";
-  const shellClass = `fixed top-24 z-30 w-44 ${sideClass} ${mobileClass} h-[70vh] max-h-[860px] flex-col items-center justify-center gap-4 rounded-xl p-4 shadow-lg backdrop-blur`;
+  const shellClass = `fixed top-24 z-30 w-88 ${sideClass} ${mobileClass} h-[70vh] max-h-[860px] flex-col items-center justify-center gap-4 rounded-xl p-4 shadow-lg backdrop-blur`;
 
   if (list.length === 0) {
     return (
