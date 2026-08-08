@@ -85,23 +85,7 @@ export function SponsorBar() {
     [sponsors],
   );
   const { data: images } = useSponsorImages(paths);
-  const [index, setIndex] = useState(0);
-  const [fade, setFade] = useState(true);
-
   const list = sponsors ?? [];
-  const rotate = Math.max(3, settings?.rotate_seconds ?? 10);
-
-  useEffect(() => {
-    if (list.length < 2) return;
-    const id = setInterval(() => {
-      setFade(false);
-      setTimeout(() => {
-        setIndex((i) => (i + 1) % list.length);
-        setFade(true);
-      }, 250);
-    }, rotate * 1000);
-    return () => clearInterval(id);
-  }, [list.length, rotate]);
 
   if (location.pathname !== "/") return null;
   if (!settings?.enabled) return null;
