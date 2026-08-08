@@ -361,8 +361,9 @@ function NewsHome() {
                     </p>
                   )}
                 </div>
+                <p className="text-xs font-medium text-primary">Se ligaside →</p>
               </div>
-            </div>
+            </Link>
 
             <div className="space-y-5 p-4 sm:p-6">
               {groupedResults.map((group) => {
