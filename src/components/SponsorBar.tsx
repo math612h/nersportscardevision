@@ -108,7 +108,7 @@ export function SponsorBar() {
 
   const sideClass = settings.position === "right" ? "right-3" : "left-3";
   const mobileClass = settings.show_on_mobile ? "" : "hidden xl:flex";
-  const shellClass = `fixed top-24 z-30 w-88 ${sideClass} ${mobileClass} h-[70vh] max-h-[860px] flex-col items-center justify-center gap-4 rounded-xl p-4 shadow-lg backdrop-blur`;
+  const shellClass = `fixed top-24 z-30 w-88 ${sideClass} ${mobileClass} max-h-[80vh] overflow-y-auto flex-col gap-3 rounded-xl p-4 shadow-lg backdrop-blur`;
 
   if (list.length === 0) {
     return (
@@ -119,7 +119,7 @@ export function SponsorBar() {
         <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Sponsor
         </p>
-        <div className="flex flex-1 w-full items-center justify-center rounded-lg bg-muted/40 text-[11px] text-muted-foreground">
+        <div className="flex h-24 w-full items-center justify-center rounded-lg bg-muted/40 text-[11px] text-muted-foreground">
           Ledig plads
         </div>
         <p className="text-center text-[11px] leading-snug text-muted-foreground">
@@ -129,81 +129,68 @@ export function SponsorBar() {
     );
   }
 
+  const renderSponsor = (s: Sponsor) => {
+    const logo = s.logo_path ? images?.[s.logo_path] : undefined;
+    const inner = (
+      <div className="flex w-full flex-col items-center gap-2">
+        {logo ? (
+          <img
+            src={logo}
+            alt={s.name}
+            loading="lazy"
+            className="max-h-24 w-full rounded object-contain"
+          />
+        ) : (
+          <div className="flex h-16 w-full items-center justify-center rounded bg-muted text-xs font-semibold">
+            {s.name}
+          </div>
+        )}
+        {settings.show_name && (
+          <span className="line-clamp-2 text-center text-xs font-medium text-foreground">{s.name}</span>
+        )}
+        {s.description && (
+          <span className="line-clamp-3 text-center text-[11px] leading-snug text-muted-foreground">
+            {s.description}
+          </span>
+        )}
+        {s.website_url && (
+          <span className="inline-flex items-center gap-1 text-[11px] text-primary">
+            Besøg <ExternalLink className="h-3 w-3" aria-hidden="true" />
+          </span>
+        )}
+      </div>
+    );
 
-  const current = list[index % list.length];
-  if (!current) return null;
-
-  const logo = current.logo_path ? images?.[current.logo_path] : undefined;
-
-
-  const inner = (
-    <div
-      className={`flex w-full flex-col items-center gap-2 transition-opacity duration-250 ${
-        fade ? "opacity-100" : "opacity-0"
-      }`}
-    >
-      {logo ? (
-        <img
-          src={logo}
-          alt={current.name}
-          loading="lazy"
-          className="max-h-24 w-full rounded object-contain"
-        />
-      ) : (
-        <div className="flex h-16 w-full items-center justify-center rounded bg-muted text-xs font-semibold">
-          {current.name}
-        </div>
-      )}
-      {settings.show_name && (
-        <span className="line-clamp-2 text-center text-xs font-medium text-foreground">{current.name}</span>
-      )}
-      {current.description && (
-        <span className="line-clamp-3 text-center text-[11px] leading-snug text-muted-foreground">
-          {current.description}
-        </span>
-      )}
-      {current.website_url && (
-        <span className="inline-flex items-center gap-1 text-[11px] text-primary">
-          Besøg <ExternalLink className="h-3 w-3" aria-hidden="true" />
-        </span>
-      )}
-    </div>
-  );
+    return (
+      <li key={s.id} className="w-full">
+        {s.website_url ? (
+          <a
+            href={s.website_url}
+            target="_blank"
+            rel="noopener noreferrer sponsored"
+            className="block rounded transition-transform hover:scale-[1.02]"
+          >
+            {inner}
+          </a>
+        ) : (
+          inner
+        )}
+      </li>
+    );
+  };
 
   return (
-    <aside
-      className={`${shellClass} border border-border bg-card/90`}
-      aria-label="Sponsorer"
-    >
-
+    <aside className={`${shellClass} border border-border bg-card/90`} aria-label="Sponsorer">
       <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Sponsor
+        {list.length > 1 ? "Sponsorer" : "Sponsor"}
       </p>
-      {current.website_url ? (
-        <a
-          href={current.website_url}
-          target="_blank"
-          rel="noopener noreferrer sponsored"
-          className="block rounded transition-transform hover:scale-[1.02]"
-        >
-          {inner}
-        </a>
-      ) : (
-        inner
-      )}
-      {list.length > 1 && (
-        <div className="flex items-center justify-center gap-1 pt-1">
-          {list.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              aria-label={`Vis ${s.name}`}
-              onClick={() => setIndex(i)}
-              className={`h-1.5 w-1.5 rounded-full ${i === index ? "bg-primary" : "bg-muted-foreground/40"}`}
-            />
-          ))}
-        </div>
-      )}
+      <ul className="flex w-full flex-col divide-y divide-border">
+        {list.map((s, i) => (
+          <div key={s.id} className={i === 0 ? "pb-3" : "py-3 last:pb-0"}>
+            {renderSponsor(s)}
+          </div>
+        ))}
+      </ul>
     </aside>
   );
 }
