@@ -2057,6 +2057,81 @@ export type Database = {
           },
         ]
       }
+      sponsor_settings: {
+        Row: {
+          enabled: boolean
+          id: number
+          position: string
+          rotate_seconds: number
+          show_name: boolean
+          show_on_mobile: boolean
+          updated_at: string
+        }
+        Insert: {
+          enabled?: boolean
+          id?: number
+          position?: string
+          rotate_seconds?: number
+          show_name?: boolean
+          show_on_mobile?: boolean
+          updated_at?: string
+        }
+        Update: {
+          enabled?: boolean
+          id?: number
+          position?: string
+          rotate_seconds?: number
+          show_name?: boolean
+          show_on_mobile?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sponsors: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string | null
+          description: string | null
+          ends_at: string | null
+          id: string
+          logo_path: string | null
+          name: string
+          sort_order: number
+          starts_at: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          logo_path?: string | null
+          name: string
+          sort_order?: number
+          starts_at?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          logo_path?: string | null
+          name?: string
+          sort_order?: number
+          starts_at?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string

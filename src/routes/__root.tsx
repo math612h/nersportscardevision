@@ -16,6 +16,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { AppHeader } from "@/components/AppHeader";
 import { BackBar } from "@/components/BackBar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
+import { SponsorBar } from "@/components/SponsorBar";
 import { Toaster } from "@/components/ui/sonner";
 import { SplashScreen } from "@/components/SplashScreen";
 import "@/i18n";
@@ -182,6 +183,7 @@ function Shell() {
       <main className="mx-auto max-w-6xl px-4 py-6 pb-24 sm:pb-6">
         <Outlet />
       </main>
+      <SponsorBar />
       <MobileBottomNav />
     </div>
   );
