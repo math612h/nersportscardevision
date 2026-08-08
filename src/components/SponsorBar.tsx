@@ -103,19 +103,20 @@ export function SponsorBar() {
 
   if (!settings?.enabled) return null;
 
-  const sideClass = settings.position === "left" ? "left-2" : "right-2";
+  const sideClass = settings.position === "right" ? "right-3" : "left-3";
   const mobileClass = settings.show_on_mobile ? "" : "hidden xl:flex";
+  const shellClass = `fixed top-24 z-30 w-44 ${sideClass} ${mobileClass} h-[70vh] max-h-[860px] flex-col items-center justify-center gap-4 rounded-xl p-4 shadow-lg backdrop-blur`;
 
   if (list.length === 0) {
     return (
       <aside
-        className={`fixed top-24 z-30 w-40 ${sideClass} ${mobileClass} flex-col gap-2 rounded-lg border border-dashed border-border bg-card/60 p-3 shadow-lg backdrop-blur`}
+        className={`${shellClass} border border-dashed border-border bg-card/60`}
         aria-label="Sponsorplads"
       >
         <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           Sponsor
         </p>
-        <div className="flex h-24 w-full items-center justify-center rounded bg-muted/50 text-[11px] text-muted-foreground">
+        <div className="flex flex-1 w-full items-center justify-center rounded-lg bg-muted/40 text-[11px] text-muted-foreground">
           Ledig plads
         </div>
         <p className="text-center text-[11px] leading-snug text-muted-foreground">
@@ -124,6 +125,7 @@ export function SponsorBar() {
       </aside>
     );
   }
+
 
   const current = list[index % list.length];
   if (!current) return null;
