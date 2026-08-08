@@ -969,6 +969,8 @@ export function LeagueFormWizard({
                 onAt={setCarLockAt}
               />
               <DriverAidsEditor value={eventSettings} onChange={setEventSettings} />
+              <PrizesEditor value={eventSettings} onChange={setEventSettings} />
+
             </div>
           )}
 
