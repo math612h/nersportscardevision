@@ -2773,6 +2773,7 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      is_steward: { Args: { _user_id: string }; Returns: boolean }
       league_is_active: { Args: { _league_id: string }; Returns: boolean }
       log_audit: {
         Args: {
@@ -2855,7 +2856,7 @@ export type Database = {
       user_locked_team: { Args: { _user_id: string }; Returns: string }
     }
     Enums: {
-      app_role: "admin" | "racer" | "guest" | "coach"
+      app_role: "admin" | "racer" | "guest" | "coach" | "steward"
       coaching_booking_status:
         | "pending"
         | "confirmed"
@@ -3008,7 +3009,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "racer", "guest", "coach"],
+      app_role: ["admin", "racer", "guest", "coach", "steward"],
       coaching_booking_status: [
         "pending",
         "confirmed",

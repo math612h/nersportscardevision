@@ -71,6 +71,7 @@ import { Route as AuthenticatedCoachingRateBookingIdRouteImport } from './routes
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
 import { Route as AuthenticatedAdminAdminSponsorerRouteImport } from './routes/_authenticated._admin.admin.sponsorer'
+import { Route as AuthenticatedAdminAdminRollerRouteImport } from './routes/_authenticated._admin.admin.roller'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminPartnerfordeleRouteImport } from './routes/_authenticated._admin.admin.partnerfordele'
 import { Route as AuthenticatedAdminAdminOverhalingerRouteImport } from './routes/_authenticated._admin.admin.overhalinger'
@@ -438,6 +439,12 @@ const AuthenticatedAdminAdminSponsorerRoute =
     path: '/admin/sponsorer',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminRollerRoute =
+  AuthenticatedAdminAdminRollerRouteImport.update({
+    id: '/admin/roller',
+    path: '/admin/roller',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminProtestsRoute =
   AuthenticatedAdminAdminProtestsRouteImport.update({
     id: '/admin/protests',
@@ -662,6 +669,7 @@ export interface FileRoutesByFullPath {
   '/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
@@ -750,6 +758,7 @@ export interface FileRoutesByTo {
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
+  '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
@@ -843,6 +852,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/_authenticated/_admin/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/_authenticated/_admin/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/_authenticated/_admin/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
@@ -935,6 +945,7 @@ export interface FileRouteTypes {
     | '/admin/overhalinger'
     | '/admin/partnerfordele'
     | '/admin/protests'
+    | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
@@ -1023,6 +1034,7 @@ export interface FileRouteTypes {
     | '/admin/nyhedsbrev'
     | '/admin/overhalinger'
     | '/admin/partnerfordele'
+    | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
     | '/beskeder/gruppe/$groupId'
@@ -1115,6 +1127,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/overhalinger'
     | '/_authenticated/_admin/admin/partnerfordele'
     | '/_authenticated/_admin/admin/protests'
+    | '/_authenticated/_admin/admin/roller'
     | '/_authenticated/_admin/admin/sponsorer'
     | '/_authenticated/_admin/admin/storage'
     | '/_authenticated/beskeder/gruppe/$groupId'
@@ -1630,6 +1643,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminSponsorerRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/roller': {
+      id: '/_authenticated/_admin/admin/roller'
+      path: '/admin/roller'
+      fullPath: '/admin/roller'
+      preLoaderRoute: typeof AuthenticatedAdminAdminRollerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/protests': {
       id: '/_authenticated/_admin/admin/protests'
       path: '/admin/protests'
@@ -1890,6 +1910,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminOverhalingerRoute: typeof AuthenticatedAdminAdminOverhalingerRoute
   AuthenticatedAdminAdminPartnerfordeleRoute: typeof AuthenticatedAdminAdminPartnerfordeleRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  AuthenticatedAdminAdminRollerRoute: typeof AuthenticatedAdminAdminRollerRoute
   AuthenticatedAdminAdminSponsorerRoute: typeof AuthenticatedAdminAdminSponsorerRoute
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
@@ -1926,6 +1947,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminAdminPartnerfordeleRoute,
   AuthenticatedAdminAdminProtestsRoute:
     AuthenticatedAdminAdminProtestsRouteWithChildren,
+  AuthenticatedAdminAdminRollerRoute: AuthenticatedAdminAdminRollerRoute,
   AuthenticatedAdminAdminSponsorerRoute: AuthenticatedAdminAdminSponsorerRoute,
   AuthenticatedAdminAdminStorageRoute: AuthenticatedAdminAdminStorageRoute,
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,

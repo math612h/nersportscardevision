@@ -10,6 +10,7 @@ type AuthCtx = {
   isAdmin: boolean;
   isGuest: boolean;
   isCoach: boolean;
+  isSteward: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 };
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthCtx>({
   isAdmin: false,
   isGuest: false,
   isCoach: false,
+  isSteward: false,
   loading: true,
   signOut: async () => {},
 });
@@ -30,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isGuest, setIsGuest] = useState(false);
   const [isCoach, setIsCoach] = useState(false);
+  const [isSteward, setIsSteward] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const qc = useQueryClient();
@@ -47,11 +50,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsAdmin(!!data?.some((r) => r.role === "admin"));
           setIsGuest(!!data?.some((r) => r.role === "guest"));
           setIsCoach(!!data?.some((r) => r.role === "coach"));
+          setIsSteward(!!data?.some((r) => r.role === "steward"));
         }
       } else {
         setIsAdmin(false);
         setIsGuest(false);
         setIsCoach(false);
+        setIsSteward(false);
       }
       if (mounted) setLoading(false);
     };
@@ -71,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, isAdmin, isGuest, isCoach, loading, signOut: async () => { await supabase.auth.signOut(); } }}
+      value={{ user, session, isAdmin, isGuest, isCoach, isSteward, loading, signOut: async () => { await supabase.auth.signOut(); } }}
     >
       {children}
     </AuthContext.Provider>

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/protests/")({
 });
 
 function AdminProtests() {
+  const { isAdmin } = useAuth();
   const { data } = useQuery({
     queryKey: ["protests-admin"],
     queryFn: async () => {
@@ -25,9 +27,11 @@ function AdminProtests() {
 
   return (
     <div className="space-y-4">
-      <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-3 w-3" /> Tilbage til admin
-      </Link>
+      {isAdmin && (
+        <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-3 w-3" /> Tilbage til admin
+        </Link>
+      )}
       <h1 className="text-2xl font-bold">Alle protester</h1>
       {data?.length === 0 && <p className="text-muted-foreground">Ingen protester.</p>}
       <div className="space-y-3">
