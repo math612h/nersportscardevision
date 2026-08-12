@@ -18,7 +18,7 @@ import logoAsset from "@/assets/lmu-logo.png.asset.json";
 
 
 export function AppHeader() {
-  const { user, isAdmin, signOut, loading, isGuest, isCoach } = useAuth();
+  const { user, isAdmin, signOut, loading, isGuest, isCoach, isSteward } = useAuth();
   const { complete: profileComplete, signedIn } = useProfileComplete();
   const { t } = useTranslation();
   const gated = signedIn && !profileComplete && !isGuest;
@@ -36,8 +36,9 @@ export function AppHeader() {
     { to: "/partnerfordele", label: t("nav.partnerBenefits", "Partnerfordele"), icon: <Handshake className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/feedback", label: "Feedback", icon: <MessageSquare className="h-4 w-4" />, show: !isAdminRoute && !!user && !isGuest },
     { to: "/coaching", label: t("nav.coaching", "Coaching"), icon: <GraduationCap className="h-4 w-4" />, show: !isAdminRoute },
-    { to: "/", label: t("nav.participantPage"), icon: <LayoutGrid className="h-4 w-4" />, show: !!isAdmin && isAdminRoute },
+    { to: "/", label: t("nav.participantPage"), icon: <LayoutGrid className="h-4 w-4" />, show: (!!isAdmin || !!isSteward) && isAdminRoute },
     { to: "/admin", label: t("nav.controlPanel"), icon: <Gauge className="h-4 w-4" />, show: !!isAdmin && !isAdminRoute, highlight: true },
+    { to: "/admin/protests", label: "Steward", icon: <Gauge className="h-4 w-4" />, show: !isAdmin && !!isSteward && !isAdminRoute, highlight: true },
   ];
 
   const visibleItems = navItems.filter((i) => i.show && (!gated || (i.to === "/" && i.exact)));
