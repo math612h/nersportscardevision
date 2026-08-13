@@ -1,0 +1,100 @@
+// Pure helpers for the public ICE Cup broadcast endpoint.
+// No database access here so the mapping logic can be unit-tested.
+
+export const ICE_CUP_LEAGUE_NAME_MATCH = "ice cup";
+
+export type BroadcastClass = {
+  id: string;
+  name: string;
+  lmuClass: string;
+};
+
+export const BROADCAST_CLASSES: BroadcastClass[] = [
+  { id: "hypercar", name: "Hypercar", lmuClass: "Hypercar" },
+  { id: "lmp2", name: "LMP2", lmuClass: "LMP2" },
+  { id: "lmgt3-pro", name: "LMGT3 PRO", lmuClass: "LMGT3" },
+  { id: "lmgt3-am", name: "LMGT3 AM", lmuClass: "LMGT3" },
+];
+
+export type RawEntry = {
+  user_id: string;
+  driver_name: string | null;
+  car_number: number | null;
+  car_class: string | null;
+  driver_category: string | null;
+  waitlist: boolean | null;
+  team_id: string | null;
+};
+
+export type BroadcastEntry = {
+  driverId: string;
+  driverName: string;
+  carNumber: string;
+  lmuClass: string;
+  broadcastClass: string;
+  teamId: string | null;
+  teamName: string | null;
+  avatarUrl: string | null;
+};
+
+export function normalizeLmuClass(carClass: string | null | undefined): string | null {
+  const c = (carClass ?? "").trim().toLowerCase();
+  if (!c) return null;
+  if (c.includes("hyper") || c === "lmh" || c === "lmdh") return "Hypercar";
+  if (c.includes("lmp2")) return "LMP2";
+  if (c.includes("gt3")) return "LMGT3";
+  return null;
+}
+
+export function broadcastClassId(
+  lmuClass: string,
+  driverCategory: string | null | undefined,
+): string | null {
+  if (lmuClass === "Hypercar") return "hypercar";
+  if (lmuClass === "LMP2") return "lmp2";
+  if (lmuClass === "LMGT3") {
+    const cat = (driverCategory ?? "").trim().toLowerCase();
+    return cat === "am" || cat.includes("am") ? "lmgt3-am" : "lmgt3-pro";
+  }
+  return null;
+}
+
+/** Only approved, non-waitlisted entries are exposed. */
+export function isPublicEntry(
+  entry: RawEntry,
+  profileApproved: boolean | null | undefined,
+): boolean {
+  return profileApproved === true && entry.waitlist !== true;
+}
+
+export function buildEntries(
+  rows: RawEntry[],
+  ctx: {
+    approvedByUser: Map<string, boolean>;
+    nameByUser: Map<string, string>;
+    avatarByUser: Map<string, string | null>;
+    teamNameById: Map<string, string>;
+  },
+): BroadcastEntry[] {
+  const out: BroadcastEntry[] = [];
+  for (const e of rows) {
+    if (!isPublicEntry(e, ctx.approvedByUser.get(e.user_id))) continue;
+    const lmuClass = normalizeLmuClass(e.car_class);
+    if (!lmuClass) continue;
+    const bc = broadcastClassId(lmuClass, e.driver_category);
+    if (!bc) continue;
+    if (e.car_number == null) continue;
+    out.push({
+      driverId: e.user_id,
+      driverName: ctx.nameByUser.get(e.user_id) || (e.driver_name ?? ""),
+      carNumber: String(e.car_number),
+      lmuClass,
+      broadcastClass: bc,
+      teamId: e.team_id ?? null,
+      teamName: e.team_id ? (ctx.teamNameById.get(e.team_id) ?? null) : null,
+      avatarUrl: ctx.avatarByUser.get(e.user_id) ?? null,
+    });
+  }
+  out.sort((a, b) => Number(a.carNumber) - Number(b.carNumber));
+  return out;
+}
