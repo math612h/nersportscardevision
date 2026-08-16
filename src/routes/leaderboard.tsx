@@ -184,11 +184,27 @@ function LeaderboardPage() {
       }
       const profiles = (allProfiles ?? []) as Array<{ id: string; lmu_name: string | null }>;
 
-      const xmlFiles = Array.from(files).filter((f) => /\.xml$/i.test(f.name));
+      const all = Array.from(files);
+      // Nogle LMU-installationer gemmer resultatfiler uden .xml-endelse (eller med
+      // en anden endelse). Fald derfor tilbage til at sniffe filens indhold.
+      let xmlFiles = all.filter((f) => /\.xml$/i.test(f.name) || /xml/i.test(f.type));
       if (xmlFiles.length === 0) {
-        toast.warning("Ingen XML-filer fundet.");
+        const sniffed: File[] = [];
+        for (const f of all) {
+          if (f.size === 0 || f.size > 20_000_000) continue;
+          if (/\.(zip|rar|7z|png|jpg|jpeg|gif|exe|dll|mp4|avi|dds|ini|dat)$/i.test(f.name)) continue;
+          try {
+            const head = (await f.slice(0, 512).text()).trimStart();
+            if (head.startsWith("<")) sniffed.push(f);
+          } catch { /* ignorér ulæselige filer */ }
+        }
+        xmlFiles = sniffed;
+      }
+      if (xmlFiles.length === 0) {
+        toast.warning(`Ingen resultatfiler fundet (${all.length} fil(er) valgt). Vælg .xml-filerne i Results-mappen.`);
         return;
       }
+
 
       let totalInserted = 0;
       let totalDuplicates = 0;
@@ -322,7 +338,7 @@ function LeaderboardPage() {
             <input
               ref={fileRef}
               type="file"
-              accept=".xml,application/xml,text/xml"
+              accept=".xml,.XML,application/xml,text/xml,*/*"
               multiple
               className="hidden"
               onChange={(e) => {
