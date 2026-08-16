@@ -185,21 +185,13 @@ function LeaderboardPage() {
       const profiles = (allProfiles ?? []) as Array<{ id: string; lmu_name: string | null }>;
 
       const all = Array.from(files);
-      // Nogle LMU-installationer gemmer resultatfiler uden .xml-endelse (eller med
-      // en anden endelse). Fald derfor tilbage til at sniffe filens indhold.
-      let xmlFiles = all.filter((f) => /\.xml$/i.test(f.name) || /xml/i.test(f.type));
-      if (xmlFiles.length === 0) {
-        const sniffed: File[] = [];
-        for (const f of all) {
-          if (f.size === 0 || f.size > 20_000_000) continue;
-          if (/\.(zip|rar|7z|png|jpg|jpeg|gif|exe|dll|mp4|avi|dds|ini|dat)$/i.test(f.name)) continue;
-          try {
-            const head = (await f.slice(0, 512).text()).trimStart();
-            if (head.startsWith("<")) sniffed.push(f);
-          } catch { /* ignorér ulæselige filer */ }
-        }
-        xmlFiles = sniffed;
-      }
+      // Filvælgeren på nogle enheder giver hverken korrekt filendelse eller MIME-type.
+      // Lad derfor LMU-parseren afgøre, om en almindelig tekstfil er et resultat.
+      const xmlFiles = all.filter((f) =>
+        f.size > 0
+        && f.size <= 20_000_000
+        && !/\.(zip|rar|7z|png|jpg|jpeg|webp|gif|exe|dll|mp4|avi|dds)$/i.test(f.name),
+      );
       if (xmlFiles.length === 0) {
         toast.warning(`Ingen resultatfiler fundet (${all.length} fil(er) valgt). Vælg .xml-filerne i Results-mappen.`);
         return;
@@ -284,7 +276,8 @@ function LeaderboardPage() {
       if (totalDuplicates) parts.push(`${totalDuplicates} dublet${totalDuplicates === 1 ? "" : "ter"} sprunget over`);
       if (filesWithoutMe) parts.push(`${filesWithoutMe} uden dig`);
       if (filesFailed) parts.push(`${filesFailed} fejlede`);
-      toast.success(parts.join(" · "));
+      if (filesProcessed === 0) toast.error(parts.join(" · "));
+      else toast.success(parts.join(" · "));
       qc.invalidateQueries({ queryKey: ["leaderboard"] });
     } catch (e: any) {
       toast.error(e.message ?? "Kunne ikke læse filerne");
