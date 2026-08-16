@@ -338,7 +338,7 @@ function LeaderboardPage() {
             <input
               ref={fileRef}
               type="file"
-              accept=".xml,application/xml,text/xml"
+              accept=".xml,.XML,application/xml,text/xml,*/*"
               multiple
               className="hidden"
               onChange={(e) => {
