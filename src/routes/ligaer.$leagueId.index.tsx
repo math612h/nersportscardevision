@@ -1314,11 +1314,28 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const alreadySignedUp = !!user && (signups ?? []).some((s) => s.user_id === user.id);
   const signupOpen = !signupOpensAt ? false : new Date(signupOpensAt).getTime() <= Date.now();
 
-  // (Tidligere auto-kategori-filter er fjernet — alle klasser er åbne for alle.
-  //  Admin opdeler manuelt via "Opdel feltet i Pro & Am"-knappen når feltet er fyldt.)
-  const filteredConfigs = configs;
+  // Kategorier (Pro/Am) vælges ikke af brugeren — algoritmen foreslår automatisk.
+  const carClasses = useMemo(
+    () => Array.from(new Set(configs.map((c) => c.car_class))),
+    [configs],
+  );
+  const classConfigs = useMemo(
+    () => configs.filter((c) => c.car_class === carClassSel),
+    [configs, carClassSel],
+  );
+  const isSplit = classConfigs.length > 1;
 
-  const selected = configs[Number(cfgIdx)];
+  const { data: suggestion, isFetching: suggesting } = useQuery({
+    queryKey: ["signup-category-suggestion", leagueId, carClassSel, user?.id],
+    enabled: !!user && !!carClassSel && isSplit && open,
+    staleTime: 60_000,
+    queryFn: async () => await suggestCategoryFn({ data: { leagueId, carClass: carClassSel } }),
+  });
+
+  const selected = isSplit
+    ? classConfigs.find((c) => c.driver_category === suggestion?.category) ?? undefined
+    : classConfigs[0];
+
 
   const { taken, available } = useMemo(() => {
     if (!selected) return { taken: [] as number[], available: [] as number[] };
