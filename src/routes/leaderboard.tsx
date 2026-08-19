@@ -88,6 +88,7 @@ function LeaderboardPage() {
   const folderRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const fetchLeaderboard = useServerFn(getLeaderboardRows);
+  const ensureTrackImagesFn = useServerFn(ensureTrackImages);
 
 
 
