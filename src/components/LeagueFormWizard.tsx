@@ -341,9 +341,9 @@ function ClassConfigsEditor({
                 onChange={(e) => {
                   const val = e.target.value === "" ? undefined : Number(e.target.value);
                   // Pladser gælder for hele bilklassen — hold Pro/Am synkroniseret
-                  configs.forEach((cc, idx) => {
-                    if (cc.car_class === c.car_class) update(idx, { max_drivers: val });
-                  });
+                  setConfigs((prev) =>
+                    prev.map((cc) => (cc.car_class === c.car_class ? { ...cc, max_drivers: val } : cc)),
+                  );
                 }}
               />
               <p className="mt-1 text-[11px] text-muted-foreground">
