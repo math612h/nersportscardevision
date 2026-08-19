@@ -139,6 +139,7 @@ function AdminEntries() {
               const catKeys = Object.keys(cats);
               const totalInClass = catKeys.reduce((sum, k) => sum + cats[k].length, 0);
               const canSplit = catKeys.length === 1 && totalInClass >= 2 && div === "Liga-tilmelding";
+              const canMerge = catKeys.length > 1 && div === "Liga-tilmelding";
               return (
               <div key={cls}>
                 <div className="flex items-center justify-between gap-2">
