@@ -16,6 +16,7 @@ import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
 import { deleteLeagueRaceResults, setResultsConfirmed } from "@/lib/league-results.functions";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
+import { classCap } from "@/lib/class-capacity";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/stillinger")({
   component: AdminStandings,
@@ -998,8 +999,11 @@ async function reconcileWaitlist({
         stillOnGrid.push(e);
       }
     }
-    const cap = cfg.max_drivers ?? Infinity;
-    const room = Math.max(0, cap - stillOnGrid.length);
+    const cap = classCap(configs as any, cfg.car_class) ?? Infinity;
+    const classOnGrid = entries.filter(
+      (e) => e.car_class === cfg.car_class && !e.waitlist && !updates.some((u) => u.id === e.id && u.waitlist),
+    ).length;
+    const room = Math.max(0, cap - classOnGrid);
     const promotions = Math.min(openSlots, room, wait.length);
     for (let i = 0; i < promotions; i++) {
       updates.push({ id: wait[i].id, waitlist: false });

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CARS_BY_CLASS } from "@/lib/lmu-cars";
+import { classCap } from "@/lib/class-capacity";
 
 const SITE = "https://lmudanmark.dk";
 
@@ -118,8 +119,7 @@ export const setProfileApproval = createServerFn({ method: "POST" })
           .maybeSingle();
         const configs: Array<{ car_class: string; driver_category: string; max_drivers?: number | null }> =
           Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
-        const cfg = configs.find((c) => c.car_class === entry.car_class && c.driver_category === entry.driver_category);
-        const cap = cfg?.max_drivers ?? null;
+        const cap = classCap(configs, entry.car_class);
 
 
         const { data: siblings } = await supabaseAdmin
@@ -127,8 +127,7 @@ export const setProfileApproval = createServerFn({ method: "POST" })
           .select("id,waitlist")
           .eq("league_id", leagueId)
           .is("division_id", null)
-          .eq("car_class", entry.car_class)
-          .eq("driver_category", entry.driver_category);
+          .eq("car_class", entry.car_class);
         const gridCount = (siblings ?? []).filter((s) => !s.waitlist).length;
 
         if (cap == null || gridCount < cap) {
