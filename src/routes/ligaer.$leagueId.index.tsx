@@ -1508,24 +1508,41 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
           </div>
           <div>
             <Label>Bilklasse</Label>
-            <Select value={cfgIdx} onValueChange={(v) => { setCfgIdx(v); setCarNumber(null); setCarModel(""); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select value={carClassSel} onValueChange={(v) => { setCarClassSel(v); setCarNumber(null); setCarModel(""); }}>
+              <SelectTrigger><SelectValue placeholder="Vælg klasse" /></SelectTrigger>
               <SelectContent>
-                {filteredConfigs.map((c) => {
-                  const i = configs.indexOf(c);
-                  const col = classColor(c.car_class);
+                {carClasses.map((cls) => {
+                  const col = classColor(cls);
                   return (
-                    <SelectItem key={i} value={String(i)}>
+                    <SelectItem key={cls} value={cls}>
                       <span className="inline-flex items-center gap-2">
                         <span className={`h-2 w-2 rounded-full ${col.dot}`} />
-                        {c.car_class} · {c.driver_category} (#{c.number_from}-{c.number_to})
+                        {cls}
                       </span>
                     </SelectItem>
                   );
                 })}
               </SelectContent>
             </Select>
+            {isSplit && (
+              <div className="mt-2 rounded-md border border-border bg-muted/40 p-2 text-xs">
+                {suggesting || !suggestion?.category ? (
+                  <span className="text-muted-foreground">Beregner din kategori…</span>
+                ) : (
+                  <>
+                    <span className="font-medium">Din kategori: {suggestion.category}</span>
+                    <span className="ml-1 text-muted-foreground">
+                      — tildeles automatisk og kan ikke ændres. {suggestion.reason}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+            {selected && !isSplit && selected.driver_category && (
+              <p className="mt-1 text-xs text-muted-foreground">Kategori: {selected.driver_category}</p>
+            )}
           </div>
+
           {needsMoreTimes ? (
             <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-4">
               <div className="flex items-start gap-2">
