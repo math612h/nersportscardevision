@@ -1282,13 +1282,15 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const assignDiscord = useServerFn(assignDiscordRoleForEntry);
   const checkGuild = useServerFn(checkDiscordGuildMembership);
   const ackFn = useServerFn(acknowledgeLeagueRules);
+  const suggestCategoryFn = useServerFn(suggestSignupCategory);
   const [open, setOpen] = useState(false);
-  const [cfgIdx, setCfgIdx] = useState<string>("0");
+  const [carClassSel, setCarClassSel] = useState<string>(configs[0]?.car_class ?? "");
   const [carNumber, setCarNumber] = useState<number | null>(null);
   const [teamId, setTeamId] = useState<string>("");
   const [carModel, setCarModel] = useState<string>("");
   const [ackChecked, setAckChecked] = useState(false);
   const { data: myTeams } = useMyTeams(user?.id);
+
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
