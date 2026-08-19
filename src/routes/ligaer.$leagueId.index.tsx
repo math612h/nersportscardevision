@@ -1358,10 +1358,11 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     return { taken: t, available: a };
   }, [signups, selected]);
 
+  // Pladser gælder samlet for bilklassen (ikke pr. Pro/Am-kategori)
   const gridCount = (signups ?? []).filter(
-    (s) => selected && s.car_class === selected.car_class && s.driver_category === selected.driver_category && !s.waitlist,
+    (s) => selected && s.car_class === selected.car_class && !s.waitlist,
   ).length;
-  const cap = selected?.max_drivers ?? null;
+  const cap = classCap(configs, selected?.car_class);
   const isApproved = !!profile?.approved;
   const { isAdmin } = useAuth();
   const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);
