@@ -332,18 +332,23 @@ function ClassConfigsEditor({
               />
             </div>
             <div className="col-span-2">
-              <Label className="text-xs">Maks. deltagere</Label>
+              <Label className="text-xs">Maks. deltagere (i alt for klassen)</Label>
               <Input
                 type="number"
                 min={1}
                 value={c.max_drivers ?? ""}
                 placeholder="Ubegrænset"
-                onChange={(e) =>
-                  update(i, {
-                    max_drivers: e.target.value === "" ? undefined : Number(e.target.value),
-                  })
-                }
+                onChange={(e) => {
+                  const val = e.target.value === "" ? undefined : Number(e.target.value);
+                  // Pladser gælder for hele bilklassen — hold Pro/Am synkroniseret
+                  configs.forEach((cc, idx) => {
+                    if (cc.car_class === c.car_class) update(idx, { max_drivers: val });
+                  });
+                }}
               />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Pladserne deles af alle kategorier i klassen (fx Pro + Am).
+              </p>
             </div>
           </div>
           <CarPicker
