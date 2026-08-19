@@ -1,13 +1,14 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, Plus, Trash2, ArrowLeftRight, CheckCircle2, Clock, Split, UserPlus, Search } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, ArrowLeftRight, CheckCircle2, Clock, Split, Merge, UserPlus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { setProfileApproval } from "@/lib/leagues.functions";
 import { splitClassIntoProAm } from "@/lib/league-split.functions";
+import { mergeClassCategories } from "@/lib/league-merge.functions";
 import { searchUsersForAdmin, adminAddEntryToLeague, adminPromoteWaitlistEntry } from "@/lib/league-admin-entries.functions";
 import { adminDeleteEntryWithRoleCleanup } from "@/lib/discord-sync.functions";
 import { CAR_CLASSES, DRIVER_CATEGORIES } from "@/lib/tracks";
@@ -138,11 +139,15 @@ function AdminEntries() {
               const catKeys = Object.keys(cats);
               const totalInClass = catKeys.reduce((sum, k) => sum + cats[k].length, 0);
               const canSplit = catKeys.length === 1 && totalInClass >= 2 && div === "Liga-tilmelding";
+              const canMerge = catKeys.length > 1 && div === "Liga-tilmelding";
               return (
               <div key={cls}>
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium">{cls} <span className="text-xs text-muted-foreground">({totalInClass})</span></p>
-                  {canSplit && <SplitClassButton leagueId={leagueId} carClass={cls} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />}
+                  <div className="flex items-center gap-1">
+                    {canSplit && <SplitClassButton leagueId={leagueId} carClass={cls} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />}
+                    {canMerge && <MergeClassButton leagueId={leagueId} carClass={cls} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />}
+                  </div>
                 </div>
                 {Object.entries(cats).map(([cat, list]) => {
                   const sorted = [...list].sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
@@ -448,39 +453,110 @@ function MoveEntryDialog({ entry, leagueId, allEntries, onDone }: { entry: Entry
 function SplitClassButton({ leagueId, carClass, onDone }: { leagueId: string; carClass: string; onDone: () => void }) {
   const [open, setOpen] = useState(false);
   const splitFn = useServerFn(splitClassIntoProAm);
+
+  const { data: preview, isFetching, error } = useQuery({
+    queryKey: ["split-preview", leagueId, carClass, open],
+    enabled: open,
+    staleTime: 0,
+    queryFn: async () => splitFn({ data: { leagueId, carClass, dryRun: true } }),
+  });
+
   const mut = useMutation({
     mutationFn: async () => splitFn({ data: { leagueId, carClass } }),
     onSuccess: (res) => {
-      toast.success(`Opdelt: ${res.proCount} i Pro, ${res.amCount} i Am`);
+      toast.success(`Publiceret: ${res.proCount} i Pro, ${res.amCount} i Am`);
+      setOpen(false);
+      onDone();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const renderList = (title: string, list: Array<{ user_id: string; driver_name: string; score: number }>) => (
+    <div className="rounded-md border border-border">
+      <div className="border-b border-border bg-muted/40 px-3 py-1.5 text-xs font-semibold">
+        {title} <span className="text-muted-foreground">({list.length})</span>
+      </div>
+      <ol className="max-h-56 overflow-y-auto p-2 text-sm">
+        {list.map((d, i) => (
+          <li key={d.user_id} className="flex items-center justify-between gap-2 rounded px-1.5 py-1 odd:bg-muted/30">
+            <span className="truncate"><span className="text-muted-foreground mr-1.5">{i + 1}.</span>{d.driver_name}</span>
+            <span className="shrink-0 font-mono text-xs text-muted-foreground">{d.score}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
+          <Split className="h-3.5 w-3.5" /> Opdel i Pro & Am
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader><DialogTitle>Forhåndsvisning: {carClass} opdelt i Pro & Am</DialogTitle></DialogHeader>
+        <p className="text-xs text-muted-foreground">
+          Fordelingen beregnes ud fra ELO-rating (70%) og leaderboard-tider (30%). Intet er gemt endnu — tryk "Publicér opdeling"
+          for at gøre den synlig på ligasiden.
+        </p>
+        {isFetching && <p className="text-sm text-muted-foreground">Beregner fordeling…</p>}
+        {error && <p className="text-sm text-destructive">{(error as Error).message}</p>}
+        {preview && (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {renderList("Pro", preview.proDrivers)}
+            {renderList("Am", preview.amDrivers)}
+          </div>
+        )}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={mut.isPending}>Annullér</Button>
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending || !preview}>
+            {mut.isPending ? "Publicerer…" : "Publicér opdeling"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function MergeClassButton({ leagueId, carClass, onDone }: { leagueId: string; carClass: string; onDone: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState<string>("Open");
+  const mergeFn = useServerFn(mergeClassCategories);
+  const mut = useMutation({
+    mutationFn: async () => mergeFn({ data: { leagueId, carClass, targetCategory: category as "Pro" | "Am" | "Open" } }),
+    onSuccess: (res) => {
+      toast.success(`Samlet: ${res.moved} kørere i ${carClass} · ${res.category}`);
       setOpen(false);
       onDone();
     },
     onError: (e: Error) => toast.error(e.message),
   });
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-7 gap-1 text-xs">
-          <Split className="h-3.5 w-3.5" /> Opdel i Pro & Am
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs">
+          <Merge className="h-3.5 w-3.5" /> Saml klasse
         </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Opdel {carClass} i Pro & Am?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Alle tilmeldte i {carClass} fordeles automatisk i Pro og Am baseret på ELO-rating (70%) og leaderboard-tider (30%).
-            Algoritmen prioriterer ens niveau frem for lige store grupper, så størrelserne kan variere.
-            Du kan flytte enkelte kørere bagefter via "Flyt"-knappen.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={mut.isPending}>Annullér</AlertDialogCancel>
-          <AlertDialogAction onClick={(ev) => { ev.preventDefault(); mut.mutate(); }} disabled={mut.isPending}>
-            {mut.isPending ? "Opdeler…" : "Opdel nu"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader><DialogTitle>Saml {carClass} til én klasse</DialogTitle></DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Alle kørere i {carClass} flyttes til én fælles kategori, og opdelingen fjernes fra ligasiden.
+        </p>
+        <div>
+          <Label>Kategori</Label>
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>{DRIVER_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+          </Select>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={mut.isPending}>Annullér</Button>
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending}>{mut.isPending ? "Samler…" : "Saml klasse"}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

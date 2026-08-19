@@ -5,10 +5,12 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const schema = z.object({
   leagueId: z.string().uuid(),
   carClass: z.string().min(1),
+  dryRun: z.boolean().optional(),
 });
 
 export type SplitResult = {
   ok: true;
+  preview: boolean;
   total: number;
   proCount: number;
   amCount: number;
@@ -149,6 +151,18 @@ export const splitClassIntoProAm = createServerFn({ method: "POST" })
     const proIds = pro.map((p) => p.id);
     const amIds = am.map((p) => p.id);
 
+    const buildResult = (preview: boolean): SplitResult => ({
+      ok: true,
+      preview,
+      total: n,
+      proCount: pro.length,
+      amCount: am.length,
+      proDrivers: pro.map((p) => ({ user_id: p.user_id, driver_name: p.driver_name, score: Math.round(p.score * 10) / 10 })),
+      amDrivers: am.map((p) => ({ user_id: p.user_id, driver_name: p.driver_name, score: Math.round(p.score * 10) / 10 })),
+    });
+
+    if (data.dryRun) return buildResult(true);
+
     if (proIds.length > 0) {
       const { error } = await supabaseAdmin
         .from("entries")
@@ -178,12 +192,5 @@ export const splitClassIntoProAm = createServerFn({ method: "POST" })
       .eq("id", data.leagueId);
     if (updErr) throw new Error(updErr.message);
 
-    return {
-      ok: true,
-      total: n,
-      proCount: pro.length,
-      amCount: am.length,
-      proDrivers: pro.map((p) => ({ user_id: p.user_id, driver_name: p.driver_name, score: Math.round(p.score * 10) / 10 })),
-      amDrivers: am.map((p) => ({ user_id: p.user_id, driver_name: p.driver_name, score: Math.round(p.score * 10) / 10 })),
-    };
+    return buildResult(false);
   });
