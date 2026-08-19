@@ -150,6 +150,18 @@ export const splitClassIntoProAm = createServerFn({ method: "POST" })
     const proIds = pro.map((p) => p.id);
     const amIds = am.map((p) => p.id);
 
+    const buildResult = (preview: boolean): SplitResult => ({
+      ok: true,
+      preview,
+      total: n,
+      proCount: pro.length,
+      amCount: am.length,
+      proDrivers: pro.map((p) => ({ user_id: p.user_id, driver_name: p.driver_name, score: Math.round(p.score * 10) / 10 })),
+      amDrivers: am.map((p) => ({ user_id: p.user_id, driver_name: p.driver_name, score: Math.round(p.score * 10) / 10 })),
+    });
+
+    if (data.dryRun) return buildResult(true);
+
     if (proIds.length > 0) {
       const { error } = await supabaseAdmin
         .from("entries")
