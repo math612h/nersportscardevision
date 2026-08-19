@@ -12,6 +12,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { leaveLeague, updateMyLeagueEntry } from "@/lib/leagues.functions";
 import { assignDiscordRoleForEntry, removeDiscordRoleForEntry } from "@/lib/discord.functions";
+import { suggestSignupCategory } from "@/lib/signup-category.functions";
+
 import { checkDiscordGuildMembership } from "@/lib/discord-guild.functions";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1282,13 +1284,15 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const assignDiscord = useServerFn(assignDiscordRoleForEntry);
   const checkGuild = useServerFn(checkDiscordGuildMembership);
   const ackFn = useServerFn(acknowledgeLeagueRules);
+  const suggestCategoryFn = useServerFn(suggestSignupCategory);
   const [open, setOpen] = useState(false);
-  const [cfgIdx, setCfgIdx] = useState<string>("0");
+  const [carClassSel, setCarClassSel] = useState<string>(configs[0]?.car_class ?? "");
   const [carNumber, setCarNumber] = useState<number | null>(null);
   const [teamId, setTeamId] = useState<string>("");
   const [carModel, setCarModel] = useState<string>("");
   const [ackChecked, setAckChecked] = useState(false);
   const { data: myTeams } = useMyTeams(user?.id);
+
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -1312,11 +1316,28 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const alreadySignedUp = !!user && (signups ?? []).some((s) => s.user_id === user.id);
   const signupOpen = !signupOpensAt ? false : new Date(signupOpensAt).getTime() <= Date.now();
 
-  // (Tidligere auto-kategori-filter er fjernet — alle klasser er åbne for alle.
-  //  Admin opdeler manuelt via "Opdel feltet i Pro & Am"-knappen når feltet er fyldt.)
-  const filteredConfigs = configs;
+  // Kategorier (Pro/Am) vælges ikke af brugeren — algoritmen foreslår automatisk.
+  const carClasses = useMemo(
+    () => Array.from(new Set(configs.map((c) => c.car_class))),
+    [configs],
+  );
+  const classConfigs = useMemo(
+    () => configs.filter((c) => c.car_class === carClassSel),
+    [configs, carClassSel],
+  );
+  const isSplit = classConfigs.length > 1;
 
-  const selected = configs[Number(cfgIdx)];
+  const { data: suggestion, isFetching: suggesting } = useQuery({
+    queryKey: ["signup-category-suggestion", leagueId, carClassSel, user?.id],
+    enabled: !!user && !!carClassSel && isSplit && open,
+    staleTime: 60_000,
+    queryFn: async () => await suggestCategoryFn({ data: { leagueId, carClass: carClassSel } }),
+  });
+
+  const selected = isSplit
+    ? classConfigs.find((c) => c.driver_category === suggestion?.category) ?? undefined
+    : classConfigs[0];
+
 
   const { taken, available } = useMemo(() => {
     if (!selected) return { taken: [] as number[], available: [] as number[] };
@@ -1489,24 +1510,41 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
           </div>
           <div>
             <Label>Bilklasse</Label>
-            <Select value={cfgIdx} onValueChange={(v) => { setCfgIdx(v); setCarNumber(null); setCarModel(""); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <Select value={carClassSel} onValueChange={(v) => { setCarClassSel(v); setCarNumber(null); setCarModel(""); }}>
+              <SelectTrigger><SelectValue placeholder="Vælg klasse" /></SelectTrigger>
               <SelectContent>
-                {filteredConfigs.map((c) => {
-                  const i = configs.indexOf(c);
-                  const col = classColor(c.car_class);
+                {carClasses.map((cls) => {
+                  const col = classColor(cls);
                   return (
-                    <SelectItem key={i} value={String(i)}>
+                    <SelectItem key={cls} value={cls}>
                       <span className="inline-flex items-center gap-2">
                         <span className={`h-2 w-2 rounded-full ${col.dot}`} />
-                        {c.car_class} · {c.driver_category} (#{c.number_from}-{c.number_to})
+                        {cls}
                       </span>
                     </SelectItem>
                   );
                 })}
               </SelectContent>
             </Select>
+            {isSplit && (
+              <div className="mt-2 rounded-md border border-border bg-muted/40 p-2 text-xs">
+                {suggesting || !suggestion?.category ? (
+                  <span className="text-muted-foreground">Beregner din kategori…</span>
+                ) : (
+                  <>
+                    <span className="font-medium">Din kategori: {suggestion.category}</span>
+                    <span className="ml-1 text-muted-foreground">
+                      — tildeles automatisk og kan ikke ændres. {suggestion.reason}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+            {selected && !isSplit && selected.driver_category && (
+              <p className="mt-1 text-xs text-muted-foreground">Kategori: {selected.driver_category}</p>
+            )}
           </div>
+
           {needsMoreTimes ? (
             <div className="space-y-3 rounded-md border border-amber-500/40 bg-amber-500/5 p-4">
               <div className="flex items-start gap-2">
