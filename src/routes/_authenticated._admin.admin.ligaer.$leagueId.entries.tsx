@@ -144,7 +144,10 @@ function AdminEntries() {
               <div key={cls}>
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-medium">{cls} <span className="text-xs text-muted-foreground">({totalInClass})</span></p>
-                  {canSplit && <SplitClassButton leagueId={leagueId} carClass={cls} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />}
+                  <div className="flex items-center gap-1">
+                    {canSplit && <SplitClassButton leagueId={leagueId} carClass={cls} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />}
+                    {canMerge && <MergeClassButton leagueId={leagueId} carClass={cls} onDone={() => qc.invalidateQueries({ queryKey: ["entries-admin", leagueId] })} />}
+                  </div>
                 </div>
                 {Object.entries(cats).map(([cat, list]) => {
                   const sorted = [...list].sort((a, b) => +new Date(a.created_at) - +new Date(b.created_at));
