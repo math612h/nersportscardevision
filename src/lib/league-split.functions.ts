@@ -5,6 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const schema = z.object({
   leagueId: z.string().uuid(),
   carClass: z.string().min(1),
+  dryRun: z.boolean().optional(),
 });
 
 export type SplitResult = {
