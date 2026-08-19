@@ -112,11 +112,26 @@ const TRACK_IMAGE_RULES: { match: string; file: string }[] = [
   { match: "barcelona", file: "barcelona.png" },
 ];
 
+/** Filnavn-slug for en bane, fx "Laguna Seca" -> "laguna-seca". */
+export function trackImageSlug(trackName?: string | null): string | null {
+  const raw = (trackName ?? "").trim();
+  if (!raw) return null;
+  const slug = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || null;
+}
+
 export function getTrackImageFile(trackName?: string | null): string | null {
   if (!trackName) return null;
   const n = trackName.toLowerCase();
   for (const r of TRACK_IMAGE_RULES) if (n.includes(r.match)) return r.file;
-  return null;
+  // Nye baner uden regel: brug automatisk slug-navnet i track-images-bucketen
+  const slug = trackImageSlug(normalizeTrackName(trackName));
+  return slug ? `${slug}.png` : null;
 }
 
 // LMU has started writing full official track names in the result XML
