@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ensureTrackImages } from "@/lib/track-images.functions";
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity, expandDriverStints } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
@@ -204,6 +205,7 @@ function LeaderboardPage() {
       let filesProcessed = 0;
       let filesFailed = 0;
       let filesWithoutMe = 0;
+      const discoveredTracks = new Set<string>();
 
       for (const file of xmlFiles) {
         try {
@@ -220,6 +222,7 @@ function LeaderboardPage() {
               if (s >= 0.85 && s > bestScore) { bestScore = s; me = d; }
             }
           }
+          if (parsed.track) discoveredTracks.add(parsed.track);
           if (!me) { filesWithoutMe += 1; continue; }
 
           const rows = parsed.drivers
@@ -267,6 +270,15 @@ function LeaderboardPage() {
         } catch (err) {
           console.warn("[leaderboard upload]", file.name, err);
           filesFailed += 1;
+        }
+      }
+
+      // Registrér evt. nye baner i track-images, så admins kan tildele et billede
+      if (discoveredTracks.size > 0) {
+        try {
+          await ensureTrackImagesFn({ data: { tracks: Array.from(discoveredTracks).slice(0, 50) } });
+        } catch (err) {
+          console.warn("[track-images]", err);
         }
       }
 
