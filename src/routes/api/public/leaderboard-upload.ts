@@ -125,6 +125,13 @@ export const Route = createFileRoute("/api/public/leaderboard-upload")({
             insertedCount = ins?.length ?? 0;
           }
 
+          try {
+            const { ensureTrackImagePlaceholders } = await import("@/lib/track-images.server");
+            await ensureTrackImagePlaceholders([parsed.track]);
+          } catch (err) {
+            console.warn("[track-images]", err);
+          }
+
           await supabaseAdmin
             .from("device_tokens")
             .update({ last_used_at: new Date().toISOString() })

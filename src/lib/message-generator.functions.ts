@@ -6,6 +6,7 @@ import {
   buildCountdownMessage,
 } from "./league-announce.functions";
 import { getTrackImageFile } from "./tracks";
+import { classCap, uniqueCarClasses } from "@/lib/class-capacity";
 
 const SITE_URL = "https://www.lmudanmark.dk";
 
@@ -147,19 +148,17 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
       );
 
       const seatLines: string[] = [];
-      for (const c of classConfigs) {
-        if (!c.car_class) continue;
-        const cap = typeof c.max_drivers === "number" ? c.max_drivers : null;
+      for (const carClass of uniqueCarClasses(classConfigs as any)) {
+        const cap = classCap(classConfigs as any, carClass);
         if (cap === null) continue;
-        const k = `${c.car_class}|${c.driver_category ?? ""}`;
-        const taken = counts.get(k) ?? 0;
+        let taken = 0;
+        for (const [k, v] of counts) if (k.split("|")[0] === carClass) taken += v;
         const remaining = Math.max(0, cap - taken);
-        const cat = c.driver_category ? ` (${c.driver_category})` : "";
         if (remaining <= 0) {
-          seatLines.push(`• ${c.car_class}${cat} — ${B}FULD${B} ✅`);
+          seatLines.push(`• ${carClass} — ${B}FULD${B} ✅`);
         } else {
           seatLines.push(
-            `• ${c.car_class}${cat} — ${B}${remaining} plads${remaining === 1 ? "" : "er"} tilbage${B} (${taken}/${cap})`,
+            `• ${carClass} — ${B}${remaining} plads${remaining === 1 ? "" : "er"} tilbage${B} (${taken}/${cap})`,
           );
         }
       }

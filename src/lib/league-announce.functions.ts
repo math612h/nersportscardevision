@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { classCap, uniqueCarClasses } from "@/lib/class-capacity";
 
 const DISCORD_ANNOUNCE_CHANNEL_ID = "1514985014255943881";
 const DISCORD_MEMBERS_ROLE_ID = "1336326061654278186";
@@ -75,13 +76,15 @@ export function buildSignupOpenMessage(args: {
   classConfigs: Array<{ car_class?: string; driver_category?: string; max_drivers?: number }> | null;
   divisions: Array<{ name: string | null; track: string | null; layout: string | null; race_date: string | null }>;
 }): string {
-  const classLines = (args.classConfigs ?? [])
-    .filter((c) => c?.car_class)
-    .map((c) => {
-      const cat = c.driver_category ? ` (${c.driver_category})` : "";
-      const seats = typeof c.max_drivers === "number" ? ` — **${c.max_drivers} pladser**` : "";
-      return `• ${c.car_class}${cat}${seats}`;
-    });
+  const classLines = uniqueCarClasses(args.classConfigs ?? []).map((cls) => {
+    const cats = (args.classConfigs ?? [])
+      .filter((c) => c.car_class === cls && c.driver_category)
+      .map((c) => c.driver_category as string);
+    const cat = cats.length > 0 ? ` (${Array.from(new Set(cats)).join(" / ")})` : "";
+    const cap = classCap(args.classConfigs ?? [], cls);
+    const seats = cap != null ? ` — **${cap} pladser**` : "";
+    return `• ${cls}${cat}${seats}`;
+  });
   const calendarLines = args.divisions
     .slice()
     .sort(
@@ -127,13 +130,15 @@ export function buildCountdownMessage(args: {
   divisions: Array<{ name: string | null; track: string | null; layout: string | null; race_date: string | null }>;
 }): string {
   const unix = Math.floor(new Date(args.signupOpensAt).getTime() / 1000);
-  const classLines = (args.classConfigs ?? [])
-    .filter((c) => c?.car_class)
-    .map((c) => {
-      const cat = c.driver_category ? ` (${c.driver_category})` : "";
-      const seats = typeof c.max_drivers === "number" ? ` — **${c.max_drivers} pladser**` : "";
-      return `• ${c.car_class}${cat}${seats}`;
-    });
+  const classLines = uniqueCarClasses(args.classConfigs ?? []).map((cls) => {
+    const cats = (args.classConfigs ?? [])
+      .filter((c) => c.car_class === cls && c.driver_category)
+      .map((c) => c.driver_category as string);
+    const cat = cats.length > 0 ? ` (${Array.from(new Set(cats)).join(" / ")})` : "";
+    const cap = classCap(args.classConfigs ?? [], cls);
+    const seats = cap != null ? ` — **${cap} pladser**` : "";
+    return `• ${cls}${cat}${seats}`;
+  });
   const calendarLines = args.divisions
     .slice()
     .sort(

@@ -32,6 +32,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_AID_FIELDS, getTrackImageFile } from "@/lib/tracks";
+import { classCap } from "@/lib/class-capacity";
 import { CARS_BY_CLASS, classColor } from "@/lib/lmu-cars";
 import { Checkbox } from "@/components/ui/checkbox";
 import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
@@ -633,12 +634,17 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
           if (!list || list.length === 0) return null;
           const [cls, cat] = k.split(" · ");
           const cfg = configs.find((c) => c.car_class === cls && c.driver_category === cat);
+          // Pladser er samlet for hele bilklassen — ikke pr. kategori
+          const cap = classCap(configs, cls);
+          const classGrid = data.filter((e) => e.car_class === cls && !e.waitlist).length;
           return (
             <EntryClassCard
               key={k}
               cls={cls}
               cat={cat}
               cfg={cfg}
+              classCapacity={cap}
+              classGridCount={classGrid}
               list={list}
               teamMap={teamMap}
               ratingMap={ratingMap}
@@ -652,10 +658,12 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
   );
 }
 
-function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }: {
+function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, teamMap, ratingMap, approvedMap }: {
   cls: string;
   cat: string;
   cfg: ClassConfig | undefined;
+  classCapacity?: number | null;
+  classGridCount?: number;
   list: Array<{ id: string; user_id: string; driver_name: string; car_class: string; driver_category: string; car_number: number | null; waitlist: boolean; created_at: string; team_id?: string | null; car_model?: string | null }>;
   teamMap?: Record<string, string>;
   ratingMap?: Record<string, { score: number; percentile: number | null }>;
@@ -678,7 +686,7 @@ function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }
           <Badge variant="outline" className="text-[10px]">{cat}</Badge>
         </CardTitle>
         <span className="text-xs text-muted-foreground">
-          {grid.length}{cfg?.max_drivers ? `/${cfg.max_drivers}` : ""} på grid{wait.length > 0 ? ` · ${wait.length} på venteliste` : ""}
+          {grid.length} på grid{classCapacity ? ` · ${classGridCount ?? grid.length}/${classCapacity} i ${cls}` : ""}{wait.length > 0 ? ` · ${wait.length} på venteliste` : ""}
         </span>
       </CardHeader>
       <CardContent className="pt-0 space-y-3">
@@ -1350,10 +1358,11 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     return { taken: t, available: a };
   }, [signups, selected]);
 
+  // Pladser gælder samlet for bilklassen (ikke pr. Pro/Am-kategori)
   const gridCount = (signups ?? []).filter(
-    (s) => selected && s.car_class === selected.car_class && s.driver_category === selected.driver_category && !s.waitlist,
+    (s) => selected && s.car_class === selected.car_class && !s.waitlist,
   ).length;
-  const cap = selected?.max_drivers ?? null;
+  const cap = classCap(configs, selected?.car_class);
   const isApproved = !!profile?.approved;
   const { isAdmin } = useAuth();
   const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);

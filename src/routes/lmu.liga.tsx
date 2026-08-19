@@ -13,6 +13,7 @@ import { classColor } from "@/lib/lmu-cars";
 
 import { cn } from "@/lib/utils";
 import type { ClassConfig } from "@/lib/tracks";
+import { classCap, uniqueCarClasses } from "@/lib/class-capacity";
 
 const LMU_TITLE = "Le Mans Ultimate ligaer & løb — LMU Danmark";
 const LMU_DESC =
@@ -296,13 +297,14 @@ function LeagueCard({
   let totalSlots = 0;
   let takenSlots = 0;
   let hasCap = false;
-  for (const c of cfgs) {
-    if (typeof c.max_drivers === "number" && c.max_drivers > 0) {
-      hasCap = true;
-      totalSlots += c.max_drivers;
-      const taken = entries.filter((e) => !e.waitlist && e.car_class === c.car_class && e.driver_category === c.driver_category).length;
-      takenSlots += Math.min(taken, c.max_drivers);
-    }
+  // Pladser er samlet pr. bilklasse — også når klassen er delt i Pro/Am
+  for (const cls of uniqueCarClasses(cfgs)) {
+    const cap = classCap(cfgs, cls);
+    if (cap == null) continue;
+    hasCap = true;
+    totalSlots += cap;
+    const taken = entries.filter((e) => !e.waitlist && e.car_class === cls).length;
+    takenSlots += Math.min(taken, cap);
   }
   const freeSlots = Math.max(0, totalSlots - takenSlots);
 
