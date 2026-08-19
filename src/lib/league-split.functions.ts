@@ -10,6 +10,7 @@ const schema = z.object({
 
 export type SplitResult = {
   ok: true;
+  preview: boolean;
   total: number;
   proCount: number;
   amCount: number;
