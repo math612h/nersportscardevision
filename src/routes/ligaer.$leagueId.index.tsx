@@ -657,10 +657,12 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
   );
 }
 
-function EntryClassCard({ cls, cat, cfg, list, teamMap, ratingMap, approvedMap }: {
+function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, teamMap, ratingMap, approvedMap }: {
   cls: string;
   cat: string;
   cfg: ClassConfig | undefined;
+  classCapacity?: number | null;
+  classGridCount?: number;
   list: Array<{ id: string; user_id: string; driver_name: string; car_class: string; driver_category: string; car_number: number | null; waitlist: boolean; created_at: string; team_id?: string | null; car_model?: string | null }>;
   teamMap?: Record<string, string>;
   ratingMap?: Record<string, { score: number; percentile: number | null }>;
