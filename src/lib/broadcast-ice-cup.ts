@@ -107,6 +107,8 @@ export function buildEntries(
       teamId: e.team_id ?? null,
       teamName: e.team_id ? (ctx.teamNameById.get(e.team_id) ?? null) : null,
       avatarUrl: ctx.avatarByUser.get(e.user_id) ?? null,
+      ...(bc === "lmgt3-pro" ? { category: "PRO" as const } : {}),
+      ...(bc === "lmgt3-am" ? { category: "AM" as const } : {}),
     });
   }
   out.sort((a, b) => Number(a.carNumber) - Number(b.carNumber));
