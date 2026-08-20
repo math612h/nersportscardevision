@@ -55,6 +55,7 @@ describe("ice-cup broadcast payload", () => {
       "avatarUrl",
       "broadcastClass",
       "carNumber",
+      "category",
       "classId",
       "className",
       "driverId",
