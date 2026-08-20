@@ -42,6 +42,7 @@ export type BroadcastEntry = {
   teamId: string | null;
   teamName: string | null;
   avatarUrl: string | null;
+  category?: "PRO" | "AM";
 };
 
 export function normalizeLmuClass(carClass: string | null | undefined): string | null {
