@@ -35,15 +35,26 @@ export const getBriefingToken = createServerFn({ method: "POST" })
 
     // Only enrolled, non-waitlist drivers (or admins) may join a briefing room
     if (!admin) {
-      const { data: entry } = await supabase
-        .from("entries")
-        .select("id")
-        .eq("division_id", data.divisionId)
-        .eq("user_id", userId)
-        .eq("waitlist", false)
+      const { data: division } = await supabase
+        .from("divisions")
+        .select("league_id")
+        .eq("id", data.divisionId)
         .maybeSingle();
-      if (!entry) throw new Error("Du er ikke tilmeldt denne afdeling.");
+      if (!division) throw new Error("Afdelingen findes ikke.");
+
+      // Entries are league-scoped; division_id may be null on most entries
+      const { data: entries } = await supabase
+        .from("entries")
+        .select("id, division_id")
+        .eq("league_id", division.league_id)
+        .eq("user_id", userId)
+        .eq("waitlist", false);
+      const enrolled = (entries ?? []).some(
+        (e: { division_id: string | null }) => !e.division_id || e.division_id === data.divisionId,
+      );
+      if (!enrolled) throw new Error("Du er ikke tilmeldt denne afdeling.");
     }
+
 
     // Fetch display info for the token (name + avatar)
     const { data: profile } = await supabase
