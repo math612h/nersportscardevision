@@ -10,7 +10,7 @@ const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
-  "Cache-Control": "public, max-age=60",
+  "Cache-Control": "no-store, no-cache, must-revalidate",
 };
 
 export const Route = createFileRoute("/api/public/broadcast/ice-cup")({

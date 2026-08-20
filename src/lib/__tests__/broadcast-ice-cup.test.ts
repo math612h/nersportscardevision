@@ -33,7 +33,8 @@ describe("ice-cup broadcast payload", () => {
     expect(normalizeLmuClass("LMGT3")).toBe("LMGT3");
     expect(normalizeLmuClass("Hypercar")).toBe("Hypercar");
     expect(broadcastClassId("LMGT3", "Am")).toBe("lmgt3-am");
-    expect(broadcastClassId("LMGT3", "Open")).toBe("lmgt3-pro");
+    expect(broadcastClassId("LMGT3", "Pro")).toBe("lmgt3-pro");
+    expect(broadcastClassId("LMGT3", "Open")).toBe("lmgt3");
     expect(broadcastClassId("LMP2", null)).toBe("lmp2");
   });
 
@@ -52,6 +53,8 @@ describe("ice-cup broadcast payload", () => {
     const keys = Object.keys(entries[0]!).sort();
     expect(keys).toEqual([
       "avatarUrl",
+      "classId",
+      "className",
       "broadcastClass",
       "carNumber",
       "driverId",

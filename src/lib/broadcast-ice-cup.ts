@@ -12,9 +12,14 @@ export type BroadcastClass = {
 export const BROADCAST_CLASSES: BroadcastClass[] = [
   { id: "hypercar", name: "Hypercar", lmuClass: "Hypercar" },
   { id: "lmp2", name: "LMP2", lmuClass: "LMP2" },
+  { id: "lmgt3", name: "LMGT3", lmuClass: "LMGT3" },
   { id: "lmgt3-pro", name: "LMGT3 PRO", lmuClass: "LMGT3" },
   { id: "lmgt3-am", name: "LMGT3 AM", lmuClass: "LMGT3" },
 ];
+
+export function classNameFor(id: string): string {
+  return BROADCAST_CLASSES.find((c) => c.id === id)?.name ?? id;
+}
 
 export type RawEntry = {
   user_id: string;
@@ -32,6 +37,8 @@ export type BroadcastEntry = {
   carNumber: string;
   lmuClass: string;
   broadcastClass: string;
+  classId: string;
+  className: string;
   teamId: string | null;
   teamName: string | null;
   avatarUrl: string | null;
@@ -53,8 +60,12 @@ export function broadcastClassId(
   if (lmuClass === "Hypercar") return "hypercar";
   if (lmuClass === "LMP2") return "lmp2";
   if (lmuClass === "LMGT3") {
+    // Category comes straight from the entry list (entries.driver_category),
+    // which is what the site renders. No car-model or hardcoded mapping.
     const cat = (driverCategory ?? "").trim().toLowerCase();
-    return cat === "am" || cat.includes("am") ? "lmgt3-am" : "lmgt3-pro";
+    if (cat === "am" || cat.startsWith("am") || cat.includes(" am")) return "lmgt3-am";
+    if (cat === "pro" || cat.startsWith("pro")) return "lmgt3-pro";
+    return "lmgt3"; // class not split (e.g. "Open")
   }
   return null;
 }
@@ -90,6 +101,8 @@ export function buildEntries(
       carNumber: String(e.car_number),
       lmuClass,
       broadcastClass: bc,
+      classId: bc,
+      className: classNameFor(bc),
       teamId: e.team_id ?? null,
       teamName: e.team_id ? (ctx.teamNameById.get(e.team_id) ?? null) : null,
       avatarUrl: ctx.avatarByUser.get(e.user_id) ?? null,
