@@ -53,10 +53,10 @@ describe("ice-cup broadcast payload", () => {
     const keys = Object.keys(entries[0]!).sort();
     expect(keys).toEqual([
       "avatarUrl",
-      "classId",
-      "className",
       "broadcastClass",
       "carNumber",
+      "classId",
+      "className",
       "driverId",
       "driverName",
       "lmuClass",
