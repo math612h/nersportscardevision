@@ -1,7 +1,9 @@
 // Pure helpers for the public ICE Cup broadcast endpoint.
 // No database access here so the mapping logic can be unit-tested.
 
-export const ICE_CUP_LEAGUE_NAME_MATCH = "ice cup";
+// Ligaen som broadcast-feedet dækker. Endpointets sti bevares af hensyn til
+// eksisterende broadcast-opsætning, men datakilden er Pre-Season Shakedown.
+export const ICE_CUP_LEAGUE_NAME_MATCH = "shakedown";
 
 export type BroadcastClass = {
   id: string;
