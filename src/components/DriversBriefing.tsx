@@ -443,6 +443,8 @@ type ChatMessage = {
 };
 
 const CHAT_TOPIC = "briefing-chat";
+const TYPING_TOPIC = "briefing-typing";
+const TYPING_TTL = 4000;
 
 function BriefingChat() {
   const room = useRoomContext();
@@ -450,14 +452,53 @@ function BriefingChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [typing, setTyping] = useState<Record<string, { name: string; at: number }>>({});
+  const [tick, setTick] = useState(0);
+  const lastTypingSent = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
+
+  const displayName = () => {
+    let name = localParticipant.name || "Kører";
+    try {
+      const metadata = localParticipant.metadata ? JSON.parse(localParticipant.metadata) : {};
+      name = metadata.display_name || name;
+    } catch {
+      // Participant name remains the fallback.
+    }
+    return name;
+  };
 
   useEffect(() => {
     const receiveMessage = (payload: Uint8Array, _participant: unknown, _kind: unknown, topic?: string) => {
+      if (topic === TYPING_TOPIC) {
+        try {
+          const data = JSON.parse(new TextDecoder().decode(payload)) as {
+            senderId: string;
+            senderName: string;
+            typing: boolean;
+          };
+          if (!data.senderId) return;
+          setTyping((current) => {
+            const next = { ...current };
+            if (data.typing) next[data.senderId] = { name: data.senderName || "Kører", at: Date.now() };
+            else delete next[data.senderId];
+            return next;
+          });
+        } catch {
+          // Ignore malformed typing packets.
+        }
+        return;
+      }
       if (topic !== CHAT_TOPIC) return;
       try {
         const message = JSON.parse(new TextDecoder().decode(payload)) as ChatMessage;
         if (!message.id || !message.senderId || !message.senderName || !message.text || !message.sentAt) return;
+        setTyping((current) => {
+          if (!current[message.senderId]) return current;
+          const next = { ...current };
+          delete next[message.senderId];
+          return next;
+        });
         setMessages((current) => current.some((item) => item.id === message.id)
           ? current
           : [...current, message].slice(-100));
@@ -473,20 +514,53 @@ function BriefingChat() {
   }, [room]);
 
   useEffect(() => {
+    const id = window.setInterval(() => setTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const publishTyping = (isTyping: boolean) => {
+    void localParticipant
+      .publishData(
+        new TextEncoder().encode(
+          JSON.stringify({ senderId: localParticipant.identity, senderName: displayName(), typing: isTyping }),
+        ),
+        { reliable: false, topic: TYPING_TOPIC },
+      )
+      .catch(() => {
+        // Typing state is best-effort.
+      });
+  };
+
+  const handleTyping = (value: string) => {
+    setText(value);
+    const now = Date.now();
+    if (!value.trim()) {
+      lastTypingSent.current = 0;
+      publishTyping(false);
+      return;
+    }
+    if (now - lastTypingSent.current > 2000) {
+      lastTypingSent.current = now;
+      publishTyping(true);
+    }
+  };
+
+  const activeTypers = Object.entries(typing)
+    .filter(([id, t]) => id !== localParticipant.identity && Date.now() - t.at < TYPING_TTL)
+    .map(([, t]) => t.name);
+  void tick;
+
+  useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages]);
+
 
   const sendMessage = async () => {
     const value = text.trim();
     if (!value || sending) return;
 
-    let senderName = localParticipant.name || "Kører";
-    try {
-      const metadata = localParticipant.metadata ? JSON.parse(localParticipant.metadata) : {};
-      senderName = metadata.display_name || senderName;
-    } catch {
-      // Participant name remains the fallback.
-    }
+    const senderName = displayName();
+
 
     const message: ChatMessage = {
       id: crypto.randomUUID(),
@@ -504,6 +578,9 @@ function BriefingChat() {
       });
       setMessages((current) => [...current, message].slice(-100));
       setText("");
+      lastTypingSent.current = 0;
+      publishTyping(false);
+
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Beskeden kunne ikke sendes");
     } finally {
@@ -516,10 +593,12 @@ function BriefingChat() {
       <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
         <MessageSquare className="h-4 w-4 text-primary" />
         <h3 className="text-sm font-semibold">Briefing-chat</h3>
+        <span className="ml-auto text-[10px] text-muted-foreground">Synlig for alle i kanalen</span>
       </div>
       <ScrollArea className="min-h-0 flex-1 px-3 py-2">
         {messages.length === 0 ? (
           <p className="py-6 text-center text-xs text-muted-foreground">Ingen spørgsmål endnu.</p>
+
         ) : (
           <ul className="space-y-3">
             {messages.map((message) => {
@@ -543,6 +622,18 @@ function BriefingChat() {
         )}
         <div ref={endRef} />
       </ScrollArea>
+      {activeTypers.length > 0 && (
+        <p className="flex items-center gap-1.5 border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground">
+          <span className="flex gap-0.5">
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:0ms]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
+          </span>
+          {activeTypers.length === 1
+            ? `${activeTypers[0]} skriver…`
+            : `${activeTypers.slice(0, 2).join(", ")}${activeTypers.length > 2 ? ` +${activeTypers.length - 2}` : ""} skriver…`}
+        </p>
+      )}
       <form
         className="flex gap-2 border-t border-border p-2"
         onSubmit={(event) => {
@@ -552,11 +643,13 @@ function BriefingChat() {
       >
         <Input
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => handleTyping(event.target.value)}
+          onBlur={() => publishTyping(false)}
           maxLength={500}
           placeholder="Skriv et spørgsmål…"
           aria-label="Skriv et spørgsmål"
         />
+
         <Button type="submit" size="icon" disabled={!text.trim() || sending} aria-label="Send spørgsmål">
           <Send className="h-4 w-4" />
         </Button>
