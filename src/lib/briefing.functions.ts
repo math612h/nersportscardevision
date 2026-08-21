@@ -1,60 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-
-const RoomInput = z.object({ divisionId: z.string().uuid() });
-const ParticipantInput = z.object({
-  divisionId: z.string().uuid(),
-  participantIdentity: z.string().min(1).max(128),
-});
-
-async function isAdmin(supabase: any, userId: string): Promise<boolean> {
-  const { data } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId)
-    .eq("role", "admin")
-    .maybeSingle();
-  return !!data;
-}
+import { isBriefingAdmin } from "@/lib/briefing.server";
 
 /** Mint a LiveKit access token for the current user, scoped to a division's briefing room. */
 export const getBriefingToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => RoomInput.parse(d))
+  .inputValidator((d) => z.object({ divisionId: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { AccessToken } = await import("livekit-server-sdk");
 
-    const apiKey = process.env.LIVEKIT_API_KEY!;
-    const apiSecret = process.env.LIVEKIT_API_SECRET!;
-    const wsUrl = process.env.LIVEKIT_URL!;
+    const apiKey = process.env.LIVEKIT_API_KEY;
+    const apiSecret = process.env.LIVEKIT_API_SECRET;
+    const wsUrl = process.env.LIVEKIT_URL;
     if (!apiKey || !apiSecret || !wsUrl) throw new Error("LiveKit secrets ikke konfigureret");
 
-    const admin = await isAdmin(supabase, userId);
-
-    // Only enrolled, non-waitlist drivers (or admins) may join a briefing room
-    if (!admin) {
-      const { data: division } = await supabase
-        .from("divisions")
-        .select("league_id")
-        .eq("id", data.divisionId)
-        .maybeSingle();
-      if (!division) throw new Error("Afdelingen findes ikke.");
-
-      // Entries are league-scoped; division_id may be null on most entries
-      const { data: entries } = await supabase
-        .from("entries")
-        .select("id, division_id")
-        .eq("league_id", division.league_id)
-        .eq("user_id", userId)
-        .eq("waitlist", false);
-      const enrolled = (entries ?? []).some(
-        (e: { division_id: string | null }) => !e.division_id || e.division_id === data.divisionId,
-      );
-      if (!enrolled) throw new Error("Du er ikke tilmeldt denne afdeling.");
-    }
-
+    const admin = await isBriefingAdmin(supabase, userId);
 
     // Fetch display info for the token (name + avatar)
     const { data: profile } = await supabase
@@ -89,16 +51,19 @@ export const getBriefingToken = createServerFn({ method: "POST" })
 /** Admin: grant a participant permission to publish audio (give them the floor). */
 export const grantSpeak = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => ParticipantInput.parse(d))
+  .inputValidator((d) => z.object({
+    divisionId: z.string().uuid(),
+    participantIdentity: z.string().min(1).max(128),
+  }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    if (!(await isAdmin(supabase, userId))) throw new Error("Kun admins");
+    if (!(await isBriefingAdmin(supabase, userId))) throw new Error("Kun admins");
 
     const { RoomServiceClient } = await import("livekit-server-sdk");
     const svc = new RoomServiceClient(
-      process.env.LIVEKIT_URL!,
-      process.env.LIVEKIT_API_KEY!,
-      process.env.LIVEKIT_API_SECRET!,
+      process.env.LIVEKIT_URL ?? "",
+      process.env.LIVEKIT_API_KEY ?? "",
+      process.env.LIVEKIT_API_SECRET ?? "",
     );
     const room = `briefing-${data.divisionId}`;
     await svc.updateParticipant(room, data.participantIdentity, undefined, {
@@ -112,16 +77,19 @@ export const grantSpeak = createServerFn({ method: "POST" })
 /** Admin: revoke speak permission and mute the participant's tracks. */
 export const revokeSpeak = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => ParticipantInput.parse(d))
+  .inputValidator((d) => z.object({
+    divisionId: z.string().uuid(),
+    participantIdentity: z.string().min(1).max(128),
+  }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    if (!(await isAdmin(supabase, userId))) throw new Error("Kun admins");
+    if (!(await isBriefingAdmin(supabase, userId))) throw new Error("Kun admins");
 
     const { RoomServiceClient } = await import("livekit-server-sdk");
     const svc = new RoomServiceClient(
-      process.env.LIVEKIT_URL!,
-      process.env.LIVEKIT_API_KEY!,
-      process.env.LIVEKIT_API_SECRET!,
+      process.env.LIVEKIT_URL ?? "",
+      process.env.LIVEKIT_API_KEY ?? "",
+      process.env.LIVEKIT_API_SECRET ?? "",
     );
     const room = `briefing-${data.divisionId}`;
 
@@ -156,16 +124,19 @@ export const revokeSpeak = createServerFn({ method: "POST" })
 /** Admin: remove a participant from the room. */
 export const removeParticipant = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => ParticipantInput.parse(d))
+  .inputValidator((d) => z.object({
+    divisionId: z.string().uuid(),
+    participantIdentity: z.string().min(1).max(128),
+  }).parse(d))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    if (!(await isAdmin(supabase, userId))) throw new Error("Kun admins");
+    if (!(await isBriefingAdmin(supabase, userId))) throw new Error("Kun admins");
 
     const { RoomServiceClient } = await import("livekit-server-sdk");
     const svc = new RoomServiceClient(
-      process.env.LIVEKIT_URL!,
-      process.env.LIVEKIT_API_KEY!,
-      process.env.LIVEKIT_API_SECRET!,
+      process.env.LIVEKIT_URL ?? "",
+      process.env.LIVEKIT_API_KEY ?? "",
+      process.env.LIVEKIT_API_SECRET ?? "",
     );
     const room = `briefing-${data.divisionId}`;
     await svc.removeParticipant(room, data.participantIdentity);

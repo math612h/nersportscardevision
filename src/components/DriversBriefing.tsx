@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -6,10 +6,11 @@ import {
   RoomAudioRenderer,
   useParticipants,
   useLocalParticipant,
+  useRoomContext,
   useTracks,
 } from "@livekit/components-react";
-import { Track } from "livekit-client";
-import { Mic, MicOff, Hand, UserX, Volume2, X, Radio } from "lucide-react";
+import { RoomEvent, Track } from "livekit-client";
+import { Mic, MicOff, Hand, UserX, Volume2, X, Radio, MessageSquare, Send } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   getBriefingToken,
@@ -120,7 +123,7 @@ function BriefingRoomDialog({ divisionId, onClose }: { divisionId: string; onClo
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Radio className="h-5 w-5 text-primary" /> Drivers Briefing
@@ -242,7 +245,8 @@ function BriefingRoomUI({ divisionId, isAdmin }: { divisionId: string; isAdmin: 
   });
 
   return (
-    <div className="space-y-4">
+    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="min-w-0 space-y-4">
       <div className="rounded-lg border border-border bg-card p-3">
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Taler nu
@@ -424,6 +428,139 @@ function BriefingRoomUI({ divisionId, isAdmin }: { divisionId: string; isAdmin: 
           })}
         </ul>
       </div>
+      </div>
+      <BriefingChat />
     </div>
+  );
+}
+
+type ChatMessage = {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  sentAt: number;
+};
+
+const CHAT_TOPIC = "briefing-chat";
+
+function BriefingChat() {
+  const room = useRoomContext();
+  const { localParticipant } = useLocalParticipant();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [text, setText] = useState("");
+  const [sending, setSending] = useState(false);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const receiveMessage = (payload: Uint8Array, _participant: unknown, _kind: unknown, topic?: string) => {
+      if (topic !== CHAT_TOPIC) return;
+      try {
+        const message = JSON.parse(new TextDecoder().decode(payload)) as ChatMessage;
+        if (!message.id || !message.senderId || !message.senderName || !message.text || !message.sentAt) return;
+        setMessages((current) => current.some((item) => item.id === message.id)
+          ? current
+          : [...current, message].slice(-100));
+      } catch {
+        // Ignore malformed data packets from the room.
+      }
+    };
+
+    room.on(RoomEvent.DataReceived, receiveMessage);
+    return () => {
+      room.off(RoomEvent.DataReceived, receiveMessage);
+    };
+  }, [room]);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [messages]);
+
+  const sendMessage = async () => {
+    const value = text.trim();
+    if (!value || sending) return;
+
+    let senderName = localParticipant.name || "Kører";
+    try {
+      const metadata = localParticipant.metadata ? JSON.parse(localParticipant.metadata) : {};
+      senderName = metadata.display_name || senderName;
+    } catch {
+      // Participant name remains the fallback.
+    }
+
+    const message: ChatMessage = {
+      id: crypto.randomUUID(),
+      senderId: localParticipant.identity,
+      senderName,
+      text: value.slice(0, 500),
+      sentAt: Date.now(),
+    };
+
+    setSending(true);
+    try {
+      await localParticipant.publishData(new TextEncoder().encode(JSON.stringify(message)), {
+        reliable: true,
+        topic: CHAT_TOPIC,
+      });
+      setMessages((current) => [...current, message].slice(-100));
+      setText("");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Beskeden kunne ikke sendes");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <aside className="flex min-h-80 flex-col overflow-hidden rounded-lg border border-border bg-card lg:h-[34rem]">
+      <div className="flex items-center gap-2 border-b border-border px-3 py-2.5">
+        <MessageSquare className="h-4 w-4 text-primary" />
+        <h3 className="text-sm font-semibold">Briefing-chat</h3>
+      </div>
+      <ScrollArea className="min-h-0 flex-1 px-3 py-2">
+        {messages.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">Ingen spørgsmål endnu.</p>
+        ) : (
+          <ul className="space-y-3">
+            {messages.map((message) => {
+              const mine = message.senderId === localParticipant.identity;
+              return (
+                <li key={message.id} className={mine ? "text-right" : "text-left"}>
+                  <div className="mb-0.5 flex items-baseline justify-between gap-2 text-[10px] text-muted-foreground">
+                    <span className="truncate font-medium">{message.senderName}</span>
+                    <time>{new Date(message.sentAt).toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" })}</time>
+                  </div>
+                  <p className={mine
+                    ? "ml-auto inline-block max-w-[90%] rounded-md bg-primary px-2.5 py-1.5 text-left text-sm text-primary-foreground"
+                    : "inline-block max-w-[90%] rounded-md bg-muted px-2.5 py-1.5 text-sm text-foreground"}
+                  >
+                    {message.text}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <div ref={endRef} />
+      </ScrollArea>
+      <form
+        className="flex gap-2 border-t border-border p-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void sendMessage();
+        }}
+      >
+        <Input
+          value={text}
+          onChange={(event) => setText(event.target.value)}
+          maxLength={500}
+          placeholder="Skriv et spørgsmål…"
+          aria-label="Skriv et spørgsmål"
+        />
+        <Button type="submit" size="icon" disabled={!text.trim() || sending} aria-label="Send spørgsmål">
+          <Send className="h-4 w-4" />
+        </Button>
+      </form>
+    </aside>
   );
 }
