@@ -578,6 +578,9 @@ function BriefingChat() {
       });
       setMessages((current) => [...current, message].slice(-100));
       setText("");
+      lastTypingSent.current = 0;
+      publishTyping(false);
+
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Beskeden kunne ikke sendes");
     } finally {
