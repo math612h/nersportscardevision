@@ -26,6 +26,8 @@ import {
   Receipt,
   MessageSquare,
   BarChart3,
+  Radio,
+
 
   CalendarDays,
 }  from "lucide-react";
@@ -129,6 +131,13 @@ export function AdminSidebar() {
       ],
     },
     {
+      label: "Broadcast",
+      items: [
+        { title: "Streaming profil", url: "/admin/streaming-profil", icon: Radio },
+      ],
+    },
+    {
+
       label: "System",
       items: [
         { title: "Audit log", url: "/admin/audit", icon: History },

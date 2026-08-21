@@ -67,9 +67,11 @@ import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './ro
 import { Route as ApiPublicCronCoachingRemindersRouteImport } from './routes/api/public/cron/coaching-reminders'
 import { Route as ApiPublicCronCoachingRatingRequestsRouteImport } from './routes/api/public/cron/coaching-rating-requests'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
+import { Route as ApiPublicBroadcastStreamingProfilesRouteImport } from './routes/api/public/broadcast/streaming-profiles'
 import { Route as ApiPublicBroadcastIceCupRouteImport } from './routes/api/public/broadcast/ice-cup'
 import { Route as AuthenticatedCoachingRateBookingIdRouteImport } from './routes/_authenticated.coaching.rate.$bookingId'
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
+import { Route as AuthenticatedAdminAdminStreamingProfilRouteImport } from './routes/_authenticated._admin.admin.streaming-profil'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
 import { Route as AuthenticatedAdminAdminSponsorerRouteImport } from './routes/_authenticated._admin.admin.sponsorer'
 import { Route as AuthenticatedAdminAdminRollerRouteImport } from './routes/_authenticated._admin.admin.roller'
@@ -416,6 +418,12 @@ const ApiPublicCompanionVerifyTokenRoute =
     path: '/api/public/companion/verify-token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBroadcastStreamingProfilesRoute =
+  ApiPublicBroadcastStreamingProfilesRouteImport.update({
+    id: '/api/public/broadcast/streaming-profiles',
+    path: '/api/public/broadcast/streaming-profiles',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBroadcastIceCupRoute =
   ApiPublicBroadcastIceCupRouteImport.update({
     id: '/api/public/broadcast/ice-cup',
@@ -433,6 +441,12 @@ const AuthenticatedBeskederGruppeGroupIdRoute =
     id: '/gruppe/$groupId',
     path: '/gruppe/$groupId',
     getParentRoute: () => AuthenticatedBeskederRoute,
+  } as any)
+const AuthenticatedAdminAdminStreamingProfilRoute =
+  AuthenticatedAdminAdminStreamingProfilRouteImport.update({
+    id: '/admin/streaming-profil',
+    path: '/admin/streaming-profil',
+    getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAdminStorageRoute =
   AuthenticatedAdminAdminStorageRouteImport.update({
@@ -679,9 +693,11 @@ export interface FileRoutesByFullPath {
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
+  '/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
+  '/api/public/broadcast/streaming-profiles': typeof ApiPublicBroadcastStreamingProfilesRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
@@ -769,9 +785,11 @@ export interface FileRoutesByTo {
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
+  '/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
+  '/api/public/broadcast/streaming-profiles': typeof ApiPublicBroadcastStreamingProfilesRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
@@ -864,9 +882,11 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/_authenticated/_admin/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
+  '/_authenticated/_admin/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/_authenticated/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
+  '/api/public/broadcast/streaming-profiles': typeof ApiPublicBroadcastStreamingProfilesRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
@@ -958,9 +978,11 @@ export interface FileRouteTypes {
     | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
+    | '/admin/streaming-profil'
     | '/beskeder/gruppe/$groupId'
     | '/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
+    | '/api/public/broadcast/streaming-profiles'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
@@ -1048,9 +1070,11 @@ export interface FileRouteTypes {
     | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
+    | '/admin/streaming-profil'
     | '/beskeder/gruppe/$groupId'
     | '/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
+    | '/api/public/broadcast/streaming-profiles'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
@@ -1142,9 +1166,11 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/roller'
     | '/_authenticated/_admin/admin/sponsorer'
     | '/_authenticated/_admin/admin/storage'
+    | '/_authenticated/_admin/admin/streaming-profil'
     | '/_authenticated/beskeder/gruppe/$groupId'
     | '/_authenticated/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
+    | '/api/public/broadcast/streaming-profiles'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
@@ -1201,6 +1227,7 @@ export interface RootRouteChildren {
   ApiPublicLeaderboardUploadRoute: typeof ApiPublicLeaderboardUploadRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicBroadcastIceCupRoute: typeof ApiPublicBroadcastIceCupRoute
+  ApiPublicBroadcastStreamingProfilesRoute: typeof ApiPublicBroadcastStreamingProfilesRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
   ApiPublicCronCoachingRatingRequestsRoute: typeof ApiPublicCronCoachingRatingRequestsRoute
   ApiPublicCronCoachingRemindersRoute: typeof ApiPublicCronCoachingRemindersRoute
@@ -1629,6 +1656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCompanionVerifyTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/broadcast/streaming-profiles': {
+      id: '/api/public/broadcast/streaming-profiles'
+      path: '/api/public/broadcast/streaming-profiles'
+      fullPath: '/api/public/broadcast/streaming-profiles'
+      preLoaderRoute: typeof ApiPublicBroadcastStreamingProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/broadcast/ice-cup': {
       id: '/api/public/broadcast/ice-cup'
       path: '/api/public/broadcast/ice-cup'
@@ -1649,6 +1683,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/beskeder/gruppe/$groupId'
       preLoaderRoute: typeof AuthenticatedBeskederGruppeGroupIdRouteImport
       parentRoute: typeof AuthenticatedBeskederRoute
+    }
+    '/_authenticated/_admin/admin/streaming-profil': {
+      id: '/_authenticated/_admin/admin/streaming-profil'
+      path: '/admin/streaming-profil'
+      fullPath: '/admin/streaming-profil'
+      preLoaderRoute: typeof AuthenticatedAdminAdminStreamingProfilRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/_admin/admin/storage': {
       id: '/_authenticated/_admin/admin/storage'
@@ -1934,6 +1975,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminRollerRoute: typeof AuthenticatedAdminAdminRollerRoute
   AuthenticatedAdminAdminSponsorerRoute: typeof AuthenticatedAdminAdminSponsorerRoute
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
+  AuthenticatedAdminAdminStreamingProfilRoute: typeof AuthenticatedAdminAdminStreamingProfilRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
   AuthenticatedAdminAdminBrugereUserIdRoute: typeof AuthenticatedAdminAdminBrugereUserIdRoute
   AuthenticatedAdminAdminRegelsaetTemplateIdRoute: typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
@@ -1971,6 +2013,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminRollerRoute: AuthenticatedAdminAdminRollerRoute,
   AuthenticatedAdminAdminSponsorerRoute: AuthenticatedAdminAdminSponsorerRoute,
   AuthenticatedAdminAdminStorageRoute: AuthenticatedAdminAdminStorageRoute,
+  AuthenticatedAdminAdminStreamingProfilRoute:
+    AuthenticatedAdminAdminStreamingProfilRoute,
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
   AuthenticatedAdminAdminBrugereUserIdRoute:
     AuthenticatedAdminAdminBrugereUserIdRoute,
@@ -2081,6 +2125,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLeaderboardUploadRoute: ApiPublicLeaderboardUploadRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicBroadcastIceCupRoute: ApiPublicBroadcastIceCupRoute,
+  ApiPublicBroadcastStreamingProfilesRoute:
+    ApiPublicBroadcastStreamingProfilesRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
   ApiPublicCronCoachingRatingRequestsRoute:
     ApiPublicCronCoachingRatingRequestsRoute,

@@ -17,6 +17,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { RatingBadge } from "@/components/RatingBadge";
+import { StreamingProfileCard } from "@/components/StreamingProfileCard";
+
 import { startDiscordLink, unlinkDiscord } from "@/lib/discord.functions";
 import { notifyAdminNameUpdated } from "@/lib/admin-name-notify.functions";
 import { deleteMyAccount } from "@/lib/account.functions";
@@ -227,9 +229,10 @@ function ProfilePage() {
       </div>
 
       <Tabs defaultValue="oversigt" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="oversigt">Oversigt</TabsTrigger>
           <TabsTrigger value="profil">Profil</TabsTrigger>
+          <TabsTrigger value="streaming">Streaming</TabsTrigger>
           <TabsTrigger value="forbindelser">Forbindelser</TabsTrigger>
         </TabsList>
 
@@ -237,6 +240,11 @@ function ProfilePage() {
           <MyRatingsCard userId={user?.id ?? null} />
           <MyTeamsCard userId={user?.id ?? null} />
         </TabsContent>
+
+        <TabsContent value="streaming" className="mt-4">
+          {user && <StreamingProfileCard userId={user.id} />}
+        </TabsContent>
+
 
         <TabsContent value="profil" className="mt-4">
           <Card>
