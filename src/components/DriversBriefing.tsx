@@ -559,13 +559,8 @@ function BriefingChat() {
     const value = text.trim();
     if (!value || sending) return;
 
-    let senderName = localParticipant.name || "Kører";
-    try {
-      const metadata = localParticipant.metadata ? JSON.parse(localParticipant.metadata) : {};
-      senderName = metadata.display_name || senderName;
-    } catch {
-      // Participant name remains the fallback.
-    }
+    const senderName = displayName();
+
 
     const message: ChatMessage = {
       id: crypto.randomUUID(),
