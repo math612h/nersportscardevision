@@ -2132,6 +2132,71 @@ export type Database = {
         }
         Relationships: []
       }
+      streaming_profile_answers: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          question_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answer?: string
+          created_at?: string
+          id?: string
+          question_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streaming_profile_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "streaming_profile_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      streaming_profile_questions: {
+        Row: {
+          active: boolean
+          created_at: string
+          help_text: string | null
+          id: string
+          position: number
+          question_text: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          help_text?: string | null
+          id?: string
+          position?: number
+          question_text: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          help_text?: string | null
+          id?: string
+          position?: number
+          question_text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
