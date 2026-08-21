@@ -70,6 +70,7 @@ import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/
 import { Route as ApiPublicBroadcastIceCupRouteImport } from './routes/api/public/broadcast/ice-cup'
 import { Route as AuthenticatedCoachingRateBookingIdRouteImport } from './routes/_authenticated.coaching.rate.$bookingId'
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
+import { Route as AuthenticatedAdminAdminStreamingProfilRouteImport } from './routes/_authenticated._admin.admin.streaming-profil'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
 import { Route as AuthenticatedAdminAdminSponsorerRouteImport } from './routes/_authenticated._admin.admin.sponsorer'
 import { Route as AuthenticatedAdminAdminRollerRouteImport } from './routes/_authenticated._admin.admin.roller'
@@ -434,6 +435,12 @@ const AuthenticatedBeskederGruppeGroupIdRoute =
     path: '/gruppe/$groupId',
     getParentRoute: () => AuthenticatedBeskederRoute,
   } as any)
+const AuthenticatedAdminAdminStreamingProfilRoute =
+  AuthenticatedAdminAdminStreamingProfilRouteImport.update({
+    id: '/admin/streaming-profil',
+    path: '/admin/streaming-profil',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminStorageRoute =
   AuthenticatedAdminAdminStorageRouteImport.update({
     id: '/admin/storage',
@@ -679,6 +686,7 @@ export interface FileRoutesByFullPath {
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
+  '/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
@@ -769,6 +777,7 @@ export interface FileRoutesByTo {
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
+  '/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
@@ -864,6 +873,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/_authenticated/_admin/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
+  '/_authenticated/_admin/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/_authenticated/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
@@ -958,6 +968,7 @@ export interface FileRouteTypes {
     | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
+    | '/admin/streaming-profil'
     | '/beskeder/gruppe/$groupId'
     | '/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
@@ -1048,6 +1059,7 @@ export interface FileRouteTypes {
     | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
+    | '/admin/streaming-profil'
     | '/beskeder/gruppe/$groupId'
     | '/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
@@ -1142,6 +1154,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/roller'
     | '/_authenticated/_admin/admin/sponsorer'
     | '/_authenticated/_admin/admin/storage'
+    | '/_authenticated/_admin/admin/streaming-profil'
     | '/_authenticated/beskeder/gruppe/$groupId'
     | '/_authenticated/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
@@ -1650,6 +1663,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBeskederGruppeGroupIdRouteImport
       parentRoute: typeof AuthenticatedBeskederRoute
     }
+    '/_authenticated/_admin/admin/streaming-profil': {
+      id: '/_authenticated/_admin/admin/streaming-profil'
+      path: '/admin/streaming-profil'
+      fullPath: '/admin/streaming-profil'
+      preLoaderRoute: typeof AuthenticatedAdminAdminStreamingProfilRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/storage': {
       id: '/_authenticated/_admin/admin/storage'
       path: '/admin/storage'
@@ -1934,6 +1954,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminRollerRoute: typeof AuthenticatedAdminAdminRollerRoute
   AuthenticatedAdminAdminSponsorerRoute: typeof AuthenticatedAdminAdminSponsorerRoute
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
+  AuthenticatedAdminAdminStreamingProfilRoute: typeof AuthenticatedAdminAdminStreamingProfilRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
   AuthenticatedAdminAdminBrugereUserIdRoute: typeof AuthenticatedAdminAdminBrugereUserIdRoute
   AuthenticatedAdminAdminRegelsaetTemplateIdRoute: typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
@@ -1971,6 +1992,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminRollerRoute: AuthenticatedAdminAdminRollerRoute,
   AuthenticatedAdminAdminSponsorerRoute: AuthenticatedAdminAdminSponsorerRoute,
   AuthenticatedAdminAdminStorageRoute: AuthenticatedAdminAdminStorageRoute,
+  AuthenticatedAdminAdminStreamingProfilRoute:
+    AuthenticatedAdminAdminStreamingProfilRoute,
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
   AuthenticatedAdminAdminBrugereUserIdRoute:
     AuthenticatedAdminAdminBrugereUserIdRoute,
