@@ -622,6 +622,18 @@ function BriefingChat() {
         )}
         <div ref={endRef} />
       </ScrollArea>
+      {activeTypers.length > 0 && (
+        <p className="flex items-center gap-1.5 border-t border-border px-3 py-1.5 text-[11px] text-muted-foreground">
+          <span className="flex gap-0.5">
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:0ms]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:150ms]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-primary [animation-delay:300ms]" />
+          </span>
+          {activeTypers.length === 1
+            ? `${activeTypers[0]} skriver…`
+            : `${activeTypers.slice(0, 2).join(", ")}${activeTypers.length > 2 ? ` +${activeTypers.length - 2}` : ""} skriver…`}
+        </p>
+      )}
       <form
         className="flex gap-2 border-t border-border p-2"
         onSubmit={(event) => {
@@ -631,11 +643,13 @@ function BriefingChat() {
       >
         <Input
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => handleTyping(event.target.value)}
+          onBlur={() => publishTyping(false)}
           maxLength={500}
           placeholder="Skriv et spørgsmål…"
           aria-label="Skriv et spørgsmål"
         />
+
         <Button type="submit" size="icon" disabled={!text.trim() || sending} aria-label="Send spørgsmål">
           <Send className="h-4 w-4" />
         </Button>
