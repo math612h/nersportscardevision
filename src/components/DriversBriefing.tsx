@@ -443,6 +443,8 @@ type ChatMessage = {
 };
 
 const CHAT_TOPIC = "briefing-chat";
+const TYPING_TOPIC = "briefing-typing";
+const TYPING_TTL = 4000;
 
 function BriefingChat() {
   const room = useRoomContext();
@@ -450,14 +452,53 @@ function BriefingChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [typing, setTyping] = useState<Record<string, { name: string; at: number }>>({});
+  const [tick, setTick] = useState(0);
+  const lastTypingSent = useRef(0);
   const endRef = useRef<HTMLDivElement>(null);
+
+  const displayName = () => {
+    let name = localParticipant.name || "Kører";
+    try {
+      const metadata = localParticipant.metadata ? JSON.parse(localParticipant.metadata) : {};
+      name = metadata.display_name || name;
+    } catch {
+      // Participant name remains the fallback.
+    }
+    return name;
+  };
 
   useEffect(() => {
     const receiveMessage = (payload: Uint8Array, _participant: unknown, _kind: unknown, topic?: string) => {
+      if (topic === TYPING_TOPIC) {
+        try {
+          const data = JSON.parse(new TextDecoder().decode(payload)) as {
+            senderId: string;
+            senderName: string;
+            typing: boolean;
+          };
+          if (!data.senderId) return;
+          setTyping((current) => {
+            const next = { ...current };
+            if (data.typing) next[data.senderId] = { name: data.senderName || "Kører", at: Date.now() };
+            else delete next[data.senderId];
+            return next;
+          });
+        } catch {
+          // Ignore malformed typing packets.
+        }
+        return;
+      }
       if (topic !== CHAT_TOPIC) return;
       try {
         const message = JSON.parse(new TextDecoder().decode(payload)) as ChatMessage;
         if (!message.id || !message.senderId || !message.senderName || !message.text || !message.sentAt) return;
+        setTyping((current) => {
+          if (!current[message.senderId]) return current;
+          const next = { ...current };
+          delete next[message.senderId];
+          return next;
+        });
         setMessages((current) => current.some((item) => item.id === message.id)
           ? current
           : [...current, message].slice(-100));
@@ -473,8 +514,46 @@ function BriefingChat() {
   }, [room]);
 
   useEffect(() => {
+    const id = window.setInterval(() => setTick((n) => n + 1), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const publishTyping = (isTyping: boolean) => {
+    void localParticipant
+      .publishData(
+        new TextEncoder().encode(
+          JSON.stringify({ senderId: localParticipant.identity, senderName: displayName(), typing: isTyping }),
+        ),
+        { reliable: false, topic: TYPING_TOPIC },
+      )
+      .catch(() => {
+        // Typing state is best-effort.
+      });
+  };
+
+  const handleTyping = (value: string) => {
+    setText(value);
+    const now = Date.now();
+    if (!value.trim()) {
+      lastTypingSent.current = 0;
+      publishTyping(false);
+      return;
+    }
+    if (now - lastTypingSent.current > 2000) {
+      lastTypingSent.current = now;
+      publishTyping(true);
+    }
+  };
+
+  const activeTypers = Object.entries(typing)
+    .filter(([id, t]) => id !== localParticipant.identity && Date.now() - t.at < TYPING_TTL)
+    .map(([, t]) => t.name);
+  void tick;
+
+  useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages]);
+
 
   const sendMessage = async () => {
     const value = text.trim();
