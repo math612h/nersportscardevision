@@ -18,9 +18,10 @@ const PAGE_SIZE = 1000;
 //
 // Offentligt feed med kørernes hurtigste omgange (PB'er) fra leaderboardet,
 // beregnet som bedste tid pr. (bane, layout, bilklasse) pr. kører.
+// Feedet inkluderer alle registrerede brugere der har sat en tid – uafhængigt af
+// liga- eller divisionsmedlemskab.
 //
 // Query-parametre (kan kombineres):
-//   league=<navn>     – kun kørere tilmeldt ligaen (fuzzy navn, seneste publicerede)
 //   driverId=<id,id>  – kun specifikke kørere (uuid, kommasepareret)
 //   track=<navn>      – kun tider på baner der matcher (fuzzy)
 //   class=<klasse>    – kun tider i bilklassen (fx "LMGT3", fuzzy)
@@ -35,7 +36,6 @@ export const Route = createFileRoute("/api/public/broadcast/leaderboard")({
             "@/integrations/supabase/client.server"
           );
           const url = new URL(request.url);
-          const leagueMatch = url.searchParams.get("league")?.trim() || null;
           const driverParam = url.searchParams.get("driverId")?.trim() || null;
           const trackMatch = url.searchParams.get("track")?.trim() || null;
           const classMatch = url.searchParams.get("class")?.trim() || null;
@@ -43,39 +43,13 @@ export const Route = createFileRoute("/api/public/broadcast/leaderboard")({
             (url.searchParams.get("onlyCurrent") ?? "").toLowerCase(),
           );
 
-          // Optional scoping: only drivers entered in a given league.
+          // Optional scoping: specific drivers.
           let userFilter: string[] | null = null;
-          if (leagueMatch) {
-            const { data: league } = await supabaseAdmin
-              .from("leagues")
-              .select("id")
-              .ilike("name", `%${leagueMatch}%`)
-              .eq("published", true)
-              .order("created_at", { ascending: false })
-              .limit(1)
-              .maybeSingle();
-            if (!league) {
-              return Response.json(
-                { error: "Liga ikke fundet" },
-                { status: 404, headers: CORS },
-              );
-            }
-            const { data: entries } = await supabaseAdmin
-              .from("entries")
-              .select("user_id")
-              .eq("league_id", league.id);
-            userFilter = [
-              ...new Set((entries ?? []).map((e: any) => e.user_id as string)),
-            ];
-          }
           if (driverParam) {
-            const ids = driverParam
+            userFilter = driverParam
               .split(",")
               .map((s) => s.trim())
               .filter(Boolean);
-            userFilter = userFilter
-              ? userFilter.filter((id) => ids.includes(id))
-              : ids;
           }
 
           // Aktuel patch (major.minor) på tværs af hele leaderboardet.
