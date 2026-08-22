@@ -133,7 +133,6 @@ export const Route = createFileRoute("/api/public/broadcast/leaderboard")({
               currentPatch,
               generatedAt: new Date().toISOString(),
               filters: {
-                league: leagueMatch,
                 driverId: driverParam,
                 track: trackMatch,
                 class: classMatch,
