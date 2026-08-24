@@ -222,6 +222,8 @@ function DivisionDetail() {
     },
   });
 
+  const [resultView, setResultView] = useState<"race" | "qualifying">("race");
+
   const resultUserIds = Array.from(new Set((results ?? []).map((r) => r.user_id)));
   const { data: resultNames } = useQuery({
     queryKey: ["result-driver-names", resultUserIds.sort().join(",")],
@@ -577,80 +579,95 @@ function DivisionDetail() {
       </section>
 
       {(results?.length ?? 0) > 0 && (() => {
-        const sessions: { type: "race" | "qualifying"; label: string }[] = [
-          { type: "race", label: "Race resultater" },
-          { type: "qualifying", label: "Kvalifikation" },
+        const allSessions: { type: "race" | "qualifying"; label: string; short: string }[] = [
+          { type: "race", label: "Race resultater", short: "Race results" },
+          { type: "qualifying", label: "Kvalifikation", short: "Quali results" },
         ];
+        const sessions = allSessions.filter((s) => (results ?? []).some((r) => r.session_type === s.type));
+        if (sessions.length === 0) return null;
+        const active = sessions.some((s) => s.type === resultView) ? resultView : sessions[0].type;
+        const activeLabel = sessions.find((s) => s.type === active)?.label ?? "";
+        const rows = (results ?? []).filter((r) => r.session_type === active);
+        const byClass = new Map<string, typeof rows>();
+        for (const r of rows) {
+          if (!byClass.has(r.car_class)) byClass.set(r.car_class, [] as any);
+          byClass.get(r.car_class)!.push(r);
+        }
         return (
           <section id="resultater" className="space-y-4 scroll-mt-24">
-            {sessions.map(({ type, label }) => {
-              const rows = (results ?? []).filter((r) => r.session_type === type);
-              if (rows.length === 0) return null;
-              const byClass = new Map<string, typeof rows>();
-              for (const r of rows) {
-                if (!byClass.has(r.car_class)) byClass.set(r.car_class, [] as any);
-                byClass.get(r.car_class)!.push(r);
-              }
-              return (
-                <div key={type} className="space-y-3">
-                  <div className="flex items-center gap-2 text-primary">
-                    <Trophy className="h-4 w-4" />
-                    <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{label}</h2>
-                  </div>
-                  {Array.from(byClass.entries()).flatMap(([cls, list]) => {
-                    // Opdel i kategorier (Pro/Am) når feltet er splittet
-                    const cats = Array.from(
-                      new Set(
-                        list
-                          .map((r) => catByUserClass.get(`${r.user_id}|${cls}`))
-                          .filter(Boolean) as string[],
-                      ),
-                    ).sort((a, b) => (/pro/i.test(a) ? 0 : 1) - (/pro/i.test(b) ? 0 : 1));
-                    const subgroups =
-                      cats.length > 1
-                        ? cats.map((cat) => ({
-                            cat: cat as string | null,
-                            rows: list.filter((r) => catByUserClass.get(`${r.user_id}|${cls}`) === cat),
-                          }))
-                        : [{ cat: null as string | null, rows: list }];
-                    return subgroups.map((sg) => (
-                      <Card key={`${cls}-${sg.cat ?? "all"}`}>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <span>{cls}</span>
-                            {sg.cat && <Badge variant="outline" className="text-[10px]">{sg.cat}</Badge>}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                          <ul className="divide-y divide-border">
-                            {sg.rows
-                              .slice()
-                              .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
-                              .map((r) => (
-                                <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
-                                  <span className="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
-                                    P{r.position}
-                                  </span>
-                                  <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? "Ukendt"} className="min-w-0 flex-1 truncate" />
-                                  <span className="ml-auto flex shrink-0 items-center gap-3">
-                                    {r.car_model && <span className="hidden sm:inline text-xs text-muted-foreground truncate">{r.car_model}</span>}
-                                    {r.best_lap_ms != null && (
-                                      <span className="font-mono text-xs tabular-nums text-muted-foreground">{msToLapStr(r.best_lap_ms)}</span>
-                                    )}
-                                    {type === "race" && (
-                                      <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{r.points ?? 0}p</span>
-                                    )}
-                                  </span>
-                                </li>
-                              ))}
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    ));
-                  })}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-primary">
+                <Trophy className="h-4 w-4" />
+                <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{activeLabel}</h2>
+              </div>
+              {sessions.length > 1 && (
+                <div className="inline-flex rounded-md border border-border p-0.5">
+                  {sessions.map((s) => (
+                    <button
+                      key={s.type}
+                      type="button"
+                      onClick={() => setResultView(s.type)}
+                      className={`px-3 py-1 text-xs font-medium rounded ${active === s.type ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      {s.short}
+                    </button>
+                  ))}
                 </div>
-              );
-            })}
+              )}
+            </div>
+            <div className="space-y-3">
+              {Array.from(byClass.entries()).flatMap(([cls, list]) => {
+                // Opdel i kategorier (Pro/Am) når feltet er splittet
+                const cats = Array.from(
+                  new Set(
+                    list
+                      .map((r) => catByUserClass.get(`${r.user_id}|${cls}`))
+                      .filter(Boolean) as string[],
+                  ),
+                ).sort((a, b) => (/pro/i.test(a) ? 0 : 1) - (/pro/i.test(b) ? 0 : 1));
+                const subgroups =
+                  cats.length > 1
+                    ? cats.map((cat) => ({
+                        cat: cat as string | null,
+                        rows: list.filter((r) => catByUserClass.get(`${r.user_id}|${cls}`) === cat),
+                      }))
+                    : [{ cat: null as string | null, rows: list }];
+                return subgroups.map((sg) => (
+                  <Card key={`${cls}-${sg.cat ?? "all"}`}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <span>{cls}</span>
+                        {sg.cat && <Badge variant="outline" className="text-[10px]">{sg.cat}</Badge>}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <ul className="divide-y divide-border">
+                        {sg.rows
+                          .slice()
+                          .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
+                          .map((r) => (
+                            <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
+                              <span className="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                                P{r.position}
+                              </span>
+                              <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? "Ukendt"} className="min-w-0 flex-1 truncate" />
+                              <span className="ml-auto flex shrink-0 items-center gap-3">
+                                {r.car_model && <span className="hidden sm:inline text-xs text-muted-foreground truncate">{r.car_model}</span>}
+                                {r.best_lap_ms != null && (
+                                  <span className="font-mono text-xs tabular-nums text-muted-foreground">{msToLapStr(r.best_lap_ms)}</span>
+                                )}
+                                {active === "race" && (
+                                  <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{r.points ?? 0}p</span>
+                                )}
+                              </span>
+                            </li>
+                          ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                ));
+              })}
+            </div>
           </section>
         );
       })()}
