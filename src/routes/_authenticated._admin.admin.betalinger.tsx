@@ -57,105 +57,95 @@ function StatCard({ label, value, sub, icon: Icon }: { label: string; value: str
   );
 }
 
-function RefundDialog({
-  row,
-  open,
-  onOpenChange,
-  onDone,
-}: {
-  row: Row | null;
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  onDone: () => void;
-}) {
-  const refundFn = useServerFn(refundPayment);
-  const [amount, setAmount] = useState("");
-  const [busy, setBusy] = useState(false);
+const PAYOUT_STATUS_LABEL: Record<string, string> = {
+  paid: "Udbetalt",
+  pending: "Afventer",
+  in_transit: "Undervejs",
+  canceled: "Annulleret",
+  failed: "Fejlet",
+};
 
-  const remaining = row ? row.amount_dkk - (row.refunded_amount_dkk ?? 0) : 0;
+function StripeOverview() {
+  const overviewFn = useServerFn(getStripeOverview);
+  const env = getStripeEnvironment();
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin-stripe-overview", env],
+    queryFn: () => overviewFn({ data: { environment: env } }),
+    refetchInterval: 60_000,
+  });
 
-  const submit = async (fullRefund: boolean) => {
-    if (!row) return;
-    const parsed = fullRefund ? undefined : Math.round(Number(amount));
-    if (!fullRefund && (!Number.isFinite(parsed) || !parsed || parsed <= 0)) {
-      toast.error("Angiv et gyldigt beløb");
-      return;
-    }
-    setBusy(true);
-    try {
-      const res = await refundFn({
-        data: {
-          donationId: row.id,
-          amountDkk: parsed,
-          environment: getStripeEnvironment(),
-        },
-      });
-      if ("error" in res) {
-        toast.error(res.error);
-      } else {
-        toast.success(`Refunderet ${res.refundDkk} kr.`);
-        onOpenChange(false);
-        setAmount("");
-        onDone();
-      }
-    } catch (e: any) {
-      toast.error(e?.message ?? "Refundering fejlede");
-    } finally {
-      setBusy(false);
-    }
-  };
+  if (isLoading) {
+    return <p className="text-sm text-muted-foreground">Henter Stripe-saldo…</p>;
+  }
+  if (!data || !data.ok) {
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Landmark className="h-4 w-4" /> Stripe-saldo
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Kunne ikke hente saldo fra Stripe{data && !data.ok ? `: ${data.error}` : ""}.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Refunder betaling</DialogTitle>
-        </DialogHeader>
-        {row && (
-          <div className="space-y-3 text-sm">
-            <div className="rounded border bg-muted/40 p-3">
-              <div className="font-medium">
-                {row.profiles?.display_name ?? "Uden navn"}
-                {row.profiles?.lmu_name && (
-                  <span className="ml-2 text-xs text-muted-foreground">({row.profiles.lmu_name})</span>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                Oprindeligt beløb: {formatDkk(row.amount_dkk)} · Kan stadig refunderes: {formatDkk(remaining)}
-              </div>
-              {!row.stripe_payment_intent_id && (
-                <div className="mt-2 rounded border border-amber-500/40 bg-amber-500/10 p-2 text-xs">
-                  Denne betaling er registreret manuelt (ingen Stripe-transaktion). Refundering
-                  markerer den kun som refunderet — pengeoverførsel skal håndteres udenom.
-                </div>
-              )}
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium">Delvist beløb (kr.) — lad stå tom for fuld refundering</label>
-              <Input
-                type="number"
-                min={1}
-                max={remaining}
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder={`Fuld: ${remaining}`}
-              />
-            </div>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Landmark className="h-4 w-4" /> Stripe-saldo (read-only)
+          {env === "sandbox" && <Badge variant="secondary" className="text-[10px]">testmiljø</Badge>}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded border bg-muted/40 p-3">
+            <div className="text-xs text-muted-foreground">Tilgængelig hos Stripe</div>
+            <div className="text-xl font-bold">{formatDkk(data.availableDkk)}</div>
           </div>
-        )}
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>
-            Annullér
-          </Button>
-          <Button variant="secondary" onClick={() => submit(false)} disabled={busy || !amount}>
-            Refunder {amount ? `${amount} kr.` : "delvist"}
-          </Button>
-          <Button variant="destructive" onClick={() => submit(true)} disabled={busy}>
-            Refunder fuldt ({formatDkk(remaining)})
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <div className="rounded border bg-muted/40 p-3">
+            <div className="text-xs text-muted-foreground">Undervejs til saldo</div>
+            <div className="text-xl font-bold">{formatDkk(data.pendingDkk)}</div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="mb-2 text-sm font-medium flex items-center gap-2">
+            <ArrowUpRight className="h-4 w-4" /> Udbetalinger fra Stripe
+          </h3>
+          {data.payouts.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Ingen udbetalinger endnu.</p>
+          ) : (
+            <div className="divide-y rounded border">
+              {data.payouts.map((p) => (
+                <div key={p.id} className="flex items-center justify-between gap-3 p-2.5 text-sm">
+                  <div>
+                    <div className="font-medium">{formatDkk(p.amountDkk)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Ankomst: {new Date(p.arrivalDate * 1000).toLocaleDateString("da-DK")}
+                      {" · "}Oprettet: {new Date(p.created * 1000).toLocaleDateString("da-DK")}
+                    </div>
+                  </div>
+                  <Badge
+                    variant={p.status === "paid" ? "default" : p.status === "failed" || p.status === "canceled" ? "destructive" : "secondary"}
+                  >
+                    {PAYOUT_STATUS_LABEL[p.status] ?? p.status}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="mt-2 text-xs text-muted-foreground">
+            Udbetalinger oprettes i Stripe-dashboardet — hjemmesiden viser dem kun.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
