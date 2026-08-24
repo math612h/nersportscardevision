@@ -134,6 +134,7 @@ export function AdminSidebar() {
       label: "Broadcast",
       items: [
         { title: "Streaming profil", url: "/admin/streaming-profil", icon: Radio },
+        { title: "Streaming tool", url: "/admin/streaming-tool", icon: MonitorPlay },
       ],
     },
     {
