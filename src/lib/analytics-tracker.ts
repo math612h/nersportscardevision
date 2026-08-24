@@ -48,15 +48,37 @@ let started = false;
 let lastPath: string | null = null;
 let pageEnteredAt = 0;
 
+// Postgres text columns reject NUL bytes — some user agents/referrers contain
+// them, which makes the whole batch insert fail with "null character not permitted".
+function clean(s: string | null): string | null {
+  if (s == null) return null;
+  // eslint-disable-next-line no-control-regex
+  return s.replace(/\u0000/g, "").slice(0, 500);
+}
+
 async function flush() {
   if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
   if (queue.length === 0) return;
-  const batch = queue;
+  const batch = queue.map((ev) => ({
+    ...ev,
+    path: clean(ev.path),
+    referrer: clean(ev.referrer),
+    user_agent: clean(ev.user_agent),
+  }));
   queue = [];
   try {
-    await supabase.from("analytics_events").insert(batch);
+    const { error } = await supabase.from("analytics_events").insert(batch);
+    if (error) throw error;
   } catch {
-    // swallow — don't disrupt UX
+    // Batch failed (e.g. one bad row) — retry row by row so one bad event
+    // doesn't discard the rest.
+    for (const ev of batch) {
+      try {
+        await supabase.from("analytics_events").insert(ev);
+      } catch {
+        // drop the bad row
+      }
+    }
   }
 }
 
