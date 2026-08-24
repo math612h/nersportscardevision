@@ -519,9 +519,12 @@ function LeagueDetail() {
         </div>
       </section>
 
-      <RaceDataResults leagueId={leagueId} />
-
-      <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={!!(league as any)?.separate_division_standings} />
+      {!(league as any)?.separate_division_standings && (
+        <>
+          <RaceDataResults leagueId={leagueId} />
+          <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={false} />
+        </>
+      )}
 
     </div>
   );
