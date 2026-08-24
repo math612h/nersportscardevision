@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Receipt, Search, RotateCcw, ExternalLink, CreditCard, Coffee, HandCoins, Landmark, ArrowUpRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,7 +150,6 @@ function StripeOverview() {
 }
 
 function AdminPaymentsPage() {
-  const qc = useQueryClient();
   const listFn = useServerFn(listAllPayments);
   const statsFn = useServerFn(getPaymentsStats);
 
@@ -170,13 +169,6 @@ function AdminPaymentsPage() {
 
   const rows = (data?.rows ?? []) as Row[];
   const stats = statsData ?? { grossTotal: 0, refundedTotal: 0, netTotal: 0, countAll: 0, countRefunded: 0, monthNet: 0, donationsNet: 0, coachingNet: 0 };
-
-  const refresh = () => {
-    qc.invalidateQueries({ queryKey: ["admin-payments"] });
-    qc.invalidateQueries({ queryKey: ["admin-payments-stats"] });
-    qc.invalidateQueries({ queryKey: ["admin-donations"] });
-    qc.invalidateQueries({ queryKey: ["donation-tier"] });
-  };
 
   const stripeDashboardUrl = (row: Row) => {
     if (!row.stripe_payment_intent_id) return null;
