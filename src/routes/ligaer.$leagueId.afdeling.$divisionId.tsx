@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Calendar, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2, Timer, Trophy, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, ChevronDown, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2, Timer, Trophy, Clock } from "lucide-react";
 import { msToLapStr } from "@/lib/lmu-parser";
 import { format, formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
@@ -13,6 +13,7 @@ import { triggerReserveOfferForAbsence, respondReserveOffer, undoDivisionAbsence
 import { PracticeSessionsList } from "@/components/PracticeSessionsList";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_NUMERIC_FIELDS } from "@/lib/tracks";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DriverLink } from "@/components/DriverLink";
 import { useDonationTier, donationAccentClass } from "@/lib/donation-tier";
 import { cn } from "@/lib/utils";
@@ -315,6 +316,10 @@ function DivisionDetail() {
   const totalSignups = signups?.length ?? 0;
   const absentCount = absences?.length ?? 0;
   const participantCount = totalSignups - absentCount;
+  const catByUserClass = new Map<string, string>();
+  for (const e of [...(signups ?? []), ...(reserveEntries ?? [])]) {
+    if (e.driver_category) catByUserClass.set(`${e.user_id}|${e.car_class}`, e.driver_category);
+  }
 
   // Anonymous visitors can browse afdelings-siden; interaktive elementer er gated længere nede.
 
@@ -481,6 +486,96 @@ function DivisionDetail() {
 
       <PracticeSessionsList divisionId={divisionId} />
 
+
+      <section className="space-y-4">
+        <Collapsible defaultOpen={(results?.length ?? 0) === 0}>
+          <div className="flex items-center justify-between gap-2">
+            <CollapsibleTrigger className="group flex items-center gap-2 text-primary transition hover:text-primary/80">
+              <Users className="h-4 w-4" />
+              <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">
+                Deltagere ({participantCount}/{totalSignups})
+              </h2>
+              <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
+            </CollapsibleTrigger>
+            {absentCount > 0 && (
+              <span className="text-xs text-muted-foreground">{absentCount} deltager ikke</span>
+            )}
+          </div>
+          <CollapsibleContent className="space-y-3 pt-4">
+            {totalSignups === 0 && <p className="text-sm text-muted-foreground">Ingen tilmeldte til ligaen endnu.</p>}
+            <div className="space-y-3">
+              {Object.entries(grouped).map(([k, list]) => {
+                if (!list || list.length === 0) return null;
+                const [cls, cat] = k.split(" · ");
+                const sorted = [...list].sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0));
+                return (
+                  <Card key={k}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm flex items-center gap-2">
+                        <span>{cls}</span>
+                        <Badge variant="outline" className="text-[10px]">{cat}</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <ul className="divide-y divide-border">
+                        {sorted.map((e) => {
+                          const ab = absenceByUser.get(e.user_id);
+                          return (
+                            <DriverEntryRow
+                              key={e.id}
+                              userId={e.user_id}
+                              absent={!!ab}
+                            >
+                              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                                #{e.car_number}
+                              </span>
+                              <DriverLink userId={e.user_id} name={e.driver_name} className={`flex-1 truncate ${ab ? "line-through" : ""}`} />
+                              {approvedSet?.has(e.user_id) && (
+                                <Badge variant="secondary" className="gap-1 text-[10px] text-green-700 dark:text-green-400" title="Godkendt kører">
+                                  <CheckCircle2 className="h-3 w-3" /> Godkendt
+                                </Badge>
+                              )}
+                              {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
+                              {e._kind === "reserve" && (
+                                <Badge variant="secondary" className="gap-1 text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" title="Reserve — kører kun denne afdeling">
+                                  Reserve
+                                </Badge>
+                              )}
+                              {ab && (
+                                <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
+                                  <UserX className="h-3 w-3" /> Deltager ikke
+                                </Badge>
+                              )}
+                            </DriverEntryRow>
+                          );
+                        })}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {(absenceReasons?.length ?? 0) > 0 && (
+              <div className="mt-4">
+                <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Begrundelser</h3>
+                <ul className="space-y-1.5">
+                  {(absenceReasons ?? []).map((a) => {
+                    const e = (signups ?? []).find((s) => s.user_id === a.user_id);
+                    return (
+                      <li key={a.id} className="rounded border border-border px-3 py-2 text-sm">
+                        <DriverLink userId={e?.user_id} name={e?.driver_name ?? "Ukendt kører"} className="font-medium" />:{" "}
+                        <span className="text-muted-foreground">{a.reason}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+      </section>
+
       {(results?.length ?? 0) > 0 && (() => {
         const sessions: { type: "race" | "qualifying"; label: string }[] = [
           { type: "race", label: "Race resultater" },
@@ -488,7 +583,6 @@ function DivisionDetail() {
         ];
         return (
           <section id="resultater" className="space-y-4 scroll-mt-24">
-
             {sessions.map(({ type, label }) => {
               const rows = (results ?? []).filter((r) => r.session_type === type);
               if (rows.length === 0) return null;
@@ -503,120 +597,63 @@ function DivisionDetail() {
                     <Trophy className="h-4 w-4" />
                     <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{label}</h2>
                   </div>
-                  {Array.from(byClass.entries()).map(([cls, list]) => (
-                    <Card key={cls}>
-                      <CardHeader className="pb-2"><CardTitle className="text-sm">{cls}</CardTitle></CardHeader>
-                      <CardContent className="pt-0">
-                        <ul className="divide-y divide-border">
-                          {list.sort((a, b) => (a.position ?? 999) - (b.position ?? 999)).map((r) => (
-                            <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
-                              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
-                                P{r.position}
-                              </span>
-                              <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? "Ukendt"} className="flex-1 truncate" />
-                              {r.car_model && <span className="hidden sm:inline text-xs text-muted-foreground truncate">{r.car_model}</span>}
-                              {r.best_lap_ms != null && (
-                                <span className="font-mono text-xs tabular-nums text-muted-foreground">{msToLapStr(r.best_lap_ms)}</span>
-                              )}
-                              {type === "race" && (
-                                <span className="font-mono text-xs tabular-nums font-semibold w-10 text-right">{r.points ?? 0}p</span>
-                              )}
-                            </li>
-                          ))}
-                        </ul>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  {Array.from(byClass.entries()).flatMap(([cls, list]) => {
+                    // Opdel i kategorier (Pro/Am) når feltet er splittet
+                    const cats = Array.from(
+                      new Set(
+                        list
+                          .map((r) => catByUserClass.get(`${r.user_id}|${cls}`))
+                          .filter(Boolean) as string[],
+                      ),
+                    ).sort((a, b) => (/pro/i.test(a) ? 0 : 1) - (/pro/i.test(b) ? 0 : 1));
+                    const subgroups =
+                      cats.length > 1
+                        ? cats.map((cat) => ({
+                            cat: cat as string | null,
+                            rows: list.filter((r) => catByUserClass.get(`${r.user_id}|${cls}`) === cat),
+                          }))
+                        : [{ cat: null as string | null, rows: list }];
+                    return subgroups.map((sg) => (
+                      <Card key={`${cls}-${sg.cat ?? "all"}`}>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <span>{cls}</span>
+                            {sg.cat && <Badge variant="outline" className="text-[10px]">{sg.cat}</Badge>}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <ul className="divide-y divide-border">
+                            {sg.rows
+                              .slice()
+                              .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
+                              .map((r) => (
+                                <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
+                                  <span className="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                                    P{r.position}
+                                  </span>
+                                  <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? "Ukendt"} className="min-w-0 flex-1 truncate" />
+                                  <span className="ml-auto flex shrink-0 items-center gap-3">
+                                    {r.car_model && <span className="hidden sm:inline text-xs text-muted-foreground truncate">{r.car_model}</span>}
+                                    {r.best_lap_ms != null && (
+                                      <span className="font-mono text-xs tabular-nums text-muted-foreground">{msToLapStr(r.best_lap_ms)}</span>
+                                    )}
+                                    {type === "race" && (
+                                      <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{r.points ?? 0}p</span>
+                                    )}
+                                  </span>
+                                </li>
+                              ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    ));
+                  })}
                 </div>
               );
             })}
           </section>
         );
       })()}
-
-      <section className="space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-primary">
-            <Users className="h-4 w-4" />
-            <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">
-              Deltagere ({participantCount}/{totalSignups})
-            </h2>
-          </div>
-          {absentCount > 0 && (
-            <span className="text-xs text-muted-foreground">{absentCount} deltager ikke</span>
-          )}
-        </div>
-        {totalSignups === 0 && <p className="text-sm text-muted-foreground">Ingen tilmeldte til ligaen endnu.</p>}
-        <div className="space-y-3">
-          {Object.entries(grouped).map(([k, list]) => {
-            if (!list || list.length === 0) return null;
-            const [cls, cat] = k.split(" · ");
-            const sorted = [...list].sort((a, b) => (a.car_number ?? 0) - (b.car_number ?? 0));
-            return (
-              <Card key={k}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <span>{cls}</span>
-                    <Badge variant="outline" className="text-[10px]">{cat}</Badge>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <ul className="divide-y divide-border">
-                    {sorted.map((e) => {
-                      const ab = absenceByUser.get(e.user_id);
-                      return (
-                        <DriverEntryRow
-                          key={e.id}
-                          userId={e.user_id}
-                          absent={!!ab}
-                        >
-                          <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
-                            #{e.car_number}
-                          </span>
-                          <DriverLink userId={e.user_id} name={e.driver_name} className={`flex-1 truncate ${ab ? "line-through" : ""}`} />
-                          {approvedSet?.has(e.user_id) && (
-                            <Badge variant="secondary" className="gap-1 text-[10px] text-green-700 dark:text-green-400" title="Godkendt kører">
-                              <CheckCircle2 className="h-3 w-3" /> Godkendt
-                            </Badge>
-                          )}
-                          {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
-                          {e._kind === "reserve" && (
-                            <Badge variant="secondary" className="gap-1 text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" title="Reserve — kører kun denne afdeling">
-                              Reserve
-                            </Badge>
-                          )}
-                          {ab && (
-                            <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
-                              <UserX className="h-3 w-3" /> Deltager ikke
-                            </Badge>
-                          )}
-                        </DriverEntryRow>
-                      );
-                    })}
-                  </ul>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {(absenceReasons?.length ?? 0) > 0 && (
-          <div className="mt-4">
-            <h3 className="mb-2 text-sm font-semibold text-muted-foreground">Begrundelser</h3>
-            <ul className="space-y-1.5">
-              {(absenceReasons ?? []).map((a) => {
-                const e = (signups ?? []).find((s) => s.user_id === a.user_id);
-                return (
-                  <li key={a.id} className="rounded border border-border px-3 py-2 text-sm">
-                    <DriverLink userId={e?.user_id} name={e?.driver_name ?? "Ukendt kører"} className="font-medium" />:{" "}
-                    <span className="text-muted-foreground">{a.reason}</span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-      </section>
     </div>
   );
 }

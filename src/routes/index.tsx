@@ -367,7 +367,7 @@ function NewsHome() {
 
             <div className="space-y-5 p-4 sm:p-6">
               {groupedResults.map((group) => {
-                const teamGroup = (latestTeamStandings ?? []).find((g) => g.car_class === group.key);
+                const teamGroup = (latestTeamStandings ?? []).find((g) => g.car_class === group.cls);
                 return (
                 <div key={group.key} className="space-y-3 rounded-md border border-border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -402,7 +402,7 @@ function NewsHome() {
                           <span className="min-w-0 flex-1 truncate font-medium">
                             {row.driver_name}
                           </span>
-                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                          <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
                             {row.points ?? 0} p
                           </span>
                         </li>
@@ -484,21 +484,34 @@ function NewsHome() {
 }
 
 function groupTopThree(results: ResultRow[]) {
-  const groups = new Map<string, ResultRow[]>();
+  // Gruppér pr. bilklasse — og pr. kategori (Pro/Am) når klassen er opdelt
+  const byClass = new Map<string, ResultRow[]>();
   for (const r of results) {
     if (r.dns || r.dnf || !r.driver_name) continue;
-    const key = r.car_class ?? "Ukendt klasse";
-    (groups.get(key) ?? groups.set(key, []).get(key)!).push(r);
+    const cls = r.car_class ?? "Ukendt klasse";
+    (byClass.get(cls) ?? byClass.set(cls, []).get(cls)!).push(r);
   }
-  return Array.from(groups.entries())
-    .map(([key, rows]) => {
-      const top = rows
+  const groups: { key: string; cls: string; label: string; top: ResultRow[]; winner: ResultRow | undefined }[] = [];
+  for (const [cls, rows] of byClass) {
+    const cats = Array.from(new Set(rows.map((r) => r.driver_category).filter(Boolean) as string[]))
+      .sort((a, b) => (/pro/i.test(a) ? 0 : 1) - (/pro/i.test(b) ? 0 : 1));
+    const subgroups =
+      cats.length > 1
+        ? cats.map((cat) => ({
+            key: `${cls} · ${cat}`,
+            label: `${cls} · ${cat}`,
+            rows: rows.filter((r) => r.driver_category === cat),
+          }))
+        : [{ key: cls, label: cls, rows }];
+    for (const sg of subgroups) {
+      const top = sg.rows
         .filter((r) => Number(r.class_position) > 0)
         .sort((a, b) => Number(a.class_position) - Number(b.class_position))
         .slice(0, 3);
-      return { key, label: key, top, winner: top[0] };
-    })
-    .filter((g) => g.top.length > 0);
+      if (top.length > 0) groups.push({ key: sg.key, cls, label: sg.label, top, winner: top[0] });
+    }
+  }
+  return groups;
 }
 
 type NewsPost = {
