@@ -157,7 +157,6 @@ function AdminPaymentsPage() {
   const [source, setSource] = useState<"all" | "donation" | "coaching" | "manual">("all");
   const [status, setStatus] = useState<"all" | "refunded" | "not_refunded">("all");
   const [q, setQ] = useState("");
-  const [refundRow, setRefundRow] = useState<Row | null>(null);
 
   const { data: statsData } = useQuery({
     queryKey: ["admin-payments-stats"],
@@ -363,12 +362,6 @@ function AdminPaymentsPage() {
         </CardContent>
       </Card>
 
-      <RefundDialog
-        row={refundRow}
-        open={!!refundRow}
-        onOpenChange={(o) => !o && setRefundRow(null)}
-        onDone={refresh}
-      />
     </div>
   );
 }
