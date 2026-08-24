@@ -2134,6 +2134,26 @@ function RaceDataResults({ leagueId }: { leagueId: string }) {
     },
   });
 
+  // Kategori (Pro/Am) pr. kører+klasse — bruges til at opdele resultaterne ved splittede klasser
+  const { data: catEntries } = useQuery({
+    queryKey: ["league-entries-cats", leagueId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("user_id,car_class,driver_category")
+        .eq("league_id", leagueId);
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; car_class: string; driver_category: string | null }[];
+    },
+  });
+  const catByUserClass = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const e of catEntries ?? []) {
+      if (e.driver_category) m.set(`${e.user_id}|${e.car_class}`, e.driver_category);
+    }
+    return m;
+  }, [catEntries]);
+
   // Kun afsluttede afdelinger med resultatdata, nyest afsluttede først
   const completedDivisions = useMemo(() => {
     const withResults = new Set((rows ?? []).map((r) => r.division_id));
@@ -2201,40 +2221,58 @@ function RaceDataResults({ leagueId }: { leagueId: string }) {
           </CardContent>
         </Card>
       ) : (
-        Array.from(byClass.entries()).map(([cls, list]) => (
-          <Card key={cls}>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <span>{cls}</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs text-muted-foreground">
-                    <th className="py-1 pr-2 w-8">#</th>
-                    <th className="py-1 pr-2">Kører</th>
-                    <th className="py-1 pr-2">Bil</th>
-                    <th className="py-1 pl-2 w-24 text-right">Bedste omg.</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {list
-                    .slice()
-                    .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
-                    .map((r) => (
-                      <tr key={r.id} className="border-t border-border">
-                        <td className="py-1.5 pr-2 font-semibold tabular-nums">{r.position ?? "–"}</td>
-                        <td className="py-1.5 pr-2 truncate">{profiles?.[r.user_id] ?? "Kører"}</td>
-                        <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{r.car_model ?? "–"}</td>
-                        <td className="py-1.5 pl-2 text-right font-mono tabular-nums">{msToLap(r.best_lap_ms)}</td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            </CardContent>
-          </Card>
-        ))
+        Array.from(byClass.entries()).flatMap(([cls, list]) => {
+          // Opdel i kategorier (Pro/Am) når feltet er splittet
+          const cats = Array.from(
+            new Set(
+              list
+                .map((r) => catByUserClass.get(`${r.user_id}|${cls}`))
+                .filter(Boolean) as string[],
+            ),
+          ).sort((a, b) => (/pro/i.test(a) ? 0 : 1) - (/pro/i.test(b) ? 0 : 1));
+          const subgroups =
+            cats.length > 1
+              ? cats.map((cat) => ({
+                  cat: cat as string | null,
+                  rows: list.filter((r) => catByUserClass.get(`${r.user_id}|${cls}`) === cat),
+                }))
+              : [{ cat: null as string | null, rows: list }];
+          return subgroups.map((sg) => (
+            <Card key={`${cls}-${sg.cat ?? "all"}`}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <span>{cls}</span>
+                  {sg.cat && <Badge variant="outline" className="text-[10px]">{sg.cat}</Badge>}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0 overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted-foreground">
+                      <th className="py-1 pr-2 w-8">#</th>
+                      <th className="py-1 pr-2">Kører</th>
+                      <th className="py-1 pr-2">Bil</th>
+                      <th className="py-1 pl-2 w-24 text-right">Bedste omg.</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sg.rows
+                      .slice()
+                      .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
+                      .map((r) => (
+                        <tr key={r.id} className="border-t border-border">
+                          <td className="py-1.5 pr-2 font-semibold tabular-nums">{r.position ?? "–"}</td>
+                          <td className="py-1.5 pr-2 truncate">{profiles?.[r.user_id] ?? "Kører"}</td>
+                          <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{r.car_model ?? "–"}</td>
+                          <td className="py-1.5 pl-2 text-right font-mono tabular-nums">{msToLap(r.best_lap_ms)}</td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </CardContent>
+            </Card>
+          ));
+        })
       )}
     </section>
   );
