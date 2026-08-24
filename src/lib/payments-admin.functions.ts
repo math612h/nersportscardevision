@@ -138,93 +138,46 @@ export const getPaymentsStats = createServerFn({ method: "GET" })
     };
   });
 
-const refundSchema = z.object({
-  donationId: z.string().uuid(),
-  amountDkk: z.number().int().positive().optional(),
-  reason: z.enum(["requested_by_customer", "duplicate", "fraudulent"]).optional(),
+const overviewSchema = z.object({
   environment: z.enum(["sandbox", "live"]),
 });
 
 /**
- * Refund a payment. If the donation has a Stripe payment_intent_id we issue a
- * real Stripe refund; otherwise we mark it as manually refunded (for donations
- * that were registered by hand). Full refund by default; pass amountDkk for
- * partial refund. Refunded amount is subtracted from donor total via
- * recompute_donation_tier.
+ * Read-only Stripe overview for admins: current balance (available/pending)
+ * and recent payouts made from the Stripe dashboard. The website never moves
+ * money — this is purely a status view.
  */
-export const refundPayment = createServerFn({ method: "POST" })
+export const getStripeOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i) => refundSchema.parse(i))
+  .inputValidator((i) => overviewSchema.parse(i))
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const { data: donation, error } = await (supabaseAdmin as any)
-      .from("donations")
-      .select(
-        "id, user_id, amount_dkk, refunded_amount_dkk, stripe_payment_intent_id, environment, source",
-      )
-      .eq("id", data.donationId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!donation) return { error: "Betaling ikke fundet" };
-
-    const alreadyRefunded = donation.refunded_amount_dkk ?? 0;
-    const maxRefundable = donation.amount_dkk - alreadyRefunded;
-    if (maxRefundable <= 0) return { error: "Beløbet er allerede refunderet fuldt ud" };
-    const refundDkk = Math.min(data.amountDkk ?? maxRefundable, maxRefundable);
-
-    let stripeRefundId: string | null = null;
-
-    if (donation.stripe_payment_intent_id) {
-      try {
-        const env = (donation.environment as StripeEnv | null) ?? data.environment;
-        const stripe = createStripeClient(env);
-        const refund = await stripe.refunds.create({
-          payment_intent: donation.stripe_payment_intent_id,
-          amount: refundDkk * 100,
-          reason: data.reason ?? "requested_by_customer",
-        });
-        stripeRefundId = refund.id;
-      } catch (e) {
-        return { error: getStripeErrorMessage(e) };
-      }
-    }
-
-    const newRefunded = alreadyRefunded + refundDkk;
-    const { error: updErr } = await (supabaseAdmin as any)
-      .from("donations")
-      .update({
-        refunded_amount_dkk: newRefunded,
-        refunded_at: new Date().toISOString(),
-        stripe_refund_id: stripeRefundId ?? donation.stripe_payment_intent_id ? stripeRefundId : "manual",
-      })
-      .eq("id", data.donationId);
-    if (updErr) return { error: updErr.message };
-
-    // Recompute donor tier since refund reduces the counted amount.
-    await (supabaseAdmin as any).rpc("recompute_donation_tier", { _user_id: donation.user_id });
-
-    // Notify the donor.
     try {
-      const { data: profile } = await (supabaseAdmin as any)
-        .from("profiles")
-        .select("display_name")
-        .eq("id", donation.user_id)
-        .maybeSingle();
-      const name = (profile?.display_name as string | null)?.trim() || "ven";
-      const title = "Din betaling er refunderet";
-      const body =
-        `Hej ${name}!\n\n` +
-        `Vi har refunderet ${refundDkk} kr. af din betaling. Beløbet vil normalt være tilbage på din konto inden for få hverdage.\n\n` +
-        `Er der noget, er du velkommen til at kontakte os.`;
-      await (supabaseAdmin as any).from("notifications").insert({
-        user_id: donation.user_id,
-        title,
-        body,
-        link: "/donationer",
-      });
-    } catch (_) {}
+      const stripe = createStripeClient(data.environment as StripeEnv);
+      const [balance, payouts] = await Promise.all([
+        stripe.balance.retrieve(),
+        stripe.payouts.list({ limit: 25 }),
+      ]);
 
-    return { ok: true, refundDkk };
+      const sumDkk = (list: { amount: number; currency: string }[]) =>
+        list.filter((b) => b.currency === "dkk").reduce((s, b) => s + b.amount, 0) / 100;
+
+      return {
+        ok: true as const,
+        availableDkk: sumDkk(balance.available as any),
+        pendingDkk: sumDkk(balance.pending as any),
+        payouts: payouts.data.map((p) => ({
+          id: p.id,
+          amountDkk: p.amount / 100,
+          currency: p.currency,
+          status: p.status, // paid | pending | in_transit | canceled | failed
+          created: p.created,
+          arrivalDate: p.arrival_date,
+          method: p.method,
+          description: p.description,
+        })),
+      };
+    } catch (e) {
+      return { ok: false as const, error: getStripeErrorMessage(e) };
+    }
   });
