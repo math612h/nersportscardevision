@@ -80,6 +80,7 @@ import { Route as AuthenticatedAdminAdminRollerRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminPartnerfordeleRouteImport } from './routes/_authenticated._admin.admin.partnerfordele'
 import { Route as AuthenticatedAdminAdminOverhalingerRouteImport } from './routes/_authenticated._admin.admin.overhalinger'
+import { Route as AuthenticatedAdminAdminOnlineRouteImport } from './routes/_authenticated._admin.admin.online'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
 import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
 import { Route as AuthenticatedAdminAdminGaesterRouteImport } from './routes/_authenticated._admin.admin.gaester'
@@ -498,6 +499,12 @@ const AuthenticatedAdminAdminOverhalingerRoute =
     path: '/admin/overhalinger',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminOnlineRoute =
+  AuthenticatedAdminAdminOnlineRouteImport.update({
+    id: '/admin/online',
+    path: '/admin/online',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminNyhedsbrevRoute =
   AuthenticatedAdminAdminNyhedsbrevRouteImport.update({
     id: '/admin/nyhedsbrev',
@@ -701,6 +708,7 @@ export interface FileRoutesByFullPath {
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/admin/online': typeof AuthenticatedAdminAdminOnlineRoute
   '/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
@@ -796,6 +804,7 @@ export interface FileRoutesByTo {
   '/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/admin/online': typeof AuthenticatedAdminAdminOnlineRoute
   '/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
@@ -894,6 +903,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/gaester': typeof AuthenticatedAdminAdminGaesterRoute
   '/_authenticated/_admin/admin/ligaer': typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  '/_authenticated/_admin/admin/online': typeof AuthenticatedAdminAdminOnlineRoute
   '/_authenticated/_admin/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/_authenticated/_admin/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
@@ -992,6 +1002,7 @@ export interface FileRouteTypes {
     | '/admin/gaester'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
+    | '/admin/online'
     | '/admin/overhalinger'
     | '/admin/partnerfordele'
     | '/admin/protests'
@@ -1087,6 +1098,7 @@ export interface FileRouteTypes {
     | '/admin/gaester'
     | '/admin/ligaer'
     | '/admin/nyhedsbrev'
+    | '/admin/online'
     | '/admin/overhalinger'
     | '/admin/partnerfordele'
     | '/admin/roller'
@@ -1184,6 +1196,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/gaester'
     | '/_authenticated/_admin/admin/ligaer'
     | '/_authenticated/_admin/admin/nyhedsbrev'
+    | '/_authenticated/_admin/admin/online'
     | '/_authenticated/_admin/admin/overhalinger'
     | '/_authenticated/_admin/admin/partnerfordele'
     | '/_authenticated/_admin/admin/protests'
@@ -1774,6 +1787,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminOverhalingerRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/online': {
+      id: '/_authenticated/_admin/admin/online'
+      path: '/admin/online'
+      fullPath: '/admin/online'
+      preLoaderRoute: typeof AuthenticatedAdminAdminOnlineRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/nyhedsbrev': {
       id: '/_authenticated/_admin/admin/nyhedsbrev'
       path: '/admin/nyhedsbrev'
@@ -2010,6 +2030,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminGaesterRoute: typeof AuthenticatedAdminAdminGaesterRoute
   AuthenticatedAdminAdminLigaerRoute: typeof AuthenticatedAdminAdminLigaerRouteWithChildren
   AuthenticatedAdminAdminNyhedsbrevRoute: typeof AuthenticatedAdminAdminNyhedsbrevRoute
+  AuthenticatedAdminAdminOnlineRoute: typeof AuthenticatedAdminAdminOnlineRoute
   AuthenticatedAdminAdminOverhalingerRoute: typeof AuthenticatedAdminAdminOverhalingerRoute
   AuthenticatedAdminAdminPartnerfordeleRoute: typeof AuthenticatedAdminAdminPartnerfordeleRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
@@ -2046,6 +2067,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminAdminLigaerRouteWithChildren,
   AuthenticatedAdminAdminNyhedsbrevRoute:
     AuthenticatedAdminAdminNyhedsbrevRoute,
+  AuthenticatedAdminAdminOnlineRoute: AuthenticatedAdminAdminOnlineRoute,
   AuthenticatedAdminAdminOverhalingerRoute:
     AuthenticatedAdminAdminOverhalingerRoute,
   AuthenticatedAdminAdminPartnerfordeleRoute:
