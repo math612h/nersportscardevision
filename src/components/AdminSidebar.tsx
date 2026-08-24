@@ -28,6 +28,7 @@ import {
   BarChart3,
   Radio,
   MonitorPlay,
+  Wifi,
 
 
   CalendarDays,
@@ -94,6 +95,7 @@ export function AdminSidebar() {
       items: [
         { title: "Dashboard", url: "/admin", icon: LayoutDashboard, exact: true },
         { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
+        { title: "Online nu", url: "/admin/online", icon: Wifi },
       ],
     },
     {
