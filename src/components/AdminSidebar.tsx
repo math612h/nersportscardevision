@@ -27,6 +27,7 @@ import {
   MessageSquare,
   BarChart3,
   Radio,
+  MonitorPlay,
 
 
   CalendarDays,

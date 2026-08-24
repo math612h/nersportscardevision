@@ -72,6 +72,7 @@ import { Route as ApiPublicBroadcastLeaderboardRouteImport } from './routes/api/
 import { Route as ApiPublicBroadcastIceCupRouteImport } from './routes/api/public/broadcast/ice-cup'
 import { Route as AuthenticatedCoachingRateBookingIdRouteImport } from './routes/_authenticated.coaching.rate.$bookingId'
 import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
+import { Route as AuthenticatedAdminAdminStreamingToolRouteImport } from './routes/_authenticated._admin.admin.streaming-tool'
 import { Route as AuthenticatedAdminAdminStreamingProfilRouteImport } from './routes/_authenticated._admin.admin.streaming-profil'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
 import { Route as AuthenticatedAdminAdminSponsorerRouteImport } from './routes/_authenticated._admin.admin.sponsorer'
@@ -449,6 +450,12 @@ const AuthenticatedBeskederGruppeGroupIdRoute =
     path: '/gruppe/$groupId',
     getParentRoute: () => AuthenticatedBeskederRoute,
   } as any)
+const AuthenticatedAdminAdminStreamingToolRoute =
+  AuthenticatedAdminAdminStreamingToolRouteImport.update({
+    id: '/admin/streaming-tool',
+    path: '/admin/streaming-tool',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminStreamingProfilRoute =
   AuthenticatedAdminAdminStreamingProfilRouteImport.update({
     id: '/admin/streaming-profil',
@@ -701,6 +708,7 @@ export interface FileRoutesByFullPath {
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
+  '/admin/streaming-tool': typeof AuthenticatedAdminAdminStreamingToolRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
@@ -794,6 +802,7 @@ export interface FileRoutesByTo {
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
+  '/admin/streaming-tool': typeof AuthenticatedAdminAdminStreamingToolRoute
   '/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
@@ -892,6 +901,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
   '/_authenticated/_admin/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
+  '/_authenticated/_admin/admin/streaming-tool': typeof AuthenticatedAdminAdminStreamingToolRoute
   '/_authenticated/beskeder/gruppe/$groupId': typeof AuthenticatedBeskederGruppeGroupIdRoute
   '/_authenticated/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
@@ -989,6 +999,7 @@ export interface FileRouteTypes {
     | '/admin/sponsorer'
     | '/admin/storage'
     | '/admin/streaming-profil'
+    | '/admin/streaming-tool'
     | '/beskeder/gruppe/$groupId'
     | '/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
@@ -1082,6 +1093,7 @@ export interface FileRouteTypes {
     | '/admin/sponsorer'
     | '/admin/storage'
     | '/admin/streaming-profil'
+    | '/admin/streaming-tool'
     | '/beskeder/gruppe/$groupId'
     | '/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
@@ -1179,6 +1191,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/sponsorer'
     | '/_authenticated/_admin/admin/storage'
     | '/_authenticated/_admin/admin/streaming-profil'
+    | '/_authenticated/_admin/admin/streaming-tool'
     | '/_authenticated/beskeder/gruppe/$groupId'
     | '/_authenticated/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
@@ -1705,6 +1718,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBeskederGruppeGroupIdRouteImport
       parentRoute: typeof AuthenticatedBeskederRoute
     }
+    '/_authenticated/_admin/admin/streaming-tool': {
+      id: '/_authenticated/_admin/admin/streaming-tool'
+      path: '/admin/streaming-tool'
+      fullPath: '/admin/streaming-tool'
+      preLoaderRoute: typeof AuthenticatedAdminAdminStreamingToolRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/streaming-profil': {
       id: '/_authenticated/_admin/admin/streaming-profil'
       path: '/admin/streaming-profil'
@@ -1997,6 +2017,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminSponsorerRoute: typeof AuthenticatedAdminAdminSponsorerRoute
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
   AuthenticatedAdminAdminStreamingProfilRoute: typeof AuthenticatedAdminAdminStreamingProfilRoute
+  AuthenticatedAdminAdminStreamingToolRoute: typeof AuthenticatedAdminAdminStreamingToolRoute
   AuthenticatedAdminAdminIndexRoute: typeof AuthenticatedAdminAdminIndexRoute
   AuthenticatedAdminAdminBrugereUserIdRoute: typeof AuthenticatedAdminAdminBrugereUserIdRoute
   AuthenticatedAdminAdminRegelsaetTemplateIdRoute: typeof AuthenticatedAdminAdminRegelsaetTemplateIdRoute
@@ -2036,6 +2057,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminStorageRoute: AuthenticatedAdminAdminStorageRoute,
   AuthenticatedAdminAdminStreamingProfilRoute:
     AuthenticatedAdminAdminStreamingProfilRoute,
+  AuthenticatedAdminAdminStreamingToolRoute:
+    AuthenticatedAdminAdminStreamingToolRoute,
   AuthenticatedAdminAdminIndexRoute: AuthenticatedAdminAdminIndexRoute,
   AuthenticatedAdminAdminBrugereUserIdRoute:
     AuthenticatedAdminAdminBrugereUserIdRoute,
