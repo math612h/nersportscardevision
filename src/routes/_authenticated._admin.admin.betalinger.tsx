@@ -221,9 +221,11 @@ function AdminPaymentsPage() {
       </header>
       <p className="text-sm text-muted-foreground">
         Oversigt over alle registrerede betalinger — både Stripe-transaktioner (donationer og
-        coaching) og manuelt registrerede donationer. Du kan refundere Stripe-betalinger direkte
-        herfra; refunderede beløb trækkes automatisk fra donor-status.
+        coaching) og manuelt registrerede donationer. Siden er read-only: refunderinger og
+        udbetalinger håndteres i Stripe-dashboardet, og saldoen her følger Stripe.
       </p>
+
+      <StripeOverview />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Netto i alt" value={formatDkk(stats.netTotal)} sub={`${stats.countAll} transaktioner`} icon={HandCoins} />
@@ -345,14 +347,11 @@ function AdminPaymentsPage() {
                           </a>
                         </Button>
                       )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setRefundRow(row)}
-                        disabled={remaining <= 0}
-                      >
-                        <RotateCcw className="mr-1 h-3 w-3" /> Refunder
-                      </Button>
+                      {row.stripe_payment_intent_id && (
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                          Refundering sker via Stripe
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 );
