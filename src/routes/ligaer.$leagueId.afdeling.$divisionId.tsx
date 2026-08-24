@@ -579,10 +579,11 @@ function DivisionDetail() {
       </section>
 
       {(results?.length ?? 0) > 0 && (() => {
-        const sessions: { type: "race" | "qualifying"; label: string; short: string }[] = [
+        const allSessions: { type: "race" | "qualifying"; label: string; short: string }[] = [
           { type: "race", label: "Race resultater", short: "Race results" },
           { type: "qualifying", label: "Kvalifikation", short: "Quali results" },
-        ].filter((s) => (results ?? []).some((r) => r.session_type === s.type));
+        ];
+        const sessions = allSessions.filter((s) => (results ?? []).some((r) => r.session_type === s.type));
         if (sessions.length === 0) return null;
         const active = sessions.some((s) => s.type === resultView) ? resultView : sessions[0].type;
         const activeLabel = sessions.find((s) => s.type === active)?.label ?? "";
