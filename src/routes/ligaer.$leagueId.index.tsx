@@ -380,7 +380,7 @@ function LeagueDetail() {
         </div>
       </header>
 
-      <QuickNav teamsAllowed={!!(league as any)?.teams_allowed} />
+      <QuickNav teamsAllowed={!!(league as any)?.teams_allowed} showStandings={!(league as any)?.separate_division_standings} />
 
 
       {league && <SignupsList leagueId={leagueId} configs={configs} />}
@@ -391,8 +391,7 @@ function LeagueDetail() {
 
       <DriverAidsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
 
-
-
+      <PrizesView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
 
       <section id="kalender" className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
@@ -514,8 +513,6 @@ function LeagueDetail() {
       </section>
 
       <RaceDataResults leagueId={leagueId} />
-
-      <PrizesView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
 
       <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={!!(league as any)?.separate_division_standings} />
 
@@ -1561,15 +1558,14 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   );
 }
 
-function QuickNav({ teamsAllowed = false }: { teamsAllowed?: boolean }) {
+function QuickNav({ teamsAllowed = false, showStandings = true }: { teamsAllowed?: boolean; showStandings?: boolean }) {
   const items = [
     { id: "entryliste", label: "Entryliste", icon: Users },
     ...(teamsAllowed ? [{ id: "teams", label: "Teams", icon: Shield }] : []),
-    { id: "kalender", label: "Kalender", icon: Calendar },
     { id: "driveraids", label: "Driver Aids", icon: SettingsIcon },
     { id: "praemier", label: "Præmier", icon: Gift },
-    { id: "stillinger", label: "Stillinger", icon: Trophy },
-
+    { id: "kalender", label: "Kalender", icon: Calendar },
+    ...(showStandings ? [{ id: "stillinger", label: "Stillinger", icon: Trophy }] : []),
   ];
 
   const scrollTo = (id: string) => {
