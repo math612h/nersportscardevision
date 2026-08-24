@@ -380,7 +380,14 @@ function LeagueDetail() {
         </div>
       </header>
 
-      <QuickNav teamsAllowed={!!(league as any)?.teams_allowed} showStandings={!(league as any)?.separate_division_standings} />
+      <QuickNav
+        teamsAllowed={!!(league as any)?.teams_allowed}
+        showStandings={!(league as any)?.separate_division_standings}
+        showPrizes={
+          ((((league as any)?.event_settings ?? {}) as EventSettings).podium_prizes ?? []).some((p) => p.trim().length > 0) ||
+          ((((league as any)?.event_settings ?? {}) as EventSettings).raffle_prizes ?? []).some((p) => p.trim().length > 0)
+        }
+      />
 
 
       {league && <SignupsList leagueId={leagueId} configs={configs} />}
@@ -1558,12 +1565,12 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   );
 }
 
-function QuickNav({ teamsAllowed = false, showStandings = true }: { teamsAllowed?: boolean; showStandings?: boolean }) {
+function QuickNav({ teamsAllowed = false, showStandings = true, showPrizes = true }: { teamsAllowed?: boolean; showStandings?: boolean; showPrizes?: boolean }) {
   const items = [
     { id: "entryliste", label: "Entryliste", icon: Users },
     ...(teamsAllowed ? [{ id: "teams", label: "Teams", icon: Shield }] : []),
     { id: "driveraids", label: "Driver Aids", icon: SettingsIcon },
-    { id: "praemier", label: "Præmier", icon: Gift },
+    ...(showPrizes ? [{ id: "praemier", label: "Præmier", icon: Gift }] : []),
     { id: "kalender", label: "Kalender", icon: Calendar },
     ...(showStandings ? [{ id: "stillinger", label: "Stillinger", icon: Trophy }] : []),
   ];
@@ -1648,6 +1655,8 @@ function PrizesView({ settings }: { settings: EventSettings }) {
   const podium = (settings.podium_prizes ?? []).filter((p) => p.trim().length > 0);
   const raffle = (settings.raffle_prizes ?? []).filter((p) => p.trim().length > 0);
   const total = podium.length + raffle.length;
+
+  if (total === 0) return null;
 
   const renderList = (items: string[], podiumStyle: boolean) => (
     <ul className="space-y-2">
