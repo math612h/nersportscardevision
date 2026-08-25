@@ -310,16 +310,20 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
-        .select("lobby_code,lobby_password,server_name")
+        .select("lobby_code,lobby_password,server_name,am_lobby_code,am_lobby_password,am_server_name")
         .eq("division_id", division.id)
         .maybeSingle();
       if (error) throw error;
       setLobbyCode(String(data?.lobby_code ?? ""));
       setLobbyPassword(String(data?.lobby_password ?? ""));
       setServerName(String((data as any)?.server_name ?? ""));
+      setAmLobbyCode(String((data as any)?.am_lobby_code ?? ""));
+      setAmLobbyPassword(String((data as any)?.am_lobby_password ?? ""));
+      setAmServerName(String((data as any)?.am_server_name ?? ""));
       return data ?? null;
     },
   });
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
