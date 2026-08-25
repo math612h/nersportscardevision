@@ -1655,6 +1655,7 @@ export type Database = {
           id: string
           lmu_name: string | null
           media_consent: boolean
+          stream_photo_path: string | null
           updated_at: string
         }
         Insert: {
@@ -1672,6 +1673,7 @@ export type Database = {
           id: string
           lmu_name?: string | null
           media_consent?: boolean
+          stream_photo_path?: string | null
           updated_at?: string
         }
         Update: {
@@ -1689,6 +1691,7 @@ export type Database = {
           id?: string
           lmu_name?: string | null
           media_consent?: boolean
+          stream_photo_path?: string | null
           updated_at?: string
         }
         Relationships: []
