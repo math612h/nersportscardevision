@@ -196,21 +196,42 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
             <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
             <p className="mt-1 text-xs text-muted-foreground">Lufttemperatur for løbet.</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Lobby code</Label>
-              <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+          <div className="rounded-md border border-border p-3 space-y-3">
+            <p className="text-sm font-semibold">Pro Server</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Lobby code</Label>
+                <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+              </div>
             </div>
             <div>
-              <Label>Password</Label>
-              <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+              <Label>Server navn</Label>
+              <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
             </div>
           </div>
-          <div>
-            <Label>Server navn</Label>
-            <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
+          <div className="rounded-md border border-border p-3 space-y-3">
+            <p className="text-sm font-semibold">Am Server (valgfri)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Lobby code</Label>
+                <Input maxLength={50} value={amLobbyCode} onChange={(e) => setAmLobbyCode(e.target.value)} placeholder="fx ABC123" />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input maxLength={50} value={amLobbyPassword} onChange={(e) => setAmLobbyPassword(e.target.value)} placeholder="Lobby password" />
+              </div>
+            </div>
+            <div>
+              <Label>Server navn</Label>
+              <Input maxLength={100} value={amServerName} onChange={(e) => setAmServerName(e.target.value)} placeholder="fx LMU Danmark #2" />
+            </div>
           </div>
           <p className="-mt-2 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
+
           <div className="space-y-2">
             <Label>Vejr (5 slots)</Label>
             <div className="space-y-2">
