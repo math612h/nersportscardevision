@@ -231,10 +231,11 @@ function LeagueDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
-        .select("division_id,lobby_code,lobby_password,server_name")
+        .select("division_id,lobby_code,lobby_password,server_name,am_lobby_code,am_lobby_password,am_server_name")
         .in("division_id", divisionIds);
       if (error) throw error;
-      const m: Record<string, { lobby_code: string | null; lobby_password: string | null; server_name: string | null }> = {};
+      const m: Record<string, { lobby_code: string | null; lobby_password: string | null; server_name: string | null; am_lobby_code: string | null; am_lobby_password: string | null; am_server_name: string | null }> = {};
+
       (data ?? []).forEach((l: any) => { m[l.division_id] = l; });
       return m;
     },
