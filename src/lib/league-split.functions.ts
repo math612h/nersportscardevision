@@ -64,15 +64,21 @@ export const splitClassIntoProAm = createServerFn({ method: "POST" })
     const userIds = Array.from(new Set(rows.map((r) => r.user_id)));
     const { data: ratings } = await supabaseAdmin
       .from("user_class_ratings")
-      .select("user_id, score, percentile, confidence")
+      .select("user_id, score, percentile, confidence, components")
       .eq("car_class", data.carClass)
       .in("user_id", userIds);
     const ratingMap = new Map(
-      ((ratings ?? []) as Array<{ user_id: string; score: number; percentile: number | null; confidence: number }>).map((r) => [r.user_id, r]),
+      ((ratings ?? []) as Array<{
+        user_id: string;
+        score: number;
+        percentile: number | null;
+        confidence: number;
+        components: { has_leaderboard_data?: boolean } | null;
+      }>).map((r) => [r.user_id, r]),
     );
     const drivers: SplitDriver[] = rows.map((row) => {
       const rating = ratingMap.get(row.user_id);
-      const hasRating = rating != null && Number(rating.confidence) > 0;
+      const hasRating = rating?.components?.has_leaderboard_data === true && Number(rating.confidence) > 0;
       return {
         entry_id: row.id,
         user_id: row.user_id,

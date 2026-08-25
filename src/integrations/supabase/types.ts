@@ -2843,6 +2843,10 @@ export type Database = {
       }
       is_steward: { Args: { _user_id: string }; Returns: boolean }
       league_is_active: { Args: { _league_id: string }; Returns: boolean }
+      lmu_game_version_sort_key: {
+        Args: { _version: string }
+        Returns: number[]
+      }
       log_audit: {
         Args: {
           _action: string
@@ -2890,6 +2894,10 @@ export type Database = {
       recompute_all_team_ratings: { Args: never; Returns: undefined }
       recompute_donation_tier: {
         Args: { _user_id: string }
+        Returns: undefined
+      }
+      refresh_all_user_class_ratings: {
+        Args: { _car_class: string }
         Returns: undefined
       }
       refresh_class_percentiles: {
