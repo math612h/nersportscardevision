@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Wifi, Globe, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { PRESENCE_CHANNEL, type PresencePayload } from "@/lib/presence";
+import { subscribeToPresence, isPresenceConnected, type OnlineVisitor } from "@/lib/presence";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -11,12 +11,7 @@ export const Route = createFileRoute("/_authenticated/_admin/admin/online")({
   component: AdminOnlinePage,
 });
 
-type OnlineEntry = {
-  key: string;
-  userId: string | null;
-  path: string;
-  since: number;
-};
+type OnlineEntry = OnlineVisitor;
 
 function formatDuration(ms: number) {
   const sec = Math.max(0, Math.floor(ms / 1000));
@@ -32,37 +27,18 @@ function AdminOnlinePage() {
   const [connected, setConnected] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
-  useEffect(() => {
-    const ch = supabase.channel(PRESENCE_CHANNEL);
-    const sync = () => {
-      const state = ch.presenceState<PresencePayload>();
-      const list: OnlineEntry[] = [];
-      for (const [key, metas] of Object.entries(state)) {
-        const p = metas[metas.length - 1];
-        if (!p) continue;
-        list.push({
-          key,
-          userId: p.userId ?? null,
-          path: p.path ?? "/",
-          since: typeof p.since === "number" ? p.since : Date.now(),
-        });
-      }
-      setEntries(list);
-    };
-    ch.on("presence", { event: "sync" }, sync)
-      .on("presence", { event: "join" }, sync)
-      .on("presence", { event: "leave" }, sync)
-      .subscribe((status) => setConnected(status === "SUBSCRIBED"));
-    return () => {
-      void supabase.removeChannel(ch);
-    };
-  }, []);
+  useEffect(() => subscribeToPresence(setEntries), []);
 
   // Ticking clock so durations update while the page is open
   useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 10_000);
+    const t = setInterval(() => {
+      setNow(Date.now());
+      setConnected(isPresenceConnected());
+    }, 3000);
+    setConnected(isPresenceConnected());
     return () => clearInterval(t);
   }, []);
+
 
   const userIds = useMemo(
     () => [...new Set(entries.map((e) => e.userId).filter((x): x is string => !!x))],
