@@ -480,6 +480,9 @@ function LeagueDetail() {
                         <ChevronDown className="ml-auto h-3 w-3 transition group-open/lobby:rotate-180" />
                       </summary>
                       <ul className="space-y-0.5 px-2 pb-2">
+                        {(lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password) && (lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password) && (
+                          <li className="pt-1 font-semibold uppercase tracking-wide text-primary">Pro Server</li>
+                        )}
                         {lobby?.server_name && (
                           <li className="flex justify-between gap-2">
                             <span className="text-muted-foreground">Server Navn</span>
@@ -498,7 +501,29 @@ function LeagueDetail() {
                             <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
                           </li>
                         )}
+                        {(lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password) && (
+                          <li className="pt-1.5 font-semibold uppercase tracking-wide text-primary">Am Server</li>
+                        )}
+                        {lobby?.am_server_name && (
+                          <li className="flex justify-between gap-2">
+                            <span className="text-muted-foreground">Server Navn</span>
+                            <span className="font-mono font-medium truncate">{lobby.am_server_name}</span>
+                          </li>
+                        )}
+                        {lobby?.am_lobby_code && (
+                          <li className="flex justify-between gap-2">
+                            <span className="text-muted-foreground">Lobby Code</span>
+                            <span className="font-mono font-medium truncate">{lobby.am_lobby_code}</span>
+                          </li>
+                        )}
+                        {lobby?.am_lobby_password && (
+                          <li className="flex justify-between gap-2">
+                            <span className="text-muted-foreground">Password</span>
+                            <span className="font-mono font-medium truncate">{lobby.am_lobby_password}</span>
+                          </li>
+                        )}
                       </ul>
+
                     </details>
                   )}
               <PracticeSessionsList divisionId={d.id} />
