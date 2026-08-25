@@ -2892,6 +2892,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: undefined
       }
+      refresh_all_user_class_ratings: {
+        Args: { _car_class: string }
+        Returns: undefined
+      }
       refresh_class_percentiles: {
         Args: { _car_class: string }
         Returns: undefined
