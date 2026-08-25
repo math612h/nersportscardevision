@@ -387,7 +387,9 @@ function DivisionDetail() {
       <EventSettingsCard settings={((div?.settings as any)?.event_settings ?? {}) as EventSettings} />
 
       {(() => {
-        const hasLobby = !!(lobby?.lobby_code || lobby?.lobby_password || lobby?.server_name);
+        const hasPro = !!(lobby?.lobby_code || lobby?.lobby_password || lobby?.server_name);
+        const hasAm = !!(lobby?.am_lobby_code || lobby?.am_lobby_password || lobby?.am_server_name);
+        const hasLobby = hasPro || hasAm;
         if (!user || !mySignup) return null;
         if (!isApproved) {
           return (
@@ -400,34 +402,39 @@ function DivisionDetail() {
           );
         }
         if (!hasLobby) return null;
+        const row = (label: string, value: string) => (
+          <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">{label}</span>
+            <span className="font-mono font-semibold">{value}</span>
+          </div>
+        );
         return (
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2"><KeyRound className="h-4 w-4 text-primary" /> Lobby info</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              {lobby?.server_name && (
-                <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Server navn</span>
-                  <span className="font-mono font-semibold">{lobby.server_name}</span>
+            <CardContent className="space-y-4 text-sm">
+              {hasPro && (
+                <div className="space-y-2">
+                  {hasAm && <p className="text-xs font-semibold uppercase tracking-wide text-primary">Pro Server</p>}
+                  {lobby?.server_name && row("Server navn", lobby.server_name)}
+                  {lobby?.lobby_code && row("Lobby code", lobby.lobby_code)}
+                  {lobby?.lobby_password && row("Password", lobby.lobby_password)}
                 </div>
               )}
-              {lobby?.lobby_code && (
-                <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Lobby code</span>
-                  <span className="font-mono font-semibold">{lobby.lobby_code}</span>
-                </div>
-              )}
-              {lobby?.lobby_password && (
-                <div className="flex items-center justify-between gap-3 rounded border border-border px-3 py-2">
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">Password</span>
-                  <span className="font-mono font-semibold">{lobby.lobby_password}</span>
+              {hasAm && (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">Am Server</p>
+                  {lobby?.am_server_name && row("Server navn", lobby.am_server_name)}
+                  {lobby?.am_lobby_code && row("Lobby code", lobby.am_lobby_code)}
+                  {lobby?.am_lobby_password && row("Password", lobby.am_lobby_password)}
                 </div>
               )}
             </CardContent>
           </Card>
         );
       })()}
+
 
 
       {user && myOffer && (
