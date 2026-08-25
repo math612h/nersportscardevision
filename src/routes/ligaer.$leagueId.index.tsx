@@ -231,10 +231,11 @@ function LeagueDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
-        .select("division_id,lobby_code,lobby_password,server_name")
+        .select("division_id,lobby_code,lobby_password,server_name,am_lobby_code,am_lobby_password,am_server_name")
         .in("division_id", divisionIds);
       if (error) throw error;
-      const m: Record<string, { lobby_code: string | null; lobby_password: string | null; server_name: string | null }> = {};
+      const m: Record<string, { lobby_code: string | null; lobby_password: string | null; server_name: string | null; am_lobby_code: string | null; am_lobby_password: string | null; am_server_name: string | null }> = {};
+
       (data ?? []).forEach((l: any) => { m[l.division_id] = l; });
       return m;
     },
@@ -417,7 +418,7 @@ function LeagueDetail() {
             const startedAt = d.race_date ? new Date(d.race_date).getTime() : 0;
             const isActive = !completed && startedAt > 0 && Date.now() >= startedAt && Date.now() - startedAt < 4 * 60 * 60 * 1000;
             const lobby = lobbies?.[d.id];
-            const hasLobby = !!(lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password);
+            const hasLobby = !!(lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password || lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password);
             const cardInner = (
               <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : "border-border hover:border-primary"}`}>
                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
@@ -480,6 +481,9 @@ function LeagueDetail() {
                         <ChevronDown className="ml-auto h-3 w-3 transition group-open/lobby:rotate-180" />
                       </summary>
                       <ul className="space-y-0.5 px-2 pb-2">
+                        {(lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password) && (lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password) && (
+                          <li className="pt-1 font-semibold uppercase tracking-wide text-primary">Pro Server</li>
+                        )}
                         {lobby?.server_name && (
                           <li className="flex justify-between gap-2">
                             <span className="text-muted-foreground">Server Navn</span>
@@ -498,7 +502,29 @@ function LeagueDetail() {
                             <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
                           </li>
                         )}
+                        {(lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password) && (
+                          <li className="pt-1.5 font-semibold uppercase tracking-wide text-primary">Am Server</li>
+                        )}
+                        {lobby?.am_server_name && (
+                          <li className="flex justify-between gap-2">
+                            <span className="text-muted-foreground">Server Navn</span>
+                            <span className="font-mono font-medium truncate">{lobby.am_server_name}</span>
+                          </li>
+                        )}
+                        {lobby?.am_lobby_code && (
+                          <li className="flex justify-between gap-2">
+                            <span className="text-muted-foreground">Lobby Code</span>
+                            <span className="font-mono font-medium truncate">{lobby.am_lobby_code}</span>
+                          </li>
+                        )}
+                        {lobby?.am_lobby_password && (
+                          <li className="flex justify-between gap-2">
+                            <span className="text-muted-foreground">Password</span>
+                            <span className="font-mono font-medium truncate">{lobby.am_lobby_password}</span>
+                          </li>
+                        )}
                       </ul>
+
                     </details>
                   )}
               <PracticeSessionsList divisionId={d.id} />

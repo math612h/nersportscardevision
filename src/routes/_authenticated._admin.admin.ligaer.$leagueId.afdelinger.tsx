@@ -129,6 +129,10 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   const [lobbyCode, setLobbyCode] = useState("");
   const [lobbyPassword, setLobbyPassword] = useState("");
   const [serverName, setServerName] = useState("");
+  const [amLobbyCode, setAmLobbyCode] = useState("");
+  const [amLobbyPassword, setAmLobbyPassword] = useState("");
+  const [amServerName, setAmServerName] = useState("");
+
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
 
   const [trackIdxStr, layout] = trackLayout.split("::");
@@ -150,12 +154,15 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
       },
     }).select("id").single();
     if (error) return toast.error(error.message);
-    if (inserted && (lobbyCode.trim() || lobbyPassword.trim() || serverName.trim())) {
+    if (inserted && (lobbyCode.trim() || lobbyPassword.trim() || serverName.trim() || amLobbyCode.trim() || amLobbyPassword.trim() || amServerName.trim())) {
       const { error: lErr } = await supabase.from("division_lobbies").insert({
         division_id: inserted.id,
         lobby_code: lobbyCode.trim() || null,
         lobby_password: lobbyPassword.trim() || null,
         server_name: serverName.trim() || null,
+        am_lobby_code: amLobbyCode.trim() || null,
+        am_lobby_password: amLobbyPassword.trim() || null,
+        am_server_name: amServerName.trim() || null,
       } as any);
       if (lErr) return toast.error(`Afdeling oprettet, men lobby fejlede: ${lErr.message}`);
     }
@@ -164,6 +171,8 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
     setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny"));
     setTemperature(22);
     setLobbyCode(""); setLobbyPassword(""); setServerName("");
+    setAmLobbyCode(""); setAmLobbyPassword(""); setAmServerName("");
+
     setEventSettings({});
     onDone();
   };
@@ -196,21 +205,42 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
             <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
             <p className="mt-1 text-xs text-muted-foreground">Lufttemperatur for løbet.</p>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Lobby code</Label>
-              <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+          <div className="rounded-md border border-border p-3 space-y-3">
+            <p className="text-sm font-semibold">Pro Server</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Lobby code</Label>
+                <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+              </div>
             </div>
             <div>
-              <Label>Password</Label>
-              <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+              <Label>Server navn</Label>
+              <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
             </div>
           </div>
-          <div>
-            <Label>Server navn</Label>
-            <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
+          <div className="rounded-md border border-border p-3 space-y-3">
+            <p className="text-sm font-semibold">Am Server (valgfri)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Lobby code</Label>
+                <Input maxLength={50} value={amLobbyCode} onChange={(e) => setAmLobbyCode(e.target.value)} placeholder="fx ABC123" />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input maxLength={50} value={amLobbyPassword} onChange={(e) => setAmLobbyPassword(e.target.value)} placeholder="Lobby password" />
+              </div>
+            </div>
+            <div>
+              <Label>Server navn</Label>
+              <Input maxLength={100} value={amServerName} onChange={(e) => setAmServerName(e.target.value)} placeholder="fx LMU Danmark #2" />
+            </div>
           </div>
           <p className="-mt-2 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil.</p>
+
           <div className="space-y-2">
             <Label>Vejr (5 slots)</Label>
             <div className="space-y-2">
@@ -263,6 +293,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
   const [lobbyCode, setLobbyCode] = useState<string>("");
   const [lobbyPassword, setLobbyPassword] = useState<string>("");
   const [serverName, setServerName] = useState<string>("");
+  const [amLobbyCode, setAmLobbyCode] = useState<string>("");
+  const [amLobbyPassword, setAmLobbyPassword] = useState<string>("");
+  const [amServerName, setAmServerName] = useState<string>("");
+
   const [serverStartedAt, setServerStartedAt] = useState<string | null>(
     (division as any).server_started_at ?? null,
   );
@@ -276,16 +310,20 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
-        .select("lobby_code,lobby_password,server_name")
+        .select("lobby_code,lobby_password,server_name,am_lobby_code,am_lobby_password,am_server_name")
         .eq("division_id", division.id)
         .maybeSingle();
       if (error) throw error;
       setLobbyCode(String(data?.lobby_code ?? ""));
       setLobbyPassword(String(data?.lobby_password ?? ""));
       setServerName(String((data as any)?.server_name ?? ""));
+      setAmLobbyCode(String((data as any)?.am_lobby_code ?? ""));
+      setAmLobbyPassword(String((data as any)?.am_lobby_password ?? ""));
+      setAmServerName(String((data as any)?.am_server_name ?? ""));
       return data ?? null;
     },
   });
+
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -311,7 +349,7 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     const sn = serverName.trim() || null;
     const { error: lErr } = await supabase
       .from("division_lobbies")
-      .upsert({ division_id: division.id, lobby_code: code, lobby_password: pw, server_name: sn, updated_at: new Date().toISOString() } as any, { onConflict: "division_id" });
+      .upsert({ division_id: division.id, lobby_code: code, lobby_password: pw, server_name: sn, am_lobby_code: amLobbyCode.trim() || null, am_lobby_password: amLobbyPassword.trim() || null, am_server_name: amServerName.trim() || null, updated_at: new Date().toISOString() } as any, { onConflict: "division_id" });
     if (lErr) return toast.error(`Lobby kunne ikke gemmes: ${lErr.message}`);
 
     toast.success("Opdateret");
@@ -335,20 +373,41 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
             <Label>Temperatur (°C)</Label>
             <Input type="number" min={-20} max={50} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Lobby code</Label>
-              <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+          <div className="rounded-md border border-border p-3 space-y-3">
+            <p className="text-sm font-semibold">Pro Server</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Lobby code</Label>
+                <Input maxLength={50} value={lobbyCode} onChange={(e) => setLobbyCode(e.target.value)} placeholder="fx ABC123" />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+              </div>
             </div>
             <div>
-              <Label>Password</Label>
-              <Input maxLength={50} value={lobbyPassword} onChange={(e) => setLobbyPassword(e.target.value)} placeholder="Lobby password" />
+              <Label>Server navn</Label>
+              <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
             </div>
           </div>
-          <div>
-            <Label>Server navn</Label>
-            <Input maxLength={100} value={serverName} onChange={(e) => setServerName(e.target.value)} placeholder="fx LMU Danmark #1" />
+          <div className="rounded-md border border-border p-3 space-y-3">
+            <p className="text-sm font-semibold">Am Server (valgfri)</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Lobby code</Label>
+                <Input maxLength={50} value={amLobbyCode} onChange={(e) => setAmLobbyCode(e.target.value)} placeholder="fx ABC123" />
+              </div>
+              <div>
+                <Label>Password</Label>
+                <Input maxLength={50} value={amLobbyPassword} onChange={(e) => setAmLobbyPassword(e.target.value)} placeholder="Lobby password" />
+              </div>
+            </div>
+            <div>
+              <Label>Server navn</Label>
+              <Input maxLength={100} value={amServerName} onChange={(e) => setAmServerName(e.target.value)} placeholder="fx LMU Danmark #2" />
+            </div>
           </div>
+
           <p className="-mt-1 text-xs text-muted-foreground">Vises kun for kørere med godkendt profil. Afdelingen markeres automatisk som LIVE i 4 timer fra løbets starttidspunkt.</p>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={completed} onChange={(e) => setCompleted(e.target.checked)} />
