@@ -494,7 +494,7 @@ function DivisionDetail() {
         {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
 
-      <PracticeSessionsList divisionId={divisionId} />
+      {user && mySignup && <PracticeSessionsList divisionId={divisionId} />}
 
 
       <section className="space-y-4">

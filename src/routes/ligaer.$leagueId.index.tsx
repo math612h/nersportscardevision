@@ -527,7 +527,7 @@ function LeagueDetail() {
 
                     </details>
                   )}
-              <PracticeSessionsList divisionId={d.id} />
+              {user && isSignedUp && <PracticeSessionsList divisionId={d.id} />}
             </CardContent>
           </Card>
         );
