@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Radio, Loader2 } from "lucide-react";
+import { Radio, Loader2, Upload, Trash2, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import streamPhotoExample from "@/assets/stream-photo-example.png.asset.json";
+
+const BUCKET = "stream-photos";
 
 export type StreamingQuestion = {
   id: string;
