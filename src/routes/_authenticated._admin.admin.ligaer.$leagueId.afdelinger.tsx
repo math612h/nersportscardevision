@@ -129,6 +129,10 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
   const [lobbyCode, setLobbyCode] = useState("");
   const [lobbyPassword, setLobbyPassword] = useState("");
   const [serverName, setServerName] = useState("");
+  const [amLobbyCode, setAmLobbyCode] = useState("");
+  const [amLobbyPassword, setAmLobbyPassword] = useState("");
+  const [amServerName, setAmServerName] = useState("");
+
   const [eventSettings, setEventSettings] = useState<EventSettings>({});
 
   const [trackIdxStr, layout] = trackLayout.split("::");
