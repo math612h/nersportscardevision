@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Plus, Trash2, ArrowLeftRight, CheckCircle2, Clock, Split, Merge, UserPlus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { setProfileApproval } from "@/lib/leagues.functions";
 import { splitClassIntoProAm } from "@/lib/league-split.functions";
+import { sortSplitDrivers, type SplitDriver } from "@/lib/league-split";
 import { mergeClassCategories } from "@/lib/league-merge.functions";
 import { searchUsersForAdmin, adminAddEntryToLeague, adminPromoteWaitlistEntry } from "@/lib/league-admin-entries.functions";
 import { adminDeleteEntryWithRoleCleanup } from "@/lib/discord-sync.functions";
@@ -452,6 +453,9 @@ function MoveEntryDialog({ entry, leagueId, allEntries, onDone }: { entry: Entry
 
 function SplitClassButton({ leagueId, carClass, onDone }: { leagueId: string; carClass: string; onDone: () => void }) {
   const [open, setOpen] = useState(false);
+  const [proDrivers, setProDrivers] = useState<SplitDriver[]>([]);
+  const [amDrivers, setAmDrivers] = useState<SplitDriver[]>([]);
+  const [moveCount, setMoveCount] = useState(1);
   const splitFn = useServerFn(splitClassIntoProAm);
 
   const { data: preview, isFetching, error } = useQuery({
@@ -461,8 +465,21 @@ function SplitClassButton({ leagueId, carClass, onDone }: { leagueId: string; ca
     queryFn: async () => splitFn({ data: { leagueId, carClass, dryRun: true } }),
   });
 
+  useEffect(() => {
+    if (!preview) return;
+    setProDrivers(preview.proDrivers);
+    setAmDrivers(preview.amDrivers);
+  }, [preview]);
+
   const mut = useMutation({
-    mutationFn: async () => splitFn({ data: { leagueId, carClass } }),
+    mutationFn: async () => splitFn({
+      data: {
+        leagueId,
+        carClass,
+        proEntryIds: proDrivers.map((driver) => driver.entry_id),
+        amEntryIds: amDrivers.map((driver) => driver.entry_id),
+      },
+    }),
     onSuccess: (res) => {
       toast.success(`Publiceret: ${res.proCount} i Pro, ${res.amCount} i Am`);
       setOpen(false);
@@ -471,16 +488,59 @@ function SplitClassButton({ leagueId, carClass, onDone }: { leagueId: string; ca
     onError: (e: Error) => toast.error(e.message),
   });
 
-  const renderList = (title: string, list: Array<{ user_id: string; driver_name: string; score: number }>) => (
+  const moveOne = (driver: SplitDriver, from: "Pro" | "Am") => {
+    if (from === "Pro") {
+      if (proDrivers.length <= 1) return toast.error("Pro skal indeholde mindst én kører.");
+      setProDrivers((current) => current.filter((item) => item.entry_id !== driver.entry_id));
+      setAmDrivers((current) => sortSplitDrivers([...current, driver]));
+      return;
+    }
+    if (amDrivers.length <= 1) return toast.error("Am skal indeholde mindst én kører.");
+    setAmDrivers((current) => current.filter((item) => item.entry_id !== driver.entry_id));
+    setProDrivers((current) => sortSplitDrivers([...current, driver]));
+  };
+
+  const moveMany = (from: "Pro" | "Am") => {
+    const source = from === "Pro" ? proDrivers : amDrivers;
+    const safeCount = Math.min(Math.max(1, moveCount), source.length - 1);
+    if (safeCount < 1) return toast.error(`${from} skal indeholde mindst én kører.`);
+    const moved = from === "Pro" ? source.slice(-safeCount) : source.slice(0, safeCount);
+    const movedIds = new Set(moved.map((driver) => driver.entry_id));
+    if (from === "Pro") {
+      setProDrivers((current) => current.filter((driver) => !movedIds.has(driver.entry_id)));
+      setAmDrivers((current) => sortSplitDrivers([...current, ...moved]));
+    } else {
+      setAmDrivers((current) => current.filter((driver) => !movedIds.has(driver.entry_id)));
+      setProDrivers((current) => sortSplitDrivers([...current, ...moved]));
+    }
+  };
+
+  const tierLabel = (percentile: number | null) => {
+    if (percentile == null) return "Ingen tier";
+    if (percentile >= 90) return "Top 10%";
+    if (percentile >= 75) return "Top 25%";
+    if (percentile >= 50) return "Top 50%";
+    if (percentile >= 25) return "Top 75%";
+    return "Nedre 25%";
+  };
+
+  const renderList = (title: "Pro" | "Am", list: SplitDriver[]) => (
     <div className="rounded-md border border-border">
       <div className="border-b border-border bg-muted/40 px-3 py-1.5 text-xs font-semibold">
         {title} <span className="text-muted-foreground">({list.length})</span>
       </div>
       <ol className="max-h-56 overflow-y-auto p-2 text-sm">
         {list.map((d, i) => (
-          <li key={d.user_id} className="flex items-center justify-between gap-2 rounded px-1.5 py-1 odd:bg-muted/30">
-            <span className="truncate"><span className="text-muted-foreground mr-1.5">{i + 1}.</span>{d.driver_name}</span>
-            <span className="shrink-0 font-mono text-xs text-muted-foreground">{d.score}</span>
+          <li key={d.entry_id} className="flex items-center justify-between gap-2 rounded px-1.5 py-1 odd:bg-muted/30">
+            <span className="min-w-0 truncate"><span className="text-muted-foreground mr-1.5">{i + 1}.</span>{d.driver_name}</span>
+            <span className="flex shrink-0 items-center gap-2">
+              <span className="text-right text-[10px] leading-tight text-muted-foreground">
+                {d.hasRating && d.score != null ? <><strong className="block text-foreground">{d.score.toFixed(2)}</strong>{tierLabel(d.percentile)}</> : "Ingen rating"}
+              </span>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => moveOne(d, title)} title={`Flyt til ${title === "Pro" ? "Am" : "Pro"}`}>
+                <ArrowLeftRight className="h-3.5 w-3.5" />
+              </Button>
+            </span>
           </li>
         ))}
       </ol>
@@ -494,23 +554,32 @@ function SplitClassButton({ leagueId, carClass, onDone }: { leagueId: string; ca
           <Split className="h-3.5 w-3.5" /> Opdel i Pro & Am
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader><DialogTitle>Forhåndsvisning: {carClass} opdelt i Pro & Am</DialogTitle></DialogHeader>
         <p className="text-xs text-muted-foreground">
-          Fordelingen beregnes ud fra ELO-rating (70%) og leaderboard-tider (30%). Intet er gemt endnu — tryk "Publicér opdeling"
-          for at gøre den synlig på ligasiden.
+          Fordelingen følger den klassespecifikke leaderboard-rating og tier. Du kan flytte kørere manuelt, før opdelingen publiceres.
         </p>
         {isFetching && <p className="text-sm text-muted-foreground">Beregner fordeling…</p>}
         {error && <p className="text-sm text-destructive">{(error as Error).message}</p>}
         {preview && (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {renderList("Pro", preview.proDrivers)}
-            {renderList("Am", preview.amDrivers)}
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-end gap-2 rounded-md border border-border p-3">
+              <div className="w-24">
+                <Label htmlFor={`move-count-${carClass}`}>Antal</Label>
+                <Input id={`move-count-${carClass}`} type="number" min={1} max={Math.max(proDrivers.length, amDrivers.length) - 1} value={moveCount} onChange={(event) => setMoveCount(Math.max(1, Number(event.target.value) || 1))} />
+              </div>
+              <Button variant="outline" onClick={() => moveMany("Am")} disabled={amDrivers.length <= 1}>Bedste Am til Pro</Button>
+              <Button variant="outline" onClick={() => moveMany("Pro")} disabled={proDrivers.length <= 1}>Laveste Pro til Am</Button>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {renderList("Pro", proDrivers)}
+              {renderList("Am", amDrivers)}
+            </div>
           </div>
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => setOpen(false)} disabled={mut.isPending}>Annullér</Button>
-          <Button onClick={() => mut.mutate()} disabled={mut.isPending || !preview}>
+          <Button onClick={() => mut.mutate()} disabled={mut.isPending || !preview || proDrivers.length === 0 || amDrivers.length === 0}>
             {mut.isPending ? "Publicerer…" : "Publicér opdeling"}
           </Button>
         </DialogFooter>
