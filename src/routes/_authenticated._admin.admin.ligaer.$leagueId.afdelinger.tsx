@@ -154,12 +154,15 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
       },
     }).select("id").single();
     if (error) return toast.error(error.message);
-    if (inserted && (lobbyCode.trim() || lobbyPassword.trim() || serverName.trim())) {
+    if (inserted && (lobbyCode.trim() || lobbyPassword.trim() || serverName.trim() || amLobbyCode.trim() || amLobbyPassword.trim() || amServerName.trim())) {
       const { error: lErr } = await supabase.from("division_lobbies").insert({
         division_id: inserted.id,
         lobby_code: lobbyCode.trim() || null,
         lobby_password: lobbyPassword.trim() || null,
         server_name: serverName.trim() || null,
+        am_lobby_code: amLobbyCode.trim() || null,
+        am_lobby_password: amLobbyPassword.trim() || null,
+        am_server_name: amServerName.trim() || null,
       } as any);
       if (lErr) return toast.error(`Afdeling oprettet, men lobby fejlede: ${lErr.message}`);
     }
@@ -168,6 +171,8 @@ function DivisionDialog({ leagueId, carClass, category, onDone }: { leagueId: st
     setWeather(Array(WEATHER_SLOT_COUNT).fill("sunny"));
     setTemperature(22);
     setLobbyCode(""); setLobbyPassword(""); setServerName("");
+    setAmLobbyCode(""); setAmLobbyPassword(""); setAmServerName("");
+
     setEventSettings({});
     onDone();
   };
