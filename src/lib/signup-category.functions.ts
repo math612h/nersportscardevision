@@ -47,12 +47,19 @@ export const suggestSignupCategory = createServerFn({ method: "POST" })
       if (ids.length === 0) return out;
       const { data: ratings } = await supabaseAdmin
         .from("user_class_ratings")
-        .select("user_id, score, confidence")
+        .select("user_id, score, confidence, components")
         .eq("car_class", data.carClass)
         .in("user_id", ids);
       for (const id of ids) out.set(id, null);
-      for (const r of (ratings ?? []) as Array<{ user_id: string; score: number; confidence: number }>) {
-        if (Number(r.confidence) > 0) out.set(r.user_id, Number(r.score));
+      for (const r of (ratings ?? []) as Array<{
+        user_id: string;
+        score: number;
+        confidence: number;
+        components: { has_leaderboard_data?: boolean } | null;
+      }>) {
+        if (r.components?.has_leaderboard_data === true && Number(r.confidence) > 0) {
+          out.set(r.user_id, Number(r.score));
+        }
       }
       return out;
     };
@@ -106,11 +113,14 @@ export const suggestSignupCategory = createServerFn({ method: "POST" })
     // Ingen brugbar felt-reference endnu — brug klassens percentil.
     const { data: myRating } = await supabaseAdmin
       .from("user_class_ratings")
-      .select("percentile")
+      .select("percentile, components")
       .eq("user_id", userId)
       .eq("car_class", data.carClass)
       .maybeSingle();
-    const pct = (myRating as any)?.percentile;
+    const ratingComponents = (myRating as { components?: { has_leaderboard_data?: boolean } | null } | null)?.components;
+    const pct = ratingComponents?.has_leaderboard_data === true
+      ? (myRating as { percentile?: number | null } | null)?.percentile
+      : null;
     const category = pct != null && Number(pct) >= 50 ? proName : amName;
     return { category, reason: pct == null ? "Ingen klassespecifik rating endnu." : "Placeret ud fra din rating i bilklassen." };
   });
