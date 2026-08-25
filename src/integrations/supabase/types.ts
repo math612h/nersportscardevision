@@ -2843,6 +2843,10 @@ export type Database = {
       }
       is_steward: { Args: { _user_id: string }; Returns: boolean }
       league_is_active: { Args: { _league_id: string }; Returns: boolean }
+      lmu_game_version_sort_key: {
+        Args: { _version: string }
+        Returns: number[]
+      }
       log_audit: {
         Args: {
           _action: string
