@@ -86,7 +86,9 @@ export function StreamingProfileCard({ userId }: { userId: string }) {
           Disse informationer kan blive nævnt på live streamen LMU Danmark på YouTube og Twitch.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
+        <StreamPhotoSection userId={userId} />
+
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Indlæser…</p>
         ) : !questions?.length ? (
