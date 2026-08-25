@@ -90,7 +90,7 @@ export const suggestSignupCategory = createServerFn({ method: "POST" })
     if (mine != null && proAvg != null && amAvg != null) {
       const mid = (proAvg + amAvg) / 2;
       const category = mine >= mid ? proName : amName;
-      return { category, reason: "Placeret ud fra din rating og omgangstider i forhold til feltet." };
+      return { category, reason: "Placeret ud fra din klassespecifikke rating i forhold til feltet." };
     }
 
     if (mine != null && (proAvg != null || amAvg != null)) {

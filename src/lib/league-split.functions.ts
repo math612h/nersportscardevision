@@ -23,11 +23,11 @@ export const splitClassIntoProAm = createServerFn({ method: "POST" })
     amEntryIds: z.array(z.string().uuid()).optional(),
   }).parse(input))
   .handler(async ({ data, context }): Promise<SplitResult> => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
-    if (!isAdmin) throw new Error("Kun admins kan opdele klasser.");
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    if (!(roles ?? []).some((role) => role.role === "admin")) throw new Error("Kun admins kan opdele klasser.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // Fetch league
