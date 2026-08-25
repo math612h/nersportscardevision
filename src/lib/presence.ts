@@ -11,10 +11,15 @@ export type PresencePayload = {
   since: number; // epoch ms when this tab session came online
 };
 
+export type OnlineVisitor = PresencePayload & { key: string };
+
 let channel: ReturnType<typeof supabase.channel> | null = null;
 let currentUserId: string | null = null;
 let onlineSince = 0;
 let currentPath = "/";
+
+let visitors: OnlineVisitor[] = [];
+const listeners = new Set<(v: OnlineVisitor[]) => void>();
 
 const KEY_STORAGE = "lmu_presence_key";
 
@@ -45,6 +50,24 @@ async function track() {
   }
 }
 
+function syncState() {
+  if (!channel) return;
+  const state = channel.presenceState<PresencePayload>();
+  const list: OnlineVisitor[] = [];
+  for (const [key, metas] of Object.entries(state)) {
+    const p = metas[metas.length - 1];
+    if (!p) continue;
+    list.push({
+      key,
+      userId: p.userId ?? null,
+      path: p.path ?? "/",
+      since: typeof p.since === "number" ? p.since : Date.now(),
+    });
+  }
+  visitors = list;
+  listeners.forEach((fn) => fn(visitors));
+}
+
 export function initPresence() {
   if (channel || typeof window === "undefined") return;
   onlineSince = Date.now();
@@ -52,9 +75,13 @@ export function initPresence() {
   channel = supabase.channel(PRESENCE_CHANNEL, {
     config: { presence: { key: sessionKey() } },
   });
-  channel.subscribe((status) => {
-    if (status === "SUBSCRIBED") void track();
-  });
+  channel
+    .on("presence", { event: "sync" }, syncState)
+    .on("presence", { event: "join" }, syncState)
+    .on("presence", { event: "leave" }, syncState)
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") void track();
+    });
 }
 
 export function updatePresencePath(path: string) {
@@ -67,4 +94,16 @@ export function setPresenceUser(userId: string | null) {
   if (userId === currentUserId) return;
   currentUserId = userId;
   void track();
+}
+
+/** Subscribe to the live list of online visitors. Returns an unsubscribe fn. */
+export function subscribeToPresence(fn: (v: OnlineVisitor[]) => void): () => void {
+  initPresence();
+  listeners.add(fn);
+  fn(visitors);
+  return () => { listeners.delete(fn); };
+}
+
+export function isPresenceConnected(): boolean {
+  return channel?.state === "joined";
 }
