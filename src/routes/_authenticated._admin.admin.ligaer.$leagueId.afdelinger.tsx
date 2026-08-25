@@ -349,7 +349,7 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     const sn = serverName.trim() || null;
     const { error: lErr } = await supabase
       .from("division_lobbies")
-      .upsert({ division_id: division.id, lobby_code: code, lobby_password: pw, server_name: sn, updated_at: new Date().toISOString() } as any, { onConflict: "division_id" });
+      .upsert({ division_id: division.id, lobby_code: code, lobby_password: pw, server_name: sn, am_lobby_code: amLobbyCode.trim() || null, am_lobby_password: amLobbyPassword.trim() || null, am_server_name: amServerName.trim() || null, updated_at: new Date().toISOString() } as any, { onConflict: "division_id" });
     if (lErr) return toast.error(`Lobby kunne ikke gemmes: ${lErr.message}`);
 
     toast.success("Opdateret");
