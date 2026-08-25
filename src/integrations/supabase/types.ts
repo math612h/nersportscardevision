@@ -530,6 +530,9 @@ export type Database = {
       }
       division_lobbies: {
         Row: {
+          am_lobby_code: string | null
+          am_lobby_password: string | null
+          am_server_name: string | null
           division_id: string
           lobby_code: string | null
           lobby_password: string | null
@@ -537,6 +540,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          am_lobby_code?: string | null
+          am_lobby_password?: string | null
+          am_server_name?: string | null
           division_id: string
           lobby_code?: string | null
           lobby_password?: string | null
@@ -544,6 +550,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          am_lobby_code?: string | null
+          am_lobby_password?: string | null
+          am_server_name?: string | null
           division_id?: string
           lobby_code?: string | null
           lobby_password?: string | null
