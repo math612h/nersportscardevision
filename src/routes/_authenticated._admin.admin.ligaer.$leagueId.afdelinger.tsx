@@ -293,6 +293,10 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
   const [lobbyCode, setLobbyCode] = useState<string>("");
   const [lobbyPassword, setLobbyPassword] = useState<string>("");
   const [serverName, setServerName] = useState<string>("");
+  const [amLobbyCode, setAmLobbyCode] = useState<string>("");
+  const [amLobbyPassword, setAmLobbyPassword] = useState<string>("");
+  const [amServerName, setAmServerName] = useState<string>("");
+
   const [serverStartedAt, setServerStartedAt] = useState<string | null>(
     (division as any).server_started_at ?? null,
   );
