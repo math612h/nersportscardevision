@@ -36,6 +36,16 @@ describe("league split", () => {
     expect(split.proDrivers[0]?.entry_id).toBe("1");
   });
 
+  it("keeps the automatic starting groups balanced even across one large gap", () => {
+    const split = buildAutomaticSplit([
+      driver("1", 95, 99), driver("2", 90, 95), driver("3", 60, 80), driver("4", 59, 70),
+      driver("5", 58, 60), driver("6", 57, 50), driver("7", 56, 40), driver("8", 55, 30),
+      driver("9", 54, 20), driver("10", 53, 10),
+    ]);
+    expect(split.proDrivers.length).toBeGreaterThanOrEqual(4);
+    expect(split.proDrivers.length).toBeLessThanOrEqual(6);
+  });
+
   it("rejects incomplete, duplicate, and empty assignments", () => {
     expect(() => validateSplitAssignment(["1", "2"], ["1"], ["2"])).not.toThrow();
     expect(() => validateSplitAssignment(["1", "2"], ["1"], ["1"])).toThrow();

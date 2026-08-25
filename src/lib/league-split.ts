@@ -30,6 +30,8 @@ export function buildAutomaticSplit(drivers: SplitDriver[]): {
 
   let bestK = Math.floor(n / 2);
   let bestTotal = -Infinity;
+  const minGroupSize = Math.max(1, Math.floor(n * 0.4));
+  const maxProSize = Math.min(n - 1, Math.ceil(n * 0.6));
   const ratedGaps = sorted.slice(0, -1).map((driver, index) => {
     const next = sorted[index + 1];
     if (!driver.hasRating || !next?.hasRating || driver.score == null || next.score == null) return 0;
@@ -37,7 +39,7 @@ export function buildAutomaticSplit(drivers: SplitDriver[]): {
   });
   const maxGap = Math.max(...ratedGaps, 0.001);
 
-  for (let k = 1; k < n; k += 1) {
+  for (let k = minGroupSize; k <= maxProSize; k += 1) {
     const balance = 1 - Math.abs(k - n / 2) / (n / 2);
     const gap = (ratedGaps[k - 1] ?? 0) / maxGap;
     const total = 0.35 * balance + 0.65 * gap;
