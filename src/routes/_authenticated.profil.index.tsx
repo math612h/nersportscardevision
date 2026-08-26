@@ -7,6 +7,7 @@ import { Loader2, CheckCircle2, Shield, Link2, Unlink } from "lucide-react";
 import { CreateTeamDialog } from "@/components/CreateTeamDialog";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { signStreamPhotoUrl } from "@/lib/stream-photo";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,7 +60,7 @@ function ProfilePage() {
       const [{ data, error }, { data: priv }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, display_name, lmu_name, bio, achievements, avatar_url, discord_avatar_url, approved, accepts_danish, media_consent")
+          .select("id, display_name, lmu_name, bio, achievements, avatar_url, discord_avatar_url, stream_photo_path, approved, accepts_danish, media_consent")
           .eq("id", user!.id)
           .maybeSingle(),
         (supabase as unknown as { from: (t: string) => any })
@@ -84,9 +85,12 @@ function ProfilePage() {
   });
 
   const { data: avatarUrl } = useQuery({
-    queryKey: ["avatar-url", profile?.discord_avatar_url, profile?.avatar_url],
-    enabled: !!profile && (!!profile.discord_avatar_url || !!profile.avatar_url),
-    queryFn: () => profile?.discord_avatar_url ?? signedAvatarUrl(profile!.avatar_url),
+    queryKey: ["avatar-url", (profile as any)?.stream_photo_path, profile?.discord_avatar_url, profile?.avatar_url],
+    enabled: !!profile && (!!(profile as any).stream_photo_path || !!profile.discord_avatar_url || !!profile.avatar_url),
+    queryFn: async () =>
+      (await signStreamPhotoUrl((profile as any)?.stream_photo_path)) ??
+      profile?.discord_avatar_url ??
+      (await signedAvatarUrl(profile!.avatar_url)),
   });
 
   const [displayName, setDisplayName] = useState("");

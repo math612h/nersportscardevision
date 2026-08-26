@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Users, Search, CheckCircle2, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { signStreamPhotoUrl } from "@/lib/stream-photo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,7 @@ type ProfileRow = {
   lmu_name: string | null;
   avatar_url: string | null;
   discord_avatar_url: string | null;
+  stream_photo_path: string | null;
   approved: boolean;
   donation_tier: "bronze" | "silver" | "gold" | null;
 };
@@ -58,7 +60,7 @@ function UsersPage() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("profiles")
-        .select("id, display_name, lmu_name, avatar_url, discord_avatar_url, approved, donation_tier")
+        .select("id, display_name, lmu_name, avatar_url, discord_avatar_url, stream_photo_path, approved, donation_tier")
         .order("display_name", { ascending: true });
 
       if (error) throw error;
@@ -82,14 +84,19 @@ function UsersPage() {
   const { data: avatars } = useQuery({
     queryKey: [
       "all-profile-avatars",
-      (profiles ?? []).map((p) => `${p.id}:${p.discord_avatar_url ?? ""}:${p.avatar_url ?? ""}`).join(","),
+      (profiles ?? [])
+        .map((p) => `${p.id}:${p.stream_photo_path ?? ""}:${p.discord_avatar_url ?? ""}:${p.avatar_url ?? ""}`)
+        .join(","),
     ],
-    enabled: !!profiles?.some((p) => p.discord_avatar_url || p.avatar_url),
+    enabled: !!profiles?.some((p) => p.stream_photo_path || p.discord_avatar_url || p.avatar_url),
     queryFn: async () => {
       const map: Record<string, string> = {};
       await Promise.all(
         (profiles ?? []).map(async (p) => {
-          if (p.discord_avatar_url) {
+          if (p.stream_photo_path) {
+            const u = await signStreamPhotoUrl(p.stream_photo_path);
+            if (u) map[p.id] = u;
+          } else if (p.discord_avatar_url) {
             map[p.id] = p.discord_avatar_url;
           } else if (p.avatar_url) {
             const u = await signed(p.avatar_url);

@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { signStreamPhotoUrl } from "@/lib/stream-photo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ function PublicProfile() {
       const [{ data, error }, { data: priv }] = await Promise.all([
         supabase
           .from("profiles")
-          .select("id, display_name, lmu_name, bio, achievements, avatar_url, discord_avatar_url, approved")
+          .select("id, display_name, lmu_name, bio, achievements, avatar_url, discord_avatar_url, stream_photo_path, approved")
           .eq("id", userId)
           .maybeSingle(),
         supabase.rpc("get_profile_private", { _user_id: userId }).maybeSingle(),
@@ -41,9 +42,12 @@ function PublicProfile() {
   });
 
   const { data: avatarUrl } = useQuery({
-    queryKey: ["avatar-url", profile?.discord_avatar_url, profile?.avatar_url],
-    enabled: !!profile && (!!profile.discord_avatar_url || !!profile.avatar_url),
-    queryFn: () => profile?.discord_avatar_url ?? signedAvatarUrl(profile!.avatar_url),
+    queryKey: ["avatar-url", (profile as any)?.stream_photo_path, profile?.discord_avatar_url, profile?.avatar_url],
+    enabled: !!profile && (!!(profile as any).stream_photo_path || !!profile.discord_avatar_url || !!profile.avatar_url),
+    queryFn: async () =>
+      (await signStreamPhotoUrl((profile as any)?.stream_photo_path)) ??
+      profile?.discord_avatar_url ??
+      (await signedAvatarUrl(profile!.avatar_url)),
   });
 
   const { data: rating } = useQuery({
