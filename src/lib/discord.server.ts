@@ -378,6 +378,61 @@ function buildDiscordTopLevelContent(content: string, roleIds: string[]): string
     : content;
 }
 
+type DiscordCreatedMessage = {
+  id?: string;
+  content?: string;
+  flags?: number;
+  mention_roles?: string[];
+  edited_timestamp?: string | null;
+  webhook_id?: string;
+  application_id?: string;
+  author?: {
+    id?: string;
+    username?: string;
+    bot?: boolean;
+  };
+};
+
+async function validateDiscordCreatedMessage(
+  response: DiscordCreatedMessage,
+  requestedRoleIds: string[],
+  expectedBotUserId: string,
+): Promise<string | null> {
+  const acknowledgedRoles = new Set(response.mention_roles ?? []);
+  const missingRoles = requestedRoleIds.filter((roleId) => !acknowledgedRoles.has(roleId));
+  if (missingRoles.length > 0) {
+    return `Discord modtog beskeden, men mention_roles mangler rolle-ID: ${missingRoles.join(", ")}.`;
+  }
+  if (response.flags !== 0) {
+    return `Discord returnerede uventede message flags (${String(response.flags)}); forventede 0.`;
+  }
+  if (response.webhook_id) {
+    return `Discord-beskeden blev sendt som webhook (${response.webhook_id}) og ikke direkte af LMU Danmark-botten.`;
+  }
+  if (response.author?.id !== expectedBotUserId || response.author.bot !== true) {
+    return `Discord-beskedens afsender matcher ikke LMU Danmark-botten (forventet ${expectedBotUserId}, modtog ${response.author?.id ?? "ukendt"}).`;
+  }
+  if (response.edited_timestamp) {
+    return `Discord returnerede beskeden som redigeret (${response.edited_timestamp}); rolle-pinget skal være med ved oprettelsen.`;
+  }
+  return null;
+}
+
+function logDiscordMessageExchange(
+  channelId: string,
+  requestBody: string,
+  status: number,
+  response: unknown,
+): void {
+  console.info("[Discord message POST request]", JSON.stringify({
+    method: "POST",
+    channelId,
+    authentication: "Bot",
+    rawBody: requestBody,
+  }));
+  console.info("[Discord message POST response]", JSON.stringify({ status, message: response }));
+}
+
 async function ensureDiscordRolesMentionable(roleIds: string[], botToken: string): Promise<void> {
   if (roleIds.length === 0) return;
 
@@ -433,6 +488,11 @@ export async function sendDiscordChannelMessage(
     roles,
     users: derived.users,
   };
+  const requestBody = JSON.stringify({
+    content: topLevelContent.slice(0, 1900),
+    allowed_mentions: allowedMentions,
+    flags: 0,
+  });
 
   const msgRes = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
     method: "POST",
@@ -440,32 +500,23 @@ export async function sendDiscordChannelMessage(
       Authorization: `Bot ${botToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      content: topLevelContent.slice(0, 1900),
-      allowed_mentions: allowedMentions,
-      flags: 0,
-    }),
+    body: requestBody,
   });
-  if (msgRes.status === 200 || msgRes.status === 201) {
-    let messageId: string | undefined;
-    try {
-      const json = (await msgRes.json()) as { id?: string; mention_roles?: string[] };
-      messageId = json?.id;
-      const acknowledgedRoles = new Set(json.mention_roles ?? []);
-      const missingRoles = roles.filter((roleId) => !acknowledgedRoles.has(roleId));
-      if (missingRoles.length > 0) {
-        return {
-          ok: false,
-          status: 502,
-          message: "Discord modtog beskeden, men aktiverede ikke rolle-pinget. Kontrollér kanalens rolle-tilladelser.",
-          messageId,
-        };
-      }
-    } catch (_) {}
-    return { ok: true, status: msgRes.status, messageId };
+  const responseText = await msgRes.text().catch(() => "");
+  let responseObject: DiscordCreatedMessage | { raw: string };
+  try {
+    responseObject = JSON.parse(responseText) as DiscordCreatedMessage;
+  } catch {
+    responseObject = { raw: responseText };
   }
-  const text = await msgRes.text().catch(() => "");
-  return { ok: false, status: msgRes.status, message: text };
+  logDiscordMessageExchange(channelId, requestBody, msgRes.status, responseObject);
+  if (msgRes.status === 200 || msgRes.status === 201) {
+    const json = responseObject as DiscordCreatedMessage;
+    const validationError = await validateDiscordCreatedMessage(json, roles, await getBotUserId());
+    if (validationError) return { ok: false, status: 502, message: validationError, messageId: json.id };
+    return { ok: true, status: msgRes.status, messageId: json.id };
+  }
+  return { ok: false, status: msgRes.status, message: responseText };
 }
 
 export async function sendDiscordChannelRichMessage(
@@ -494,31 +545,27 @@ export async function sendDiscordChannelRichMessage(
 
   if (topLevelContent) body.content = topLevelContent.slice(0, 1900);
   if (opts.embeds) body.embeds = opts.embeds;
+  const requestBody = JSON.stringify(body);
   const msgRes = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
     method: "POST",
     headers: { Authorization: `Bot ${botToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: requestBody,
   });
-  if (msgRes.status === 200 || msgRes.status === 201) {
-    let messageId: string | undefined;
-    try {
-      const json = (await msgRes.json()) as { id?: string; mention_roles?: string[] };
-      messageId = json?.id;
-      const acknowledgedRoles = new Set(json.mention_roles ?? []);
-      const missingRoles = roles.filter((roleId) => !acknowledgedRoles.has(roleId));
-      if (missingRoles.length > 0) {
-        return {
-          ok: false,
-          status: 502,
-          message: "Discord modtog beskeden, men aktiverede ikke rolle-pinget. Kontrollér kanalens rolle-tilladelser.",
-          messageId,
-        };
-      }
-    } catch (_) {}
-    return { ok: true, status: msgRes.status, messageId };
+  const responseText = await msgRes.text().catch(() => "");
+  let responseObject: DiscordCreatedMessage | { raw: string };
+  try {
+    responseObject = JSON.parse(responseText) as DiscordCreatedMessage;
+  } catch {
+    responseObject = { raw: responseText };
   }
-  const text = await msgRes.text().catch(() => "");
-  return { ok: false, status: msgRes.status, message: text };
+  logDiscordMessageExchange(channelId, requestBody, msgRes.status, responseObject);
+  if (msgRes.status === 200 || msgRes.status === 201) {
+    const json = responseObject as DiscordCreatedMessage;
+    const validationError = await validateDiscordCreatedMessage(json, roles, await getBotUserId());
+    if (validationError) return { ok: false, status: 502, message: validationError, messageId: json.id };
+    return { ok: true, status: msgRes.status, messageId: json.id };
+  }
+  return { ok: false, status: msgRes.status, message: responseText };
 }
 
 export async function deleteDiscordChannelMessage(
