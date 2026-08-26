@@ -368,6 +368,16 @@ export function deriveMentionsFromContent(content: string): {
   return { parse, roles: Array.from(new Set(roles)), users: Array.from(new Set(users)) };
 }
 
+function buildDiscordTopLevelContent(content: string, roleIds: string[]): string {
+  const existingRoles = new Set(deriveMentionsFromContent(content).roles);
+  const missingRoleTags = roleIds
+    .filter((roleId) => !existingRoles.has(roleId))
+    .map((roleId) => `<@&${roleId}>`);
+  return missingRoleTags.length > 0
+    ? `${missingRoleTags.join(" ")}\n\n${content}`
+    : content;
+}
+
 async function ensureDiscordRolesMentionable(roleIds: string[], botToken: string): Promise<void> {
   if (roleIds.length === 0) return;
 
@@ -417,6 +427,7 @@ export async function sendDiscordChannelMessage(
   const derived = deriveMentionsFromContent(content);
   const roles = Array.from(new Set([...(roleMentions ?? []), ...derived.roles]));
   await ensureDiscordRolesMentionable(roles, botToken);
+  const topLevelContent = buildDiscordTopLevelContent(content, roles);
   const allowedMentions = {
     parse: derived.parse,
     roles,
@@ -429,7 +440,11 @@ export async function sendDiscordChannelMessage(
       Authorization: `Bot ${botToken}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ content: content.slice(0, 1900), allowed_mentions: allowedMentions }),
+    body: JSON.stringify({
+      content: topLevelContent.slice(0, 1900),
+      allowed_mentions: allowedMentions,
+      flags: 0,
+    }),
   });
   if (msgRes.status === 200 || msgRes.status === 201) {
     let messageId: string | undefined;
@@ -463,18 +478,21 @@ export async function sendDiscordChannelRichMessage(
   },
 ): Promise<{ ok: boolean; status: number; message?: string; messageId?: string }> {
   const botToken = getEnv("DISCORD_BOT_TOKEN");
-  const derived = deriveMentionsFromContent(opts.content ?? "");
+  const originalContent = opts.content ?? "";
+  const derived = deriveMentionsFromContent(originalContent);
   const roles = Array.from(new Set([...(opts.roleMentions ?? []), ...derived.roles]));
   await ensureDiscordRolesMentionable(roles, botToken);
+  const topLevelContent = buildDiscordTopLevelContent(originalContent, roles);
   const body: Record<string, unknown> = {
     allowed_mentions: {
       parse: derived.parse,
       users: Array.from(new Set([...(opts.userMentions ?? []), ...derived.users])),
       roles,
     },
+    flags: 0,
   };
 
-  if (opts.content) body.content = opts.content.slice(0, 1900);
+  if (topLevelContent) body.content = topLevelContent.slice(0, 1900);
   if (opts.embeds) body.embeds = opts.embeds;
   const msgRes = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
     method: "POST",
@@ -484,8 +502,18 @@ export async function sendDiscordChannelRichMessage(
   if (msgRes.status === 200 || msgRes.status === 201) {
     let messageId: string | undefined;
     try {
-      const json = (await msgRes.json()) as { id?: string };
+      const json = (await msgRes.json()) as { id?: string; mention_roles?: string[] };
       messageId = json?.id;
+      const acknowledgedRoles = new Set(json.mention_roles ?? []);
+      const missingRoles = roles.filter((roleId) => !acknowledgedRoles.has(roleId));
+      if (missingRoles.length > 0) {
+        return {
+          ok: false,
+          status: 502,
+          message: "Discord modtog beskeden, men aktiverede ikke rolle-pinget. Kontrollér kanalens rolle-tilladelser.",
+          messageId,
+        };
+      }
     } catch (_) {}
     return { ok: true, status: msgRes.status, messageId };
   }
