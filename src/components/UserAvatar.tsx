@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import type { DonationTier } from "@/lib/donation-tier";
+import { signStreamPhotoUrl } from "@/lib/stream-photo";
 
 
 type Size = "xs" | "sm" | "md" | "lg" | "xl";
@@ -21,6 +22,7 @@ type Brief = {
   lmu_name: string | null;
   avatar_url: string | null;
   discord_avatar_url: string | null;
+  stream_photo_path: string | null;
   donation_tier: DonationTier;
 };
 
@@ -32,7 +34,7 @@ export function useUserBrief(userId: string | null | undefined) {
     queryFn: async () => {
       const { data } = await (supabase as any)
         .from("profiles")
-        .select("display_name, lmu_name, avatar_url, discord_avatar_url, donation_tier")
+        .select("display_name, lmu_name, avatar_url, discord_avatar_url, stream_photo_path, donation_tier")
         .eq("id", userId!)
         .maybeSingle();
       return (data ?? null) as Brief | null;
@@ -47,16 +49,26 @@ async function signedAvatar(path: string): Promise<string | null> {
 }
 
 function useResolvedAvatarUrl(brief: Brief | null | undefined) {
-  // Priority: Discord vinder altid (per brugerens valg). Fallback til uploadet.
+  // Prioritet: streambillede > Discord > uploadet avatar.
+  const streamPath = brief?.stream_photo_path ?? null;
   const discord = brief?.discord_avatar_url ?? null;
   const uploaded = brief?.avatar_url ?? null;
-  const needsSign = !discord && !!uploaded;
+
+  const { data: streamUrl } = useQuery({
+    queryKey: ["stream-photo-signed", streamPath],
+    enabled: !!streamPath,
+    staleTime: 60 * 60 * 1000,
+    queryFn: () => signStreamPhotoUrl(streamPath),
+  });
+
+  const needsSign = !streamPath && !discord && !!uploaded;
   const { data: signed } = useQuery({
     queryKey: ["avatar-signed", uploaded],
     enabled: needsSign,
     staleTime: 60 * 60 * 1000,
     queryFn: () => signedAvatar(uploaded!),
   });
+  if (streamPath) return streamUrl ?? null;
   return discord ?? signed ?? null;
 }
 
