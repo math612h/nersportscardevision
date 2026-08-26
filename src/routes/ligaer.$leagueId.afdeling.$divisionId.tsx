@@ -97,7 +97,7 @@ export const Route = createFileRoute("/ligaer/$leagueId/afdeling/$divisionId")({
 
 function DivisionDetail() {
   const { leagueId, divisionId } = useParams({ from: "/ligaer/$leagueId/afdeling/$divisionId" });
-  const { user } = useAuth();
+  const { user, isAdmin, isSteward } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -494,7 +494,7 @@ function DivisionDetail() {
         {user && <ProtestDialog leagueId={leagueId} divisionId={divisionId} entries={signups ?? []} currentUserId={user.id} ticketsPerSeason={(league as any)?.protest_tickets_per_season ?? 3} />}
       </div>
 
-      {user && mySignup && <PracticeSessionsList divisionId={divisionId} />}
+      {user && (mySignup || isAdmin || isSteward) && <PracticeSessionsList divisionId={divisionId} />}
 
 
       <section className="space-y-4">
