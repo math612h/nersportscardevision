@@ -413,13 +413,15 @@ export async function sendDiscordChannelRichMessage(
   },
 ): Promise<{ ok: boolean; status: number; message?: string; messageId?: string }> {
   const botToken = getEnv("DISCORD_BOT_TOKEN");
+  const derived = deriveMentionsFromContent(opts.content ?? "");
   const body: Record<string, unknown> = {
     allowed_mentions: {
-      parse: [] as string[],
-      users: opts.userMentions ?? [],
-      roles: opts.roleMentions ?? [],
+      parse: derived.parse,
+      users: Array.from(new Set([...(opts.userMentions ?? []), ...derived.users])),
+      roles: Array.from(new Set([...(opts.roleMentions ?? []), ...derived.roles])),
     },
   };
+
   if (opts.content) body.content = opts.content.slice(0, 1900);
   if (opts.embeds) body.embeds = opts.embeds;
   const msgRes = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
