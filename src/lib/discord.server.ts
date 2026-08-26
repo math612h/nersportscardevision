@@ -364,8 +364,7 @@ export function deriveMentionsFromContent(content: string): {
   const roles = Array.from(content.matchAll(/<@&(\d+)>/g), (m) => m[1]!);
   const users = Array.from(content.matchAll(/<@!?(\d+)>/g), (m) => m[1]!);
   const parse: string[] = [];
-  if (/@everyone/.test(content)) parse.push("everyone");
-  if (/@here/.test(content)) parse.push("here");
+  if (/@(?:everyone|here)\b/.test(content)) parse.push("everyone");
   return { parse, roles: Array.from(new Set(roles)), users: Array.from(new Set(users)) };
 }
 
@@ -435,8 +434,18 @@ export async function sendDiscordChannelMessage(
   if (msgRes.status === 200 || msgRes.status === 201) {
     let messageId: string | undefined;
     try {
-      const json = (await msgRes.json()) as { id?: string };
+      const json = (await msgRes.json()) as { id?: string; mention_roles?: string[] };
       messageId = json?.id;
+      const acknowledgedRoles = new Set(json.mention_roles ?? []);
+      const missingRoles = roles.filter((roleId) => !acknowledgedRoles.has(roleId));
+      if (missingRoles.length > 0) {
+        return {
+          ok: false,
+          status: 502,
+          message: "Discord modtog beskeden, men aktiverede ikke rolle-pinget. Kontrollér kanalens rolle-tilladelser.",
+          messageId,
+        };
+      }
     } catch (_) {}
     return { ok: true, status: msgRes.status, messageId };
   }
