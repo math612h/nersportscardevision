@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { signStreamPhotoUrl } from "@/lib/stream-photo";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/streaming-profil")({
@@ -318,13 +318,17 @@ function AnswersPanel() {
               className="flex w-full items-center gap-3 p-3 text-left transition hover:bg-muted/50"
             >
               <Avatar className="h-8 w-8">
-                {p.stream_photo_path ? <AvatarImage src="" alt="" /> : null}
                 <AvatarFallback>{(p.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{p.display_name ?? "Uden navn"}</p>
                 {p.lmu_name && <p className="truncate text-xs text-muted-foreground">{p.lmu_name}</p>}
               </div>
+              {p.stream_photo_path && (
+                <Badge variant="outline" className="gap-1">
+                  <ImageIcon className="h-3 w-3" /> Billede
+                </Badge>
+              )}
               {answered?.has(p.id) ? (
                 <Badge variant="secondary">Besvaret</Badge>
               ) : (
