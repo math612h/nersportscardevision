@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Radio, Plus, Trash2, Search, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Radio, Plus, Trash2, Search, ArrowLeft, Eye, EyeOff, Download, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { signStreamPhotoUrl } from "@/lib/stream-photo";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/streaming-profil")({
   head: () => ({ meta: [{ title: "Streaming profil – Kontrolpanel" }] }),
@@ -126,7 +127,67 @@ function QuestionsPanel() {
   );
 }
 
-type ProfileRow = { id: string; display_name: string | null; lmu_name: string | null };
+type ProfileRow = {
+  id: string;
+  display_name: string | null;
+  lmu_name: string | null;
+  stream_photo_path: string | null;
+};
+
+function StreamPhotoPanel({ profile }: { profile: ProfileRow }) {
+  const { data: url } = useQuery({
+    queryKey: ["admin-stream-photo", profile.stream_photo_path],
+    enabled: !!profile.stream_photo_path,
+    queryFn: () => signStreamPhotoUrl(profile.stream_photo_path),
+  });
+
+  const download = async () => {
+    if (!url) return;
+    try {
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const ext = (profile.stream_photo_path ?? "").split(".").pop() || "jpg";
+      const name = (profile.display_name || profile.lmu_name || "streambillede")
+        .replace(/[^a-zA-Z0-9-_ ]/g, "")
+        .trim()
+        .replace(/\s+/g, "-");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${name || "streambillede"}.${ext}`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke hente billedet");
+    }
+  };
+
+  return (
+    <div className="rounded-md border p-3">
+      <p className="mb-2 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+        <ImageIcon className="h-4 w-4" /> Streambillede
+      </p>
+      {profile.stream_photo_path ? (
+        <div className="flex items-end gap-3">
+          <div className="h-40 w-30 overflow-hidden rounded-md border bg-muted/30">
+            {url ? <img src={url} alt="Streambillede" className="h-full w-full object-cover" /> : null}
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" disabled={!url} onClick={download}>
+              <Download className="mr-1 h-4 w-4" /> Hent billede
+            </Button>
+            {url && (
+              <Button size="sm" variant="ghost" asChild>
+                <a href={url} target="_blank" rel="noreferrer">Åbn</a>
+              </Button>
+            )}
+          </div>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">Intet streambillede uploadet.</p>
+      )}
+    </div>
+  );
+}
 
 function AnswersPanel() {
   const qc = useQueryClient();
@@ -138,7 +199,7 @@ function AnswersPanel() {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("profiles")
-        .select("id, display_name, lmu_name")
+        .select("id, display_name, lmu_name, stream_photo_path")
         .order("display_name", { ascending: true });
       if (error) throw error;
       return (data ?? []) as ProfileRow[];
@@ -211,6 +272,7 @@ function AnswersPanel() {
           {selected.lmu_name && <CardDescription>LMU: {selected.lmu_name}</CardDescription>}
         </CardHeader>
         <CardContent className="space-y-3">
+          <StreamPhotoPanel profile={selected} />
           {detailLoading ? (
             <p className="text-sm text-muted-foreground">Indlæser…</p>
           ) : (
@@ -256,6 +318,7 @@ function AnswersPanel() {
               className="flex w-full items-center gap-3 p-3 text-left transition hover:bg-muted/50"
             >
               <Avatar className="h-8 w-8">
+                {p.stream_photo_path ? <AvatarImage src="" alt="" /> : null}
                 <AvatarFallback>{(p.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
