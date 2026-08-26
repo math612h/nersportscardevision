@@ -63,14 +63,31 @@ export const Route = createFileRoute("/api/public/broadcast/streaming-profiles")
           if (aErr) throw aErr;
 
           const rows = (answers ?? []).filter((a: any) => (a.answer ?? "").trim());
-          const userIds = [...new Set(rows.map((a: any) => a.user_id as string))];
+          const userIds = [
+            ...new Set([
+              ...rows.map((a: any) => a.user_id as string),
+              ...(userFilter ?? []),
+            ]),
+          ];
 
           const { data: profiles } = userIds.length
             ? await supabaseAdmin
                 .from("profiles")
-                .select("id, display_name, lmu_name")
+                .select("id, display_name, lmu_name, stream_photo_path, avatar_url, discord_avatar_url")
                 .in("id", userIds)
             : { data: [] as any[] };
+
+          // Signerede billed-URL'er (7 dage) til uploadede streambilleder.
+          const photoUrls = new Map<string, string>();
+          const withPhoto = (profiles ?? []).filter((p: any) => p.stream_photo_path);
+          if (withPhoto.length) {
+            const { data: signed } = await supabaseAdmin.storage
+              .from("stream-photos")
+              .createSignedUrls(withPhoto.map((p: any) => p.stream_photo_path as string), 60 * 60 * 24 * 7);
+            (signed ?? []).forEach((s: any, i: number) => {
+              if (s?.signedUrl) photoUrls.set(withPhoto[i].id, s.signedUrl);
+            });
+          }
 
           const questionText = new Map<string, string>();
           for (const q of (questions ?? []) as any[]) questionText.set(q.id, q.question_text);
@@ -78,6 +95,9 @@ export const Route = createFileRoute("/api/public/broadcast/streaming-profiles")
           const drivers = (profiles ?? []).map((p: any) => ({
             driverId: p.id,
             driverName: p.display_name || p.lmu_name || "",
+            photoUrl: photoUrls.get(p.id) ?? null,
+            avatarUrl: photoUrls.get(p.id) ?? p.discord_avatar_url ?? p.avatar_url ?? null,
+            hasStreamPhoto: !!p.stream_photo_path,
             answers: rows
               .filter((a: any) => a.user_id === p.id && questionText.has(a.question_id))
               .map((a: any) => ({
