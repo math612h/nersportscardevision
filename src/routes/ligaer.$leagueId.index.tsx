@@ -149,7 +149,7 @@ function RaceCountdown({ raceDate }: { raceDate: string }) {
 
 function LeagueDetail() {
   const { leagueId } = useParams({ from: "/ligaer/$leagueId/" });
-  const { user } = useAuth();
+  const { user, isAdmin, isSteward } = useAuth();
   const isGuest = !user;
 
 
@@ -223,6 +223,7 @@ function LeagueDetail() {
     },
   });
   const isSignedUp = !!mySignup;
+  const canSeePractice = !!user && (isSignedUp || isAdmin || isSteward);
 
   const divisionIds = useMemo(() => (divisions ?? []).map((d: any) => d.id), [divisions]);
   const { data: lobbies } = useQuery({
@@ -527,7 +528,7 @@ function LeagueDetail() {
 
                     </details>
                   )}
-              {user && isSignedUp && <PracticeSessionsList divisionId={d.id} />}
+              {canSeePractice && <PracticeSessionsList divisionId={d.id} />}
             </CardContent>
           </Card>
         );
