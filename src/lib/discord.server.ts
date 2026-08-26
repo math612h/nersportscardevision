@@ -369,6 +369,46 @@ export function deriveMentionsFromContent(content: string): {
   return { parse, roles: Array.from(new Set(roles)), users: Array.from(new Set(users)) };
 }
 
+async function ensureDiscordRolesMentionable(roleIds: string[], botToken: string): Promise<void> {
+  if (roleIds.length === 0) return;
+
+  const guildId = getEnv("DISCORD_GUILD_ID");
+  const rolesRes = await fetch(`${DISCORD_API}/guilds/${guildId}/roles`, {
+    headers: { Authorization: `Bot ${botToken}` },
+  });
+  if (!rolesRes.ok) {
+    const text = await rolesRes.text().catch(() => "");
+    throw new Error(`Kunne ikke kontrollere Discord-roller (${rolesRes.status}): ${text}`);
+  }
+
+  const guildRoles = (await rolesRes.json()) as Array<{
+    id: string;
+    name: string;
+    mentionable: boolean;
+  }>;
+  const roleMap = new Map(guildRoles.map((role) => [role.id, role]));
+
+  for (const roleId of roleIds) {
+    const role = roleMap.get(roleId);
+    if (!role || role.mentionable) continue;
+
+    const updateRes = await fetch(`${DISCORD_API}/guilds/${guildId}/roles/${roleId}`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bot ${botToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ mentionable: true }),
+    });
+    if (!updateRes.ok) {
+      const text = await updateRes.text().catch(() => "");
+      throw new Error(
+        `Discord-rollen “${role.name}” kan ikke sende notifikationer. Giv LMU Danmark-botten rettigheden “Manage Roles”, og placer bot-rollen over “${role.name}” (${updateRes.status}: ${text}).`,
+      );
+    }
+  }
+}
+
 export async function sendDiscordChannelMessage(
   channelId: string,
   content: string,
@@ -377,6 +417,7 @@ export async function sendDiscordChannelMessage(
   const botToken = getEnv("DISCORD_BOT_TOKEN");
   const derived = deriveMentionsFromContent(content);
   const roles = Array.from(new Set([...(roleMentions ?? []), ...derived.roles]));
+  await ensureDiscordRolesMentionable(roles, botToken);
   const allowedMentions = {
     parse: derived.parse,
     roles,
@@ -414,11 +455,13 @@ export async function sendDiscordChannelRichMessage(
 ): Promise<{ ok: boolean; status: number; message?: string; messageId?: string }> {
   const botToken = getEnv("DISCORD_BOT_TOKEN");
   const derived = deriveMentionsFromContent(opts.content ?? "");
+  const roles = Array.from(new Set([...(opts.roleMentions ?? []), ...derived.roles]));
+  await ensureDiscordRolesMentionable(roles, botToken);
   const body: Record<string, unknown> = {
     allowed_mentions: {
       parse: derived.parse,
       users: Array.from(new Set([...(opts.userMentions ?? []), ...derived.users])),
-      roles: Array.from(new Set([...(opts.roleMentions ?? []), ...derived.roles])),
+      roles,
     },
   };
 
