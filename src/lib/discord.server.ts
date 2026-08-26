@@ -354,15 +354,35 @@ export async function verifyDiscordInteractionSignature(
   }
 }
 
+/** Find role/user IDs and @everyone/@here written directly in the message text,
+ *  so Discord actually pings them instead of rendering a silent mention. */
+export function deriveMentionsFromContent(content: string): {
+  parse: string[];
+  roles: string[];
+  users: string[];
+} {
+  const roles = Array.from(content.matchAll(/<@&(\d+)>/g), (m) => m[1]!);
+  const users = Array.from(content.matchAll(/<@!?(\d+)>/g), (m) => m[1]!);
+  const parse: string[] = [];
+  if (/@everyone/.test(content)) parse.push("everyone");
+  if (/@here/.test(content)) parse.push("here");
+  return { parse, roles: Array.from(new Set(roles)), users: Array.from(new Set(users)) };
+}
+
 export async function sendDiscordChannelMessage(
   channelId: string,
   content: string,
   roleMentions?: string[],
 ): Promise<{ ok: boolean; status: number; message?: string; messageId?: string }> {
   const botToken = getEnv("DISCORD_BOT_TOKEN");
-  const allowedMentions = roleMentions && roleMentions.length > 0
-    ? { parse: [] as string[], roles: roleMentions }
-    : { parse: [] as string[] };
+  const derived = deriveMentionsFromContent(content);
+  const roles = Array.from(new Set([...(roleMentions ?? []), ...derived.roles]));
+  const allowedMentions = {
+    parse: derived.parse,
+    roles,
+    users: derived.users,
+  };
+
   const msgRes = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
     method: "POST",
     headers: {
