@@ -67,6 +67,7 @@ import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './ro
 import { Route as ApiPublicCronCoachingRemindersRouteImport } from './routes/api/public/cron/coaching-reminders'
 import { Route as ApiPublicCronCoachingRatingRequestsRouteImport } from './routes/api/public/cron/coaching-rating-requests'
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
+import { Route as ApiPublicBroadcastTeamLineupsRouteImport } from './routes/api/public/broadcast/team-lineups'
 import { Route as ApiPublicBroadcastStreamingProfilesRouteImport } from './routes/api/public/broadcast/streaming-profiles'
 import { Route as ApiPublicBroadcastLeaderboardRouteImport } from './routes/api/public/broadcast/leaderboard'
 import { Route as ApiPublicBroadcastIceCupRouteImport } from './routes/api/public/broadcast/ice-cup'
@@ -421,6 +422,12 @@ const ApiPublicCompanionVerifyTokenRoute =
     path: '/api/public/companion/verify-token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBroadcastTeamLineupsRoute =
+  ApiPublicBroadcastTeamLineupsRouteImport.update({
+    id: '/api/public/broadcast/team-lineups',
+    path: '/api/public/broadcast/team-lineups',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBroadcastStreamingProfilesRoute =
   ApiPublicBroadcastStreamingProfilesRouteImport.update({
     id: '/api/public/broadcast/streaming-profiles',
@@ -722,6 +729,7 @@ export interface FileRoutesByFullPath {
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
   '/api/public/broadcast/leaderboard': typeof ApiPublicBroadcastLeaderboardRoute
   '/api/public/broadcast/streaming-profiles': typeof ApiPublicBroadcastStreamingProfilesRoute
+  '/api/public/broadcast/team-lineups': typeof ApiPublicBroadcastTeamLineupsRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
@@ -817,6 +825,7 @@ export interface FileRoutesByTo {
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
   '/api/public/broadcast/leaderboard': typeof ApiPublicBroadcastLeaderboardRoute
   '/api/public/broadcast/streaming-profiles': typeof ApiPublicBroadcastStreamingProfilesRoute
+  '/api/public/broadcast/team-lineups': typeof ApiPublicBroadcastTeamLineupsRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
@@ -917,6 +926,7 @@ export interface FileRoutesById {
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
   '/api/public/broadcast/leaderboard': typeof ApiPublicBroadcastLeaderboardRoute
   '/api/public/broadcast/streaming-profiles': typeof ApiPublicBroadcastStreamingProfilesRoute
+  '/api/public/broadcast/team-lineups': typeof ApiPublicBroadcastTeamLineupsRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
   '/api/public/cron/coaching-rating-requests': typeof ApiPublicCronCoachingRatingRequestsRoute
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
@@ -1016,6 +1026,7 @@ export interface FileRouteTypes {
     | '/api/public/broadcast/ice-cup'
     | '/api/public/broadcast/leaderboard'
     | '/api/public/broadcast/streaming-profiles'
+    | '/api/public/broadcast/team-lineups'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
@@ -1111,6 +1122,7 @@ export interface FileRouteTypes {
     | '/api/public/broadcast/ice-cup'
     | '/api/public/broadcast/leaderboard'
     | '/api/public/broadcast/streaming-profiles'
+    | '/api/public/broadcast/team-lineups'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
@@ -1210,6 +1222,7 @@ export interface FileRouteTypes {
     | '/api/public/broadcast/ice-cup'
     | '/api/public/broadcast/leaderboard'
     | '/api/public/broadcast/streaming-profiles'
+    | '/api/public/broadcast/team-lineups'
     | '/api/public/companion/verify-token'
     | '/api/public/cron/coaching-rating-requests'
     | '/api/public/cron/coaching-reminders'
@@ -1268,6 +1281,7 @@ export interface RootRouteChildren {
   ApiPublicBroadcastIceCupRoute: typeof ApiPublicBroadcastIceCupRoute
   ApiPublicBroadcastLeaderboardRoute: typeof ApiPublicBroadcastLeaderboardRoute
   ApiPublicBroadcastStreamingProfilesRoute: typeof ApiPublicBroadcastStreamingProfilesRoute
+  ApiPublicBroadcastTeamLineupsRoute: typeof ApiPublicBroadcastTeamLineupsRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
   ApiPublicCronCoachingRatingRequestsRoute: typeof ApiPublicCronCoachingRatingRequestsRoute
   ApiPublicCronCoachingRemindersRoute: typeof ApiPublicCronCoachingRemindersRoute
@@ -1694,6 +1708,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/companion/verify-token'
       fullPath: '/api/public/companion/verify-token'
       preLoaderRoute: typeof ApiPublicCompanionVerifyTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/broadcast/team-lineups': {
+      id: '/api/public/broadcast/team-lineups'
+      path: '/api/public/broadcast/team-lineups'
+      fullPath: '/api/public/broadcast/team-lineups'
+      preLoaderRoute: typeof ApiPublicBroadcastTeamLineupsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/broadcast/streaming-profiles': {
@@ -2194,6 +2215,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicBroadcastLeaderboardRoute: ApiPublicBroadcastLeaderboardRoute,
   ApiPublicBroadcastStreamingProfilesRoute:
     ApiPublicBroadcastStreamingProfilesRoute,
+  ApiPublicBroadcastTeamLineupsRoute: ApiPublicBroadcastTeamLineupsRoute,
   ApiPublicCompanionVerifyTokenRoute: ApiPublicCompanionVerifyTokenRoute,
   ApiPublicCronCoachingRatingRequestsRoute:
     ApiPublicCronCoachingRatingRequestsRoute,
