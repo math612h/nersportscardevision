@@ -69,6 +69,7 @@ import { Route as ApiPublicCronCoachingRatingRequestsRouteImport } from './route
 import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
 import { Route as ApiPublicBroadcastTeamLineupsRouteImport } from './routes/api/public/broadcast/team-lineups'
 import { Route as ApiPublicBroadcastStreamingProfilesRouteImport } from './routes/api/public/broadcast/streaming-profiles'
+import { Route as ApiPublicBroadcastSponsorsRouteImport } from './routes/api/public/broadcast/sponsors'
 import { Route as ApiPublicBroadcastLeaderboardRouteImport } from './routes/api/public/broadcast/leaderboard'
 import { Route as ApiPublicBroadcastIceCupRouteImport } from './routes/api/public/broadcast/ice-cup'
 import { Route as AuthenticatedCoachingRateBookingIdRouteImport } from './routes/_authenticated.coaching.rate.$bookingId'
@@ -434,6 +435,12 @@ const ApiPublicBroadcastStreamingProfilesRoute =
     path: '/api/public/broadcast/streaming-profiles',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicBroadcastSponsorsRoute =
+  ApiPublicBroadcastSponsorsRouteImport.update({
+    id: '/api/public/broadcast/sponsors',
+    path: '/api/public/broadcast/sponsors',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicBroadcastLeaderboardRoute =
   ApiPublicBroadcastLeaderboardRouteImport.update({
     id: '/api/public/broadcast/leaderboard',
@@ -728,6 +735,7 @@ export interface FileRoutesByFullPath {
   '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
   '/api/public/broadcast/leaderboard': typeof ApiPublicBroadcastLeaderboardRoute
+  '/api/public/broadcast/sponsors': typeof ApiPublicBroadcastSponsorsRoute
   '/api/public/broadcast/streaming-profiles': typeof ApiPublicBroadcastStreamingProfilesRoute
   '/api/public/broadcast/team-lineups': typeof ApiPublicBroadcastTeamLineupsRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
@@ -824,6 +832,7 @@ export interface FileRoutesByTo {
   '/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
   '/api/public/broadcast/leaderboard': typeof ApiPublicBroadcastLeaderboardRoute
+  '/api/public/broadcast/sponsors': typeof ApiPublicBroadcastSponsorsRoute
   '/api/public/broadcast/streaming-profiles': typeof ApiPublicBroadcastStreamingProfilesRoute
   '/api/public/broadcast/team-lineups': typeof ApiPublicBroadcastTeamLineupsRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
@@ -925,6 +934,7 @@ export interface FileRoutesById {
   '/_authenticated/coaching/rate/$bookingId': typeof AuthenticatedCoachingRateBookingIdRoute
   '/api/public/broadcast/ice-cup': typeof ApiPublicBroadcastIceCupRoute
   '/api/public/broadcast/leaderboard': typeof ApiPublicBroadcastLeaderboardRoute
+  '/api/public/broadcast/sponsors': typeof ApiPublicBroadcastSponsorsRoute
   '/api/public/broadcast/streaming-profiles': typeof ApiPublicBroadcastStreamingProfilesRoute
   '/api/public/broadcast/team-lineups': typeof ApiPublicBroadcastTeamLineupsRoute
   '/api/public/companion/verify-token': typeof ApiPublicCompanionVerifyTokenRoute
@@ -1025,6 +1035,7 @@ export interface FileRouteTypes {
     | '/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
     | '/api/public/broadcast/leaderboard'
+    | '/api/public/broadcast/sponsors'
     | '/api/public/broadcast/streaming-profiles'
     | '/api/public/broadcast/team-lineups'
     | '/api/public/companion/verify-token'
@@ -1121,6 +1132,7 @@ export interface FileRouteTypes {
     | '/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
     | '/api/public/broadcast/leaderboard'
+    | '/api/public/broadcast/sponsors'
     | '/api/public/broadcast/streaming-profiles'
     | '/api/public/broadcast/team-lineups'
     | '/api/public/companion/verify-token'
@@ -1221,6 +1233,7 @@ export interface FileRouteTypes {
     | '/_authenticated/coaching/rate/$bookingId'
     | '/api/public/broadcast/ice-cup'
     | '/api/public/broadcast/leaderboard'
+    | '/api/public/broadcast/sponsors'
     | '/api/public/broadcast/streaming-profiles'
     | '/api/public/broadcast/team-lineups'
     | '/api/public/companion/verify-token'
@@ -1280,6 +1293,7 @@ export interface RootRouteChildren {
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicBroadcastIceCupRoute: typeof ApiPublicBroadcastIceCupRoute
   ApiPublicBroadcastLeaderboardRoute: typeof ApiPublicBroadcastLeaderboardRoute
+  ApiPublicBroadcastSponsorsRoute: typeof ApiPublicBroadcastSponsorsRoute
   ApiPublicBroadcastStreamingProfilesRoute: typeof ApiPublicBroadcastStreamingProfilesRoute
   ApiPublicBroadcastTeamLineupsRoute: typeof ApiPublicBroadcastTeamLineupsRoute
   ApiPublicCompanionVerifyTokenRoute: typeof ApiPublicCompanionVerifyTokenRoute
@@ -1722,6 +1736,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/broadcast/streaming-profiles'
       fullPath: '/api/public/broadcast/streaming-profiles'
       preLoaderRoute: typeof ApiPublicBroadcastStreamingProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/broadcast/sponsors': {
+      id: '/api/public/broadcast/sponsors'
+      path: '/api/public/broadcast/sponsors'
+      fullPath: '/api/public/broadcast/sponsors'
+      preLoaderRoute: typeof ApiPublicBroadcastSponsorsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/broadcast/leaderboard': {
@@ -2213,6 +2234,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicBroadcastIceCupRoute: ApiPublicBroadcastIceCupRoute,
   ApiPublicBroadcastLeaderboardRoute: ApiPublicBroadcastLeaderboardRoute,
+  ApiPublicBroadcastSponsorsRoute: ApiPublicBroadcastSponsorsRoute,
   ApiPublicBroadcastStreamingProfilesRoute:
     ApiPublicBroadcastStreamingProfilesRoute,
   ApiPublicBroadcastTeamLineupsRoute: ApiPublicBroadcastTeamLineupsRoute,
