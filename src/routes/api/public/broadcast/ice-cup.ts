@@ -17,7 +17,7 @@ export const Route = createFileRoute("/api/public/broadcast/ice-cup")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      GET: async () => {
+      GET: async ({ request }) => {
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

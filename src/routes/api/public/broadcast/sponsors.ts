@@ -11,7 +11,7 @@ export const Route = createFileRoute("/api/public/broadcast/sponsors")({
   server: {
     handlers: {
       OPTIONS: async () => new Response(null, { status: 204, headers: CORS }),
-      GET: async () => {
+      GET: async ({ request }) => {
         try {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const nowIso = new Date().toISOString();
