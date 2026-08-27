@@ -35,15 +35,13 @@ export const Route = createFileRoute("/api/public/broadcast/sponsors")({
             (s) => (!s.starts_at || s.starts_at <= nowIso) && (!s.ends_at || s.ends_at >= nowIso),
           );
 
-          const withLogo = active.filter((s) => s.logo_path);
           const logoUrls = new Map<string, string>();
-          if (withLogo.length) {
-            const { data: signed } = await supabaseAdmin.storage
+          for (const s of active) {
+            if (!s.logo_path) continue;
+            const { data: publicUrl } = supabaseAdmin.storage
               .from("sponsor-images")
-              .createSignedUrls(withLogo.map((s) => s.logo_path as string), 60 * 60 * 24 * 7);
-            (signed ?? []).forEach((s: any, i: number) => {
-              if (s?.signedUrl) logoUrls.set(withLogo[i].id, s.signedUrl);
-            });
+              .getPublicUrl(s.logo_path as string);
+            if (publicUrl?.publicUrl) logoUrls.set(s.id, publicUrl.publicUrl);
           }
 
           const sponsors = active.map((s) => ({
