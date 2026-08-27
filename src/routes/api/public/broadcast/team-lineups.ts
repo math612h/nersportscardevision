@@ -91,18 +91,12 @@ export const Route = createFileRoute("/api/public/broadcast/team-lineups")({
                 .in("id", userIds)
             : { data: [] as any[] };
 
+          const origin = new URL(request.url).origin;
           const photoUrls = new Map<string, string>();
-          const withPhoto = ((profiles ?? []) as any[]).filter((p) => p.stream_photo_path);
-          if (withPhoto.length) {
-            const { data: signed } = await supabaseAdmin.storage
-              .from("stream-photos")
-              .createSignedUrls(
-                withPhoto.map((p: any) => p.stream_photo_path as string),
-                60 * 60 * 24 * 7,
-              );
-            (signed ?? []).forEach((s: any, i: number) => {
-              if (s?.signedUrl) photoUrls.set(withPhoto[i].id, s.signedUrl);
-            });
+          for (const p of (profiles ?? []) as any[]) {
+            if (p.stream_photo_path) {
+              photoUrls.set(p.id, `${origin}/api/public/broadcast/storage/stream-photos/${p.stream_photo_path}`);
+            }
           }
 
           const profileById = new Map<string, any>();
