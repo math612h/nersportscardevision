@@ -4,7 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { classCap, uniqueCarClasses } from "@/lib/class-capacity";
 
 const DISCORD_ANNOUNCE_CHANNEL_ID = "1514985014255943881";
-const DISCORD_MEMBERS_ROLE_ID = "1336326061654278186";
+const DISCORD_MEMBERS_ROLE_ID = "1542536891486965962";
 const SITE_URL = "https://www.lmudanmark.dk";
 
 function formatDanishDate(iso: string | null | undefined): string {
