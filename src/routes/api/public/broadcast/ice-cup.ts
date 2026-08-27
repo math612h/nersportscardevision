@@ -69,16 +69,12 @@ export const Route = createFileRoute("/api/public/broadcast/ice-cup")({
           }
 
           if (needSigning.length) {
-            const paths = (profiles ?? [])
-              .filter((p: any) => needSigning.includes(p.id))
-              .map((p: any) => p.avatar_url as string);
-            const { data: signed } = await supabaseAdmin.storage
-              .from("avatars")
-              .createSignedUrls(paths, 60 * 60 * 24 * 7);
-            (signed ?? []).forEach((s, i) => {
-              const id = needSigning[i]!;
-              avatarByUser.set(id, s?.signedUrl ?? null);
-            });
+            const origin = new URL(request.url).origin;
+            for (const p of (profiles ?? []) as any[]) {
+              if (needSigning.includes(p.id)) {
+                avatarByUser.set(p.id, `${origin}/api/public/broadcast/storage/avatars/${p.avatar_url}`);
+              }
+            }
           }
 
           const teamNameById = new Map<string, string>();
