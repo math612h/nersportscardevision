@@ -104,6 +104,7 @@ import { Route as AuthenticatedAdminAdminBrugereIndexRouteImport } from './route
 import { Route as AuthenticatedAdminAdminRegelsaetTemplateIdRouteImport } from './routes/_authenticated._admin.admin.regelsaet.$templateId'
 import { Route as AuthenticatedAdminAdminProtestsProtestIdRouteImport } from './routes/_authenticated._admin.admin.protests.$protestId'
 import { Route as AuthenticatedAdminAdminBrugereUserIdRouteImport } from './routes/_authenticated._admin.admin.brugere.$userId'
+import { Route as ApiPublicBroadcastStorageBucketSplatRouteImport } from './routes/api/public/broadcast/storage/$bucket/$'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdReglerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.regler'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.entries'
@@ -645,6 +646,12 @@ const AuthenticatedAdminAdminBrugereUserIdRoute =
     path: '/admin/brugere/$userId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const ApiPublicBroadcastStorageBucketSplatRoute =
+  ApiPublicBroadcastStorageBucketSplatRouteImport.update({
+    id: '/api/public/broadcast/storage/$bucket/$',
+    path: '/api/public/broadcast/storage/$bucket/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute =
   AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport.update({
     id: '/$leagueId/stillinger',
@@ -768,6 +775,7 @@ export interface FileRoutesByFullPath {
   '/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
   '/admin/ligaer/$leagueId/stillinger': typeof AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute
+  '/api/public/broadcast/storage/$bucket/$': typeof ApiPublicBroadcastStorageBucketSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -865,6 +873,7 @@ export interface FileRoutesByTo {
   '/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
   '/admin/ligaer/$leagueId/stillinger': typeof AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute
+  '/api/public/broadcast/storage/$bucket/$': typeof ApiPublicBroadcastStorageBucketSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -967,6 +976,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger': typeof AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute
+  '/api/public/broadcast/storage/$bucket/$': typeof ApiPublicBroadcastStorageBucketSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -1068,6 +1078,7 @@ export interface FileRouteTypes {
     | '/admin/ligaer/$leagueId/entries'
     | '/admin/ligaer/$leagueId/regler'
     | '/admin/ligaer/$leagueId/stillinger'
+    | '/api/public/broadcast/storage/$bucket/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -1165,6 +1176,7 @@ export interface FileRouteTypes {
     | '/admin/ligaer/$leagueId/entries'
     | '/admin/ligaer/$leagueId/regler'
     | '/admin/ligaer/$leagueId/stillinger'
+    | '/api/public/broadcast/storage/$bucket/$'
   id:
     | '__root__'
     | '/'
@@ -1266,6 +1278,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/ligaer/$leagueId/entries'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/regler'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger'
+    | '/api/public/broadcast/storage/$bucket/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1314,6 +1327,7 @@ export interface RootRouteChildren {
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
+  ApiPublicBroadcastStorageBucketSplatRoute: typeof ApiPublicBroadcastStorageBucketSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1983,6 +1997,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminBrugereUserIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/broadcast/storage/$bucket/$': {
+      id: '/api/public/broadcast/storage/$bucket/$'
+      path: '/api/public/broadcast/storage/$bucket/$'
+      fullPath: '/api/public/broadcast/storage/$bucket/$'
+      preLoaderRoute: typeof ApiPublicBroadcastStorageBucketSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger': {
       id: '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger'
       path: '/$leagueId/stillinger'
@@ -2260,6 +2281,8 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
+  ApiPublicBroadcastStorageBucketSplatRoute:
+    ApiPublicBroadcastStorageBucketSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
