@@ -190,10 +190,37 @@ function StreamPhotoPanel({ profile }: { profile: ProfileRow }) {
   );
 }
 
-function AnswersPanel() {
-  const qc = useQueryClient();
+type LeagueOption = { id: string; name: string };
+
+function useStreamingProfilesFilter() {
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<ProfileRow | null>(null);
+  const [leagueId, setLeagueId] = useState<string>("");
+
+  const { data: leagues } = useQuery({
+    queryKey: ["admin-streaming-leagues"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("leagues")
+        .select("id, name")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as LeagueOption[];
+    },
+  });
+
+  const { data: leagueUserIds } = useQuery({
+    queryKey: ["admin-streaming-league-users", leagueId],
+    queryFn: async () => {
+      if (!leagueId) return null;
+      const { data, error } = await (supabase as any)
+        .from("entries")
+        .select("user_id")
+        .eq("league_id", leagueId);
+      if (error) throw error;
+      return new Set<string>((data ?? []).map((e: any) => e.user_id as string));
+    },
+    enabled: !!leagueId,
+  });
 
   const { data: profiles } = useQuery({
     queryKey: ["admin-streaming-profiles"],
@@ -220,6 +247,90 @@ function AnswersPanel() {
     },
   });
 
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return (profiles ?? []).filter((p) => {
+      if (leagueId && leagueUserIds && !leagueUserIds.has(p.id)) return false;
+      if (!needle) return true;
+      return (
+        (p.display_name ?? "").toLowerCase().includes(needle) ||
+        (p.lmu_name ?? "").toLowerCase().includes(needle)
+      );
+    });
+  }, [profiles, q, leagueId, leagueUserIds]);
+
+  const answeredProfiles = useMemo(
+    () => filtered.filter((p) => answered?.has(p.id)),
+    [filtered, answered],
+  );
+
+  const missingProfiles = useMemo(
+    () => filtered.filter((p) => !answered?.has(p.id)),
+    [filtered, answered],
+  );
+
+  return {
+    q,
+    setQ,
+    leagueId,
+    setLeagueId,
+    leagues: leagues ?? [],
+    answered,
+    answeredProfiles,
+    missingProfiles,
+  };
+}
+
+function ProfileRowButton({
+  p,
+  answered,
+  onSelect,
+}: {
+  p: ProfileRow;
+  answered: Set<string> | undefined;
+  onSelect: (p: ProfileRow) => void;
+}) {
+  return (
+    <button
+      key={p.id}
+      onClick={() => onSelect(p)}
+      className="flex w-full items-center gap-3 p-3 text-left transition hover:bg-muted/50"
+    >
+      <Avatar className="h-8 w-8">
+        <AvatarFallback>{(p.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{p.display_name ?? "Uden navn"}</p>
+        {p.lmu_name && <p className="truncate text-xs text-muted-foreground">{p.lmu_name}</p>}
+      </div>
+      {p.stream_photo_path && (
+        <Badge variant="outline" className="gap-1">
+          <ImageIcon className="h-3 w-3" /> Billede
+        </Badge>
+      )}
+      {answered?.has(p.id) ? (
+        <Badge variant="secondary">Besvaret</Badge>
+      ) : (
+        <Badge variant="outline">Tom</Badge>
+      )}
+    </button>
+  );
+}
+
+function AnswersPanel() {
+  const qc = useQueryClient();
+  const [selected, setSelected] = useState<ProfileRow | null>(null);
+  const {
+    q,
+    setQ,
+    leagueId,
+    setLeagueId,
+    leagues,
+    answered,
+    answeredProfiles,
+    missingProfiles,
+  } = useStreamingProfilesFilter();
+
   const { data: detail, isLoading: detailLoading } = useQuery({
     queryKey: ["admin-streaming-answers", selected?.id],
     enabled: !!selected,
@@ -244,15 +355,6 @@ function AnswersPanel() {
       }));
     },
   });
-
-  const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return (profiles ?? []).filter((p) =>
-      !needle ||
-      (p.display_name ?? "").toLowerCase().includes(needle) ||
-      (p.lmu_name ?? "").toLowerCase().includes(needle),
-    );
-  }, [profiles, q]);
 
   const deleteAnswer = async (answerId: string) => {
     const { error } = await (supabase as any).from("streaming_profile_answers").delete().eq("id", answerId);
@@ -304,41 +406,58 @@ function AnswersPanel() {
     <Card>
       <CardHeader>
         <CardTitle className="text-base">Besvarelser pr. profil</CardTitle>
-        <CardDescription>Vælg en profil for at se og fjerne besvarelser.</CardDescription>
+        <CardDescription>
+          Filtrér efter liga, og se hvem der har besvaret streaming-profilen, og hvem der mangler.
+        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="relative sm:max-w-sm">
-          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Søg navn…" className="pl-8" />
+      <CardContent className="space-y-4">
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Søg navn…" className="pl-8" />
+          </div>
+          <Select value={leagueId} onValueChange={setLeagueId}>
+            <SelectTrigger className="w-full sm:w-64">
+              <SelectValue placeholder="Alle ligaer" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">Alle ligaer</SelectItem>
+              {leagues.map((l) => (
+                <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <div className="divide-y rounded-md border">
-          {filtered.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => setSelected(p)}
-              className="flex w-full items-center gap-3 p-3 text-left transition hover:bg-muted/50"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>{(p.display_name || "?").slice(0, 2).toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{p.display_name ?? "Uden navn"}</p>
-                {p.lmu_name && <p className="truncate text-xs text-muted-foreground">{p.lmu_name}</p>}
-              </div>
-              {p.stream_photo_path && (
-                <Badge variant="outline" className="gap-1">
-                  <ImageIcon className="h-3 w-3" /> Billede
-                </Badge>
-              )}
-              {answered?.has(p.id) ? (
-                <Badge variant="secondary">Besvaret</Badge>
-              ) : (
-                <Badge variant="outline">Tom</Badge>
-              )}
-            </button>
-          ))}
-          {!filtered.length && <p className="p-3 text-sm text-muted-foreground">Ingen profiler matcher.</p>}
-        </div>
+
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Besvaret</h3>
+            <Badge variant="secondary">{answeredProfiles.length}</Badge>
+          </div>
+          <div className="divide-y rounded-md border">
+            {answeredProfiles.map((p) => (
+              <ProfileRowButton key={p.id} p={p} answered={answered} onSelect={setSelected} />
+            ))}
+            {!answeredProfiles.length && (
+              <p className="p-3 text-sm text-muted-foreground">Ingen profiler matcher.</p>
+            )}
+          </div>
+        </section>
+
+        <section className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Mangler besvarelse</h3>
+            <Badge variant="outline">{missingProfiles.length}</Badge>
+          </div>
+          <div className="divide-y rounded-md border">
+            {missingProfiles.map((p) => (
+              <ProfileRowButton key={p.id} p={p} answered={answered} onSelect={setSelected} />
+            ))}
+            {!missingProfiles.length && (
+              <p className="p-3 text-sm text-muted-foreground">Ingen profiler matcher.</p>
+            )}
+          </div>
+        </section>
       </CardContent>
     </Card>
   );
