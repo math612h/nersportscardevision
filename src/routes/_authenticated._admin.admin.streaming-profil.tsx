@@ -416,12 +416,12 @@ function AnswersPanel() {
             <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Søg navn…" className="pl-8" />
           </div>
-          <Select value={leagueId} onValueChange={setLeagueId}>
+          <Select value={leagueId || "all"} onValueChange={(v) => setLeagueId(v === "all" ? "" : v)}>
             <SelectTrigger className="w-full sm:w-64">
               <SelectValue placeholder="Alle ligaer" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Alle ligaer</SelectItem>
+              <SelectItem value="all">Alle ligaer</SelectItem>
               {leagues.map((l) => (
                 <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
               ))}
