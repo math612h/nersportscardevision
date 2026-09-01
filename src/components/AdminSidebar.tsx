@@ -15,6 +15,7 @@ import {
   History,
   Clock,
   FolderOpen,
+  Gauge,
   Headphones,
   AlertTriangle,
   KeyRound,
