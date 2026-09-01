@@ -1266,11 +1266,16 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     return { taken: t, available: a };
   }, [signups, selected]);
 
-  // Pladser gælder samlet for bilklassen (ikke pr. Pro/Am-kategori)
+  // Pladser gælder pr. kategori når klassen er delt i Pro/Am
+  const splitSel = isSplitClass(configs, selected?.car_class);
   const gridCount = (signups ?? []).filter(
-    (s) => selected && s.car_class === selected.car_class && !s.waitlist,
+    (s) =>
+      selected &&
+      s.car_class === selected.car_class &&
+      (!splitSel || s.driver_category === selected.driver_category) &&
+      !s.waitlist,
   ).length;
-  const cap = classCap(configs, selected?.car_class);
+  const cap = seatCap(configs, selected?.car_class, selected?.driver_category);
   const isApproved = !!profile?.approved;
   const { isAdmin } = useAuth();
   const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);
