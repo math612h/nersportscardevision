@@ -475,59 +475,58 @@ function LeagueDetail() {
                       })}
                     </div>
                   )}
-                  {hasLobby && !completed && (
-                    <details className="group/lobby mt-1 rounded border border-border/60 bg-muted/30 text-xs">
-                      <summary className="flex cursor-pointer list-none items-center gap-1.5 px-2 py-1.5 font-medium text-muted-foreground hover:text-foreground">
-                        <KeyRound className="h-3 w-3" />
-                        Vis lobby-info
-                        <ChevronDown className="ml-auto h-3 w-3 transition group-open/lobby:rotate-180" />
-                      </summary>
-                      <ul className="space-y-0.5 px-2 pb-2">
-                        {(lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password) && (lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password) && (
-                          <li className="pt-1 font-semibold uppercase tracking-wide text-primary">Pro Server</li>
-                        )}
-                        {lobby?.server_name && (
-                          <li className="flex justify-between gap-2">
-                            <span className="text-muted-foreground">Server Navn</span>
-                            <span className="font-mono font-medium truncate">{lobby.server_name}</span>
-                          </li>
-                        )}
-                        {lobby?.lobby_code && (
-                          <li className="flex justify-between gap-2">
-                            <span className="text-muted-foreground">Lobby Code</span>
-                            <span className="font-mono font-medium truncate">{lobby.lobby_code}</span>
-                          </li>
-                        )}
-                        {lobby?.lobby_password && (
-                          <li className="flex justify-between gap-2">
-                            <span className="text-muted-foreground">Password</span>
-                            <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
-                          </li>
-                        )}
-                        {(lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password) && (
-                          <li className="pt-1.5 font-semibold uppercase tracking-wide text-primary">Am Server</li>
-                        )}
-                        {lobby?.am_server_name && (
-                          <li className="flex justify-between gap-2">
-                            <span className="text-muted-foreground">Server Navn</span>
-                            <span className="font-mono font-medium truncate">{lobby.am_server_name}</span>
-                          </li>
-                        )}
-                        {lobby?.am_lobby_code && (
-                          <li className="flex justify-between gap-2">
-                            <span className="text-muted-foreground">Lobby Code</span>
-                            <span className="font-mono font-medium truncate">{lobby.am_lobby_code}</span>
-                          </li>
-                        )}
-                        {lobby?.am_lobby_password && (
-                          <li className="flex justify-between gap-2">
-                            <span className="text-muted-foreground">Password</span>
-                            <span className="font-mono font-medium truncate">{lobby.am_lobby_password}</span>
-                          </li>
-                        )}
-                      </ul>
-
-                    </details>
+                  {hasLobby && !completed && canSeeLobby && (
+                    <div className="mt-1 space-y-1.5 rounded border border-primary/40 bg-primary/5 p-2 text-xs">
+                      <div className="flex items-center gap-1.5 font-semibold uppercase tracking-wider text-primary">
+                        <KeyRound className="h-3 w-3" /> Server info
+                      </div>
+                      {(lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password) && (
+                        <div className="space-y-0.5">
+                          <Badge className="mb-0.5 text-[10px]">PRO SERVER</Badge>
+                          {lobby?.server_name && (
+                            <div className="flex justify-between gap-2">
+                              <span className="text-muted-foreground">Server navn</span>
+                              <span className="font-mono font-medium truncate">{lobby.server_name}</span>
+                            </div>
+                          )}
+                          {lobby?.lobby_code && (
+                            <div className="flex justify-between gap-2">
+                              <span className="text-muted-foreground">Lobby code</span>
+                              <span className="font-mono font-medium truncate">{lobby.lobby_code}</span>
+                            </div>
+                          )}
+                          {lobby?.lobby_password && (
+                            <div className="flex justify-between gap-2">
+                              <span className="text-muted-foreground">Password</span>
+                              <span className="font-mono font-medium truncate">{lobby.lobby_password}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {(lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password) && (
+                        <div className="space-y-0.5">
+                          <Badge variant="secondary" className="mb-0.5 text-[10px]">AM SERVER</Badge>
+                          {lobby?.am_server_name && (
+                            <div className="flex justify-between gap-2">
+                              <span className="text-muted-foreground">Server navn</span>
+                              <span className="font-mono font-medium truncate">{lobby.am_server_name}</span>
+                            </div>
+                          )}
+                          {lobby?.am_lobby_code && (
+                            <div className="flex justify-between gap-2">
+                              <span className="text-muted-foreground">Lobby code</span>
+                              <span className="font-mono font-medium truncate">{lobby.am_lobby_code}</span>
+                            </div>
+                          )}
+                          {lobby?.am_lobby_password && (
+                            <div className="flex justify-between gap-2">
+                              <span className="text-muted-foreground">Password</span>
+                              <span className="font-mono font-medium truncate">{lobby.am_lobby_password}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
               {canSeePractice && <PracticeSessionsList divisionId={d.id} />}
             </CardContent>
