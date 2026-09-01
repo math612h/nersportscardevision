@@ -108,6 +108,12 @@ function AdminRules() {
         <h1 className="text-2xl font-bold">Regelsæt</h1>
         <div className="flex flex-wrap gap-2">
           <SaveTemplateDialog rules={rules ?? []} sections={sections ?? []} />
+          <ClearRulesButton
+            leagueId={leagueId}
+            ruleCount={rules?.length ?? 0}
+            sectionCount={sections?.length ?? 0}
+            onCleared={invalidate}
+          />
           <LoadTemplateDialog leagueId={leagueId} existingCount={rules?.length ?? 0} onLoaded={invalidate} />
           <ManageTemplatesDialog />
           <NewSectionDialog leagueId={leagueId} sectionCount={sections?.length ?? 0} onCreated={invalidate} />
