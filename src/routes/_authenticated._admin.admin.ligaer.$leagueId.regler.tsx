@@ -584,6 +584,34 @@ function LoadTemplateDialog({ leagueId, existingCount, onLoaded }: { leagueId: s
 
 
 
+function ClearRulesButton({ leagueId, ruleCount, sectionCount, onCleared }: { leagueId: string; ruleCount: number; sectionCount: number; onCleared: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const empty = ruleCount === 0 && sectionCount === 0;
+
+  const clear = async () => {
+    if (!confirm(`Fjern hele regelsættet fra ligaen?\n\nDette sletter ${ruleCount} regler og ${sectionCount} sektioner fra ligaen. Arkiverede skabeloner berøres ikke.\n\nTip: Gem først som skabelon, hvis du vil kunne indlæse regelsættet igen.`)) return;
+    setBusy(true);
+    try {
+      const { error: rErr } = await supabase.from("rulesets").delete().eq("league_id", leagueId);
+      if (rErr) throw rErr;
+      const { error: sErr } = await supabase.from("ruleset_sections" as any).delete().eq("league_id", leagueId);
+      if (sErr) throw sErr;
+      toast.success("Regelsæt fjernet fra ligaen");
+      onCleared();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Kunne ikke fjerne regelsættet");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Button variant="destructive" className="gap-1" onClick={clear} disabled={busy || empty} title={empty ? "Ligaen har intet regelsæt" : undefined}>
+      <Trash2 className="h-4 w-4" /> Fjern regelsæt
+    </Button>
+  );
+}
+
 function ManageTemplatesDialog() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
