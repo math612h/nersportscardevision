@@ -244,7 +244,10 @@ function DivisionEditor({
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [importedInfo, setImportedInfo] = useState<{ track: string; layout: string | null } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importedFiles, setImportedFiles] = useState<Partial<Record<ServerKind, { fileName: string; matched: number }>>>({});
+  const proInputRef = useRef<HTMLInputElement>(null);
+  const amInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = proInputRef;
   const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
   const deleteResults = useServerFn(deleteLeagueRaceResults);
   const confirmResults = useServerFn(setResultsConfirmed);
