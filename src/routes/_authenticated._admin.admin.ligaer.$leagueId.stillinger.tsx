@@ -26,6 +26,9 @@ const DEFAULT_POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
 type SessionKind = "race" | "qualifying";
 
+type ServerKind = "pro" | "am";
+const SERVER_LABEL: Record<ServerKind, string> = { pro: "PRO-server", am: "AM-server" };
+
 type DraftRow = {
   entry_id: string;
   user_id: string;
@@ -244,7 +247,9 @@ function DivisionEditor({
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [importedInfo, setImportedInfo] = useState<{ track: string; layout: string | null } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importedFiles, setImportedFiles] = useState<Partial<Record<ServerKind, { fileName: string; matched: number }>>>({});
+  const proInputRef = useRef<HTMLInputElement>(null);
+  const amInputRef = useRef<HTMLInputElement>(null);
   const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
   const deleteResults = useServerFn(deleteLeagueRaceResults);
   const confirmResults = useServerFn(setResultsConfirmed);
@@ -254,8 +259,13 @@ function DivisionEditor({
     setCompleted(!!division.settings?.completed);
     setConfirmed(!!division.settings?.results_confirmed);
     setImportedInfo(null);
+    setImportedFiles({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
+
+  useEffect(() => {
+    setImportedFiles({});
+  }, [session]);
 
   const userIds = useMemo(() => Array.from(new Set(entries.map((e) => e.user_id))), [entries]);
   const { data: profiles } = useQuery({
@@ -274,7 +284,7 @@ function DivisionEditor({
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
 
-  const importXml = async (file: File, kind: SessionKind) => {
+  const importXml = async (file: File, kind: SessionKind, server: ServerKind) => {
     try {
       const text = await file.text();
       const parsedRace = parseLmuRaceFile(text);
@@ -375,7 +385,8 @@ function DivisionEditor({
         }
       }
 
-      toast.success(`Importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
+      setImportedFiles((prev) => ({ ...prev, [server]: { fileName: file.name, matched } }));
+      toast.success(`${SERVER_LABEL[server]}: importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
       if (missing.length > 0) toast.warning(`${missing.length} ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
       if (noLmu.length > 0) toast.message(`${noLmu.length} på grid mangler LMU-navn.`);
     } catch (e: any) {
@@ -676,6 +687,17 @@ function DivisionEditor({
                 <span className="ml-2 opacity-70">· Læst: {importedInfo.track}{importedInfo.layout ? ` · ${importedInfo.layout}` : ""}</span>
               )}
             </p>
+            {(importedFiles.pro || importedFiles.am) && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {(["pro", "am"] as ServerKind[]).map((sv) =>
+                  importedFiles[sv] ? (
+                    <span key={sv} className="mr-3">
+                      {SERVER_LABEL[sv]}: <span className="font-mono">{importedFiles[sv]!.fileName}</span> ({importedFiles[sv]!.matched} matchet)
+                    </span>
+                  ) : null,
+                )}
+              </p>
+            )}
             <p className="mt-1 text-xs text-muted-foreground">
               {confirmed
                 ? "Resultaterne er markeret som endelige og vises som bekræftede."
@@ -710,18 +732,32 @@ function DivisionEditor({
               <Check className="h-4 w-4" /> {confirming ? "Gemmer…" : confirmed ? "Fjern bekræftelse" : "Bekræft resultater"}
             </Button>
             <input
-              ref={fileInputRef}
+              ref={proInputRef}
               type="file"
               accept=".xml,application/xml,text/xml"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) importXml(f, session);
+                if (f) importXml(f, session, "pro");
                 e.target.value = "";
               }}
             />
-            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
-              <Upload className="h-4 w-4" /> Importer {session === "race" ? "race-fil" : "quali-fil"}
+            <input
+              ref={amInputRef}
+              type="file"
+              accept=".xml,application/xml,text/xml"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importXml(f, session, "am");
+                e.target.value = "";
+              }}
+            />
+            <Button type="button" variant="outline" onClick={() => proInputRef.current?.click()} className="gap-2">
+              <Upload className="h-4 w-4" /> {session === "race" ? "Race-fil" : "Quali-fil"} · PRO-server
+            </Button>
+            <Button type="button" variant="outline" onClick={() => amInputRef.current?.click()} className="gap-2">
+              <Upload className="h-4 w-4" /> {session === "race" ? "Race-fil" : "Quali-fil"} · AM-server
             </Button>
             <Button
               type="button"

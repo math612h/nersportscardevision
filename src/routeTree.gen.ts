@@ -81,6 +81,7 @@ import { Route as AuthenticatedAdminAdminSponsorerRouteImport } from './routes/_
 import { Route as AuthenticatedAdminAdminRollerRouteImport } from './routes/_authenticated._admin.admin.roller'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminPartnerfordeleRouteImport } from './routes/_authenticated._admin.admin.partnerfordele'
+import { Route as AuthenticatedAdminAdminPaceSammenligningRouteImport } from './routes/_authenticated._admin.admin.pace-sammenligning'
 import { Route as AuthenticatedAdminAdminOverhalingerRouteImport } from './routes/_authenticated._admin.admin.overhalinger'
 import { Route as AuthenticatedAdminAdminOnlineRouteImport } from './routes/_authenticated._admin.admin.online'
 import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
@@ -508,6 +509,12 @@ const AuthenticatedAdminAdminPartnerfordeleRoute =
     path: '/admin/partnerfordele',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminPaceSammenligningRoute =
+  AuthenticatedAdminAdminPaceSammenligningRouteImport.update({
+    id: '/admin/pace-sammenligning',
+    path: '/admin/pace-sammenligning',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminOverhalingerRoute =
   AuthenticatedAdminAdminOverhalingerRouteImport.update({
     id: '/admin/overhalinger',
@@ -731,6 +738,7 @@ export interface FileRoutesByFullPath {
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/online': typeof AuthenticatedAdminAdminOnlineRoute
   '/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
+  '/admin/pace-sammenligning': typeof AuthenticatedAdminAdminPaceSammenligningRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
@@ -830,6 +838,7 @@ export interface FileRoutesByTo {
   '/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/admin/online': typeof AuthenticatedAdminAdminOnlineRoute
   '/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
+  '/admin/pace-sammenligning': typeof AuthenticatedAdminAdminPaceSammenligningRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
@@ -932,6 +941,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/nyhedsbrev': typeof AuthenticatedAdminAdminNyhedsbrevRoute
   '/_authenticated/_admin/admin/online': typeof AuthenticatedAdminAdminOnlineRoute
   '/_authenticated/_admin/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
+  '/_authenticated/_admin/admin/pace-sammenligning': typeof AuthenticatedAdminAdminPaceSammenligningRoute
   '/_authenticated/_admin/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   '/_authenticated/_admin/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
@@ -1034,6 +1044,7 @@ export interface FileRouteTypes {
     | '/admin/nyhedsbrev'
     | '/admin/online'
     | '/admin/overhalinger'
+    | '/admin/pace-sammenligning'
     | '/admin/partnerfordele'
     | '/admin/protests'
     | '/admin/roller'
@@ -1133,6 +1144,7 @@ export interface FileRouteTypes {
     | '/admin/nyhedsbrev'
     | '/admin/online'
     | '/admin/overhalinger'
+    | '/admin/pace-sammenligning'
     | '/admin/partnerfordele'
     | '/admin/roller'
     | '/admin/sponsorer'
@@ -1234,6 +1246,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/nyhedsbrev'
     | '/_authenticated/_admin/admin/online'
     | '/_authenticated/_admin/admin/overhalinger'
+    | '/_authenticated/_admin/admin/pace-sammenligning'
     | '/_authenticated/_admin/admin/partnerfordele'
     | '/_authenticated/_admin/admin/protests'
     | '/_authenticated/_admin/admin/roller'
@@ -1836,6 +1849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminPartnerfordeleRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/pace-sammenligning': {
+      id: '/_authenticated/_admin/admin/pace-sammenligning'
+      path: '/admin/pace-sammenligning'
+      fullPath: '/admin/pace-sammenligning'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPaceSammenligningRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/overhalinger': {
       id: '/_authenticated/_admin/admin/overhalinger'
       path: '/admin/overhalinger'
@@ -2095,6 +2115,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminNyhedsbrevRoute: typeof AuthenticatedAdminAdminNyhedsbrevRoute
   AuthenticatedAdminAdminOnlineRoute: typeof AuthenticatedAdminAdminOnlineRoute
   AuthenticatedAdminAdminOverhalingerRoute: typeof AuthenticatedAdminAdminOverhalingerRoute
+  AuthenticatedAdminAdminPaceSammenligningRoute: typeof AuthenticatedAdminAdminPaceSammenligningRoute
   AuthenticatedAdminAdminPartnerfordeleRoute: typeof AuthenticatedAdminAdminPartnerfordeleRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
   AuthenticatedAdminAdminRollerRoute: typeof AuthenticatedAdminAdminRollerRoute
@@ -2133,6 +2154,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminOnlineRoute: AuthenticatedAdminAdminOnlineRoute,
   AuthenticatedAdminAdminOverhalingerRoute:
     AuthenticatedAdminAdminOverhalingerRoute,
+  AuthenticatedAdminAdminPaceSammenligningRoute:
+    AuthenticatedAdminAdminPaceSammenligningRoute,
   AuthenticatedAdminAdminPartnerfordeleRoute:
     AuthenticatedAdminAdminPartnerfordeleRoute,
   AuthenticatedAdminAdminProtestsRoute:

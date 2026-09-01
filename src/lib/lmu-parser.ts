@@ -22,6 +22,12 @@ export type ParsedDriver = {
   position: number | null;
   classPosition: number | null;
   laps: number | null;
+  /** Bilnummer fra racefilen (CarNumber), hvis til stede. */
+  carNumber?: string | null;
+  /** Alle gyldige omgange (ugyldige som "--.----" er frasorteret). */
+  validLaps?: { num: number | null; ms: number }[] | null;
+  /** Rå <Swap>-intervaller, så omgange kan fordeles pr. kører. */
+  swaps?: RawSwap[] | null;
   /** Per-kører bedste omgang når filen indeholder <Swap>; ellers null. */
   stints?: ParsedStint[] | null;
   /** Omgangsnummer for bedste omgang (kun sat ved udfoldede stints). */
@@ -109,6 +115,20 @@ export function computeStints(
  * Udfolder en bil til én leaderboard-post pr. faktisk kører når der findes
  * <Swap>-data. Uden swaps returneres køreren uændret.
  */
+/**
+ * Filtrerer rå omgange til kun gyldige tider (fx "--.----", tomme eller
+ * ikke-numeriske værdier frasorteres altid) og returnerer dem i ms.
+ */
+export function toValidLaps(laps: RawLap[]): { num: number | null; ms: number }[] {
+  const out: { num: number | null; ms: number }[] = [];
+  for (const lap of laps) {
+    const seconds = Number.parseFloat(String(lap.value ?? "").trim());
+    if (!Number.isFinite(seconds) || seconds <= 0) continue;
+    out.push({ num: lap.num, ms: Math.round(seconds * 1000) });
+  }
+  return out;
+}
+
 export function expandDriverStints(drivers: ParsedDriver[]): ParsedDriver[] {
   return drivers.flatMap((d) => {
     if (!d.stints || d.stints.length === 0) return [d];
@@ -272,6 +292,9 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
       position: Number.isFinite(pos) && pos > 0 ? pos : null,
       classPosition: Number.isFinite(classPos) && classPos > 0 ? classPos : null,
       laps: Number.isFinite(laps) && laps >= 0 ? laps : null,
+      carNumber: get("CarNumber") || null,
+      validLaps: toValidLaps(rawLaps),
+      swaps: rawSwaps.length ? rawSwaps : null,
       stints,
     };
   });

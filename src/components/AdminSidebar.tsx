@@ -15,6 +15,7 @@ import {
   History,
   Clock,
   FolderOpen,
+  Gauge,
   Headphones,
   AlertTriangle,
   KeyRound,
@@ -115,6 +116,7 @@ export function AdminSidebar() {
       items: [
         { title: "Ligaer & afdelinger", url: "/admin/ligaer", icon: Flag },
         { title: "Regelsæt-arkiv", url: "/admin/regelsaet", icon: BookOpen },
+        { title: "Pro/Am tempo", url: "/admin/pace-sammenligning", icon: Gauge },
         { title: "Protester", url: "/admin/protests", icon: MessageSquareWarning, badge: openProtestsCount },
         { title: "Teams", url: "/teams", icon: Shield },
         { title: "Coaches", url: "/admin/coaches", icon: GraduationCap },
