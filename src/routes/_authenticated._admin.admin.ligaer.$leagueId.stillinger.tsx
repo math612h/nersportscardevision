@@ -1035,9 +1035,14 @@ async function reconcileWaitlist({
         stillOnGrid.push(e);
       }
     }
-    const cap = classCap(configs as any, cfg.car_class) ?? Infinity;
+    const cap = seatCap(configs as any, cfg.car_class, cfg.driver_category) ?? Infinity;
+    const split = isSplitClass(configs as any, cfg.car_class);
     const classOnGrid = entries.filter(
-      (e) => e.car_class === cfg.car_class && !e.waitlist && !updates.some((u) => u.id === e.id && u.waitlist),
+      (e) =>
+        e.car_class === cfg.car_class &&
+        (!split || e.driver_category === cfg.driver_category) &&
+        !e.waitlist &&
+        !updates.some((u) => u.id === e.id && u.waitlist),
     ).length;
     const room = Math.max(0, cap - classOnGrid);
     const promotions = Math.min(openSlots, room, wait.length);
