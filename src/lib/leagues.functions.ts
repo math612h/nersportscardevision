@@ -119,15 +119,19 @@ export const setProfileApproval = createServerFn({ method: "POST" })
           .maybeSingle();
         const configs: Array<{ car_class: string; driver_category: string; max_drivers?: number | null }> =
           Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
-        const cap = classCap(configs, entry.car_class);
+        const cap = seatCap(configs, entry.car_class, entry.driver_category);
+        const split = isSplitClass(configs, entry.car_class);
 
 
-        const { data: siblings } = await supabaseAdmin
+        let siblingQuery = supabaseAdmin
           .from("entries")
           .select("id,waitlist")
           .eq("league_id", leagueId)
           .is("division_id", null)
           .eq("car_class", entry.car_class);
+        if (split) siblingQuery = siblingQuery.eq("driver_category", entry.driver_category);
+        const { data: siblings } = await siblingQuery;
+
         const gridCount = (siblings ?? []).filter((s) => !s.waitlist).length;
 
         if (cap == null || gridCount < cap) {
