@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { CARS_BY_CLASS } from "@/lib/lmu-cars";
-import { classCap } from "@/lib/class-capacity";
+import { seatCap, isSplitClass } from "@/lib/class-capacity";
 
 const SITE = "https://lmudanmark.dk";
 
