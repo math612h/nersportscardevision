@@ -224,7 +224,7 @@ function LeagueDetail() {
   });
   const isSignedUp = !!mySignup;
   const canSeePractice = !!user && (isSignedUp || isAdmin || isSteward);
-  const canSeeLobby = !!user && isApproved && (isSignedUp || isAdmin || isSteward);
+  const canSeeLobby = !!user && (isAdmin || isSteward || (isApproved && isSignedUp));
 
   const divisionIds = useMemo(() => (divisions ?? []).map((d: any) => d.id), [divisions]);
   const { data: lobbies } = useQuery({
