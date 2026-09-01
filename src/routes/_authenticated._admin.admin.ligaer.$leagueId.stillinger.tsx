@@ -250,7 +250,6 @@ function DivisionEditor({
   const [importedFiles, setImportedFiles] = useState<Partial<Record<ServerKind, { fileName: string; matched: number }>>>({});
   const proInputRef = useRef<HTMLInputElement>(null);
   const amInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = proInputRef;
   const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
   const deleteResults = useServerFn(deleteLeagueRaceResults);
   const confirmResults = useServerFn(setResultsConfirmed);
@@ -688,6 +687,17 @@ function DivisionEditor({
                 <span className="ml-2 opacity-70">· Læst: {importedInfo.track}{importedInfo.layout ? ` · ${importedInfo.layout}` : ""}</span>
               )}
             </p>
+            {(importedFiles.pro || importedFiles.am) && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {(["pro", "am"] as ServerKind[]).map((sv) =>
+                  importedFiles[sv] ? (
+                    <span key={sv} className="mr-3">
+                      {SERVER_LABEL[sv]}: <span className="font-mono">{importedFiles[sv]!.fileName}</span> ({importedFiles[sv]!.matched} matchet)
+                    </span>
+                  ) : null,
+                )}
+              </p>
+            )}
             <p className="mt-1 text-xs text-muted-foreground">
               {confirmed
                 ? "Resultaterne er markeret som endelige og vises som bekræftede."
@@ -722,18 +732,32 @@ function DivisionEditor({
               <Check className="h-4 w-4" /> {confirming ? "Gemmer…" : confirmed ? "Fjern bekræftelse" : "Bekræft resultater"}
             </Button>
             <input
-              ref={fileInputRef}
+              ref={proInputRef}
               type="file"
               accept=".xml,application/xml,text/xml"
               className="hidden"
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) importXml(f, session);
+                if (f) importXml(f, session, "pro");
                 e.target.value = "";
               }}
             />
-            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="gap-2">
-              <Upload className="h-4 w-4" /> Importer {session === "race" ? "race-fil" : "quali-fil"}
+            <input
+              ref={amInputRef}
+              type="file"
+              accept=".xml,application/xml,text/xml"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) importXml(f, session, "am");
+                e.target.value = "";
+              }}
+            />
+            <Button type="button" variant="outline" onClick={() => proInputRef.current?.click()} className="gap-2">
+              <Upload className="h-4 w-4" /> {session === "race" ? "Race-fil" : "Quali-fil"} · PRO-server
+            </Button>
+            <Button type="button" variant="outline" onClick={() => amInputRef.current?.click()} className="gap-2">
+              <Upload className="h-4 w-4" /> {session === "race" ? "Race-fil" : "Quali-fil"} · AM-server
             </Button>
             <Button
               type="button"
