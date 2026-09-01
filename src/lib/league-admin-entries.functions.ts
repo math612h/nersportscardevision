@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { classCap, uniqueCarClasses } from "@/lib/class-capacity";
+import { capacityBuckets } from "@/lib/class-capacity";
 
 async function assertAdmin(userId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -123,10 +123,14 @@ export const rebalanceLeagueWaitlist = createServerFn({ method: "POST" })
     }
 
     let promoted = 0;
-    for (const carClass of uniqueCarClasses(configs)) {
-      const cap = classCap(configs, carClass);
+    for (const bucket of capacityBuckets(configs)) {
+      const cap = bucket.cap;
       if (cap == null) continue;
-      const group = (entries ?? []).filter((e: any) => e.car_class === carClass);
+      const group = (entries ?? []).filter(
+        (e: any) =>
+          e.car_class === bucket.carClass &&
+          (bucket.category == null || e.driver_category === bucket.category),
+      );
       let onGrid = 0;
       for (const e of group as any[]) {
         const approved = approvedMap.get(e.user_id) ?? false;
@@ -139,6 +143,7 @@ export const rebalanceLeagueWaitlist = createServerFn({ method: "POST" })
         }
       }
     }
+
 
     return { ok: true, promoted };
   });

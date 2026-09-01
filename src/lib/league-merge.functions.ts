@@ -48,7 +48,7 @@ export const mergeClassCategories = createServerFn({ method: "POST" })
       number_to: Math.max(...targets.map((c) => Number(c.number_to) || 0)),
       max_drivers: targets
         .map((c) => (typeof c.max_drivers === "number" ? c.max_drivers : null))
-        .reduce<number | null>((a, b) => (a == null || b == null ? a ?? b : Math.max(a, b)), null),
+        .reduce<number | null>((a, b) => (a == null || b == null ? a ?? b : a + b), null),
     };
 
     let seen = false;

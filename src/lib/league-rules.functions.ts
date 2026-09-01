@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { classCap } from "@/lib/class-capacity";
+import { seatCap, isSplitClass } from "@/lib/class-capacity";
 
 const SITE = "https://lmudanmark.dk";
 
@@ -46,14 +46,18 @@ export const acknowledgeLeagueRules = createServerFn({ method: "POST" })
       .maybeSingle();
     const configs: Array<{ car_class: string; driver_category: string; max_drivers?: number | null }> =
       Array.isArray((league as any)?.class_configs) ? (league as any).class_configs : [];
-    const cap = classCap(configs, myEntry.car_class);
+    const cap = seatCap(configs, myEntry.car_class, myEntry.driver_category);
 
-    const { data: siblings } = await supabaseAdmin
+    let siblingQuery = supabaseAdmin
       .from("entries")
       .select("id,waitlist")
       .eq("league_id", data.leagueId)
       .is("division_id", null)
       .eq("car_class", myEntry.car_class);
+    if (isSplitClass(configs, myEntry.car_class)) {
+      siblingQuery = siblingQuery.eq("driver_category", myEntry.driver_category);
+    }
+    const { data: siblings } = await siblingQuery;
     const gridCount = (siblings ?? []).filter((s) => !s.waitlist).length;
 
     if (cap != null && gridCount >= cap) return { ok: true, promoted: false };

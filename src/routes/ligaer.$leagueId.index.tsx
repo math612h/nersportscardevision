@@ -31,7 +31,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { WEATHER_BY_KEY, type WeatherKey, type ClassConfig, type EventSettings, EVENT_AID_FIELDS, getTrackImageFile } from "@/lib/tracks";
-import { classCap } from "@/lib/class-capacity";
+import { seatCap, isSplitClass, capacityBuckets } from "@/lib/class-capacity";
 import { CARS_BY_CLASS, classColor } from "@/lib/lmu-cars";
 import { Checkbox } from "@/components/ui/checkbox";
 import { acknowledgeLeagueRules } from "@/lib/league-rules.functions";
@@ -352,8 +352,11 @@ function LeagueDetail() {
                   {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
                 </>
               )}
-          </div>
+           </div>
         )}
+
+        {league && configs.length > 0 && <SeatsSummary leagueId={leagueId} configs={configs} />}
+
 
 
         <div className="space-y-3 p-4 sm:p-6">
@@ -606,6 +609,41 @@ function useMyTeams(userId: string | null | undefined) {
   });
 }
 
+function SeatsSummary({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
+  const { data } = useLeagueSignups(leagueId);
+  const buckets = useMemo(() => capacityBuckets(configs), [configs]);
+  if (buckets.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5 px-4 pt-2 sm:px-6">
+      {buckets.map((b) => {
+        const taken = (data ?? []).filter(
+          (e) =>
+            e.car_class === b.carClass &&
+            (b.category == null || e.driver_category === b.category) &&
+            !e.waitlist,
+        ).length;
+        const col = classColor(b.carClass);
+        const label = `${b.carClass}${b.category ? ` ${b.category}` : ""}`;
+        const left = b.cap == null ? null : Math.max(0, b.cap - taken);
+        return (
+          <Badge
+            key={`${b.carClass}-${b.category ?? "all"}`}
+            variant="outline"
+            className={`gap-1.5 ${col.badge}`}
+          >
+            <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+            {label}:{" "}
+            {left == null ? "ubegrænset antal pladser" : `${left} af ${b.cap} pladser tilbage`}
+          </Badge>
+        );
+      })}
+    </div>
+  );
+}
+
+
+
 
 function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { data } = useLeagueSignups(leagueId);
@@ -667,9 +705,12 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
           if (!list || list.length === 0) return null;
           const [cls, cat] = k.split(" · ");
           const cfg = configs.find((c) => c.car_class === cls && c.driver_category === cat);
-          // Pladser er samlet for hele bilklassen — ikke pr. kategori
-          const cap = classCap(configs, cls);
-          const classGrid = data.filter((e) => e.car_class === cls && !e.waitlist).length;
+          // Pladser gælder pr. kategori når klassen er delt i Pro/Am
+          const split = isSplitClass(configs, cls);
+          const cap = seatCap(configs, cls, cat);
+          const classGrid = data.filter(
+            (e) => e.car_class === cls && (!split || e.driver_category === cat) && !e.waitlist,
+          ).length;
           return (
             <EntryClassCard
               key={k}
@@ -719,7 +760,7 @@ function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, te
           <Badge variant="outline" className="text-[10px]">{cat}</Badge>
         </CardTitle>
         <span className="text-xs text-muted-foreground">
-          {grid.length} på grid{classCapacity ? ` · ${classGridCount ?? grid.length}/${classCapacity} i ${cls}` : ""}{wait.length > 0 ? ` · ${wait.length} på venteliste` : ""}
+          {grid.length} på grid{classCapacity ? ` · ${classGridCount ?? grid.length}/${classCapacity} pladser` : ""}{wait.length > 0 ? ` · ${wait.length} på venteliste` : ""}
         </span>
       </CardHeader>
       <CardContent className="pt-0 space-y-3">
@@ -1266,11 +1307,16 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     return { taken: t, available: a };
   }, [signups, selected]);
 
-  // Pladser gælder samlet for bilklassen (ikke pr. Pro/Am-kategori)
+  // Pladser gælder pr. kategori når klassen er delt i Pro/Am
+  const splitSel = isSplitClass(configs, selected?.car_class);
   const gridCount = (signups ?? []).filter(
-    (s) => selected && s.car_class === selected.car_class && !s.waitlist,
+    (s) =>
+      selected &&
+      s.car_class === selected.car_class &&
+      (!splitSel || s.driver_category === selected.driver_category) &&
+      !s.waitlist,
   ).length;
-  const cap = classCap(configs, selected?.car_class);
+  const cap = seatCap(configs, selected?.car_class, selected?.driver_category);
   const isApproved = !!profile?.approved;
   const { isAdmin } = useAuth();
   const { data: rulesAck } = useMyRulesAck(leagueId, user?.id);
