@@ -391,7 +391,7 @@ function DivisionDetail() {
         const hasPro = !!(lobby?.lobby_code || lobby?.lobby_password || lobby?.server_name);
         const hasAm = !!(lobby?.am_lobby_code || lobby?.am_lobby_password || lobby?.am_server_name);
         const hasLobby = hasPro || hasAm;
-        if (!user || !mySignup) return null;
+        if (!user || (!mySignup && !isAdmin && !isSteward)) return null;
         if (!isApproved) {
           return (
             <Card className="border-dashed">
