@@ -609,6 +609,41 @@ function useMyTeams(userId: string | null | undefined) {
   });
 }
 
+function SeatsSummary({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
+  const { data } = useLeagueSignups(leagueId);
+  const buckets = useMemo(() => capacityBuckets(configs), [configs]);
+  if (buckets.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5 px-4 pt-2 sm:px-6">
+      {buckets.map((b) => {
+        const taken = (data ?? []).filter(
+          (e) =>
+            e.car_class === b.carClass &&
+            (b.category == null || e.driver_category === b.category) &&
+            !e.waitlist,
+        ).length;
+        const col = classColor(b.carClass);
+        const label = `${b.carClass}${b.category ? ` ${b.category}` : ""}`;
+        const left = b.cap == null ? null : Math.max(0, b.cap - taken);
+        return (
+          <Badge
+            key={`${b.carClass}-${b.category ?? "all"}`}
+            variant="outline"
+            className={`gap-1.5 ${col.badge}`}
+          >
+            <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+            {label}:{" "}
+            {left == null ? "ubegrænset antal pladser" : `${left} af ${b.cap} pladser tilbage`}
+          </Badge>
+        );
+      })}
+    </div>
+  );
+}
+
+
+
 
 function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { data } = useLeagueSignups(leagueId);
