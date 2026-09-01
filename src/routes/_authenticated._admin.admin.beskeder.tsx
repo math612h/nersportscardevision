@@ -743,14 +743,7 @@ function ShareDialog({
         <div className="space-y-3">
           <div>
             <Label>Kanal</Label>
-            <Select value={channelId} onValueChange={setChannelId}>
-              <SelectTrigger><SelectValue placeholder="Vælg kanal…" /></SelectTrigger>
-              <SelectContent>
-                {channels.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>#{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <ChannelPicker channels={channels} value={channelId} onChange={setChannelId} />
           </div>
         </div>
         <DialogFooter>
