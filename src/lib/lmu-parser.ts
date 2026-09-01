@@ -278,6 +278,9 @@ export function parseLmuRaceFile(xml: string): ParsedRace {
       position: Number.isFinite(pos) && pos > 0 ? pos : null,
       classPosition: Number.isFinite(classPos) && classPos > 0 ? classPos : null,
       laps: Number.isFinite(laps) && laps >= 0 ? laps : null,
+      carNumber: get("CarNumber") || null,
+      validLaps: toValidLaps(rawLaps),
+      swaps: rawSwaps.length ? rawSwaps : null,
       stints,
     };
   });
