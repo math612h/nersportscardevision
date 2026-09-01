@@ -22,6 +22,12 @@ export type ParsedDriver = {
   position: number | null;
   classPosition: number | null;
   laps: number | null;
+  /** Bilnummer fra racefilen (CarNumber), hvis til stede. */
+  carNumber?: string | null;
+  /** Alle gyldige omgange (ugyldige som "--.----" er frasorteret). */
+  validLaps?: { num: number | null; ms: number }[] | null;
+  /** Rå <Swap>-intervaller, så omgange kan fordeles pr. kører. */
+  swaps?: RawSwap[] | null;
   /** Per-kører bedste omgang når filen indeholder <Swap>; ellers null. */
   stints?: ParsedStint[] | null;
   /** Omgangsnummer for bedste omgang (kun sat ved udfoldede stints). */
