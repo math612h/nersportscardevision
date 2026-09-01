@@ -26,6 +26,9 @@ const DEFAULT_POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
 
 type SessionKind = "race" | "qualifying";
 
+type ServerKind = "pro" | "am";
+const SERVER_LABEL: Record<ServerKind, string> = { pro: "PRO-server", am: "AM-server" };
+
 type DraftRow = {
   entry_id: string;
   user_id: string;
@@ -257,8 +260,13 @@ function DivisionEditor({
     setCompleted(!!division.settings?.completed);
     setConfirmed(!!division.settings?.results_confirmed);
     setImportedInfo(null);
+    setImportedFiles({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
+
+  useEffect(() => {
+    setImportedFiles({});
+  }, [session]);
 
   const userIds = useMemo(() => Array.from(new Set(entries.map((e) => e.user_id))), [entries]);
   const { data: profiles } = useQuery({
@@ -277,7 +285,7 @@ function DivisionEditor({
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
 
-  const importXml = async (file: File, kind: SessionKind) => {
+  const importXml = async (file: File, kind: SessionKind, server: ServerKind) => {
     try {
       const text = await file.text();
       const parsedRace = parseLmuRaceFile(text);
@@ -378,7 +386,8 @@ function DivisionEditor({
         }
       }
 
-      toast.success(`Importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
+      setImportedFiles((prev) => ({ ...prev, [server]: { fileName: file.name, matched } }));
+      toast.success(`${SERVER_LABEL[server]}: importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
       if (missing.length > 0) toast.warning(`${missing.length} ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
       if (noLmu.length > 0) toast.message(`${noLmu.length} på grid mangler LMU-navn.`);
     } catch (e: any) {
