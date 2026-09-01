@@ -16,7 +16,7 @@ import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
 import { deleteLeagueRaceResults, setResultsConfirmed } from "@/lib/league-results.functions";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
-import { classCap } from "@/lib/class-capacity";
+import { seatCap, isSplitClass } from "@/lib/class-capacity";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/stillinger")({
   component: AdminStandings,
