@@ -115,6 +115,20 @@ export function computeStints(
  * Udfolder en bil til én leaderboard-post pr. faktisk kører når der findes
  * <Swap>-data. Uden swaps returneres køreren uændret.
  */
+/**
+ * Filtrerer rå omgange til kun gyldige tider (fx "--.----", tomme eller
+ * ikke-numeriske værdier frasorteres altid) og returnerer dem i ms.
+ */
+export function toValidLaps(laps: RawLap[]): { num: number | null; ms: number }[] {
+  const out: { num: number | null; ms: number }[] = [];
+  for (const lap of laps) {
+    const seconds = Number.parseFloat(String(lap.value ?? "").trim());
+    if (!Number.isFinite(seconds) || seconds <= 0) continue;
+    out.push({ num: lap.num, ms: Math.round(seconds * 1000) });
+  }
+  return out;
+}
+
 export function expandDriverStints(drivers: ParsedDriver[]): ParsedDriver[] {
   return drivers.flatMap((d) => {
     if (!d.stints || d.stints.length === 0) return [d];
