@@ -392,7 +392,7 @@ function DivisionDetail() {
         const hasAm = !!(lobby?.am_lobby_code || lobby?.am_lobby_password || lobby?.am_server_name);
         const hasLobby = hasPro || hasAm;
         if (!user || (!mySignup && !isAdmin && !isSteward)) return null;
-        if (!isApproved) {
+        if (!isApproved && !isAdmin && !isSteward) {
           return (
             <Card className="border-dashed">
               <CardContent className="flex items-start gap-2 py-4 text-sm text-muted-foreground">
