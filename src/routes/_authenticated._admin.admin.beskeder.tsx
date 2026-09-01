@@ -708,6 +708,56 @@ function TemplateEditor({
   );
 }
 
+function ChannelPicker({
+  channels,
+  value,
+  onChange,
+}: {
+  channels: DiscordChannel[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = channels.find((c) => c.id === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="w-full justify-start font-normal">
+          <Hash className="mr-2 h-4 w-4 text-muted-foreground" />
+          {selected ? selected.name : "Vælg kanal…"}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+        <Command
+          filter={(val, search) =>
+            val.toLowerCase().includes(search.toLowerCase().trim()) ? 1 : 0
+          }
+        >
+          <CommandInput placeholder="Søg efter kanal…" />
+          <CommandList className="max-h-64">
+            <CommandEmpty>Ingen kanal fundet.</CommandEmpty>
+            <CommandGroup>
+              {channels.map((c) => (
+                <CommandItem
+                  key={c.id}
+                  value={c.name}
+                  onSelect={() => {
+                    onChange(c.id);
+                    setOpen(false);
+                  }}
+                >
+                  <Hash className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+                  {c.name}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function ShareDialog({
   open,
   template,
