@@ -760,7 +760,7 @@ function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, te
           <Badge variant="outline" className="text-[10px]">{cat}</Badge>
         </CardTitle>
         <span className="text-xs text-muted-foreground">
-          {grid.length} på grid{classCapacity ? ` · ${classGridCount ?? grid.length}/${classCapacity} i ${cls}` : ""}{wait.length > 0 ? ` · ${wait.length} på venteliste` : ""}
+          {grid.length} på grid{classCapacity ? ` · ${classGridCount ?? grid.length}/${classCapacity} pladser` : ""}{wait.length > 0 ? ` · ${wait.length} på venteliste` : ""}
         </span>
       </CardHeader>
       <CardContent className="pt-0 space-y-3">
