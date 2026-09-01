@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useRef, useState } from "react";
+import { Fragment, useMemo, useRef, useState } from "react";
 import { ChevronDown, ChevronRight, Gauge, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -152,9 +152,8 @@ function PaceComparisonPage() {
                 {rows.map((r) => {
                   const isOpen = !!open[r.key];
                   return (
-                    <>
+                    <Fragment key={r.key}>
                       <tr
-                        key={r.key}
                         className={`cursor-pointer border-b border-border/40 hover:bg-muted/40 ${r.insufficient ? "opacity-70" : ""}`}
                         onClick={() => setOpen((p) => ({ ...p, [r.key]: !p[r.key] }))}
                       >
@@ -191,7 +190,7 @@ function PaceComparisonPage() {
                         </td>
                       </tr>
                       {isOpen && (
-                        <tr key={`${r.key}-laps`} className="border-b border-border/40 bg-muted/20">
+                        <tr className="border-b border-border/40 bg-muted/20">
                           <td />
                           <td colSpan={9} className="px-3 py-3">
                             <div className="mb-2 text-xs text-muted-foreground">
@@ -214,7 +213,7 @@ function PaceComparisonPage() {
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   );
                 })}
               </tbody>
