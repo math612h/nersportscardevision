@@ -195,7 +195,7 @@ function DivisionDetail() {
 
   const { data: lobby } = useQuery({
     queryKey: ["division-lobby", divisionId, user?.id ?? "anon"],
-    enabled: !!user && isApproved,
+    enabled: !!user && (isApproved || isAdmin || isSteward),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_lobbies")
