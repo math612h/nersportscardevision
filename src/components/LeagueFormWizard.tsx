@@ -332,7 +332,7 @@ function ClassConfigsEditor({
               />
             </div>
             <div className="col-span-2">
-              <Label className="text-xs">Maks. deltagere (i alt for klassen)</Label>
+              <Label className="text-xs">Maks. deltagere (for denne kategori)</Label>
               <Input
                 type="number"
                 min={1}
@@ -340,16 +340,15 @@ function ClassConfigsEditor({
                 placeholder="Ubegrænset"
                 onChange={(e) => {
                   const val = e.target.value === "" ? undefined : Number(e.target.value);
-                  // Pladser gælder for hele bilklassen — hold Pro/Am synkroniseret
-                  setConfigs((prev) =>
-                    prev.map((cc) => (cc.car_class === c.car_class ? { ...cc, max_drivers: val } : cc)),
-                  );
+                  update(i, { max_drivers: val });
                 }}
               />
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Pladserne deles af alle kategorier i klassen (fx Pro + Am).
+                Pladserne gælder kun {c.car_class} · {c.driver_category}. Er klassen delt i Pro/Am,
+                sættes antallet for hver kategori for sig.
               </p>
             </div>
+
           </div>
           <CarPicker
             carClass={c.car_class}
