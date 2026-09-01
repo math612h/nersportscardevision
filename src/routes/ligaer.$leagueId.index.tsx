@@ -352,8 +352,11 @@ function LeagueDetail() {
                   {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
                 </>
               )}
-          </div>
+           </div>
         )}
+
+        {league && configs.length > 0 && <SeatsSummary leagueId={leagueId} configs={configs} />}
+
 
 
         <div className="space-y-3 p-4 sm:p-6">
