@@ -667,9 +667,12 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
           if (!list || list.length === 0) return null;
           const [cls, cat] = k.split(" · ");
           const cfg = configs.find((c) => c.car_class === cls && c.driver_category === cat);
-          // Pladser er samlet for hele bilklassen — ikke pr. kategori
-          const cap = classCap(configs, cls);
-          const classGrid = data.filter((e) => e.car_class === cls && !e.waitlist).length;
+          // Pladser gælder pr. kategori når klassen er delt i Pro/Am
+          const split = isSplitClass(configs, cls);
+          const cap = seatCap(configs, cls, cat);
+          const classGrid = data.filter(
+            (e) => e.car_class === cls && (!split || e.driver_category === cat) && !e.waitlist,
+          ).length;
           return (
             <EntryClassCard
               key={k}
