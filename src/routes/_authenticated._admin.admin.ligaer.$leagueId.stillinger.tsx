@@ -1033,8 +1033,70 @@ function DivisionEditor({
         </p>
       </CardContent>
     </Card>
+
+    <Dialog open={!!pendingMatch} onOpenChange={(o) => { if (!o) setPendingMatch(null); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Match kørere manuelt</DialogTitle>
+          <DialogDescription>
+            {pendingMatch
+              ? `${pendingMatch.names.length} kører(e) i ${pendingMatch.fileName} kunne ikke matches automatisk. Vælg den rigtige deltager fra entrylisten, eller lad feltet stå tomt for at springe over.`
+              : ""}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
+          {pendingMatch?.names.map((name) => {
+            const key = name.trim().toLowerCase();
+            const taken = new Set(Object.entries(matchChoices).filter(([k]) => k !== key).map(([, v]) => v));
+            return (
+              <div key={key} className="grid gap-2 sm:grid-cols-2 sm:items-center">
+                <div className="font-mono text-sm">{name}</div>
+                <Select
+                  value={matchChoices[key] ?? "__skip"}
+                  onValueChange={(v) =>
+                    setMatchChoices((prev) => {
+                      const next = { ...prev };
+                      if (v === "__skip") delete next[key];
+                      else next[key] = v;
+                      return next;
+                    })
+                  }
+                >
+                  <SelectTrigger><SelectValue placeholder="Vælg deltager" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__skip">— Spring over —</SelectItem>
+                    {rows
+                      .filter((r) => !taken.has(r.user_id))
+                      .map((r) => (
+                        <SelectItem key={r.entry_id} value={r.user_id}>
+                          #{r.car_number} {r.driver_name} · {r.car_class} {r.driver_category}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setPendingMatch(null)}>Annuller</Button>
+          <Button
+            onClick={async () => {
+              const p = pendingMatch;
+              if (!p) return;
+              setPendingMatch(null);
+              await applyParsed(p.parsedRace, p.kind, p.server, p.fileName, matchChoices);
+            }}
+          >
+            Importér
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
+
 
 async function reconcileWaitlist({
   currentDivisionId,
