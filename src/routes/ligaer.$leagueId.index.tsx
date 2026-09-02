@@ -1907,7 +1907,7 @@ function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
 }
 
 function EditEntryDialog({ leagueId }: { leagueId: string }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const updateEntry = useServerFn(updateMyLeagueEntry);
   const { data: signups } = useLeagueSignups(leagueId);
