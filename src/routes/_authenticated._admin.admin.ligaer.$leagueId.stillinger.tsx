@@ -114,6 +114,9 @@ function AdminStandings() {
 
   const { data: entries } = useQuery({
     queryKey: ["league-entries-for-standings", leagueId],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
@@ -125,6 +128,7 @@ function AdminStandings() {
       return (data ?? []) as EntryRec[];
     },
   });
+
 
   useEffect(() => {
     if (!divisionId && divisions && divisions.length > 0) setDivisionId(divisions[0].id);
