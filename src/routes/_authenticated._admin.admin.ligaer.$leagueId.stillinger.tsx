@@ -1033,14 +1033,6 @@ function DivisionEditor({
                             <td className="px-2 py-1.5 text-center">
                               <input
                                 type="checkbox"
-                                checked={r.fastest_lap}
-                                onChange={(e) => setRow(i, { fastest_lap: e.target.checked })}
-                                disabled={r.dnf || r.dns}
-                              />
-                            </td>
-                            <td className="px-2 py-1.5 text-center">
-                              <input
-                                type="checkbox"
                                 checked={r.dnf}
                                 onChange={(e) => setRow(i, { dnf: e.target.checked, dns: e.target.checked ? false : r.dns })}
                               />
@@ -1049,13 +1041,12 @@ function DivisionEditor({
                               <input
                                 type="checkbox"
                                 checked={r.dns}
-                                onChange={(e) => setRow(i, { dns: e.target.checked, dnf: e.target.checked ? false : r.dnf, fastest_lap: false })}
+                                onChange={(e) => setRow(i, { dns: e.target.checked, dnf: e.target.checked ? false : r.dnf })}
                               />
                             </td>
                             <td className="px-2 py-1.5 text-right font-semibold tabular-nums">
                               <span className="inline-flex items-center gap-0.5">
                                 {totalPts}
-                                {r.fastest_lap && r.position > 0 && <Zap className="h-3 w-3 text-primary" />}
                                 {r.penalty_points > 0 && <span className="text-[10px] text-destructive">-{r.penalty_points}p</span>}
                               </span>
                             </td>
