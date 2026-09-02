@@ -399,7 +399,12 @@ function MoveEntryDialog({ entry, leagueId, allEntries, onDone }: { entry: Entry
       .from("entries")
       .update({ car_class: carClass, driver_category: category, car_number: carNumber })
       .eq("id", entry.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if ((error.message ?? "").includes("entries_league_car_number_uniq")) {
+        return toast.error(`Kørenummer #${carNumber} er allerede brugt i ligaen — vælg et andet.`);
+      }
+      return toast.error(error.message);
+    }
     toast.success("Flyttet");
     setOpen(false);
     onDone();
