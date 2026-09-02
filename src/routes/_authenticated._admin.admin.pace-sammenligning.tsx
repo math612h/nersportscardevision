@@ -112,7 +112,7 @@ function PaceComparisonPage() {
           <Gauge className="h-6 w-6 text-primary" /> Pro/Am tempo-sammenligning
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Upload racefilerne fra begge servere. Systemet viser LMGT3-kørernes median af de 10 hurtigste gyldige omgange,
+          Upload racefilerne fra begge servere. Systemet viser LMGT3-kørernes median af alle gyldige omgange,
           så I selv kan vurdere om nogen bør flyttes mellem PRO og AM. Der foreslås ingen klasseændringer.
         </p>
       </div>
