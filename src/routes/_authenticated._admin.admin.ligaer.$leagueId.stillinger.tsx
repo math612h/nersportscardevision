@@ -180,7 +180,6 @@ function AdminStandings() {
           entries={entries.filter((e) => e.car_number != null)}
           configs={configs}
           pointsTable={leaguePoints}
-          leagueFlPoints={leagueFlPoints}
           minFinishPercent={minFinishPercent}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] });
@@ -200,7 +199,6 @@ function DivisionEditor({
   entries,
   configs,
   pointsTable,
-  leagueFlPoints,
   minFinishPercent,
   onSaved,
 }: {
@@ -209,7 +207,6 @@ function DivisionEditor({
   entries: EntryRec[];
   configs: ClassConfig[];
   pointsTable: number[];
-  leagueFlPoints: number;
   minFinishPercent: number;
   onSaved: () => void;
 }) {
