@@ -11,6 +11,21 @@ async function sha256Hex(input: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// Throttle af "sidst brugt"-skrivninger: companion-appen poller ofte, og en
+// UPDATE pr. kald gav millioner af unødvendige databaseskrivninger.
+const TOUCH_TTL_MS = 60 * 60_000;
+const lastTouched = new Map<string, number>();
+function shouldTouch(id: string): boolean {
+  const now = Date.now();
+  const prev = lastTouched.get(id);
+  if (prev && now - prev < TOUCH_TTL_MS) return false;
+  lastTouched.set(id, now);
+  if (lastTouched.size > 500) lastTouched.clear();
+  return true;
+}
+
+
+
 export const Route = createFileRoute("/api/public/companion/verify-token")({
   server: {
     handlers: {
