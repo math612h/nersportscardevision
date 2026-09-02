@@ -84,8 +84,7 @@ export function buildPaceComparison(files: PaceFile[]): PaceRow[] {
       if ((d.carClassNorm || "").toUpperCase() !== "LMGT3") continue;
       for (const part of splitDriverLaps(d)) {
         const sorted = [...part.laps].sort((a, b) => a.ms - b.ms);
-        const topLaps = sorted.slice(0, TOP_LAPS);
-        const insufficient = sorted.length < TOP_LAPS;
+        const insufficient = sorted.length === 0;
         rows.push({
           key: `${file.source}:${part.name}:${d.carNumber ?? ""}`,
           name: part.name,
