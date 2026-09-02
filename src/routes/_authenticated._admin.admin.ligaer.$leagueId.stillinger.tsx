@@ -540,9 +540,11 @@ function DivisionEditor({
           if (b.effective_ms > 0) return 1;
           return a.car_number - b.car_number;
         };
-        const finished = withImportedPositions.length > 0
-          ? [...withImportedPositions].sort((a, b) => a.source_position - b.source_position).concat(withoutImportedPositions.sort(sortByRaceData))
-          : active.filter((r) => !r.dnf).sort(sortByRaceData);
+        const finished = mixedServers
+          ? [...active].sort(sortByRaceData)
+          : withImportedPositions.length > 0
+            ? [...withImportedPositions].sort((a, b) => a.source_position - b.source_position).concat(withoutImportedPositions.sort(sortByRaceData))
+            : active.filter((r) => !r.dnf).sort(sortByRaceData);
         // Min-finish threshold: drivers below X% of winner's laps get 0 points and no position.
         const maxLaps = Math.max(0, ...active.map((r: any) => r.laps ?? 0));
         const minLaps = minFinishPercent > 0 && maxLaps > 0 ? Math.ceil(maxLaps * minFinishPercent / 100) : 0;
