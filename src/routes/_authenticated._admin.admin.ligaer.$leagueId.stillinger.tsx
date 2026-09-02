@@ -314,18 +314,6 @@ function DivisionEditor({
         return best?.match.id ?? null;
       };
 
-      // Fastest-lap winner per car class (race only)
-      const flByClass = new Map<string, string>();
-      if (kind === "race") {
-        const classes = Array.from(new Set(parsed.map((p) => p.carClass).filter(Boolean)));
-        for (const cls of classes) {
-          const inCls = parsed.filter((p) => p.carClass === cls && p.bestLapMs != null);
-          if (inCls.length === 0) continue;
-          inCls.sort((a, b) => (a.bestLapMs! - b.bestLapMs!));
-          flByClass.set(cls, inCls[0].name.trim().toLowerCase());
-        }
-      }
-
       const updates = new Map<string, Partial<DraftRow>>();
       for (const p of parsed) {
         const userId = resolveUser(p.name);
@@ -333,12 +321,12 @@ function DivisionEditor({
         const row = rows.find((r) => r.user_id === userId);
         if (!row) continue;
         if (kind === "race") {
-          const isFl = flByClass.get(p.carClass) === p.name.trim().toLowerCase();
           const racePosition = p.classPosition ?? p.position ?? null;
+          const common = { best_lap_ms: p.bestLapMs ?? null, source_server: server };
           if (p.finished && p.finishMs != null) {
-            updates.set(row.entry_id, { time_str: msToStr(p.finishMs), laps: p.laps, race_position: racePosition, fastest_lap: isFl, dnf: false, dns: false });
+            updates.set(row.entry_id, { ...common, time_str: msToStr(p.finishMs), laps: p.laps, race_position: racePosition, dnf: false, dns: false });
           } else {
-            updates.set(row.entry_id, { time_str: "", laps: p.laps, race_position: racePosition, fastest_lap: false, dnf: true, dns: false });
+            updates.set(row.entry_id, { ...common, time_str: "", laps: p.laps, race_position: racePosition, fastest_lap: false, dnf: true, dns: false });
           }
         } else {
           if (p.bestLapMs != null) {
@@ -355,7 +343,24 @@ function DivisionEditor({
         if (!prof?.lmu_name) noLmu.push(r.driver_name);
       }
 
-      setRows((prev) => prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r)));
+      setRows((prev) => {
+        const next = prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r));
+        if (kind !== "race") return next;
+        // Hurtigste omgang pr. klasse på tværs af begge serverfiler
+        const flWinner = new Map<string, string>();
+        for (const r of next) {
+          if (r.dns || r.best_lap_ms == null || r.best_lap_ms <= 0) continue;
+          const k = `${r.car_class}|${r.driver_category}`;
+          const cur = flWinner.get(k);
+          const curMs = cur ? next.find((x) => x.entry_id === cur)?.best_lap_ms ?? Infinity : Infinity;
+          if (r.best_lap_ms < curMs) flWinner.set(k, r.entry_id);
+        }
+        return next.map((r) => {
+          const k = `${r.car_class}|${r.driver_category}`;
+          if (!flWinner.has(k)) return r;
+          return { ...r, fastest_lap: flWinner.get(k) === r.entry_id };
+        });
+      });
 
       // Push best-laps to global leaderboard (race file only)
       let lbInserted = 0;
