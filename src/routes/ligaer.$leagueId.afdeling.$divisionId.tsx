@@ -684,7 +684,33 @@ function DivisionDetail() {
               </div>
             </div>
             <div className="space-y-3">
-              {Array.from(byClass.entries()).flatMap(([cls, list]) => {
+              {showTeam && teamByClass && Array.from(teamByClass.entries()).map(([cls, teams]) => (
+                <Card key={`team-${cls}`}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <span>{cls}</span>
+                      <Badge variant="outline" className="text-[10px]">Teams</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <ul className="divide-y divide-border">
+                      {teams.map((t) => (
+                        <li key={t.teamId} className="flex items-center gap-3 py-2 text-sm">
+                          <span className="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                            P{t.rank}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate font-medium">{t.teamName}</span>
+                          <span className="ml-auto flex shrink-0 items-center gap-3">
+                            <span className="text-xs text-muted-foreground">{t.participants} kørere</span>
+                            <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{t.points}p</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))}
+              {!showTeam && Array.from(byClass.entries()).flatMap(([cls, list]) => {
                 // Opdel i kategorier (Pro/Am) når feltet er splittet
                 const cats = Array.from(
                   new Set(
