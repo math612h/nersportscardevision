@@ -21,10 +21,11 @@ export type PaceRow = {
   validLaps: PaceLap[];
   validLapCount: number;
   fastestLapMs: number | null;
-  /** De 10 hurtigste gyldige omgange (kun når der er mindst 10). */
+  /** Alle gyldige omgange (bruges til udfoldning i UI). */
   topLaps: PaceLap[];
-  /** Median af de 10 hurtigste — null hvis under 10 gyldige omgange. */
+  /** Median af alle gyldige omgange — null hvis der slet ingen gyldige omgange er. */
   medianMs: number | null;
+  /** Sand når køreren slet ikke har gyldige omgange. */
   insufficient: boolean;
   /** Placering i den samlede rangering; null når datagrundlaget er utilstrækkeligt. */
   position: number | null;
