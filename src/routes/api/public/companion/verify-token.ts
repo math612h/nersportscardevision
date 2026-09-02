@@ -42,10 +42,14 @@ export const Route = createFileRoute("/api/public/companion/verify-token")({
             .maybeSingle();
           if (pErr) throw pErr;
 
-          await supabaseAdmin
-            .from("device_tokens")
-            .update({ last_used_at: new Date().toISOString() })
-            .eq("id", tokenRow.id);
+          // Companion-appen kalder ofte; skriv kun "sidst brugt" maks. én gang i timen.
+          if (shouldTouch(tokenRow.id)) {
+            await supabaseAdmin
+              .from("device_tokens")
+              .update({ last_used_at: new Date().toISOString() })
+              .eq("id", tokenRow.id);
+          }
+
 
           return Response.json(
             {

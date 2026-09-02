@@ -94,6 +94,9 @@ function LeaderboardPage() {
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["leaderboard"],
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const data = (await fetchLeaderboard()) as Row[];
       // Normaliser banenavne så nye LMU-eksportnavne ("Circuit de Spa Francorchamps"
@@ -101,6 +104,7 @@ function LeaderboardPage() {
       return data.map((r) => ({ ...r, track: normalizeTrackName(r.track) || r.track }));
     },
   });
+
 
   const [carClass, setCarClass] = useState<string>(ALL);
   const [track, setTrack] = useState<string>(ALL);
