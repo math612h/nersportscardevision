@@ -33,9 +33,7 @@ export type PaceRow = {
   gapMs: number | null;
 };
 
-export const TOP_LAPS = 10;
-
-/** Median af præcis N tider = gennemsnittet af de to midterste (ved lige antal). */
+/** Median af N tider = gennemsnittet af de to midterste (ved lige antal). */
 export function medianOf(sortedMs: number[]): number | null {
   if (sortedMs.length === 0) return null;
   const mid = sortedMs.length / 2;
