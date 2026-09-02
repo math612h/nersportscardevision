@@ -242,26 +242,6 @@ function DivisionDetail() {
     },
   });
 
-  // Team-navne til team-resultater (fra tilmeldte køreres team_id)
-  const resultTeamIds = Array.from(
-    new Set(
-      [...(signups ?? []), ...(reserveEntries ?? [])]
-        .map((e: any) => e.team_id)
-        .filter(Boolean) as string[],
-    ),
-  );
-  const { data: teamNameMap } = useQuery({
-    queryKey: ["division-team-names", resultTeamIds.sort().join(",")],
-    enabled: resultTeamIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase.from("teams").select("id,name").in("id", resultTeamIds);
-      if (error) throw error;
-      const map = new Map<string, string>();
-      for (const t of data ?? []) map.set(t.id, t.name);
-      return map;
-    },
-  });
-
   // Division-level entries (reserves who accepted for THIS division only)
   const { data: reserveEntries } = useQuery({
     queryKey: ["division-reserves", divisionId],
