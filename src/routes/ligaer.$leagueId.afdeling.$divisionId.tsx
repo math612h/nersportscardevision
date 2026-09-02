@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Calendar, ChevronDown, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2, Timer, Trophy, Clock } from "lucide-react";
 import { msToLapStr } from "@/lib/lmu-parser";
+import { computeTeamRacePoints, type LineupTeamInfo } from "@/lib/team-points";
 import { format, formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
 import { toast } from "sonner";
@@ -115,7 +116,7 @@ function DivisionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("id,name,class_configs,briefing_required,protest_tickets_per_season")
+        .select("id,name,class_configs,briefing_required,protest_tickets_per_season,points_system,teams_allowed")
         .eq("id", leagueId)
         .single();
       if (error) throw error;
@@ -128,7 +129,7 @@ function DivisionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id")
         .eq("league_id", leagueId)
         .is("division_id", null)
         .order("created_at", { ascending: true });
@@ -224,6 +225,7 @@ function DivisionDetail() {
   });
 
   const [resultView, setResultView] = useState<"race" | "qualifying">("race");
+  const [teamView, setTeamView] = useState(false);
 
   const resultUserIds = Array.from(new Set((results ?? []).map((r) => r.user_id)));
   const { data: resultNames } = useQuery({
@@ -247,13 +249,33 @@ function DivisionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,created_at")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,created_at,team_id")
         .eq("division_id", divisionId);
       if (error) throw error;
       return (data ?? []) as Array<{
         id: string; user_id: string; driver_name: string;
         car_class: string; driver_category: string; car_number: number | null; created_at: string;
       }>;
+    },
+  });
+
+  // Team-navne til team-resultater (fra tilmeldte køreres team_id)
+  const resultTeamIds = Array.from(
+    new Set(
+      [...(signups ?? []), ...(reserveEntries ?? [])]
+        .map((e: any) => e.team_id)
+        .filter(Boolean) as string[],
+    ),
+  );
+  const { data: teamNameMap } = useQuery({
+    queryKey: ["division-team-names", resultTeamIds.sort().join(",")],
+    enabled: resultTeamIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("teams").select("id,name").in("id", resultTeamIds);
+      if (error) throw error;
+      const map = new Map<string, string>();
+      for (const t of data ?? []) map.set(t.id, t.name);
+      return map;
     },
   });
 
@@ -601,30 +623,97 @@ function DivisionDetail() {
           if (!byClass.has(r.car_class)) byClass.set(r.car_class, [] as any);
           byClass.get(r.car_class)!.push(r);
         }
+        // Team-resultater (kun race): byg team-info fra tilmeldtes team_id
+        const teamsAllowed = !!(league as any)?.teams_allowed;
+        const showTeam = teamView && active === "race" && teamsAllowed;
+        let teamByClass: Map<string, { teamId: string; teamName: string; points: number; rank: number; participants: number }[]> | null = null;
+        if (showTeam) {
+          const teamAgg = new Map<string, LineupTeamInfo>();
+          for (const e of [...(signups ?? []), ...(reserveEntries ?? [])] as any[]) {
+            if (!e.team_id) continue;
+            const key = `${e.team_id}|${e.car_class}`;
+            if (!teamAgg.has(key)) {
+              teamAgg.set(key, {
+                teamId: e.team_id,
+                teamName: teamNameMap?.get(e.team_id) ?? "Team",
+                carClass: e.car_class,
+                userIds: new Set<string>(),
+              });
+            }
+            teamAgg.get(key)!.userIds.add(e.user_id);
+          }
+          const raceRows = (results ?? []).filter((r) => r.session_type === "race");
+          const ppp: number[] = (league as any)?.points_system?.points_per_position ?? [];
+          teamByClass = computeTeamRacePoints({
+            results: raceRows as any,
+            teams: Array.from(teamAgg.values()).filter((t) => t.userIds.size >= 2),
+            pointsPerPosition: ppp,
+          }) as any;
+        }
         return (
           <section id="resultater" className="space-y-4 scroll-mt-24">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-primary">
                 <Trophy className="h-4 w-4" />
-                <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{activeLabel}</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{showTeam ? "Team resultater" : activeLabel}</h2>
               </div>
-              {sessions.length > 1 && (
-                <div className="inline-flex rounded-md border border-border p-0.5">
-                  {sessions.map((s) => (
-                    <button
-                      key={s.type}
-                      type="button"
-                      onClick={() => setResultView(s.type)}
-                      className={`px-3 py-1 text-xs font-medium rounded ${active === s.type ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      {s.short}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {sessions.length > 1 && (
+                  <div className="inline-flex rounded-md border border-border p-0.5">
+                    {sessions.map((s) => (
+                      <button
+                        key={s.type}
+                        type="button"
+                        onClick={() => setResultView(s.type)}
+                        className={`px-3 py-1 text-xs font-medium rounded ${active === s.type ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {s.short}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {teamsAllowed && active === "race" && (
+                  <button
+                    type="button"
+                    onClick={() => setTeamView((v) => !v)}
+                    className={`px-3 py-1 text-xs font-medium rounded border border-border ${showTeam ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Team
+                  </button>
+                )}
+              </div>
             </div>
             <div className="space-y-3">
-              {Array.from(byClass.entries()).flatMap(([cls, list]) => {
+              {showTeam && teamByClass && Array.from(teamByClass.entries()).map(([cls, teams]) => (
+                <Card key={`team-${cls}`}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <span>{cls}</span>
+                      <Badge variant="outline" className="text-[10px]">Teams</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <ul className="divide-y divide-border">
+                      {teams.map((t) => (
+                        <li key={t.teamId} className="flex items-center gap-3 py-2 text-sm">
+                          <span className="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                            P{t.rank}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate font-medium">{t.teamName}</span>
+                          <span className="ml-auto flex shrink-0 items-center gap-3">
+                            <span className="text-xs text-muted-foreground">{t.participants} kørere</span>
+                            <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{t.points}p</span>
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))}
+              {showTeam && (!teamByClass || teamByClass.size === 0) && (
+                <p className="text-sm text-muted-foreground">Ingen teams opnåede point i dette løb (kræver mindst 2 kørere pr. team).</p>
+              )}
+              {!showTeam && Array.from(byClass.entries()).flatMap(([cls, list]) => {
                 // Opdel i kategorier (Pro/Am) når feltet er splittet
                 const cats = Array.from(
                   new Set(
