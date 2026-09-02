@@ -1,9 +1,8 @@
 // Sammenligning af LMGT3-kørernes løbstempo på tværs af to racefiler
 // (PRO-serveren med LMGT3 Pro + LMP2, og AM-serveren med LMGT3 Am).
 //
-// Ren logik uden UI: udvælger de 10 hurtigste GYLDIGE omgange pr. kører,
-// beregner medianen (gennemsnittet af 5. og 6. hurtigste) og sorterer alle
-// kørere i én samlet liste.
+// Ren logik uden UI: beregner medianen af ALLE gyldige omgange pr. kører
+// og sorterer alle kørere i én samlet liste.
 
 import type { ParsedDriver, ParsedRace } from "./lmu-parser";
 
