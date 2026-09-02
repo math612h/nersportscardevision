@@ -2001,7 +2001,7 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
           )}
           <div>
             <Label>Team</Label>
-            <Select value={teamId || "none"} onValueChange={(v) => setTeamId(v === "none" ? "" : v)}>
+            <Select value={teamId || "none"} onValueChange={(v) => setTeamId(v === "none" ? "" : v)} disabled={locked}>
               <SelectTrigger><SelectValue placeholder="Intet team" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Intet team</SelectItem>
@@ -2011,12 +2011,13 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
           </div>
           {locked && (
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-              Bilvalg er låst{lockAtDate ? ` (siden ${lockAtDate.toLocaleString("da-DK")})` : ""} – kan ikke længere ændres.
+              Tilmeldingen er låst{lockAtDate ? ` (siden ${lockAtDate.toLocaleString("da-DK")})` : ""} – kontakt en admin, hvis noget skal rettes.
             </p>
           )}
           {!locked && !lockNever && lockAtDate && (
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-              Bilvalg låses {lockAtDate.toLocaleString("da-DK")}.
+              Tilmeldingen låses {lockAtDate.toLocaleString("da-DK")}
+              {isAdmin ? " (admins kan fortsat redigere)" : ""}.
             </p>
           )}
         </div>
