@@ -1192,18 +1192,24 @@ async function reconcileWaitlist({
   configs: ClassConfig[];
 }) {
   const dnsByEntry = new Map<string, number>();
-  const entryByKey = new Map<string, EntryRec>();
-  for (const e of entries) entryByKey.set(`${e.car_class}|${e.driver_category}|${e.car_number}`, e);
+  const entryByUser = new Map<string, EntryRec>();
+  const entryByNumber = new Map<number, EntryRec>();
+  for (const e of entries) {
+    if (!entryByUser.has(e.user_id)) entryByUser.set(e.user_id, e);
+    if (e.car_number != null && !entryByNumber.has(e.car_number)) entryByNumber.set(e.car_number, e);
+  }
 
   const countResults = (results: any[]) => {
     for (const r of results) {
       if (!r?.dns) continue;
-      const key = `${r.car_class}|${r.driver_category}|${r.car_number}`;
-      const ent = entryByKey.get(key);
+      const ent =
+        (r.user_id ? entryByUser.get(r.user_id) : undefined) ??
+        (typeof r.car_number === "number" ? entryByNumber.get(r.car_number) : undefined);
       if (!ent) continue;
       dnsByEntry.set(ent.id, (dnsByEntry.get(ent.id) ?? 0) + 1);
     }
   };
+
 
   for (const d of allDivisions) {
     if (d.id === currentDivisionId) continue;
