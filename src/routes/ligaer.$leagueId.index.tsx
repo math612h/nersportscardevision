@@ -552,7 +552,6 @@ function LeagueDetail() {
 
       {!(league as any)?.separate_division_standings && (
         <>
-          <RaceDataResults leagueId={leagueId} />
           <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={false} />
         </>
       )}
@@ -859,7 +858,6 @@ type ResultRow = {
   driver_category: string;
   class_position: number;
   points: number;
-  fastest_lap?: boolean;
   penalty_seconds?: number;
   penalty_points?: number;
   dns?: boolean;
@@ -874,7 +872,6 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
       return data;
     },
   });
-  const leagueFlPoints = Number((league?.points_system as any)?.fastest_lap_points ?? 1);
 
   const { data: divisions } = useQuery({
     queryKey: ["league-results", leagueId],
@@ -946,11 +943,10 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     car_class: string;
     driver_category: string;
     race: number;
-    fl: number;
     total: number;
     penalty: number;
     pointPenalty: number;
-    rounds: Record<string, { points: number; fl: boolean; flPts: number; penalty: number; pointPenalty: number; dns: boolean }>;
+    rounds: Record<string, { points: number; penalty: number; pointPenalty: number; dns: boolean }>;
   };
   // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
   // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
@@ -968,7 +964,6 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
 
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
-    const flPts = leagueFlPoints;
     for (const r of d.settings.results as ResultRow[]) {
       const cat = resolveCat(r as any);
       const key = `${r.car_class}|${cat}|${r.car_number}`;
@@ -978,21 +973,18 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         car_class: r.car_class,
         driver_category: cat,
         race: 0,
-        fl: 0,
         total: 0,
         penalty: 0,
         pointPenalty: 0,
         rounds: {},
       };
-      const earnedFl = r.fastest_lap ? flPts : 0;
       const pen = Number(r.penalty_seconds ?? 0);
       const ptsPen = Math.max(0, Number(r.penalty_points ?? 0));
       cur.race += r.points;
-      cur.fl += earnedFl;
-      cur.total += Math.max(0, r.points + earnedFl - ptsPen);
+      cur.total += Math.max(0, r.points - ptsPen);
       cur.penalty += pen;
       cur.pointPenalty += ptsPen;
-      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns };
+      cur.rounds[d.id] = { points: r.points, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns };
       map.set(key, cur);
     }
   }
@@ -1036,7 +1028,6 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                         {d.name.slice(0, 4)}
                       </th>
                     ))}
-                    <th className="py-1 px-1 w-10 text-center" title="Fastest lap points">FL</th>
                     <th className="py-1 px-1 w-12 text-center" title="Samlet tidsstraf">Straf</th>
                     <th className="py-1 px-1 w-14 text-center" title="Samlet pointstraf">Pt-straf</th>
                     <th className="py-1 pl-2 w-12 text-right">Pts</th>
@@ -1058,15 +1049,11 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                         if (cell.dns) return <td key={d.id} className="py-1.5 px-1 text-center text-[10px] font-semibold text-destructive">DNS</td>;
                         return (
                           <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
-                            <div className="inline-flex items-center gap-0.5">
-                              <span>{cell.points}</span>
-                              {cell.fl && <Zap className="h-3 w-3 text-primary" aria-label="Fastest lap" />}
-                            </div>
+                            <span>{cell.points}</span>
                           </td>
                         );
 
                       })}
-                      <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">{r.fl || "–"}</td>
                       <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
                       <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : "–"}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
