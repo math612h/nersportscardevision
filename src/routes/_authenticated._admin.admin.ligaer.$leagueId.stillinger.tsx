@@ -217,15 +217,25 @@ function DivisionEditor({
 }) {
   const existingRace: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
   const existingQuali: any[] = Array.isArray(division.settings?.quali_results) ? division.settings.quali_results : [];
-  const raceByKey = new Map(existingRace.map((r) => [`${r.car_class}|${r.driver_category}|${r.car_number}`, r]));
-  const qualiByKey = new Map(existingQuali.map((r) => [`${r.car_class}|${r.driver_category}|${r.car_number}`, r]));
+  // Nøgl gemte resultater på bruger-id (bilnummer som reserve). Klasse/kategori
+  // duer ikke som nøgle: flyttes en kører mellem Pro og Am mister vi hans data.
+  const buildLookup = (arr: any[]) => {
+    const byUser = new Map<string, any>();
+    const byNumber = new Map<number, any>();
+    for (const r of arr) {
+      if (r?.user_id && !byUser.has(r.user_id)) byUser.set(r.user_id, r);
+      if (typeof r?.car_number === "number" && !byNumber.has(r.car_number)) byNumber.set(r.car_number, r);
+    }
+    return (e: EntryRec) => byUser.get(e.user_id) ?? (e.car_number != null ? byNumber.get(e.car_number) : undefined);
+  };
+  const findRace = buildLookup(existingRace);
+  const findQuali = buildLookup(existingQuali);
 
   const gridEntries = entries.filter((e) => !e.waitlist);
 
   const buildInitial = (): DraftRow[] => gridEntries.map((e) => {
-    const k = `${e.car_class}|${e.driver_category}|${e.car_number}`;
-    const race = raceByKey.get(k) as any;
-    const quali = qualiByKey.get(k) as any;
+    const race = findRace(e) as any;
+    const quali = findQuali(e) as any;
     return {
       entry_id: e.id,
       user_id: e.user_id,
@@ -247,6 +257,7 @@ function DivisionEditor({
       q_dns: !!quali?.dns,
     };
   });
+
 
   const [rows, setRows] = useState<DraftRow[]>(buildInitial);
   const [session, setSession] = useState<SessionKind>("race");
