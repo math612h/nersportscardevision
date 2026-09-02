@@ -15,7 +15,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
-import { deleteLeagueRaceResults, setResultsConfirmed } from "@/lib/league-results.functions";
+import { deleteLeagueRaceResults, setResultsConfirmed, setResultsPublished } from "@/lib/league-results.functions";
+import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { seatCap, isSplitClass } from "@/lib/class-capacity";
 
@@ -248,6 +249,8 @@ function DivisionEditor({
   const flPoints = leagueFlPoints;
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [confirmed, setConfirmed] = useState<boolean>(!!division.settings?.results_confirmed);
+  const [published, setPublished] = useState<boolean>(isResultsPublished(division.settings));
+  const [publishing, setPublishing] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -258,11 +261,13 @@ function DivisionEditor({
   const pointsFor = (pos: number) => (pos >= 1 && pos <= pointsTable.length ? pointsTable[pos - 1] : 0);
   const deleteResults = useServerFn(deleteLeagueRaceResults);
   const confirmResults = useServerFn(setResultsConfirmed);
+  const publishResults = useServerFn(setResultsPublished);
 
   useEffect(() => {
     setRows(buildInitial());
     setCompleted(!!division.settings?.completed);
     setConfirmed(!!division.settings?.results_confirmed);
+    setPublished(isResultsPublished(division.settings));
     setImportedInfo(null);
     setImportedFiles({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -613,6 +618,8 @@ function DivisionEditor({
         // Nye/ændrede resultater er ikke endelige før admin bekræfter igen
         results_confirmed: false,
         results_confirmed_at: null,
+        // Resultater vises først offentligt når admin trykker "Vis resultater"
+        results_published: isResultsPublished(prevSettings),
         results: raceResults,
         quali_results: qualiResults,
       };
@@ -620,6 +627,7 @@ function DivisionEditor({
       if (error) throw error;
       if (effectiveCompleted && !completed) setCompleted(true);
       setConfirmed(false);
+      setPublished(isResultsPublished(prevSettings));
 
       // Compute round number from division order (by race_date)
       const sortedDivs = [...allDivisions].sort((a, b) => {
@@ -725,7 +733,7 @@ function DivisionEditor({
             <CardTitle className="text-base flex items-center gap-2">
               {division.name}
               {completed && <Badge variant="secondary" className="gap-1 text-[10px]"><Check className="h-3 w-3" /> Afsluttet</Badge>}
-              {completed && <ResultsStatusBadge confirmed={confirmed} />}
+              {completed && <ResultsStatusBadge confirmed={confirmed} published={published} />}
             </CardTitle>
             <p className="mt-1 text-xs text-muted-foreground">
               {division.track}{division.layout ? ` · ${division.layout}` : ""}
@@ -745,9 +753,11 @@ function DivisionEditor({
               </p>
             )}
             <p className="mt-1 text-xs text-muted-foreground">
-              {confirmed
-                ? "Resultaterne er markeret som endelige og vises som bekræftede."
-                : "Resultaterne vises som ikke bekræftede, indtil du trykker Bekræft."}
+              {!published
+                ? "Resultaterne er ikke udgivet endnu — kun admins kan se dem. Tryk \u201cVis resultater\u201d for at udgive dem."
+                : confirmed
+                  ? "Resultaterne er markeret som endelige og vises som bekræftede."
+                  : "Resultaterne er udgivet, men vises som ikke bekræftede (afventer steward-indsigelser), indtil du trykker Bekræft."}
             </p>
           </div>
           <div className="flex flex-wrap items-end gap-3">
@@ -757,8 +767,32 @@ function DivisionEditor({
             </label>
             <Button
               type="button"
+              variant={published ? "outline" : "default"}
+              disabled={publishing || saving}
+              className="gap-2"
+              onClick={async () => {
+                setPublishing(true);
+                try {
+                  const next = !published;
+                  await publishResults({ data: { leagueId: division.league_id, divisionId: division.id, published: next } });
+                  setPublished(next);
+                  if (!next) setConfirmed(false);
+                  toast.success(next ? "Resultater udgivet" : "Resultater skjult igen");
+                  onSaved();
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Kunne ikke opdatere udgivelse");
+                } finally {
+                  setPublishing(false);
+                }
+              }}
+            >
+              {published ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {publishing ? "Gemmer…" : published ? "Skjul resultater" : "Vis resultater"}
+            </Button>
+            <Button
+              type="button"
               variant={confirmed ? "outline" : "default"}
-              disabled={confirming || saving}
+              disabled={confirming || saving || !published}
               className="gap-2"
               onClick={async () => {
                 setConfirming(true);
@@ -828,7 +862,10 @@ function DivisionEditor({
                     newSettings.completed_at = null;
                     newSettings.results_confirmed = false;
                     newSettings.results_confirmed_at = null;
+                    newSettings.results_published = false;
+                    newSettings.results_published_at = null;
                     setConfirmed(false);
+                    setPublished(false);
                   }
                   await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
                   toast.success(`${label} nulstillet (${res.deleted} rækker fjernet)`);
