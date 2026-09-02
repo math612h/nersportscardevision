@@ -1936,7 +1936,8 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
   const lockNever = !!(league as any)?.car_lock_never;
   const lockAtRaw = (league as any)?.car_lock_at ?? null;
   const lockAtDate = lockAtRaw ? new Date(lockAtRaw) : null;
-  const locked = !lockNever && !!lockAtDate && Date.now() >= lockAtDate.getTime();
+  const locked =
+    !isAdmin && !lockNever && !!lockAtDate && Date.now() >= lockAtDate.getTime();
 
   const [carModel, setCarModel] = useState<string>("");
   const [teamId, setTeamId] = useState<string>("");
