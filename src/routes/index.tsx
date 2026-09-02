@@ -369,7 +369,6 @@ function NewsHome() {
 
             <div className="space-y-5 p-4 sm:p-6">
               {groupedResults.map((group) => {
-                const teamGroup = (latestTeamStandings ?? []).find((g) => g.car_class === group.cls);
                 return (
                 <div key={group.key} className="space-y-3 rounded-md border border-border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
@@ -413,43 +412,44 @@ function NewsHome() {
                     })}
                   </ol>
 
-                  {teamGroup && teamGroup.teams.length > 0 && (
-                    <div className="space-y-2 pt-1">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Users className="h-3.5 w-3.5" />
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.15em]">Team-stilling</span>
-                      </div>
-                      <ol className="grid gap-2 sm:grid-cols-3">
-                        {teamGroup.teams.map((tm, i) => {
-                          const pos = i + 1;
-                          const medal =
-                            pos === 1
-                              ? "bg-amber-400/20 text-amber-700 ring-1 ring-amber-400/40 dark:text-amber-300"
-                              : pos === 2
-                              ? "bg-slate-300/30 text-slate-700 ring-1 ring-slate-400/40 dark:text-slate-200"
-                              : "bg-orange-500/15 text-orange-700 ring-1 ring-orange-500/30 dark:text-orange-300";
-                          return (
-                            <li
-                              key={tm.teamId}
-                              className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
-                            >
-                              <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
-                                {pos}
-                              </span>
-                              <TeamAvatarOnly teamId={tm.teamId} fallbackName={tm.name} size="sm" />
-                              <span className="min-w-0 flex-1 truncate font-medium">{tm.name}</span>
-                              <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                                {tm.points} p
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ol>
-                    </div>
-                  )}
                 </div>
                 );
               })}
+
+              {(latestTeamStandings ?? []).map((tg) => (
+                <div key={`teams-${tg.car_class}`} className="space-y-3 rounded-md border border-border p-3">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold">Team-stilling · {tg.car_class}</h3>
+                  </div>
+                  <ol className="grid gap-2 sm:grid-cols-3">
+                    {tg.teams.map((tm, i) => {
+                      const pos = i + 1;
+                      const medal =
+                        pos === 1
+                          ? "bg-amber-400/20 text-amber-700 ring-1 ring-amber-400/40 dark:text-amber-300"
+                          : pos === 2
+                          ? "bg-slate-300/30 text-slate-700 ring-1 ring-slate-400/40 dark:text-slate-200"
+                          : "bg-orange-500/15 text-orange-700 ring-1 ring-orange-500/30 dark:text-orange-300";
+                      return (
+                        <li
+                          key={tm.teamId}
+                          className="flex items-center gap-2 rounded-md bg-muted/50 px-3 py-2 text-sm"
+                        >
+                          <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded font-semibold tabular-nums ${medal}`}>
+                            {pos}
+                          </span>
+                          <TeamAvatarOnly teamId={tm.teamId} fallbackName={tm.name} size="sm" />
+                          <span className="min-w-0 flex-1 truncate font-medium">{tm.name}</span>
+                          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                            {tm.points} p
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              ))}
             </div>
           </article>
         </section>
