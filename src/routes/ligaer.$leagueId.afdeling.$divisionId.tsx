@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Calendar, ChevronDown, MapPin, MessageSquareWarning, UserX, UserCheck, Users, KeyRound, Lock, CheckCircle2, Timer, Trophy, Clock } from "lucide-react";
 import { msToLapStr } from "@/lib/lmu-parser";
+import { computeTeamRacePoints, type LineupTeamInfo } from "@/lib/team-points";
 import { format, formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
 import { toast } from "sonner";
@@ -622,27 +623,65 @@ function DivisionDetail() {
           if (!byClass.has(r.car_class)) byClass.set(r.car_class, [] as any);
           byClass.get(r.car_class)!.push(r);
         }
+        // Team-resultater (kun race): byg team-info fra tilmeldtes team_id
+        const teamsAllowed = !!(league as any)?.teams_allowed;
+        const showTeam = teamView && active === "race" && teamsAllowed;
+        let teamByClass: Map<string, { teamId: string; teamName: string; points: number; rank: number; participants: number }[]> | null = null;
+        if (showTeam) {
+          const teamAgg = new Map<string, LineupTeamInfo>();
+          for (const e of [...(signups ?? []), ...(reserveEntries ?? [])] as any[]) {
+            if (!e.team_id) continue;
+            const key = `${e.team_id}|${e.car_class}`;
+            if (!teamAgg.has(key)) {
+              teamAgg.set(key, {
+                teamId: e.team_id,
+                teamName: teamNameMap?.get(e.team_id) ?? "Team",
+                carClass: e.car_class,
+                userIds: new Set<string>(),
+              });
+            }
+            teamAgg.get(key)!.userIds.add(e.user_id);
+          }
+          const raceRows = (results ?? []).filter((r) => r.session_type === "race");
+          const ppp: number[] = (league as any)?.points_system?.points_per_position ?? [];
+          teamByClass = computeTeamRacePoints({
+            results: raceRows as any,
+            teams: Array.from(teamAgg.values()).filter((t) => t.userIds.size >= 2),
+            pointsPerPosition: ppp,
+          }) as any;
+        }
         return (
           <section id="resultater" className="space-y-4 scroll-mt-24">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2 text-primary">
                 <Trophy className="h-4 w-4" />
-                <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{activeLabel}</h2>
+                <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{showTeam ? "Team resultater" : activeLabel}</h2>
               </div>
-              {sessions.length > 1 && (
-                <div className="inline-flex rounded-md border border-border p-0.5">
-                  {sessions.map((s) => (
-                    <button
-                      key={s.type}
-                      type="button"
-                      onClick={() => setResultView(s.type)}
-                      className={`px-3 py-1 text-xs font-medium rounded ${active === s.type ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      {s.short}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {sessions.length > 1 && (
+                  <div className="inline-flex rounded-md border border-border p-0.5">
+                    {sessions.map((s) => (
+                      <button
+                        key={s.type}
+                        type="button"
+                        onClick={() => setResultView(s.type)}
+                        className={`px-3 py-1 text-xs font-medium rounded ${active === s.type ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        {s.short}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {teamsAllowed && active === "race" && (
+                  <button
+                    type="button"
+                    onClick={() => setTeamView((v) => !v)}
+                    className={`px-3 py-1 text-xs font-medium rounded border border-border ${showTeam ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Team
+                  </button>
+                )}
+              </div>
             </div>
             <div className="space-y-3">
               {Array.from(byClass.entries()).flatMap(([cls, list]) => {
