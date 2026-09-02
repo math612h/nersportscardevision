@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_leaderboard_times_best_lap ON public.leaderboard_times USING btree (best_lap_ms, id);
