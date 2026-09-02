@@ -17,7 +17,19 @@ export type LeaderboardRow = {
 
 const PAGE_SIZE = 1000;
 
-export const getLeaderboardRows = createServerFn({ method: "GET" }).handler(async (): Promise<LeaderboardRow[]> => {
+// Leaderboardet er ens for alle besøgende og ændrer sig kun når nogen uploader
+// en ny tid. Uden cache laver hver sidevisning ~35 fulde tabel-scanninger, hvilket
+// er det, der lægger databasen ned ved mange samtidige brugere.
+const CACHE_TTL_MS = 60_000;
+let cache: { rows: LeaderboardRow[]; at: number } | undefined;
+let inflight: Promise<LeaderboardRow[]> | undefined;
+
+/** Ryd cachen, fx efter en upload, så nye tider vises med det samme. */
+export function invalidateLeaderboardCache() {
+  cache = undefined;
+}
+
+async function loadAll(): Promise<LeaderboardRow[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const allRows: LeaderboardRow[] = [];
 
@@ -35,4 +47,20 @@ export const getLeaderboardRows = createServerFn({ method: "GET" }).handler(asyn
   }
 
   return allRows;
+}
+
+export const getLeaderboardRows = createServerFn({ method: "GET" }).handler(async (): Promise<LeaderboardRow[]> => {
+  if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.rows;
+  // Sammenfald af samtidige forespørgsler deler ét databasekald.
+  if (!inflight) {
+    inflight = loadAll()
+      .then((rows) => {
+        cache = { rows, at: Date.now() };
+        return rows;
+      })
+      .finally(() => {
+        inflight = undefined;
+      });
+  }
+  return inflight;
 });
