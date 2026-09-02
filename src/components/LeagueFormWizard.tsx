@@ -535,13 +535,13 @@ function CarLockEditor({
 }) {
   return (
     <div className="space-y-2 rounded-md border border-border p-2">
-      <Label>Lås af bilvalg</Label>
+      <Label>Lås af tilmelding (bil og team)</Label>
       <label className="flex items-center gap-2 cursor-pointer">
         <Checkbox checked={never} onCheckedChange={(v) => onNever(v === true)} />
-        <span className="text-sm">Bilvalg låses aldrig (deltagere kan altid skifte bil)</span>
+        <span className="text-sm">Låses aldrig (deltagere kan altid redigere deres tilmelding)</span>
       </label>
       <div className={never ? "opacity-50 pointer-events-none" : ""}>
-        <Label className="text-xs">Lås bilvalg fra og med</Label>
+        <Label className="text-xs">Lås tilmelding fra og med</Label>
         <Input
           type="datetime-local"
           value={at}
@@ -549,8 +549,8 @@ function CarLockEditor({
           disabled={never}
         />
         <p className="mt-1 text-xs text-muted-foreground">
-          Vælg dato og tid. Når tidspunktet er nået, kan deltagerne ikke længere ændre bil. Lad
-          være tom for at undlade at låse.
+          Vælg dato og tid. Når tidspunktet er nået, kan deltagerne ikke længere ændre bil eller
+          team. Admins kan fortsat redigere tilmeldinger. Lad være tom for at undlade at låse.
         </p>
       </div>
     </div>

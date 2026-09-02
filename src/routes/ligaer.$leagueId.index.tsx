@@ -1907,7 +1907,7 @@ function LeaveLeagueButton({ leagueId }: { leagueId: string }) {
 }
 
 function EditEntryDialog({ leagueId }: { leagueId: string }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const updateEntry = useServerFn(updateMyLeagueEntry);
   const { data: signups } = useLeagueSignups(leagueId);
@@ -1936,7 +1936,8 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
   const lockNever = !!(league as any)?.car_lock_never;
   const lockAtRaw = (league as any)?.car_lock_at ?? null;
   const lockAtDate = lockAtRaw ? new Date(lockAtRaw) : null;
-  const locked = !lockNever && !!lockAtDate && Date.now() >= lockAtDate.getTime();
+  const locked =
+    !isAdmin && !lockNever && !!lockAtDate && Date.now() >= lockAtDate.getTime();
 
   const [carModel, setCarModel] = useState<string>("");
   const [teamId, setTeamId] = useState<string>("");
@@ -1959,7 +1960,7 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
   const cars = allowedList ? allCars.filter((c) => allowedList.includes(c)) : allCars;
 
   const save = async () => {
-    if (locked) return toastError("Bilvalg er låst.");
+    if (locked) return toastError("Tilmeldingen er låst.");
     if (!carModel) return toastError("Vælg din bil.");
     setSaving(true);
     try {
@@ -2000,7 +2001,7 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
           )}
           <div>
             <Label>Team</Label>
-            <Select value={teamId || "none"} onValueChange={(v) => setTeamId(v === "none" ? "" : v)}>
+            <Select value={teamId || "none"} onValueChange={(v) => setTeamId(v === "none" ? "" : v)} disabled={locked}>
               <SelectTrigger><SelectValue placeholder="Intet team" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="none">Intet team</SelectItem>
@@ -2010,12 +2011,13 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
           </div>
           {locked && (
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-              Bilvalg er låst{lockAtDate ? ` (siden ${lockAtDate.toLocaleString("da-DK")})` : ""} – kan ikke længere ændres.
+              Tilmeldingen er låst{lockAtDate ? ` (siden ${lockAtDate.toLocaleString("da-DK")})` : ""} – kontakt en admin, hvis noget skal rettes.
             </p>
           )}
           {!locked && !lockNever && lockAtDate && (
             <p className="rounded-md border border-dashed border-border bg-muted/40 p-2 text-xs text-muted-foreground">
-              Bilvalg låses {lockAtDate.toLocaleString("da-DK")}.
+              Tilmeldingen låses {lockAtDate.toLocaleString("da-DK")}
+              {isAdmin ? " (admins kan fortsat redigere)" : ""}.
             </p>
           )}
         </div>
