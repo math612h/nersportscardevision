@@ -45,6 +45,8 @@ type DraftRow = {
   dnf: boolean;
   dns: boolean;
   race_position: number | null;
+  best_lap_ms: number | null;
+  source_server: "pro" | "am" | null;
   // Quali
   q_best_str: string;        // best lap m:ss.xxx
   q_dns: boolean;
