@@ -24,6 +24,7 @@ import { UserAvatarOnly } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
 import { getCurrentWeekStartISO, shiftWeek, weekLabel, youtubeEmbedUrl } from "@/lib/overtaking-utils";
 import { DonorFrame } from "@/lib/donation-tier";
+import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 
 
@@ -104,6 +105,7 @@ function NewsHome() {
       const completed = (data ?? []).filter(
         (d: any) =>
           d.settings?.completed &&
+          isResultsPublished(d.settings) &&
           !d.settings?.hidden_from_home &&
           Array.isArray(d.settings?.results) &&
           d.settings.results.some((r: ResultRow) => Number(r.class_position) > 0 && !r.dns && !r.dnf),
@@ -341,7 +343,7 @@ function NewsHome() {
               <div className="absolute bottom-0 left-0 right-0 space-y-3 p-4 sm:p-6">
                 <div className="flex flex-wrap gap-2">
                   <Badge variant="secondary">Afsluttet</Badge>
-                  <ResultsStatusBadge confirmed={!!latest.settings?.results_confirmed} />
+                  <ResultsStatusBadge confirmed={!!latest.settings?.results_confirmed} published />
 
                   {latest.leagues?.name && <Badge variant="outline">{latest.leagues.name}</Badge>}
                   {latest.race_date && (

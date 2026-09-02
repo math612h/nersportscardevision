@@ -8,6 +8,8 @@ import { format, formatDistanceToNow } from "date-fns";
 import { da } from "date-fns/locale";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { isResultsPublished } from "@/lib/results-visibility";
+import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { triggerReserveOfferForAbsence, respondReserveOffer, undoDivisionAbsence } from "@/lib/division-reserves.functions";
@@ -224,6 +226,8 @@ function DivisionDetail() {
     },
   });
 
+  const resultsPublished = isResultsPublished((div as any)?.settings);
+  const resultsConfirmed = !!(div as any)?.settings?.results_confirmed;
   const [resultView, setResultView] = useState<"race" | "qualifying">("race");
   const [teamView, setTeamView] = useState(false);
 
@@ -608,7 +612,7 @@ function DivisionDetail() {
         </Collapsible>
       </section>
 
-      {(results?.length ?? 0) > 0 && (() => {
+      {(results?.length ?? 0) > 0 && (resultsPublished || isAdmin || isSteward) && (() => {
         const allSessions: { type: "race" | "qualifying"; label: string; short: string }[] = [
           { type: "race", label: "Race resultater", short: "Race results" },
           { type: "qualifying", label: "Kvalifikation", short: "Quali results" },
@@ -656,6 +660,7 @@ function DivisionDetail() {
               <div className="flex items-center gap-2 text-primary">
                 <Trophy className="h-4 w-4" />
                 <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">{showTeam ? "Team resultater" : activeLabel}</h2>
+                <ResultsStatusBadge confirmed={resultsConfirmed} published={resultsPublished} />
               </div>
               <div className="flex items-center gap-2">
                 {sessions.length > 1 && (

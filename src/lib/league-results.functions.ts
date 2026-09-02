@@ -439,3 +439,41 @@ export const setResultsConfirmed = createServerFn({ method: "POST" })
     if (uErr) throw new Error(uErr.message);
     return { confirmed: data.confirmed };
   });
+
+// =============================================================
+// Udgiv / skjul resultater for en afdeling.
+// "Udgivet" betyder at resultaterne er synlige for brugerne (men endnu
+// ikke nødvendigvis bekræftede/endelige).
+// =============================================================
+const publishVisibilitySchema = z.object({
+  leagueId: z.string().uuid(),
+  divisionId: z.string().uuid(),
+  published: z.boolean(),
+});
+
+export const setResultsPublished = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => publishVisibilitySchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: division, error: dErr } = await supabaseAdmin
+      .from("divisions").select("id,league_id,settings").eq("id", data.divisionId).maybeSingle();
+    if (dErr) throw new Error(dErr.message);
+    if (!division || division.league_id !== data.leagueId) throw new Error("Afdeling tilhører ikke ligaen.");
+
+    const prev = ((division.settings as any) ?? {});
+    const newSettings = {
+      ...prev,
+      results_published: data.published,
+      results_published_at: data.published ? new Date().toISOString() : null,
+      results_published_by: data.published ? context.userId : null,
+      ...(data.published ? {} : { results_confirmed: false, results_confirmed_at: null }),
+    };
+    const { error: uErr } = await supabaseAdmin
+      .from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
+    if (uErr) throw new Error(uErr.message);
+    return { published: data.published };
+  });
+
