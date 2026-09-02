@@ -224,6 +224,7 @@ function DivisionDetail() {
   });
 
   const [resultView, setResultView] = useState<"race" | "qualifying">("race");
+  const [teamView, setTeamView] = useState(false);
 
   const resultUserIds = Array.from(new Set((results ?? []).map((r) => r.user_id)));
   const { data: resultNames } = useQuery({
@@ -247,7 +248,7 @@ function DivisionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,created_at")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,created_at,team_id")
         .eq("division_id", divisionId);
       if (error) throw error;
       return (data ?? []) as Array<{
