@@ -1960,7 +1960,7 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
   const cars = allowedList ? allCars.filter((c) => allowedList.includes(c)) : allCars;
 
   const save = async () => {
-    if (locked) return toastError("Bilvalg er låst.");
+    if (locked) return toastError("Tilmeldingen er låst.");
     if (!carModel) return toastError("Vælg din bil.");
     setSaving(true);
     try {
