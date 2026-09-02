@@ -526,7 +526,11 @@ function DivisionEditor({
         const [cls, cat] = k.split("|");
         const inClass = raceResults.filter((r) => r.car_class === cls && r.driver_category === cat);
         const active = inClass.filter((r) => !r.dns && (r.source_position || r.effective_ms > 0 || (r.laps ?? 0) > 0));
-        const withImportedPositions = active.filter((r) => typeof r.source_position === "number" && r.source_position > 0);
+        // Hvis klassen har kørere fra begge serverfiler, kan filernes egne placeringer ikke bruges —
+        // de er pr. server. Så flettes feltet efter omgange og tid i stedet.
+        const servers = new Set(active.map((r: any) => r.source_server).filter(Boolean));
+        const mixedServers = servers.size > 1;
+        const withImportedPositions = mixedServers ? [] : active.filter((r) => typeof r.source_position === "number" && r.source_position > 0);
         const withoutImportedPositions = active.filter((r) => !(typeof r.source_position === "number" && r.source_position > 0));
         const sortByRaceData = (a: any, b: any) => {
           const lapsCmp = (b.laps ?? 0) - (a.laps ?? 0);
