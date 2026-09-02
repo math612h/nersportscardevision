@@ -369,7 +369,6 @@ function NewsHome() {
 
             <div className="space-y-5 p-4 sm:p-6">
               {groupedResults.map((group) => {
-                const teamGroup = (latestTeamStandings ?? []).find((g) => g.car_class === group.cls);
                 return (
                 <div key={group.key} className="space-y-3 rounded-md border border-border p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
