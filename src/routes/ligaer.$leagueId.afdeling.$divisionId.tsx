@@ -115,7 +115,7 @@ function DivisionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leagues")
-        .select("id,name,class_configs,briefing_required,protest_tickets_per_season")
+        .select("id,name,class_configs,briefing_required,protest_tickets_per_season,points_system,teams_allowed")
         .eq("id", leagueId)
         .single();
       if (error) throw error;
@@ -128,7 +128,7 @@ function DivisionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id")
         .eq("league_id", leagueId)
         .is("division_id", null)
         .order("created_at", { ascending: true });
