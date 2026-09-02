@@ -951,16 +951,31 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     pointPenalty: number;
     rounds: Record<string, { points: number; fl: boolean; flPts: number; penalty: number; pointPenalty: number; dns: boolean }>;
   };
+  // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
+  // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
+  const currentCatByUser = new Map<string, string>();
+  const currentCatByNumber = new Map<string, string>();
+  for (const e of leagueEntries ?? []) {
+    if (!e.driver_category) continue;
+    currentCatByUser.set(`${e.user_id}|${e.car_class}`, e.driver_category);
+    if (e.car_number != null) currentCatByNumber.set(`${e.car_class}|${e.car_number}`, e.driver_category);
+  }
+  const resolveCat = (r: ResultRow & { user_id?: string }) =>
+    (r.user_id ? currentCatByUser.get(`${r.user_id}|${r.car_class}`) : undefined) ??
+    currentCatByNumber.get(`${r.car_class}|${r.car_number}`) ??
+    r.driver_category;
+
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
     const flPts = leagueFlPoints;
     for (const r of d.settings.results as ResultRow[]) {
-      const key = `${r.car_class}|${r.driver_category}|${r.car_number}`;
+      const cat = resolveCat(r as any);
+      const key = `${r.car_class}|${cat}|${r.car_number}`;
       const cur = map.get(key) ?? {
         car_number: r.car_number,
         driver_name: r.driver_name,
         car_class: r.car_class,
-        driver_category: r.driver_category,
+        driver_category: cat,
         race: 0,
         fl: 0,
         total: 0,
