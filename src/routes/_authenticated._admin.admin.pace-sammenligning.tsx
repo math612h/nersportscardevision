@@ -143,7 +143,7 @@ function PaceComparisonPage() {
                   <th className="px-3 py-2">Klasse</th>
                   <th className="px-3 py-2">Server / fil</th>
                   <th className="px-3 py-2 text-right">Hurtigste omgang</th>
-                  <th className="px-3 py-2 text-right">Median (10)</th>
+                  <th className="px-3 py-2 text-right">Median (alle)</th>
                   <th className="px-3 py-2 text-right">Gyldige omgange</th>
                   <th className="px-3 py-2 text-right">Forskel</th>
                 </tr>
@@ -195,8 +195,8 @@ function PaceComparisonPage() {
                           <td colSpan={9} className="px-3 py-3">
                             <div className="mb-2 text-xs text-muted-foreground">
                               {r.insufficient
-                                ? `Kun ${r.validLapCount} gyldige omgange — ingen median beregnet.`
-                                : "De 10 hurtigste gyldige omgange, som medianen er beregnet ud fra:"}
+                                ? "Ingen gyldige omgange — ingen median beregnet."
+                                : "Alle gyldige omgange, som medianen er beregnet ud fra:"}
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {r.topLaps.map((l, i) => (
