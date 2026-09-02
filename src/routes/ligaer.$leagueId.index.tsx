@@ -961,7 +961,6 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     if (e.car_number != null) currentCatByNumber.set(`${e.car_class}|${e.car_number}`, e.driver_category);
   }
   const resolveCat = (r: ResultRow & { user_id?: string }) =>
-    (r.user_id ? currentCatByUser.get(`${r.car_class}|${r.user_id}`.replace(`${r.car_class}|`, "")) : undefined) ??
     (r.user_id ? currentCatByUser.get(`${r.user_id}|${r.car_class}`) : undefined) ??
     currentCatByNumber.get(`${r.car_class}|${r.car_number}`) ??
     r.driver_category;
