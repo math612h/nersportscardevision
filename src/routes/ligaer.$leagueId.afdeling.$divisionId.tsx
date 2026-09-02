@@ -258,6 +258,26 @@ function DivisionDetail() {
     },
   });
 
+  // Team-navne til team-resultater (fra tilmeldte køreres team_id)
+  const resultTeamIds = Array.from(
+    new Set(
+      [...(signups ?? []), ...(reserveEntries ?? [])]
+        .map((e: any) => e.team_id)
+        .filter(Boolean) as string[],
+    ),
+  );
+  const { data: teamNameMap } = useQuery({
+    queryKey: ["division-team-names", resultTeamIds.sort().join(",")],
+    enabled: resultTeamIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase.from("teams").select("id,name").in("id", resultTeamIds);
+      if (error) throw error;
+      const map = new Map<string, string>();
+      for (const t of data ?? []) map.set(t.id, t.name);
+      return map;
+    },
+  });
+
   // My pending reserve offer for this division
   const { data: myOffer } = useQuery({
     queryKey: ["my-reserve-offer", divisionId, user?.id ?? "anon"],
