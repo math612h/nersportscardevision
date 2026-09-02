@@ -164,9 +164,9 @@ function PaceComparisonPage() {
                         <td className="px-3 py-2 font-medium">
                           {r.name}
                           {r.insufficient && (
-                            <Badge variant="outline" className="ml-2 text-[10px]">
-                              Utilstrækkeligt datagrundlag
-                            </Badge>
+                              <Badge variant="outline" className="ml-2 text-[10px]">
+                                Ingen gyldige omgange
+                              </Badge>
                           )}
                         </td>
                         <td className="px-3 py-2 font-mono">{r.carNumber ?? "—"}</td>

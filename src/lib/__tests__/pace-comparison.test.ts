@@ -36,8 +36,12 @@ const file = (source: "pro" | "am", drivers: ParsedDriver[]): PaceFile => ({
 });
 
 describe("medianOf", () => {
-  it("bruger gennemsnittet af 5. og 6. ved 10 tider", () => {
+  it("bruger gennemsnittet af de to midterste ved lige antal", () => {
     expect(medianOf([1, 2, 3, 4, 10, 20, 30, 40, 50, 60])).toBe(15);
+  });
+
+  it("bruger den midterste ved ulige antal", () => {
+    expect(medianOf([1, 2, 9])).toBe(2);
   });
 });
 
@@ -60,18 +64,33 @@ describe("buildPaceComparison", () => {
     expect(rows[1].gapMs).toBe(100);
   });
 
-  it("frasorterer ugyldige omgange og markerer utilstrækkeligt datagrundlag nederst", () => {
+  it("beregner median ud fra ALLE gyldige omgange — ikke kun de hurtigste", () => {
+    const rows = buildPaceComparison([
+      file("pro", [
+        driver({ name: "Consistent", validLaps: laps([100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 200, 200]) }),
+      ]),
+    ]);
+    // median af alle 12 = gennemsnit af 6. og 7. (begge 100)
+    expect(rows[0].medianMs).toBe(100);
+    expect(rows[0].topLaps).toHaveLength(12);
+  });
+
+  it("medtager kørere med få omgange i rangeringen, men markérer dem helt uden gyldige omgange nederst", () => {
     const rows = buildPaceComparison([
       file("pro", [
         driver({ name: "Few", validLaps: laps([100, 101, 102]) }),
+        driver({ name: "None", validLaps: [] }),
         driver({ name: "Enough", validLaps: laps(new Array(11).fill(0).map((_, i) => 150 + i)) }),
       ]),
     ]);
-    expect(rows[0].name).toBe("Enough");
-    expect(rows[1].name).toBe("Few");
-    expect(rows[1].insufficient).toBe(true);
-    expect(rows[1].medianMs).toBeNull();
-    expect(rows[1].position).toBeNull();
+    expect(rows[0].name).toBe("Few");
+    expect(rows[0].medianMs).toBe(101);
+    expect(rows[0].position).toBe(1);
+    expect(rows[1].name).toBe("Enough");
+    expect(rows[2].name).toBe("None");
+    expect(rows[2].insufficient).toBe(true);
+    expect(rows[2].medianMs).toBeNull();
+    expect(rows[2].position).toBeNull();
   });
 
   it("fordeler omgange pr. kører ved førerskift", () => {
