@@ -45,6 +45,8 @@ type DraftRow = {
   dnf: boolean;
   dns: boolean;
   race_position: number | null;
+  best_lap_ms: number | null;
+  source_server: "pro" | "am" | null;
   // Quali
   q_best_str: string;        // best lap m:ss.xxx
   q_dns: boolean;
@@ -233,6 +235,8 @@ function DivisionEditor({
       dnf: !!race?.dnf,
       dns: !!race?.dns,
       race_position: typeof race?.class_position === "number" && race.class_position > 0 ? race.class_position : null,
+      best_lap_ms: typeof race?.best_lap_ms === "number" && race.best_lap_ms > 0 ? race.best_lap_ms : null,
+      source_server: race?.source_server === "pro" || race?.source_server === "am" ? race.source_server : null,
       q_best_str: quali && typeof quali.best_lap_ms === "number" && quali.best_lap_ms > 0 ? msToStr(quali.best_lap_ms) : "",
       q_dns: !!quali?.dns,
     };
@@ -310,18 +314,6 @@ function DivisionEditor({
         return best?.match.id ?? null;
       };
 
-      // Fastest-lap winner per car class (race only)
-      const flByClass = new Map<string, string>();
-      if (kind === "race") {
-        const classes = Array.from(new Set(parsed.map((p) => p.carClass).filter(Boolean)));
-        for (const cls of classes) {
-          const inCls = parsed.filter((p) => p.carClass === cls && p.bestLapMs != null);
-          if (inCls.length === 0) continue;
-          inCls.sort((a, b) => (a.bestLapMs! - b.bestLapMs!));
-          flByClass.set(cls, inCls[0].name.trim().toLowerCase());
-        }
-      }
-
       const updates = new Map<string, Partial<DraftRow>>();
       for (const p of parsed) {
         const userId = resolveUser(p.name);
@@ -329,12 +321,12 @@ function DivisionEditor({
         const row = rows.find((r) => r.user_id === userId);
         if (!row) continue;
         if (kind === "race") {
-          const isFl = flByClass.get(p.carClass) === p.name.trim().toLowerCase();
           const racePosition = p.classPosition ?? p.position ?? null;
+          const common = { best_lap_ms: p.bestLapMs ?? null, source_server: server };
           if (p.finished && p.finishMs != null) {
-            updates.set(row.entry_id, { time_str: msToStr(p.finishMs), laps: p.laps, race_position: racePosition, fastest_lap: isFl, dnf: false, dns: false });
+            updates.set(row.entry_id, { ...common, time_str: msToStr(p.finishMs), laps: p.laps, race_position: racePosition, dnf: false, dns: false });
           } else {
-            updates.set(row.entry_id, { time_str: "", laps: p.laps, race_position: racePosition, fastest_lap: false, dnf: true, dns: false });
+            updates.set(row.entry_id, { ...common, time_str: "", laps: p.laps, race_position: racePosition, fastest_lap: false, dnf: true, dns: false });
           }
         } else {
           if (p.bestLapMs != null) {
@@ -351,7 +343,24 @@ function DivisionEditor({
         if (!prof?.lmu_name) noLmu.push(r.driver_name);
       }
 
-      setRows((prev) => prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r)));
+      setRows((prev) => {
+        const next = prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r));
+        if (kind !== "race") return next;
+        // Hurtigste omgang pr. klasse på tværs af begge serverfiler
+        const flWinner = new Map<string, string>();
+        for (const r of next) {
+          if (r.dns || r.best_lap_ms == null || r.best_lap_ms <= 0) continue;
+          const k = `${r.car_class}|${r.driver_category}`;
+          const cur = flWinner.get(k);
+          const curMs = cur ? next.find((x) => x.entry_id === cur)?.best_lap_ms ?? Infinity : Infinity;
+          if (r.best_lap_ms < curMs) flWinner.set(k, r.entry_id);
+        }
+        return next.map((r) => {
+          const k = `${r.car_class}|${r.driver_category}`;
+          if (!flWinner.has(k)) return r;
+          return { ...r, fastest_lap: flWinner.get(k) === r.entry_id };
+        });
+      });
 
       // Push best-laps to global leaderboard (race file only)
       let lbInserted = 0;
@@ -503,6 +512,8 @@ function DivisionEditor({
           effective_ms: raceEff ?? 0,
           laps: r.laps,
           source_position: r.race_position,
+          source_server: r.source_server,
+          best_lap_ms: r.best_lap_ms ?? 0,
           penalty_seconds: Math.max(0, r.penalty_seconds),
           penalty_points: Math.max(0, r.penalty_points),
           dnf: r.dnf && !r.dns,
@@ -515,7 +526,11 @@ function DivisionEditor({
         const [cls, cat] = k.split("|");
         const inClass = raceResults.filter((r) => r.car_class === cls && r.driver_category === cat);
         const active = inClass.filter((r) => !r.dns && (r.source_position || r.effective_ms > 0 || (r.laps ?? 0) > 0));
-        const withImportedPositions = active.filter((r) => typeof r.source_position === "number" && r.source_position > 0);
+        // Hvis klassen har kørere fra begge serverfiler, kan filernes egne placeringer ikke bruges —
+        // de er pr. server. Så flettes feltet efter omgange og tid i stedet.
+        const servers = new Set(active.map((r: any) => r.source_server).filter(Boolean));
+        const mixedServers = servers.size > 1;
+        const withImportedPositions = mixedServers ? [] : active.filter((r) => typeof r.source_position === "number" && r.source_position > 0);
         const withoutImportedPositions = active.filter((r) => !(typeof r.source_position === "number" && r.source_position > 0));
         const sortByRaceData = (a: any, b: any) => {
           const lapsCmp = (b.laps ?? 0) - (a.laps ?? 0);
@@ -525,9 +540,11 @@ function DivisionEditor({
           if (b.effective_ms > 0) return 1;
           return a.car_number - b.car_number;
         };
-        const finished = withImportedPositions.length > 0
-          ? [...withImportedPositions].sort((a, b) => a.source_position - b.source_position).concat(withoutImportedPositions.sort(sortByRaceData))
-          : active.filter((r) => !r.dnf).sort(sortByRaceData);
+        const finished = mixedServers
+          ? [...active].sort(sortByRaceData)
+          : withImportedPositions.length > 0
+            ? [...withImportedPositions].sort((a, b) => a.source_position - b.source_position).concat(withoutImportedPositions.sort(sortByRaceData))
+            : active.filter((r) => !r.dnf).sort(sortByRaceData);
         // Min-finish threshold: drivers below X% of winner's laps get 0 points and no position.
         const maxLaps = Math.max(0, ...active.map((r: any) => r.laps ?? 0));
         const minLaps = minFinishPercent > 0 && maxLaps > 0 ? Math.ceil(maxLaps * minFinishPercent / 100) : 0;
@@ -849,7 +866,14 @@ function DivisionEditor({
                           <tr key={r.entry_id} className="border-t border-border">
                             <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
                             <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
-                            <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
+                            <td className="px-2 py-1.5 truncate">
+                              {r.driver_name}
+                              {r.source_server ? (
+                                <span className="ml-2 rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground align-middle">
+                                  {r.source_server}
+                                </span>
+                              ) : null}
+                            </td>
                             <td className="px-2 py-1.5 tabular-nums text-xs">
                               <Input
                                 className="h-8 w-16"
