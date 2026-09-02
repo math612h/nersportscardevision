@@ -79,6 +79,7 @@ import { Route as AuthenticatedAdminAdminStreamingProfilRouteImport } from './ro
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
 import { Route as AuthenticatedAdminAdminSponsorerRouteImport } from './routes/_authenticated._admin.admin.sponsorer'
 import { Route as AuthenticatedAdminAdminRollerRouteImport } from './routes/_authenticated._admin.admin.roller'
+import { Route as AuthenticatedAdminAdminReplaysRouteImport } from './routes/_authenticated._admin.admin.replays'
 import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
 import { Route as AuthenticatedAdminAdminPartnerfordeleRouteImport } from './routes/_authenticated._admin.admin.partnerfordele'
 import { Route as AuthenticatedAdminAdminPaceSammenligningRouteImport } from './routes/_authenticated._admin.admin.pace-sammenligning'
@@ -497,6 +498,12 @@ const AuthenticatedAdminAdminRollerRoute =
     path: '/admin/roller',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminReplaysRoute =
+  AuthenticatedAdminAdminReplaysRouteImport.update({
+    id: '/admin/replays',
+    path: '/admin/replays',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminProtestsRoute =
   AuthenticatedAdminAdminProtestsRouteImport.update({
     id: '/admin/protests',
@@ -741,6 +748,7 @@ export interface FileRoutesByFullPath {
   '/admin/pace-sammenligning': typeof AuthenticatedAdminAdminPaceSammenligningRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/admin/replays': typeof AuthenticatedAdminAdminReplaysRoute
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
@@ -840,6 +848,7 @@ export interface FileRoutesByTo {
   '/admin/overhalinger': typeof AuthenticatedAdminAdminOverhalingerRoute
   '/admin/pace-sammenligning': typeof AuthenticatedAdminAdminPaceSammenligningRoute
   '/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
+  '/admin/replays': typeof AuthenticatedAdminAdminReplaysRoute
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
@@ -944,6 +953,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/pace-sammenligning': typeof AuthenticatedAdminAdminPaceSammenligningRoute
   '/_authenticated/_admin/admin/partnerfordele': typeof AuthenticatedAdminAdminPartnerfordeleRoute
   '/_authenticated/_admin/admin/protests': typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  '/_authenticated/_admin/admin/replays': typeof AuthenticatedAdminAdminReplaysRoute
   '/_authenticated/_admin/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/_authenticated/_admin/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
@@ -1047,6 +1057,7 @@ export interface FileRouteTypes {
     | '/admin/pace-sammenligning'
     | '/admin/partnerfordele'
     | '/admin/protests'
+    | '/admin/replays'
     | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
@@ -1146,6 +1157,7 @@ export interface FileRouteTypes {
     | '/admin/overhalinger'
     | '/admin/pace-sammenligning'
     | '/admin/partnerfordele'
+    | '/admin/replays'
     | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
@@ -1249,6 +1261,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/pace-sammenligning'
     | '/_authenticated/_admin/admin/partnerfordele'
     | '/_authenticated/_admin/admin/protests'
+    | '/_authenticated/_admin/admin/replays'
     | '/_authenticated/_admin/admin/roller'
     | '/_authenticated/_admin/admin/sponsorer'
     | '/_authenticated/_admin/admin/storage'
@@ -1835,6 +1848,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminRollerRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/replays': {
+      id: '/_authenticated/_admin/admin/replays'
+      path: '/admin/replays'
+      fullPath: '/admin/replays'
+      preLoaderRoute: typeof AuthenticatedAdminAdminReplaysRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/protests': {
       id: '/_authenticated/_admin/admin/protests'
       path: '/admin/protests'
@@ -2118,6 +2138,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminPaceSammenligningRoute: typeof AuthenticatedAdminAdminPaceSammenligningRoute
   AuthenticatedAdminAdminPartnerfordeleRoute: typeof AuthenticatedAdminAdminPartnerfordeleRoute
   AuthenticatedAdminAdminProtestsRoute: typeof AuthenticatedAdminAdminProtestsRouteWithChildren
+  AuthenticatedAdminAdminReplaysRoute: typeof AuthenticatedAdminAdminReplaysRoute
   AuthenticatedAdminAdminRollerRoute: typeof AuthenticatedAdminAdminRollerRoute
   AuthenticatedAdminAdminSponsorerRoute: typeof AuthenticatedAdminAdminSponsorerRoute
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
@@ -2160,6 +2181,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
     AuthenticatedAdminAdminPartnerfordeleRoute,
   AuthenticatedAdminAdminProtestsRoute:
     AuthenticatedAdminAdminProtestsRouteWithChildren,
+  AuthenticatedAdminAdminReplaysRoute: AuthenticatedAdminAdminReplaysRoute,
   AuthenticatedAdminAdminRollerRoute: AuthenticatedAdminAdminRollerRoute,
   AuthenticatedAdminAdminSponsorerRoute: AuthenticatedAdminAdminSponsorerRoute,
   AuthenticatedAdminAdminStorageRoute: AuthenticatedAdminAdminStorageRoute,

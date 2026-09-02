@@ -51,7 +51,6 @@ export function PointsSystemEditor({
       ? value.points_per_position
       : DEFAULT_POINTS
   ).map((n) => Number(n) || 0);
-  const flPoints = Number(value.fastest_lap_points ?? 1);
 
   const { data: templates } = useQuery({
     queryKey: ["points-templates"],
@@ -83,7 +82,6 @@ export function PointsSystemEditor({
     if (!tpl) return;
     onChange({
       points_per_position: (tpl.points_per_position ?? []).map((n: any) => Number(n) || 0),
-      fastest_lap_points: Number(tpl.fastest_lap_points ?? 0),
     });
     toast.success(`Indlæst "${tpl.name}"`);
   };
@@ -94,7 +92,7 @@ export function PointsSystemEditor({
       name: tplName.trim(),
       description: tplDesc.trim() || null,
       points_per_position: points,
-      fastest_lap_points: flPoints,
+      fastest_lap_points: 0,
       created_by: user?.id ?? null,
     });
     if (error) return toast.error(error.message);
@@ -184,22 +182,6 @@ export function PointsSystemEditor({
           )}
         </div>
       )}
-
-      <div className="space-y-1.5">
-        <Label className="text-xs">FL-point (hurtigste omgang)</Label>
-        <Input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
-          className="max-w-40"
-          value={flPoints === 0 ? "" : String(flPoints)}
-          placeholder="0"
-          onChange={(e) => {
-            const raw = e.target.value.replace(/[^0-9]/g, "");
-            onChange({ ...value, fastest_lap_points: raw === "" ? 0 : Number(raw) });
-          }}
-        />
-      </div>
 
       <div className="space-y-1.5">
         <Label className="text-xs">Min. % af vinderens omgange for at undgå DNF</Label>

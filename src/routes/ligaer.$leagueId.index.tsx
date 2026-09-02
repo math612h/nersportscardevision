@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { Calendar, BookOpen, ArrowLeft, ChevronDown, ChevronRight, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, Zap, CheckCircle2, KeyRound, Settings as SettingsIcon, Timer, Shield, Lock, Gift } from "lucide-react";
+import { Calendar, BookOpen, ArrowLeft, ChevronDown, ChevronRight, MapPin, UserPlus, UserMinus, Users, Trophy, ArrowUpRight, CheckCircle2, KeyRound, Settings as SettingsIcon, Timer, Shield, Lock, Gift } from "lucide-react";
 import { useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -552,7 +552,6 @@ function LeagueDetail() {
 
       {!(league as any)?.separate_division_standings && (
         <>
-          <RaceDataResults leagueId={leagueId} />
           <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={false} />
         </>
       )}
@@ -859,7 +858,6 @@ type ResultRow = {
   driver_category: string;
   class_position: number;
   points: number;
-  fastest_lap?: boolean;
   penalty_seconds?: number;
   penalty_points?: number;
   dns?: boolean;
@@ -874,7 +872,6 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
       return data;
     },
   });
-  const leagueFlPoints = Number((league?.points_system as any)?.fastest_lap_points ?? 1);
 
   const { data: divisions } = useQuery({
     queryKey: ["league-results", leagueId],
@@ -946,11 +943,10 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     car_class: string;
     driver_category: string;
     race: number;
-    fl: number;
     total: number;
     penalty: number;
     pointPenalty: number;
-    rounds: Record<string, { points: number; fl: boolean; flPts: number; penalty: number; pointPenalty: number; dns: boolean }>;
+    rounds: Record<string, { points: number; penalty: number; pointPenalty: number; dns: boolean }>;
   };
   // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
   // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
@@ -968,7 +964,6 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
 
   const map = new Map<string, Agg>();
   for (const d of completed as any[]) {
-    const flPts = leagueFlPoints;
     for (const r of d.settings.results as ResultRow[]) {
       const cat = resolveCat(r as any);
       const key = `${r.car_class}|${cat}|${r.car_number}`;
@@ -978,21 +973,18 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         car_class: r.car_class,
         driver_category: cat,
         race: 0,
-        fl: 0,
         total: 0,
         penalty: 0,
         pointPenalty: 0,
         rounds: {},
       };
-      const earnedFl = r.fastest_lap ? flPts : 0;
       const pen = Number(r.penalty_seconds ?? 0);
       const ptsPen = Math.max(0, Number(r.penalty_points ?? 0));
       cur.race += r.points;
-      cur.fl += earnedFl;
-      cur.total += Math.max(0, r.points + earnedFl - ptsPen);
+      cur.total += Math.max(0, r.points - ptsPen);
       cur.penalty += pen;
       cur.pointPenalty += ptsPen;
-      cur.rounds[d.id] = { points: r.points, fl: !!r.fastest_lap, flPts: earnedFl, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns };
+      cur.rounds[d.id] = { points: r.points, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns };
       map.set(key, cur);
     }
   }
@@ -1036,7 +1028,6 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                         {d.name.slice(0, 4)}
                       </th>
                     ))}
-                    <th className="py-1 px-1 w-10 text-center" title="Fastest lap points">FL</th>
                     <th className="py-1 px-1 w-12 text-center" title="Samlet tidsstraf">Straf</th>
                     <th className="py-1 px-1 w-14 text-center" title="Samlet pointstraf">Pt-straf</th>
                     <th className="py-1 pl-2 w-12 text-right">Pts</th>
@@ -1058,15 +1049,11 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                         if (cell.dns) return <td key={d.id} className="py-1.5 px-1 text-center text-[10px] font-semibold text-destructive">DNS</td>;
                         return (
                           <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
-                            <div className="inline-flex items-center gap-0.5">
-                              <span>{cell.points}</span>
-                              {cell.fl && <Zap className="h-3 w-3 text-primary" aria-label="Fastest lap" />}
-                            </div>
+                            <span>{cell.points}</span>
                           </td>
                         );
 
                       })}
-                      <td className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">{r.fl || "–"}</td>
                       <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
                       <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : "–"}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
@@ -2044,210 +2031,3 @@ function EditEntryDialog({ leagueId }: { leagueId: string }) {
     </Dialog>
   );
 }
-
-type RaceResultRow = {
-  id: string;
-  division_id: string | null;
-  car_class: string;
-  car_model: string | null;
-  best_lap_ms: number | null;
-  position: number | null;
-  session_type: string;
-  user_id: string;
-};
-
-function msToLap(ms: number | null) {
-  if (ms == null) return "—";
-  const m = Math.floor(ms / 60000);
-  const s = ((ms % 60000) / 1000).toFixed(3).padStart(6, "0");
-  return m > 0 ? `${m}:${s}` : s;
-}
-
-function RaceDataResults({ leagueId }: { leagueId: string }) {
-  const [view, setView] = useState<"race" | "qualifying">("race");
-  const [divId, setDivId] = useState<string | null>(null);
-
-  const { data: rows } = useQuery({
-    queryKey: ["league-results-xml", leagueId],
-    queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from("league_results")
-        .select("id,division_id,car_class,car_model,best_lap_ms,position,session_type,user_id")
-        .eq("league_id", leagueId)
-        .not("division_id", "is", null)
-        .order("position", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as RaceResultRow[];
-    },
-  });
-
-  const { data: divisions } = useQuery({
-    queryKey: ["league-divisions-lite", leagueId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("divisions")
-        .select("id,name,race_date,settings")
-        .eq("league_id", leagueId)
-        .order("race_date", { ascending: true, nullsFirst: false });
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
-
-  const userIds = useMemo(() => Array.from(new Set((rows ?? []).map((r) => r.user_id))), [rows]);
-  const { data: profiles } = useQuery({
-    queryKey: ["profiles-names", userIds.sort().join(",")],
-    enabled: userIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("id,display_name,lmu_name").in("id", userIds);
-      if (error) throw error;
-      const m: Record<string, string> = {};
-      for (const p of (data ?? []) as any[]) m[p.id] = p.display_name ?? p.lmu_name ?? "Kører";
-      return m;
-    },
-  });
-
-  // Kategori (Pro/Am) pr. kører+klasse — bruges til at opdele resultaterne ved splittede klasser
-  const { data: catEntries } = useQuery({
-    queryKey: ["league-entries-cats", leagueId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("entries")
-        .select("user_id,car_class,driver_category")
-        .eq("league_id", leagueId);
-      if (error) throw error;
-      return (data ?? []) as { user_id: string; car_class: string; driver_category: string | null }[];
-    },
-  });
-  const catByUserClass = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const e of catEntries ?? []) {
-      if (e.driver_category) m.set(`${e.user_id}|${e.car_class}`, e.driver_category);
-    }
-    return m;
-  }, [catEntries]);
-
-  // Kun afsluttede afdelinger med resultatdata, nyest afsluttede først
-  const completedDivisions = useMemo(() => {
-    const withResults = new Set((rows ?? []).map((r) => r.division_id));
-    return (divisions ?? [])
-      .filter((d: any) => d.settings?.completed && isResultsPublished(d.settings) && withResults.has(d.id))
-      .sort((a: any, b: any) => {
-        const ta = new Date(a.settings?.completed_at ?? a.race_date ?? 0).getTime();
-        const tb = new Date(b.settings?.completed_at ?? b.race_date ?? 0).getTime();
-        return tb - ta;
-      });
-  }, [divisions, rows]);
-
-  const activeDivId = divId && completedDivisions.some((d: any) => d.id === divId) ? divId : completedDivisions[0]?.id ?? null;
-
-  if (!rows || rows.length === 0 || completedDivisions.length === 0) return null;
-
-  const filtered = (rows ?? []).filter((r) => r.session_type === view && r.division_id === activeDivId);
-  const byClass = new Map<string, RaceResultRow[]>();
-  for (const r of filtered) {
-    if (!byClass.has(r.car_class)) byClass.set(r.car_class, []);
-    byClass.get(r.car_class)!.push(r);
-  }
-
-  return (
-    <section className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-primary">
-          <Trophy className="h-4 w-4" />
-          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Resultatfiler</h2>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Select value={activeDivId ?? undefined} onValueChange={setDivId}>
-            <SelectTrigger className="h-8 w-56 text-xs">
-              <SelectValue placeholder="Vælg afdeling" />
-            </SelectTrigger>
-            <SelectContent>
-              {completedDivisions.map((d: any) => (
-                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="inline-flex rounded-md border border-border p-0.5">
-            <button
-              type="button"
-              onClick={() => setView("race")}
-              className={`px-3 py-1 text-xs font-medium rounded ${view === "race" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Race results
-            </button>
-            <button
-              type="button"
-              onClick={() => setView("qualifying")}
-              className={`px-3 py-1 text-xs font-medium rounded ${view === "qualifying" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-            >
-              Quali results
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="py-6 text-center text-sm text-muted-foreground">
-            Ingen {view === "race" ? "race" : "quali"}-fil uploadet for denne afdeling.
-          </CardContent>
-        </Card>
-      ) : (
-        Array.from(byClass.entries()).flatMap(([cls, list]) => {
-          // Opdel i kategorier (Pro/Am) når feltet er splittet
-          const cats = Array.from(
-            new Set(
-              list
-                .map((r) => catByUserClass.get(`${r.user_id}|${cls}`))
-                .filter(Boolean) as string[],
-            ),
-          ).sort((a, b) => (/pro/i.test(a) ? 0 : 1) - (/pro/i.test(b) ? 0 : 1));
-          const subgroups =
-            cats.length > 1
-              ? cats.map((cat) => ({
-                  cat: cat as string | null,
-                  rows: list.filter((r) => catByUserClass.get(`${r.user_id}|${cls}`) === cat),
-                }))
-              : [{ cat: null as string | null, rows: list }];
-          return subgroups.map((sg) => (
-            <Card key={`${cls}-${sg.cat ?? "all"}`}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <span>{cls}</span>
-                  {sg.cat && <Badge variant="outline" className="text-[10px]">{sg.cat}</Badge>}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-0 overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-muted-foreground">
-                      <th className="py-1 pr-2 w-8">#</th>
-                      <th className="py-1 pr-2">Kører</th>
-                      <th className="py-1 pr-2">Bil</th>
-                      <th className="py-1 pl-2 w-24 text-right">Bedste omg.</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sg.rows
-                      .slice()
-                      .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
-                      .map((r) => (
-                        <tr key={r.id} className="border-t border-border">
-                          <td className="py-1.5 pr-2 font-semibold tabular-nums">{r.position ?? "–"}</td>
-                          <td className="py-1.5 pr-2 truncate">{profiles?.[r.user_id] ?? "Kører"}</td>
-                          <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{r.car_model ?? "–"}</td>
-                          <td className="py-1.5 pl-2 text-right font-mono tabular-nums">{msToLap(r.best_lap_ms)}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </CardContent>
-            </Card>
-          ));
-        })
-      )}
-    </section>
-  );
-}
-

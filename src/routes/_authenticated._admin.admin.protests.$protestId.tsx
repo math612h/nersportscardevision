@@ -137,7 +137,6 @@ function AdminProtestDetail() {
       if (division) {
         const settings = (division.settings ?? {}) as any;
         const results: any[] = Array.isArray(settings.results) ? [...settings.results] : [];
-        const flPts = Number(((p as any)?.divisions?.leagues?.points_system as any)?.fastest_lap_points ?? 1);
 
         const userIds = new Set<string>([...Object.keys(prevApplied), ...Object.keys(newApplied)]);
         let changed = false;
@@ -176,7 +175,7 @@ function AdminProtestDetail() {
             finished.sort((a, b) => a.effective_ms - b.effective_ms);
             finished.forEach((r, idx) => {
               r.class_position = idx + 1;
-              const base = pointsFor(r.class_position) + (r.fastest_lap ? flPts : 0);
+              const base = pointsFor(r.class_position);
               r.points = Math.max(0, base - Math.max(0, Number(r.penalty_points ?? 0)));
             });
             for (const r of nonFinished) {

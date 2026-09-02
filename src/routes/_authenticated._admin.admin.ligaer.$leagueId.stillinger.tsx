@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Save, Zap, Check, Upload, Trash2, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Save, Check, Upload, Trash2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +43,6 @@ type DraftRow = {
   laps: number | null;
   penalty_seconds: number;
   penalty_points: number;
-  fastest_lap: boolean;
   dnf: boolean;
   dns: boolean;
   race_position: number | null;
@@ -140,7 +139,6 @@ function AdminStandings() {
     const arr = (league as any)?.points_system?.points_per_position;
     return Array.isArray(arr) && arr.length > 0 ? arr.map((n: any) => Number(n) || 0) : DEFAULT_POINTS_TABLE;
   })();
-  const leagueFlPoints: number = Number((league as any)?.points_system?.fastest_lap_points ?? 1);
   const minFinishPercent: number = Math.max(0, Math.min(100, Number((league as any)?.points_system?.min_finish_percent ?? 0)));
 
   return (
@@ -182,7 +180,6 @@ function AdminStandings() {
           entries={entries.filter((e) => e.car_number != null)}
           configs={configs}
           pointsTable={leaguePoints}
-          leagueFlPoints={leagueFlPoints}
           minFinishPercent={minFinishPercent}
           onSaved={() => {
             qc.invalidateQueries({ queryKey: ["divisions-admin", leagueId] });
@@ -202,7 +199,6 @@ function DivisionEditor({
   entries,
   configs,
   pointsTable,
-  leagueFlPoints,
   minFinishPercent,
   onSaved,
 }: {
@@ -211,7 +207,6 @@ function DivisionEditor({
   entries: EntryRec[];
   configs: ClassConfig[];
   pointsTable: number[];
-  leagueFlPoints: number;
   minFinishPercent: number;
   onSaved: () => void;
 }) {
@@ -247,7 +242,6 @@ function DivisionEditor({
       laps: race && typeof race.laps === "number" ? race.laps : null,
       penalty_seconds: Number(race?.penalty_seconds ?? 0),
       penalty_points: Number(race?.penalty_points ?? 0),
-      fastest_lap: !!race?.fastest_lap,
       dnf: !!race?.dnf,
       dns: !!race?.dns,
       race_position: typeof race?.class_position === "number" && race.class_position > 0 ? race.class_position : null,
@@ -261,7 +255,6 @@ function DivisionEditor({
 
   const [rows, setRows] = useState<DraftRow[]>(buildInitial);
   const [session, setSession] = useState<SessionKind>("race");
-  const flPoints = leagueFlPoints;
   const [completed, setCompleted] = useState<boolean>(!!division.settings?.completed);
   const [confirmed, setConfirmed] = useState<boolean>(!!division.settings?.results_confirmed);
   const [published, setPublished] = useState<boolean>(isResultsPublished(division.settings));
@@ -380,7 +373,7 @@ function DivisionEditor({
         if (p.finished && p.finishMs != null) {
           updates.set(row.entry_id, { ...common, time_str: msToStr(p.finishMs), laps: p.laps, race_position: racePosition, dnf: false, dns: false });
         } else {
-          updates.set(row.entry_id, { ...common, time_str: "", laps: p.laps, race_position: racePosition, fastest_lap: false, dnf: true, dns: false });
+          updates.set(row.entry_id, { ...common, time_str: "", laps: p.laps, race_position: racePosition, dnf: true, dns: false });
         }
       } else {
         if (p.bestLapMs != null) {
@@ -397,24 +390,7 @@ function DivisionEditor({
       if (!prof?.lmu_name) noLmu.push(r.driver_name);
     }
 
-    setRows((prev) => {
-      const next = prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r));
-      if (kind !== "race") return next;
-      // Hurtigste omgang pr. klasse på tværs af begge serverfiler
-      const flWinner = new Map<string, string>();
-      for (const r of next) {
-        if (r.dns || r.best_lap_ms == null || r.best_lap_ms <= 0) continue;
-        const k = `${r.car_class}|${r.driver_category}`;
-        const cur = flWinner.get(k);
-        const curMs = cur ? next.find((x) => x.entry_id === cur)?.best_lap_ms ?? Infinity : Infinity;
-        if (r.best_lap_ms < curMs) flWinner.set(k, r.entry_id);
-      }
-      return next.map((r) => {
-        const k = `${r.car_class}|${r.driver_category}`;
-        if (!flWinner.has(k)) return r;
-        return { ...r, fastest_lap: flWinner.get(k) === r.entry_id };
-      });
-    });
+    setRows((prev) => prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r)));
 
     // Push best-laps to global leaderboard (race file only)
     let lbInserted = 0;
@@ -581,7 +557,6 @@ function DivisionEditor({
           driver_category: r.driver_category,
           class_position: 0,
           points: 0,
-          fastest_lap: r.fastest_lap && !(r.dnf || r.dns),
           finish_time_ms: raceBase ?? 0,
           effective_ms: raceEff ?? 0,
           laps: r.laps,
@@ -626,16 +601,8 @@ function DivisionEditor({
         eligible.forEach((r, idx) => {
           r.class_position = idx + 1;
           const base = pointsFor(idx + 1);
-          const fl = r.fastest_lap ? flPoints : 0;
-          r.points = Math.max(0, base + fl - Math.max(0, r.penalty_points));
+          r.points = Math.max(0, base - Math.max(0, r.penalty_points));
         });
-        // FL uniqueness
-        const flCount = inClass.filter((r) => r.fastest_lap).length;
-        if (flCount > 1) {
-          toast.error(`Kun én hurtigste omgang pr. klasse (${cls} · ${cat})`);
-          setSaving(false);
-          return;
-        }
       }
       // Rank quali per class
       for (const k of groupKeys) {
@@ -891,7 +858,7 @@ function DivisionEditor({
                 try {
                   const res = await deleteResults({ data: { leagueId: division.league_id, divisionId: division.id, sessionType: session, clearDivisionSettings: session === "race" } });
                   setRows((prev) => prev.map((r) => session === "race"
-                    ? { ...r, time_str: "", laps: null, race_position: null, penalty_seconds: 0, penalty_points: 0, fastest_lap: false, dnf: false, dns: false }
+                    ? { ...r, time_str: "", laps: null, race_position: null, penalty_seconds: 0, penalty_points: 0, dnf: false, dns: false }
                     : { ...r, q_best_str: "", q_dns: false }
                   ));
                   if (session === "race") setCompleted(false);
@@ -958,7 +925,6 @@ function DivisionEditor({
                         <th className="px-2 py-1.5 w-24">Straf (s)</th>
                         <th className="px-2 py-1.5 w-24">Pointstraf</th>
                         <th className="px-2 py-1.5 w-24">Effektiv</th>
-                        <th className="px-2 py-1.5 w-12 text-center">FL</th>
                         <th className="px-2 py-1.5 w-12 text-center">DNF</th>
                         <th className="px-2 py-1.5 w-12 text-center">DNS</th>
                         <th className="px-2 py-1.5 w-14 text-right">Pts</th>
@@ -967,7 +933,7 @@ function DivisionEditor({
                     <tbody>
                       {groupRows.map((r) => {
                         const i = rows.findIndex((x) => x.entry_id === r.entry_id);
-                        const basePts = r.points + (r.fastest_lap && r.position > 0 ? flPoints : 0);
+                        const basePts = r.points;
                         const totalPts = Math.max(0, basePts - Math.max(0, r.penalty_points));
                         return (
                           <tr key={r.entry_id} className="border-t border-border">
@@ -1033,14 +999,6 @@ function DivisionEditor({
                             <td className="px-2 py-1.5 text-center">
                               <input
                                 type="checkbox"
-                                checked={r.fastest_lap}
-                                onChange={(e) => setRow(i, { fastest_lap: e.target.checked })}
-                                disabled={r.dnf || r.dns}
-                              />
-                            </td>
-                            <td className="px-2 py-1.5 text-center">
-                              <input
-                                type="checkbox"
                                 checked={r.dnf}
                                 onChange={(e) => setRow(i, { dnf: e.target.checked, dns: e.target.checked ? false : r.dns })}
                               />
@@ -1049,13 +1007,12 @@ function DivisionEditor({
                               <input
                                 type="checkbox"
                                 checked={r.dns}
-                                onChange={(e) => setRow(i, { dns: e.target.checked, dnf: e.target.checked ? false : r.dnf, fastest_lap: false })}
+                                onChange={(e) => setRow(i, { dns: e.target.checked, dnf: e.target.checked ? false : r.dnf })}
                               />
                             </td>
                             <td className="px-2 py-1.5 text-right font-semibold tabular-nums">
                               <span className="inline-flex items-center gap-0.5">
                                 {totalPts}
-                                {r.fastest_lap && r.position > 0 && <Zap className="h-3 w-3 text-primary" />}
                                 {r.penalty_points > 0 && <span className="text-[10px] text-destructive">-{r.penalty_points}p</span>}
                               </span>
                             </td>

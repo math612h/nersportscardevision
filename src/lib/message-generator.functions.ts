@@ -32,7 +32,6 @@ type ResultRow = {
   position: number;
   class_position: number;
   points: number;
-  fastest_lap?: boolean;
   penalty_points?: number;
   dns?: boolean;
 };
@@ -305,9 +304,6 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
 
 
     // --- 3. Standings ---
-    const leagueFlPoints = Number(
-      ((league as any).points_system?.fastest_lap_points) ?? 1,
-    );
     const completed = divisions.filter(
       (d) => d.settings?.completed && Array.isArray(d.settings?.results),
     );
@@ -339,9 +335,8 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
           total: 0,
           races: 0,
         };
-        const flPts = r.fastest_lap ? leagueFlPoints : 0;
         const pen = Math.max(0, Number(r.penalty_points ?? 0));
-        cur.total += Math.max(0, r.points + flPts - pen);
+        cur.total += Math.max(0, r.points - pen);
         cur.races += 1;
         map.set(key, cur);
       }
