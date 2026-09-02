@@ -114,6 +114,9 @@ function AdminStandings() {
 
   const { data: entries } = useQuery({
     queryKey: ["league-entries-for-standings", leagueId],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
@@ -125,6 +128,7 @@ function AdminStandings() {
       return (data ?? []) as EntryRec[];
     },
   });
+
 
   useEffect(() => {
     if (!divisionId && divisions && divisions.length > 0) setDivisionId(divisions[0].id);
@@ -213,15 +217,25 @@ function DivisionEditor({
 }) {
   const existingRace: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
   const existingQuali: any[] = Array.isArray(division.settings?.quali_results) ? division.settings.quali_results : [];
-  const raceByKey = new Map(existingRace.map((r) => [`${r.car_class}|${r.driver_category}|${r.car_number}`, r]));
-  const qualiByKey = new Map(existingQuali.map((r) => [`${r.car_class}|${r.driver_category}|${r.car_number}`, r]));
+  // Nøgl gemte resultater på bruger-id (bilnummer som reserve). Klasse/kategori
+  // duer ikke som nøgle: flyttes en kører mellem Pro og Am mister vi hans data.
+  const buildLookup = (arr: any[]) => {
+    const byUser = new Map<string, any>();
+    const byNumber = new Map<number, any>();
+    for (const r of arr) {
+      if (r?.user_id && !byUser.has(r.user_id)) byUser.set(r.user_id, r);
+      if (typeof r?.car_number === "number" && !byNumber.has(r.car_number)) byNumber.set(r.car_number, r);
+    }
+    return (e: EntryRec) => byUser.get(e.user_id) ?? (e.car_number != null ? byNumber.get(e.car_number) : undefined);
+  };
+  const findRace = buildLookup(existingRace);
+  const findQuali = buildLookup(existingQuali);
 
   const gridEntries = entries.filter((e) => !e.waitlist);
 
   const buildInitial = (): DraftRow[] => gridEntries.map((e) => {
-    const k = `${e.car_class}|${e.driver_category}|${e.car_number}`;
-    const race = raceByKey.get(k) as any;
-    const quali = qualiByKey.get(k) as any;
+    const race = findRace(e) as any;
+    const quali = findQuali(e) as any;
     return {
       entry_id: e.id,
       user_id: e.user_id,
@@ -243,6 +257,7 @@ function DivisionEditor({
       q_dns: !!quali?.dns,
     };
   });
+
 
   const [rows, setRows] = useState<DraftRow[]>(buildInitial);
   const [session, setSession] = useState<SessionKind>("race");
@@ -272,6 +287,32 @@ function DivisionEditor({
     setImportedFiles({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
+
+  // Hold kørerlisten synkron med tilmeldingerne (fx flytning mellem Pro/Am),
+  // uden at smide allerede indtastede/importerede tider væk.
+  const entriesSignature = useMemo(
+    () => gridEntries.map((e) => `${e.id}|${e.car_class}|${e.driver_category}|${e.car_number}|${e.driver_name}`).join(";"),
+    [gridEntries],
+  );
+  useEffect(() => {
+    setRows((prev) => {
+      const byEntry = new Map(prev.map((r) => [r.entry_id, r]));
+      return gridEntries.map((e) => {
+        const existing = byEntry.get(e.id);
+        if (!existing) return buildInitial().find((r) => r.entry_id === e.id)!;
+        return {
+          ...existing,
+          user_id: e.user_id,
+          car_number: e.car_number,
+          driver_name: e.driver_name,
+          car_class: e.car_class,
+          driver_category: e.driver_category,
+        };
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entriesSignature]);
+
 
   useEffect(() => {
     setImportedFiles({});
@@ -1151,18 +1192,24 @@ async function reconcileWaitlist({
   configs: ClassConfig[];
 }) {
   const dnsByEntry = new Map<string, number>();
-  const entryByKey = new Map<string, EntryRec>();
-  for (const e of entries) entryByKey.set(`${e.car_class}|${e.driver_category}|${e.car_number}`, e);
+  const entryByUser = new Map<string, EntryRec>();
+  const entryByNumber = new Map<number, EntryRec>();
+  for (const e of entries) {
+    if (!entryByUser.has(e.user_id)) entryByUser.set(e.user_id, e);
+    if (e.car_number != null && !entryByNumber.has(e.car_number)) entryByNumber.set(e.car_number, e);
+  }
 
   const countResults = (results: any[]) => {
     for (const r of results) {
       if (!r?.dns) continue;
-      const key = `${r.car_class}|${r.driver_category}|${r.car_number}`;
-      const ent = entryByKey.get(key);
+      const ent =
+        (r.user_id ? entryByUser.get(r.user_id) : undefined) ??
+        (typeof r.car_number === "number" ? entryByNumber.get(r.car_number) : undefined);
       if (!ent) continue;
       dnsByEntry.set(ent.id, (dnsByEntry.get(ent.id) ?? 0) + 1);
     }
   };
+
 
   for (const d of allDivisions) {
     if (d.id === currentDivisionId) continue;
