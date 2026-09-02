@@ -351,15 +351,35 @@ function MoveEntryDialog({ entry, leagueId, allEntries, onDone }: { entry: Entry
 
   const selected = configs.find((c) => c.car_class === carClass && c.driver_category === category);
 
+  // Kørenumre er unikke pr. liga (på tværs af klasser), så hent alle brugte numre i ligaen
+  const { data: leagueNumbers } = useQuery({
+    queryKey: ["league-car-numbers", leagueId, open],
+    enabled: open,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("id, car_number")
+        .eq("league_id", leagueId)
+        .not("car_number", "is", null);
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; car_number: number | null }>;
+    },
+  });
+
   const { taken, available } = useMemo(() => {
     if (!selected) return { taken: [] as number[], available: [] as number[] };
-    const t = allEntries
-      .filter((s) => s.id !== entry.id && s.car_class === selected.car_class && s.driver_category === selected.driver_category && s.car_number != null)
+    const fromDb = (leagueNumbers ?? [])
+      .filter((s) => s.id !== entry.id && s.car_number != null)
       .map((s) => s.car_number as number);
+    const fromLocal = allEntries
+      .filter((s) => s.id !== entry.id && s.car_number != null)
+      .map((s) => s.car_number as number);
+    const t = Array.from(new Set([...fromDb, ...fromLocal]));
     const a: number[] = [];
     for (let n = selected.number_from; n <= selected.number_to; n++) if (!t.includes(n)) a.push(n);
     return { taken: t, available: a };
-  }, [allEntries, selected, entry.id]);
+  }, [allEntries, leagueNumbers, selected, entry.id]);
+
 
   const pickConfig = (key: string) => {
     const c = configs[Number(key)];
