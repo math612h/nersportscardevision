@@ -710,6 +710,9 @@ function DivisionDetail() {
                   </CardContent>
                 </Card>
               ))}
+              {showTeam && (!teamByClass || teamByClass.size === 0) && (
+                <p className="text-sm text-muted-foreground">Ingen teams opnåede point i dette løb (kræver mindst 2 kørere pr. team).</p>
+              )}
               {!showTeam && Array.from(byClass.entries()).flatMap(([cls, list]) => {
                 // Opdel i kategorier (Pro/Am) når feltet er splittet
                 const cats = Array.from(
