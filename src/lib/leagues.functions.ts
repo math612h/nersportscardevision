@@ -324,7 +324,12 @@ export const updateMyLeagueEntry = createServerFn({ method: "POST" })
     const lockAtRaw = (league as any).car_lock_at ?? null;
     const lockAt = lockAtRaw ? new Date(lockAtRaw).getTime() : null;
     if (!lockNever && lockAt != null && Number.isFinite(lockAt) && Date.now() >= lockAt) {
-      throw new Error("Bilvalg er låst.");
+      const { data: roles } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+      if (!isAdmin) throw new Error("Tilmeldingen er låst og kan ikke længere ændres.");
     }
 
     const { data: entry, error: entryErr } = await supabaseAdmin
