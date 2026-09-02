@@ -512,6 +512,8 @@ function DivisionEditor({
           effective_ms: raceEff ?? 0,
           laps: r.laps,
           source_position: r.race_position,
+          source_server: r.source_server,
+          best_lap_ms: r.best_lap_ms ?? 0,
           penalty_seconds: Math.max(0, r.penalty_seconds),
           penalty_points: Math.max(0, r.penalty_points),
           dnf: r.dnf && !r.dns,
