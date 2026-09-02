@@ -151,7 +151,6 @@ const publishRowSchema = z.object({
   points_penalty: z.number().min(0).default(0),
   dsq: z.boolean().default(false),
   dnf: z.boolean().default(false),
-  fastest_lap: z.boolean().default(false),
 });
 
 const publishSchema = z.object({
@@ -227,7 +226,7 @@ export const publishLeagueRaceResult = createServerFn({ method: "POST" })
         best_lap_ms: r.best_lap_ms ?? null,
         laps: r.laps ?? null,
         points: r.points,
-        fastest_lap: !!r.fastest_lap,
+        fastest_lap: false,
         penalty_seconds: Math.round((r.time_penalty_ms ?? 0) / 1000),
         penalty_points: r.points_penalty ?? 0,
         dns: false,

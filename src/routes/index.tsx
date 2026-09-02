@@ -42,7 +42,6 @@ type ResultRow = {
   driver_category?: string;
   class_position?: number;
   points?: number;
-  fastest_lap?: boolean;
   dns?: boolean;
   dnf?: boolean;
 };
