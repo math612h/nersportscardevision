@@ -620,6 +620,47 @@ export type Database = {
           },
         ]
       }
+      division_replays: {
+        Row: {
+          created_at: string
+          division_id: string
+          file_name: string
+          id: string
+          path: string
+          server: string
+          size_bytes: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          division_id: string
+          file_name: string
+          id?: string
+          path: string
+          server: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          division_id?: string
+          file_name?: string
+          id?: string
+          path?: string
+          server?: string
+          size_bytes?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "division_replays_division_id_fkey"
+            columns: ["division_id"]
+            isOneToOne: false
+            referencedRelation: "divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       division_reserve_offers: {
         Row: {
           absentee_user_id: string
