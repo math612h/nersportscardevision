@@ -278,10 +278,14 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       ? (league.points_system as any).points_per_position : [];
     const minFinishPct = Math.max(0, Math.min(100, Number((league.points_system as any)?.min_finish_percent ?? 0))) / 100;
 
+    // Gruppér pr. bilklasse + kategori, så fx LMGT3 Pro og LMGT3 Am hver
+    // måles mod deres egen klasses vinder (ikke hinanden eller LMP2).
+    const groupKeyOf = (m: Matched) => `${m.car_class}|${m.driver_category ?? ""}`;
     const byClass = new Map<string, Matched[]>();
     for (const m of matched) {
-      if (!byClass.has(m.car_class)) byClass.set(m.car_class, []);
-      byClass.get(m.car_class)!.push(m);
+      const k = groupKeyOf(m);
+      if (!byClass.has(k)) byClass.set(k, []);
+      byClass.get(k)!.push(m);
     }
     const dnfFlag = new Map<Matched, boolean>();
     if (minFinishPct > 0 && data.sessionType === "race") {
@@ -293,7 +297,8 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       }
     }
     const resultRows: any[] = [];
-    for (const [carClass, arr] of byClass) {
+    for (const [groupKey, arr] of byClass) {
+      const carClass = arr[0]?.car_class ?? groupKey.split("|")[0];
       const allHavePos = arr.every((d) => d.position != null);
       let ordered: typeof arr;
       if (allHavePos) ordered = [...arr].sort((a, b) => (a.position! - b.position!));
