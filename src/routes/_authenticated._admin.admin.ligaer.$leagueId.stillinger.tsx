@@ -866,7 +866,14 @@ function DivisionEditor({
                           <tr key={r.entry_id} className="border-t border-border">
                             <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
                             <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
-                            <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
+                            <td className="px-2 py-1.5 truncate">
+                              {r.driver_name}
+                              {r.source_server ? (
+                                <span className="ml-2 rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground align-middle">
+                                  {r.source_server}
+                                </span>
+                              ) : null}
+                            </td>
                             <td className="px-2 py-1.5 tabular-nums text-xs">
                               <Input
                                 className="h-8 w-16"
