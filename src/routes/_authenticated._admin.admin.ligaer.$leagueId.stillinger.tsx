@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
 import { deleteLeagueRaceResults, setResultsConfirmed } from "@/lib/league-results.functions";
@@ -285,123 +286,150 @@ function DivisionEditor({
     },
   });
 
+  const [pendingMatch, setPendingMatch] = useState<{
+    parsedRace: ReturnType<typeof parseLmuRaceFile>;
+    kind: SessionKind;
+    server: ServerKind;
+    fileName: string;
+    names: string[];
+  } | null>(null);
+  const [matchChoices, setMatchChoices] = useState<Record<string, string>>({});
+
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+
+
+  const resolveUser = (parsedName: string, overrides?: Record<string, string>): string | null => {
+    const key = parsedName.trim().toLowerCase();
+    const ov = overrides?.[key];
+    if (ov) return ov;
+    const profilesWithLmu = (profiles ?? []).filter((p) => (p.lmu_name ?? "").trim().length > 0);
+    const exact = profilesWithLmu.find((p) => (p.lmu_name ?? "").trim().toLowerCase() === key);
+    if (exact) return exact.id;
+    const best = findBestNameMatch(parsedName, profilesWithLmu, (p) => p.lmu_name, 0.85);
+    return best?.match.id ?? null;
+  };
+
+  const applyParsed = async (
+    parsedRace: ReturnType<typeof parseLmuRaceFile>,
+    kind: SessionKind,
+    server: ServerKind,
+    fileName: string,
+    overrides: Record<string, string>,
+  ) => {
+    const parsed = parsedRace.drivers;
+    let matched = 0;
+    const missing: string[] = [];
+    const noLmu: string[] = [];
+
+    const updates = new Map<string, Partial<DraftRow>>();
+    for (const p of parsed) {
+      const userId = resolveUser(p.name, overrides);
+      if (!userId) { missing.push(p.name); continue; }
+      const row = rows.find((r) => r.user_id === userId);
+      if (!row) continue;
+      if (kind === "race") {
+        const racePosition = p.classPosition ?? p.position ?? null;
+        const common = { best_lap_ms: p.bestLapMs ?? null, source_server: server };
+        if (p.finished && p.finishMs != null) {
+          updates.set(row.entry_id, { ...common, time_str: msToStr(p.finishMs), laps: p.laps, race_position: racePosition, dnf: false, dns: false });
+        } else {
+          updates.set(row.entry_id, { ...common, time_str: "", laps: p.laps, race_position: racePosition, fastest_lap: false, dnf: true, dns: false });
+        }
+      } else {
+        if (p.bestLapMs != null) {
+          updates.set(row.entry_id, { q_best_str: msToStr(p.bestLapMs), q_dns: false });
+        } else {
+          updates.set(row.entry_id, { q_best_str: "", q_dns: true });
+        }
+      }
+      matched++;
+    }
+
+    for (const r of rows) {
+      const prof = (profiles ?? []).find((p) => p.id === r.user_id);
+      if (!prof?.lmu_name) noLmu.push(r.driver_name);
+    }
+
+    setRows((prev) => {
+      const next = prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r));
+      if (kind !== "race") return next;
+      // Hurtigste omgang pr. klasse på tværs af begge serverfiler
+      const flWinner = new Map<string, string>();
+      for (const r of next) {
+        if (r.dns || r.best_lap_ms == null || r.best_lap_ms <= 0) continue;
+        const k = `${r.car_class}|${r.driver_category}`;
+        const cur = flWinner.get(k);
+        const curMs = cur ? next.find((x) => x.entry_id === cur)?.best_lap_ms ?? Infinity : Infinity;
+        if (r.best_lap_ms < curMs) flWinner.set(k, r.entry_id);
+      }
+      return next.map((r) => {
+        const k = `${r.car_class}|${r.driver_category}`;
+        if (!flWinner.has(k)) return r;
+        return { ...r, fastest_lap: flWinner.get(k) === r.entry_id };
+      });
+    });
+
+    // Push best-laps to global leaderboard (race file only)
+    let lbInserted = 0;
+    if (kind === "race") {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const lbRows = parsed
+          .filter((p) => p.bestLapMs != null && p.carClass)
+          .map((p) => {
+            const matchId = resolveUser(p.name, overrides);
+            if (!matchId) return null;
+            return {
+              user_id: matchId,
+              driver_name: p.name,
+              track: parsedRace.track,
+              layout: parsedRace.layout,
+              car_class: normalizeCarClass(p.carClass),
+              car_model: p.carModel,
+              best_lap_ms: p.bestLapMs!,
+              source: "admin" as const,
+              uploaded_by: user.id,
+              division_id: division.id,
+              recorded_at: parsedRace.recordedAt,
+            };
+          })
+          .filter((r): r is NonNullable<typeof r> => r !== null);
+        if (lbRows.length > 0) {
+          const { error: lbErr } = await supabase.from("leaderboard_times").insert(lbRows);
+          if (!lbErr) lbInserted = lbRows.length;
+        }
+      }
+    }
+
+    setImportedFiles((prev) => ({ ...prev, [server]: { fileName, matched } }));
+    toast.success(`${SERVER_LABEL[server]}: importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
+    if (missing.length > 0) toast.warning(`${missing.length} ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
+    if (noLmu.length > 0) toast.message(`${noLmu.length} på grid mangler LMU-navn.`);
+  };
 
   const importXml = async (file: File, kind: SessionKind, server: ServerKind) => {
     try {
       const text = await file.text();
       const parsedRace = parseLmuRaceFile(text);
-      const parsed = parsedRace.drivers;
       setImportedInfo({ track: parsedRace.track, layout: parsedRace.layout });
 
-      const lmuToUser = new Map<string, string>();
-      const profilesWithLmu = (profiles ?? []).filter((p) => (p.lmu_name ?? "").trim().length > 0);
-      for (const p of profilesWithLmu) {
-        const key = (p.lmu_name ?? "").trim().toLowerCase();
-        if (key) lmuToUser.set(key, p.id);
+      const unresolved = Array.from(
+        new Set(parsedRace.drivers.filter((p) => !resolveUser(p.name)).map((p) => p.name.trim()).filter(Boolean)),
+      );
+
+      if (unresolved.length > 0) {
+        setPendingMatch({ parsedRace, kind, server, fileName: file.name, names: unresolved });
+        setMatchChoices({});
+        return;
       }
 
-      let matched = 0;
-      const missing: string[] = [];
-      const noLmu: string[] = [];
-
-      const resolveUser = (parsedName: string): string | null => {
-        const key = parsedName.trim().toLowerCase();
-        const exact = lmuToUser.get(key);
-        if (exact) return exact;
-        const best = findBestNameMatch(parsedName, profilesWithLmu, (p) => p.lmu_name, 0.85);
-        return best?.match.id ?? null;
-      };
-
-      const updates = new Map<string, Partial<DraftRow>>();
-      for (const p of parsed) {
-        const userId = resolveUser(p.name);
-        if (!userId) { missing.push(p.name); continue; }
-        const row = rows.find((r) => r.user_id === userId);
-        if (!row) continue;
-        if (kind === "race") {
-          const racePosition = p.classPosition ?? p.position ?? null;
-          const common = { best_lap_ms: p.bestLapMs ?? null, source_server: server };
-          if (p.finished && p.finishMs != null) {
-            updates.set(row.entry_id, { ...common, time_str: msToStr(p.finishMs), laps: p.laps, race_position: racePosition, dnf: false, dns: false });
-          } else {
-            updates.set(row.entry_id, { ...common, time_str: "", laps: p.laps, race_position: racePosition, fastest_lap: false, dnf: true, dns: false });
-          }
-        } else {
-          if (p.bestLapMs != null) {
-            updates.set(row.entry_id, { q_best_str: msToStr(p.bestLapMs), q_dns: false });
-          } else {
-            updates.set(row.entry_id, { q_best_str: "", q_dns: true });
-          }
-        }
-        matched++;
-      }
-
-      for (const r of rows) {
-        const prof = (profiles ?? []).find((p) => p.id === r.user_id);
-        if (!prof?.lmu_name) noLmu.push(r.driver_name);
-      }
-
-      setRows((prev) => {
-        const next = prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r));
-        if (kind !== "race") return next;
-        // Hurtigste omgang pr. klasse på tværs af begge serverfiler
-        const flWinner = new Map<string, string>();
-        for (const r of next) {
-          if (r.dns || r.best_lap_ms == null || r.best_lap_ms <= 0) continue;
-          const k = `${r.car_class}|${r.driver_category}`;
-          const cur = flWinner.get(k);
-          const curMs = cur ? next.find((x) => x.entry_id === cur)?.best_lap_ms ?? Infinity : Infinity;
-          if (r.best_lap_ms < curMs) flWinner.set(k, r.entry_id);
-        }
-        return next.map((r) => {
-          const k = `${r.car_class}|${r.driver_category}`;
-          if (!flWinner.has(k)) return r;
-          return { ...r, fastest_lap: flWinner.get(k) === r.entry_id };
-        });
-      });
-
-      // Push best-laps to global leaderboard (race file only)
-      let lbInserted = 0;
-      if (kind === "race") {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const lbRows = parsed
-            .filter((p) => p.bestLapMs != null && p.carClass)
-            .map((p) => {
-              const matchId = resolveUser(p.name);
-              if (!matchId) return null;
-              return {
-                user_id: matchId,
-                driver_name: p.name,
-                track: parsedRace.track,
-                layout: parsedRace.layout,
-                car_class: normalizeCarClass(p.carClass),
-                car_model: p.carModel,
-                best_lap_ms: p.bestLapMs!,
-                source: "admin" as const,
-                uploaded_by: user.id,
-                division_id: division.id,
-                recorded_at: parsedRace.recordedAt,
-              };
-            })
-            .filter((r): r is NonNullable<typeof r> => r !== null);
-          if (lbRows.length > 0) {
-            const { error: lbErr } = await supabase.from("leaderboard_times").insert(lbRows);
-            if (!lbErr) lbInserted = lbRows.length;
-          }
-        }
-      }
-
-      setImportedFiles((prev) => ({ ...prev, [server]: { fileName: file.name, matched } }));
-      toast.success(`${SERVER_LABEL[server]}: importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
-      if (missing.length > 0) toast.warning(`${missing.length} ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
-      if (noLmu.length > 0) toast.message(`${noLmu.length} på grid mangler LMU-navn.`);
+      await applyParsed(parsedRace, kind, server, file.name, {});
     } catch (e: any) {
       toast.error(e.message ?? "Kunne ikke importere fil");
     }
   };
+
 
   const groupKeys = useMemo(() => {
     return configs.length
@@ -689,6 +717,7 @@ function DivisionEditor({
   };
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1006,8 +1035,70 @@ function DivisionEditor({
         </p>
       </CardContent>
     </Card>
+
+    <Dialog open={!!pendingMatch} onOpenChange={(o) => { if (!o) setPendingMatch(null); }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Match kørere manuelt</DialogTitle>
+          <DialogDescription>
+            {pendingMatch
+              ? `${pendingMatch.names.length} kører(e) i ${pendingMatch.fileName} kunne ikke matches automatisk. Vælg den rigtige deltager fra entrylisten, eller lad feltet stå tomt for at springe over.`
+              : ""}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[50vh] space-y-3 overflow-y-auto pr-1">
+          {pendingMatch?.names.map((name) => {
+            const key = name.trim().toLowerCase();
+            const taken = new Set(Object.entries(matchChoices).filter(([k]) => k !== key).map(([, v]) => v));
+            return (
+              <div key={key} className="grid gap-2 sm:grid-cols-2 sm:items-center">
+                <div className="font-mono text-sm">{name}</div>
+                <Select
+                  value={matchChoices[key] ?? "__skip"}
+                  onValueChange={(v) =>
+                    setMatchChoices((prev) => {
+                      const next = { ...prev };
+                      if (v === "__skip") delete next[key];
+                      else next[key] = v;
+                      return next;
+                    })
+                  }
+                >
+                  <SelectTrigger><SelectValue placeholder="Vælg deltager" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__skip">— Spring over —</SelectItem>
+                    {rows
+                      .filter((r) => !taken.has(r.user_id))
+                      .map((r) => (
+                        <SelectItem key={r.entry_id} value={r.user_id}>
+                          #{r.car_number} {r.driver_name} · {r.car_class} {r.driver_category}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            );
+          })}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setPendingMatch(null)}>Annuller</Button>
+          <Button
+            onClick={async () => {
+              const p = pendingMatch;
+              if (!p) return;
+              setPendingMatch(null);
+              await applyParsed(p.parsedRace, p.kind, p.server, p.fileName, matchChoices);
+            }}
+          >
+            Importér
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
+
 
 async function reconcileWaitlist({
   currentDivisionId,
