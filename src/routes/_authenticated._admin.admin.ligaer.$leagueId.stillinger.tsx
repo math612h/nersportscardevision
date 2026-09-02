@@ -235,6 +235,8 @@ function DivisionEditor({
       dnf: !!race?.dnf,
       dns: !!race?.dns,
       race_position: typeof race?.class_position === "number" && race.class_position > 0 ? race.class_position : null,
+      best_lap_ms: typeof race?.best_lap_ms === "number" && race.best_lap_ms > 0 ? race.best_lap_ms : null,
+      source_server: race?.source_server === "pro" || race?.source_server === "am" ? race.source_server : null,
       q_best_str: quali && typeof quali.best_lap_ms === "number" && quali.best_lap_ms > 0 ? msToStr(quali.best_lap_ms) : "",
       q_dns: !!quali?.dns,
     };
