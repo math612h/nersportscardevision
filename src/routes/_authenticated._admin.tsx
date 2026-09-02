@@ -15,7 +15,7 @@ function AdminGate() {
   const { user, isAdmin, isSteward, loading } = useAuth();
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
-  const stewardAllowed = pathname.startsWith("/admin/protests");
+  const stewardAllowed = pathname.startsWith("/admin/protests") || pathname.startsWith("/admin/replays");
   const allowed = isAdmin || (isSteward && stewardAllowed);
 
   useEffect(() => {

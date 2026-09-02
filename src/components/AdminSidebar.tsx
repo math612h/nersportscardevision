@@ -1,4 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import {
+  Film, Link, useRouterState } from "@tanstack/react-router";
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -118,6 +119,7 @@ export function AdminSidebar() {
         { title: "Regelsæt-arkiv", url: "/admin/regelsaet", icon: BookOpen },
         { title: "Pro/Am tempo", url: "/admin/pace-sammenligning", icon: Gauge },
         { title: "Protester", url: "/admin/protests", icon: MessageSquareWarning, badge: openProtestsCount },
+        { title: "Replays", url: "/admin/replays", icon: Film },
         { title: "Teams", url: "/teams", icon: Shield },
         { title: "Coaches", url: "/admin/coaches", icon: GraduationCap },
         { title: "Coaching bookinger", url: "/admin/coaching-bookings", icon: CalendarDays },
