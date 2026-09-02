@@ -288,6 +288,32 @@ function DivisionEditor({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
 
+  // Hold kørerlisten synkron med tilmeldingerne (fx flytning mellem Pro/Am),
+  // uden at smide allerede indtastede/importerede tider væk.
+  const entriesSignature = useMemo(
+    () => gridEntries.map((e) => `${e.id}|${e.car_class}|${e.driver_category}|${e.car_number}|${e.driver_name}`).join(";"),
+    [gridEntries],
+  );
+  useEffect(() => {
+    setRows((prev) => {
+      const byEntry = new Map(prev.map((r) => [r.entry_id, r]));
+      return gridEntries.map((e) => {
+        const existing = byEntry.get(e.id);
+        if (!existing) return buildInitial().find((r) => r.entry_id === e.id)!;
+        return {
+          ...existing,
+          user_id: e.user_id,
+          car_number: e.car_number,
+          driver_name: e.driver_name,
+          car_class: e.car_class,
+          driver_category: e.driver_category,
+        };
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entriesSignature]);
+
+
   useEffect(() => {
     setImportedFiles({});
   }, [session]);
