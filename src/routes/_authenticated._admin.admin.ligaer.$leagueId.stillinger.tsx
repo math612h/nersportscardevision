@@ -285,8 +285,18 @@ function DivisionEditor({
     },
   });
 
+  const [pendingMatch, setPendingMatch] = useState<{
+    parsedRace: ReturnType<typeof parseLmuRaceFile>;
+    kind: SessionKind;
+    server: ServerKind;
+    fileName: string;
+    names: string[];
+  } | null>(null);
+  const [matchChoices, setMatchChoices] = useState<Record<string, string>>({});
+
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+
 
   const resolveUser = (parsedName: string, overrides?: Record<string, string>): string | null => {
     const key = parsedName.trim().toLowerCase();
