@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { toastError } from "@/lib/toast";
 import { supabase } from "@/integrations/supabase/client";
+import { isResultsPublished } from "@/lib/results-visibility";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
@@ -916,7 +917,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   const teamIds = useMemo(() => Object.values(entryTeamMap).filter(Boolean) as string[], [entryTeamMap]);
   const { data: teamMap } = useTeamLookup(teamIds);
 
-  const allCompleted = (divisions ?? []).filter((d: any) => d.settings?.completed && Array.isArray(d.settings?.results));
+  const allCompleted = (divisions ?? []).filter((d: any) => d.settings?.completed && isResultsPublished(d.settings) && Array.isArray(d.settings?.results));
   const completed: any[] = allCompleted;
 
   if (separateDivisionStandings) {
@@ -2130,7 +2131,7 @@ function RaceDataResults({ leagueId }: { leagueId: string }) {
   const completedDivisions = useMemo(() => {
     const withResults = new Set((rows ?? []).map((r) => r.division_id));
     return (divisions ?? [])
-      .filter((d: any) => d.settings?.completed && withResults.has(d.id))
+      .filter((d: any) => d.settings?.completed && isResultsPublished(d.settings) && withResults.has(d.id))
       .sort((a: any, b: any) => {
         const ta = new Date(a.settings?.completed_at ?? a.race_date ?? 0).getTime();
         const tb = new Date(b.settings?.completed_at ?? b.race_date ?? 0).getTime();
