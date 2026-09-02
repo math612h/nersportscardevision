@@ -1,9 +1,8 @@
 // Sammenligning af LMGT3-kørernes løbstempo på tværs af to racefiler
 // (PRO-serveren med LMGT3 Pro + LMP2, og AM-serveren med LMGT3 Am).
 //
-// Ren logik uden UI: udvælger de 10 hurtigste GYLDIGE omgange pr. kører,
-// beregner medianen (gennemsnittet af 5. og 6. hurtigste) og sorterer alle
-// kørere i én samlet liste.
+// Ren logik uden UI: beregner medianen af ALLE gyldige omgange pr. kører
+// og sorterer alle kørere i én samlet liste.
 
 import type { ParsedDriver, ParsedRace } from "./lmu-parser";
 
@@ -22,10 +21,11 @@ export type PaceRow = {
   validLaps: PaceLap[];
   validLapCount: number;
   fastestLapMs: number | null;
-  /** De 10 hurtigste gyldige omgange (kun når der er mindst 10). */
+  /** Alle gyldige omgange (bruges til udfoldning i UI). */
   topLaps: PaceLap[];
-  /** Median af de 10 hurtigste — null hvis under 10 gyldige omgange. */
+  /** Median af alle gyldige omgange — null hvis der slet ingen gyldige omgange er. */
   medianMs: number | null;
+  /** Sand når køreren slet ikke har gyldige omgange. */
   insufficient: boolean;
   /** Placering i den samlede rangering; null når datagrundlaget er utilstrækkeligt. */
   position: number | null;
@@ -33,9 +33,7 @@ export type PaceRow = {
   gapMs: number | null;
 };
 
-export const TOP_LAPS = 10;
-
-/** Median af præcis N tider = gennemsnittet af de to midterste (ved lige antal). */
+/** Median af N tider = gennemsnittet af de to midterste (ved lige antal). */
 export function medianOf(sortedMs: number[]): number | null {
   if (sortedMs.length === 0) return null;
   const mid = sortedMs.length / 2;
@@ -86,8 +84,7 @@ export function buildPaceComparison(files: PaceFile[]): PaceRow[] {
       if ((d.carClassNorm || "").toUpperCase() !== "LMGT3") continue;
       for (const part of splitDriverLaps(d)) {
         const sorted = [...part.laps].sort((a, b) => a.ms - b.ms);
-        const topLaps = sorted.slice(0, TOP_LAPS);
-        const insufficient = sorted.length < TOP_LAPS;
+        const insufficient = sorted.length === 0;
         rows.push({
           key: `${file.source}:${part.name}:${d.carNumber ?? ""}`,
           name: part.name,
@@ -98,8 +95,8 @@ export function buildPaceComparison(files: PaceFile[]): PaceRow[] {
           validLaps: sorted,
           validLapCount: sorted.length,
           fastestLapMs: sorted[0]?.ms ?? null,
-          topLaps: insufficient ? sorted : topLaps,
-          medianMs: insufficient ? null : medianOf(topLaps.map((l) => l.ms)),
+          topLaps: sorted,
+          medianMs: medianOf(sorted.map((l) => l.ms)),
           insufficient,
           position: null,
           gapMs: null,
