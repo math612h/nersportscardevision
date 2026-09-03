@@ -621,7 +621,25 @@ function DivisionDetail() {
         if (sessions.length === 0) return null;
         const active = sessions.some((s) => s.type === resultView) ? resultView : sessions[0].type;
         const activeLabel = sessions.find((s) => s.type === active)?.label ?? "";
-        const rows = (results ?? []).filter((r) => r.session_type === active);
+        const realRows = (results ?? []).filter((r) => r.session_type === active);
+        // Alle tilmeldte skal med i stillingen — også dem som ikke mødte op.
+        const present = new Set(realRows.map((r) => `${r.user_id}|${r.car_class}`));
+        const dnsRows = [...(signups ?? []), ...(reserveEntries ?? [])]
+          .filter((e: any) => !e.waitlist && !present.has(`${e.user_id}|${e.car_class}`))
+          .filter((e: any, i, arr) => arr.findIndex((x: any) => x.user_id === e.user_id && x.car_class === e.car_class) === i)
+          .map((e: any) => ({
+            id: `dns-${e.user_id}-${e.car_class}`,
+            user_id: e.user_id,
+            car_class: e.car_class,
+            car_model: null,
+            position: null,
+            points: 0,
+            best_lap_ms: null,
+            session_type: active,
+            driver_name: e.driver_name as string | undefined,
+            dns: true,
+          }));
+        const rows = [...realRows, ...(dnsRows as any[])] as any[];
         const byClass = new Map<string, typeof rows>();
         for (const r of rows) {
           if (!byClass.has(r.car_class)) byClass.set(r.car_class, [] as any);
@@ -747,17 +765,17 @@ function DivisionDetail() {
                         {sg.rows
                           .slice()
                           .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
-                          .map((r) => (
-                            <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
+                          .map((r: any) => (
+                            <li key={r.id} className={`flex items-center gap-3 py-2 text-sm ${r.dns ? "opacity-60" : ""}`}>
                               <span className="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
-                                P{r.position}
+                                {r.dns ? "DNS" : `P${r.position}`}
                               </span>
-                              <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? "Ukendt"} className="min-w-0 flex-1 truncate" />
+                              <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? r.driver_name ?? "Ukendt"} className="min-w-0 flex-1 truncate" />
                               <span className="ml-auto flex shrink-0 items-center gap-3">
                                 {r.car_model && <span className="hidden sm:inline text-xs text-muted-foreground truncate">{r.car_model}</span>}
-                                {r.best_lap_ms != null && (
-                                  <span className="font-mono text-xs tabular-nums text-muted-foreground">{msToLapStr(r.best_lap_ms)}</span>
-                                )}
+                                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                                  {r.best_lap_ms != null ? msToLapStr(r.best_lap_ms) : "no time"}
+                                </span>
                                 {active === "race" && (
                                   <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{r.points ?? 0}p</span>
                                 )}
