@@ -602,9 +602,10 @@ function DivisionEditor({
         const eligible = minLaps > 0 ? finished.filter((r: any) => (r.laps ?? 0) >= minLaps) : finished;
         eligible.forEach((r, idx) => {
           r.class_position = idx + 1;
-          const base = pointsFor(idx + 1);
-          r.points = Math.max(0, base - Math.max(0, r.penalty_points));
+          // Brutto-point; straffepoint vises og trækkes fra i visningen.
+          r.points = Math.max(0, pointsFor(idx + 1));
         });
+
       }
       // Rank quali per class
       for (const k of groupKeys) {
