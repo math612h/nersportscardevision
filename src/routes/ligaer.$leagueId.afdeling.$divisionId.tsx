@@ -765,29 +765,46 @@ function DivisionDetail() {
                         {sg.rows
                           .slice()
                           .sort((a, b) => {
-                            // Placerede først, derefter "no time", DNS nederst
-                            const rank = (r: any) => (r.dns ? 2 : r.best_lap_ms == null ? 1 : 0);
+                            // Klassificerede først, derefter "no time", DNS nederst
+                            const noTime = (r: any) =>
+                              !r.dns && r.best_lap_ms == null && (r.laps == null || r.laps === 0) && !(r.position > 0);
+                            const rank = (r: any) => (r.dns ? 2 : noTime(r) ? 1 : 0);
                             const d = rank(a) - rank(b);
                             if (d !== 0) return d;
-                            return (a.position ?? 999) - (b.position ?? 999);
+                            const pa = a.position > 0 ? a.position : 999;
+                            const pb = b.position > 0 ? b.position : 999;
+                            if (pa !== pb) return pa - pb;
+                            return (b.points ?? 0) - (a.points ?? 0);
                           })
-                          .map((r: any) => (
+                          .map((r: any) => {
+                            const unclassified =
+                              !r.dns && r.best_lap_ms == null && (r.laps == null || r.laps === 0) && !(r.position > 0);
+                            return (
                             <li key={r.id} className={`flex items-center gap-3 py-2 text-sm ${r.dns ? "opacity-60" : ""}`}>
                               <span className="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
-                                {r.dns ? "DNS" : `P${r.position}`}
+                                {r.dns ? "DNS" : r.position > 0 ? `P${r.position}` : "–"}
                               </span>
                               <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? r.driver_name ?? "Ukendt"} className="min-w-0 flex-1 truncate" />
                               <span className="ml-auto flex shrink-0 items-center gap-3">
                                 {r.car_model && <span className="hidden sm:inline text-xs text-muted-foreground truncate">{r.car_model}</span>}
                                 <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                                  {r.best_lap_ms != null ? msToLapStr(r.best_lap_ms) : "no time"}
+                                  {r.best_lap_ms != null
+                                    ? msToLapStr(r.best_lap_ms)
+                                    : r.dns
+                                      ? "DNS"
+                                      : unclassified
+                                        ? "no time"
+                                        : r.laps != null
+                                          ? `${r.laps} omg.`
+                                          : ""}
                                 </span>
                                 {active === "race" && (
                                   <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{r.points ?? 0}p</span>
                                 )}
                               </span>
                             </li>
-                          ))}
+                            );
+                          })}
                       </ul>
                     </CardContent>
                   </Card>
