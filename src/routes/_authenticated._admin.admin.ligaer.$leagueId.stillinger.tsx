@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Save, Check, Upload, Trash2, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Save, Check, Upload, Trash2, Eye, EyeOff, Calculator } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
-import { deleteLeagueRaceResults, setResultsConfirmed, setResultsPublished } from "@/lib/league-results.functions";
+import { deleteLeagueRaceResults, setResultsConfirmed, setResultsPublished, recalcLeaguePoints } from "@/lib/league-results.functions";
 import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { seatCap, isSplitClass } from "@/lib/class-capacity";
@@ -270,6 +270,8 @@ function DivisionEditor({
   const deleteResults = useServerFn(deleteLeagueRaceResults);
   const confirmResults = useServerFn(setResultsConfirmed);
   const publishResults = useServerFn(setResultsPublished);
+  const recalcPoints = useServerFn(recalcLeaguePoints);
+  const [recalcing, setRecalcing] = useState(false);
 
   useEffect(() => {
     setRows(buildInitial());
@@ -887,6 +889,27 @@ function DivisionEditor({
               className="gap-2 text-destructive hover:text-destructive"
             >
               <Trash2 className="h-4 w-4" /> {resetting ? "Sletter…" : `Nulstil ${session === "race" ? "race" : "quali"}`}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={recalcing || saving}
+              className="gap-2"
+              onClick={async () => {
+                if (!confirm("Genberegn point for alle afdelinger ud fra ligaens pointtabel?")) return;
+                setRecalcing(true);
+                try {
+                  const res = await recalcPoints({ data: { leagueId: division.league_id } });
+                  toast.success(`Point genberegnet (${res.updatedRows} rækker rettet)`);
+                  onSaved();
+                } catch (e: any) {
+                  toast.error(e?.message ?? "Kunne ikke genberegne point");
+                } finally {
+                  setRecalcing(false);
+                }
+              }}
+            >
+              <Calculator className="h-4 w-4" /> {recalcing ? "Genberegner…" : "Genberegn point"}
             </Button>
             <Button onClick={save} disabled={saving} className="gap-2"><Save className="h-4 w-4" /> Gem</Button>
           </div>
