@@ -403,6 +403,79 @@ export const deleteLeagueRaceResults = createServerFn({ method: "POST" })
     return { deleted: count ?? 0 };
   });
 
+// =============================================================
+// Genberegn point for hele ligaen ud fra ligaens aktuelle pointtabel.
+// Opdaterer BÅDE league_results og afdelingernes kopi i settings.results,
+// så de to aldrig kommer ud af sync.
+// =============================================================
+const recalcSchema = z.object({ leagueId: z.string().uuid() });
+
+export const recalcLeaguePoints = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => recalcSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: league, error: lErr } = await supabaseAdmin
+      .from("leagues").select("id,points_system").eq("id", data.leagueId).maybeSingle();
+    if (lErr) throw new Error(lErr.message);
+    if (!league) throw new Error("Liga findes ikke.");
+    const table: number[] = Array.isArray((league.points_system as any)?.points_per_position)
+      ? (league.points_system as any).points_per_position.map((n: any) => Number(n) || 0)
+      : [];
+
+    const { data: divisions, error: dErr } = await supabaseAdmin
+      .from("divisions").select("id,settings").eq("league_id", data.leagueId);
+    if (dErr) throw new Error(dErr.message);
+
+    let updatedRows = 0;
+    for (const div of divisions ?? []) {
+      const settings = ((div.settings as any) ?? {});
+      const copy: any[] = Array.isArray(settings.results) ? settings.results : [];
+      const zeroKeys = new Set<string>();
+      for (const r of copy) {
+        if (r?.dns || r?.dnf || r?.dsq) zeroKeys.add(`${r.user_id ?? ""}|${r.car_class ?? ""}`);
+      }
+
+      const { data: results, error: rErr } = await supabaseAdmin
+        .from("league_results")
+        .select("id,user_id,car_class,position,points,points_penalty,dsq,session_type")
+        .eq("division_id", div.id)
+        .eq("session_type", "race");
+      if (rErr) throw new Error(rErr.message);
+
+      const pointsByKey = new Map<string, number>();
+      for (const r of results ?? []) {
+        const key = `${r.user_id}|${r.car_class}`;
+        const zero = zeroKeys.has(key) || (r as any).dsq;
+        const base = zero ? 0 : (table[(r.position ?? 0) - 1] ?? 0);
+        pointsByKey.set(key, base);
+        if (Number(r.points) !== base) {
+          const { error: uErr } = await supabaseAdmin
+            .from("league_results").update({ points: base }).eq("id", r.id);
+          if (uErr) throw new Error(uErr.message);
+          updatedRows++;
+        }
+      }
+
+      if (copy.length > 0) {
+        const newCopy = copy.map((r) => {
+          const key = `${r.user_id ?? ""}|${r.car_class ?? ""}`;
+          if (r?.dns || r?.dnf || r?.dsq) return { ...r, points: 0 };
+          const p = pointsByKey.get(key);
+          return p == null ? r : { ...r, points: p };
+        });
+        await supabaseAdmin
+          .from("divisions")
+          .update({ settings: { ...settings, results: newCopy } })
+          .eq("id", div.id);
+      }
+    }
+
+    return { updatedRows };
+  });
+
 
 // =============================================================
 // Bekræft / afbekræft resultater for en afdeling.
