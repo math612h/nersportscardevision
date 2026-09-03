@@ -241,7 +241,6 @@ function ProfilePage() {
         </TabsList>
 
         <TabsContent value="oversigt" className="mt-4 space-y-6">
-          <MyRatingsCard userId={user?.id ?? null} />
           <MyTeamsCard userId={user?.id ?? null} />
         </TabsContent>
 

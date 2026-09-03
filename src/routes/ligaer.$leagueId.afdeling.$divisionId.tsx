@@ -524,12 +524,12 @@ function DivisionDetail() {
 
 
       <section className="space-y-4">
-        <Collapsible defaultOpen={(results?.length ?? 0) === 0}>
+        <Collapsible defaultOpen={false}>
           <div className="flex items-center justify-between gap-2">
             <CollapsibleTrigger className="group flex items-center gap-2 text-primary transition hover:text-primary/80">
               <Users className="h-4 w-4" />
               <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">
-                Deltagere ({participantCount}/{totalSignups})
+                Vis deltagere ({participantCount}/{totalSignups})
               </h2>
               <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]:rotate-180" />
             </CollapsibleTrigger>

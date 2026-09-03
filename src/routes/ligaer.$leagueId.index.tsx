@@ -19,7 +19,6 @@ import { checkDiscordGuildMembership } from "@/lib/discord-guild.functions";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RatingBadge } from "@/components/RatingBadge";
 import { UserAvatar } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
 import { DonorFrame } from "@/lib/donation-tier";
@@ -790,14 +789,6 @@ function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, te
                   {teamMap[e.team_id]}
                 </Badge>
               )}
-              {ratingMap?.[e.user_id] && (
-                <RatingBadge
-                  score={ratingMap[e.user_id].score}
-                  percentile={ratingMap[e.user_id].percentile}
-                  confidence={1}
-                  size="xs"
-                />
-              )}
               {approvedMap?.has(e.user_id) && (
                 <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
                   <CheckCircle2 className="h-3 w-3" />Godkendt
@@ -827,14 +818,6 @@ function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, te
                   </span>
                   <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
                   <span className="flex-1 truncate"><UserAvatar userId={e.user_id} name={e.driver_name} size="xs" /></span>
-                  {ratingMap?.[e.user_id] && (
-                    <RatingBadge
-                      score={ratingMap[e.user_id].score}
-                      percentile={ratingMap[e.user_id].percentile}
-                      confidence={1}
-                      size="xs"
-                    />
-                  )}
                   {approvedMap?.has(e.user_id) && (
                     <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
                       <CheckCircle2 className="h-3 w-3" />Godkendt

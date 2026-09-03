@@ -107,7 +107,6 @@ function ArchivePage() {
       <Tabs defaultValue="best">
         <TabsList>
           <TabsTrigger value="best">Bedste tider</TabsTrigger>
-          <TabsTrigger value="curve">Udvikling</TabsTrigger>
           <TabsTrigger value="leagues">Liga-historik</TabsTrigger>
         </TabsList>
 
@@ -152,31 +151,6 @@ function ArchivePage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="curve">
-          <Card>
-            <CardHeader>
-              <CardTitle>ELO-udvikling</CardTitle>
-              <CardDescription>Din samlede ELO-rating over tid. Beregnet med klassisk ELO-formel ud fra dine løbsresultater (K=32 indtil 5 løb, derefter 16). Alle starter på 1500.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {eloChartData.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Ingen rating-historik endnu. Den bygges op efterhånden som du uploader tider og kører liga-løb.</p>
-              ) : (
-                <div className="h-72 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={eloChartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} domain={["auto", "auto"]} />
-                      <Tooltip formatter={(v: number) => `${v.toFixed(2)}`} />
-                      <Line type="linear" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2.5} dot={{ r: 3, fill: "hsl(var(--primary))" }} activeDot={{ r: 5 }} connectNulls isAnimationActive={false} name="ELO rating" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
 
 
         <TabsContent value="leagues" className="space-y-4">

@@ -165,8 +165,6 @@ function UsersPage() {
           <SelectTrigger className="sm:w-44"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="name">Sortér: Navn</SelectItem>
-            <SelectItem value="elo_desc">Sortér: Elo (højest)</SelectItem>
-            <SelectItem value="elo_asc">Sortér: Elo (lavest)</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -200,16 +198,6 @@ function UsersPage() {
                       </Badge>
                     )}
                   </CardHeader>
-                  <CardContent className="pt-0">
-                    <div className="flex items-center gap-1.5 text-xs">
-                      <Trophy className="h-3.5 w-3.5 text-primary" />
-                      <span className="font-medium text-muted-foreground">Elo:</span>
-                      <span className="font-semibold tabular-nums">{elo ?? "–"}</span>
-                      {rating?.percentile != null && (
-                        <span className="text-muted-foreground">· top {Math.max(1, Math.round(100 - rating.percentile))}%</span>
-                      )}
-                    </div>
-                  </CardContent>
                 </Card>
               </Link>
             );
