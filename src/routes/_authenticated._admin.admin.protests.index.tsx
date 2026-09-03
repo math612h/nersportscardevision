@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ArrowLeft } from "lucide-react";
@@ -6,24 +6,60 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type ProtestSearch = { liga?: string; afdeling?: string };
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/protests/")({
+  validateSearch: (search: Record<string, unknown>): ProtestSearch => ({
+    liga: typeof search.liga === "string" && search.liga ? search.liga : undefined,
+    afdeling: typeof search.afdeling === "string" && search.afdeling ? search.afdeling : undefined,
+  }),
   component: AdminProtests,
 });
 
+const ALL = "__alle__";
+
 function AdminProtests() {
   const { isAdmin } = useAuth();
+  const navigate = useNavigate({ from: Route.fullPath });
+  const { liga, afdeling } = Route.useSearch();
+
   const { data } = useQuery({
     queryKey: ["protests-admin"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("protests")
-        .select("*, divisions(name, leagues(name)), protest_involved(id,response)")
+        .select("*, divisions(id, name, leagues(id, name)), protest_involved(id,response)")
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
+
+  // Unikke ligaer og afdelinger udledt af de hentede protester
+  const leagues = new Map<string, string>();
+  const divisions = new Map<string, { name: string; leagueId: string | null }>();
+  for (const p of data ?? []) {
+    const d = (p as any).divisions;
+    if (d?.leagues?.id) leagues.set(d.leagues.id, d.leagues.name);
+    if (d?.id) divisions.set(d.id, { name: d.name, leagueId: d?.leagues?.id ?? null });
+  }
+
+  const visibleDivisions = liga
+    ? [...divisions.entries()].filter(([, d]) => d.leagueId === liga)
+    : [...divisions.entries()];
+
+  const filtered = (data ?? []).filter((p: any) => {
+    if (liga && p.divisions?.leagues?.id !== liga) return false;
+    if (afdeling && p.divisions?.id !== afdeling) return false;
+    return true;
+  });
+
+  const setLiga = (v: string) =>
+    navigate({ search: { liga: v === ALL ? undefined : v, afdeling: undefined }, replace: true });
+  const setAfdeling = (v: string) =>
+    navigate({ search: (prev: ProtestSearch) => ({ ...prev, afdeling: v === ALL ? undefined : v }), replace: true });
 
   return (
     <div className="space-y-4">
@@ -33,9 +69,31 @@ function AdminProtests() {
         </Link>
       )}
       <h1 className="text-2xl font-bold">Alle protester</h1>
-      {data?.length === 0 && <p className="text-muted-foreground">Ingen protester.</p>}
+
+      <div className="flex flex-wrap gap-2">
+        <Select value={liga ?? ALL} onValueChange={setLiga}>
+          <SelectTrigger className="w-[220px]"><SelectValue placeholder="Alle ligaer" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle ligaer</SelectItem>
+            {[...leagues.entries()].map(([id, name]) => (
+              <SelectItem key={id} value={id}>{name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={afdeling ?? ALL} onValueChange={setAfdeling}>
+          <SelectTrigger className="w-[220px]"><SelectValue placeholder="Alle afdelinger" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>Alle afdelinger</SelectItem>
+            {visibleDivisions.map(([id, d]) => (
+              <SelectItem key={id} value={id}>{d.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {filtered.length === 0 && <p className="text-muted-foreground">Ingen protester.</p>}
       <div className="space-y-3">
-        {data?.map((p: any) => {
+        {filtered.map((p: any) => {
           const total = p.protest_involved?.length ?? 0;
           const answered = (p.protest_involved ?? []).filter((r: any) => r.response).length;
           return (
