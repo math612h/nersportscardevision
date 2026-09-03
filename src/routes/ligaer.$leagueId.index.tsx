@@ -19,7 +19,6 @@ import { checkDiscordGuildMembership } from "@/lib/discord-guild.functions";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { RatingBadge } from "@/components/RatingBadge";
 import { UserAvatar } from "@/components/UserAvatar";
 import { TeamAvatarOnly } from "@/components/TeamAvatar";
 import { DonorFrame } from "@/lib/donation-tier";
