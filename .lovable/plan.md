@@ -10,6 +10,8 @@ Ja — flowet fremover er:
 
 En enkelt ting at være opmærksom på: hvis I ændrer en kørers Pro/Am-kategori efter upload, bør resultaterne uploades igen (eller "Genberegn point" bruges), så kategorien følger med.
 
+Mht. straffe og bekræftelse (dit spørgsmål): straffe overlever både "Bekræft stillinger" og senere uploads. Import af en resultatfil opdaterer kun løbsdata (tid, omgange, placering, dnf/dns) — straffe-felterne røres ikke, og eksisterende straffe hentes automatisk ind i felterne næste gang afdelingen åbnes. Eneste der fjerner en straf er "Nulstil" på rækken eller at sætte feltet til 0 manuelt.
+
 ## Ny funktion: filtrering af protester
 
 På /admin/protests tilføjes to dropdowns over listen:
