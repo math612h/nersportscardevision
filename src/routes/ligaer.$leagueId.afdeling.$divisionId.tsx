@@ -621,7 +621,25 @@ function DivisionDetail() {
         if (sessions.length === 0) return null;
         const active = sessions.some((s) => s.type === resultView) ? resultView : sessions[0].type;
         const activeLabel = sessions.find((s) => s.type === active)?.label ?? "";
-        const rows = (results ?? []).filter((r) => r.session_type === active);
+        const realRows = (results ?? []).filter((r) => r.session_type === active);
+        // Alle tilmeldte skal med i stillingen — også dem som ikke mødte op.
+        const present = new Set(realRows.map((r) => `${r.user_id}|${r.car_class}`));
+        const dnsRows = [...(signups ?? []), ...(reserveEntries ?? [])]
+          .filter((e: any) => !e.waitlist && !present.has(`${e.user_id}|${e.car_class}`))
+          .filter((e: any, i, arr) => arr.findIndex((x: any) => x.user_id === e.user_id && x.car_class === e.car_class) === i)
+          .map((e: any) => ({
+            id: `dns-${e.user_id}-${e.car_class}`,
+            user_id: e.user_id,
+            car_class: e.car_class,
+            car_model: null,
+            position: null,
+            points: 0,
+            best_lap_ms: null,
+            session_type: active,
+            driver_name: e.driver_name as string | undefined,
+            dns: true,
+          }));
+        const rows = [...realRows, ...(dnsRows as any[])] as any[];
         const byClass = new Map<string, typeof rows>();
         for (const r of rows) {
           if (!byClass.has(r.car_class)) byClass.set(r.car_class, [] as any);
