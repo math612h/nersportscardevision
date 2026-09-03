@@ -765,17 +765,17 @@ function DivisionDetail() {
                         {sg.rows
                           .slice()
                           .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
-                          .map((r) => (
-                            <li key={r.id} className="flex items-center gap-3 py-2 text-sm">
+                          .map((r: any) => (
+                            <li key={r.id} className={`flex items-center gap-3 py-2 text-sm ${r.dns ? "opacity-60" : ""}`}>
                               <span className="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
-                                P{r.position}
+                                {r.dns ? "DNS" : `P${r.position}`}
                               </span>
-                              <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? "Ukendt"} className="min-w-0 flex-1 truncate" />
+                              <DriverLink userId={r.user_id} name={resultNames?.get(r.user_id) ?? r.driver_name ?? "Ukendt"} className="min-w-0 flex-1 truncate" />
                               <span className="ml-auto flex shrink-0 items-center gap-3">
                                 {r.car_model && <span className="hidden sm:inline text-xs text-muted-foreground truncate">{r.car_model}</span>}
-                                {r.best_lap_ms != null && (
-                                  <span className="font-mono text-xs tabular-nums text-muted-foreground">{msToLapStr(r.best_lap_ms)}</span>
-                                )}
+                                <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                                  {r.best_lap_ms != null ? msToLapStr(r.best_lap_ms) : "no time"}
+                                </span>
                                 {active === "race" && (
                                   <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{r.points ?? 0}p</span>
                                 )}
