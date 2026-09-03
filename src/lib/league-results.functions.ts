@@ -669,7 +669,7 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
         status: "ruled",
         verdict_outcome: data.outcome,
         verdict_reason: data.reason,
-        verdict_details: details,
+        verdict_details: details as any,
         ruled_by: context.userId,
         ruled_at: new Date().toISOString(),
       })
