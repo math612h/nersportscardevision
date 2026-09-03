@@ -26,6 +26,116 @@ type Matched = {
   driver_category: string | null;
 };
 
+type StoredRaceRow = Record<string, unknown> & {
+  user_id?: string;
+  car_class?: string;
+  driver_category?: string;
+  class_position?: number;
+  source_position?: number | null;
+  finish_time_ms?: number;
+  effective_ms?: number;
+  laps?: number | null;
+  points?: number;
+  penalty_seconds?: number;
+  penalty_points?: number;
+  dns?: boolean;
+  dnf?: boolean;
+  dsq?: boolean;
+};
+
+function recalculateStoredRaceRows(
+  source: StoredRaceRow[],
+  pointsTable: number[],
+  minFinishPercent: number,
+  currentCategoryByUserClass: Map<string, string>,
+) {
+  const rows = source.map((row) => {
+    const category = row.user_id && row.car_class
+      ? currentCategoryByUserClass.get(`${row.user_id}|${row.car_class}`)
+      : undefined;
+    const finishMs = Number(row.finish_time_ms ?? 0);
+    const penaltySeconds = Math.max(0, Number(row.penalty_seconds ?? 0));
+    return {
+      ...row,
+      ...(category ? { driver_category: category } : {}),
+      effective_ms: finishMs > 0 && !row.dnf && !row.dns
+        ? finishMs + penaltySeconds * 1000
+        : 0,
+      class_position: 0,
+      points: 0,
+    };
+  });
+
+  const groups = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const key = `${row.car_class ?? ""}|${row.driver_category ?? ""}`;
+    const group = groups.get(key) ?? [];
+    group.push(row);
+    groups.set(key, group);
+  }
+
+  for (const group of groups.values()) {
+    const active = group.filter((row) =>
+      !row.dns && (
+        Number(row.source_position ?? 0) > 0 ||
+        Number(row.effective_ms ?? 0) > 0 ||
+        Number(row.laps ?? 0) > 0
+      ),
+    );
+    active.sort((a, b) => {
+      const laps = Number(b.laps ?? 0) - Number(a.laps ?? 0);
+      if (laps !== 0) return laps;
+      const aTime = Number(a.effective_ms ?? 0);
+      const bTime = Number(b.effective_ms ?? 0);
+      if (aTime > 0 && bTime > 0) return aTime - bTime;
+      if (aTime > 0) return -1;
+      if (bTime > 0) return 1;
+      return Number(a.source_position ?? Number.MAX_SAFE_INTEGER) - Number(b.source_position ?? Number.MAX_SAFE_INTEGER);
+    });
+
+    const maxLaps = Math.max(0, ...active.map((row) => Number(row.laps ?? 0)));
+    const minLaps = minFinishPercent > 0 && maxLaps > 0
+      ? Math.ceil(maxLaps * minFinishPercent / 100)
+      : 0;
+    const eligible = active.filter((row) =>
+      !row.dsq && (minLaps === 0 || Number(row.laps ?? 0) >= minLaps),
+    );
+    eligible.forEach((row, index) => {
+      row.class_position = index + 1;
+      row.points = Math.max(
+        0,
+        Number(pointsTable[index] ?? 0) - Math.max(0, Number(row.penalty_points ?? 0)),
+      );
+    });
+  }
+
+  return rows;
+}
+
+async function syncStoredRaceRowsToLeagueResults(
+  supabaseAdmin: any,
+  divisionId: string,
+  rows: StoredRaceRow[],
+) {
+  for (const row of rows) {
+    if (!row.user_id || !row.car_class || Number(row.class_position ?? 0) <= 0) continue;
+    const { error } = await supabaseAdmin
+      .from("league_results")
+      .update({
+        position: Number(row.class_position),
+        points: Number(row.points ?? 0),
+        time_penalty_ms: Math.round(Math.max(0, Number(row.penalty_seconds ?? 0)) * 1000),
+        points_penalty: Math.max(0, Number(row.penalty_points ?? 0)),
+        dsq: !!row.dsq,
+      })
+      .eq("division_id", divisionId)
+      .eq("session_type", "race")
+      .eq("user_id", row.user_id)
+      .eq("car_class", row.car_class);
+    if (error) throw new Error(error.message);
+  }
+}
+
 async function matchDriversFromXml(
   xml: string,
   leagueId: string,
@@ -432,48 +542,140 @@ export const recalcLeaguePoints = createServerFn({ method: "POST" })
     let updatedRows = 0;
     for (const div of divisions ?? []) {
       const settings = ((div.settings as any) ?? {});
-      const copy: any[] = Array.isArray(settings.results) ? settings.results : [];
-      const zeroKeys = new Set<string>();
-      for (const r of copy) {
-        if (r?.dns || r?.dnf || r?.dsq) zeroKeys.add(`${r.user_id ?? ""}|${r.car_class ?? ""}`);
+      const copy: StoredRaceRow[] = Array.isArray(settings.results) ? settings.results : [];
+      if (copy.length === 0) continue;
+      const { data: entries, error: eErr } = await supabaseAdmin
+        .from("entries")
+        .select("user_id,car_class,driver_category")
+        .eq("league_id", data.leagueId)
+        .is("division_id", null);
+      if (eErr) throw new Error(eErr.message);
+      const categoryMap = new Map<string, string>();
+      for (const entry of entries ?? []) {
+        if (entry.driver_category) categoryMap.set(`${entry.user_id}|${entry.car_class}`, entry.driver_category);
       }
-
-      const { data: results, error: rErr } = await supabaseAdmin
-        .from("league_results")
-        .select("id,user_id,car_class,position,points,points_penalty,dsq,session_type")
-        .eq("division_id", div.id)
-        .eq("session_type", "race");
-      if (rErr) throw new Error(rErr.message);
-
-      const pointsByKey = new Map<string, number>();
-      for (const r of results ?? []) {
-        const key = `${r.user_id}|${r.car_class}`;
-        const zero = zeroKeys.has(key) || (r as any).dsq;
-        const base = zero ? 0 : (table[(r.position ?? 0) - 1] ?? 0);
-        pointsByKey.set(key, base);
-        if (Number(r.points) !== base) {
-          const { error: uErr } = await supabaseAdmin
-            .from("league_results").update({ points: base }).eq("id", r.id);
-          if (uErr) throw new Error(uErr.message);
-          updatedRows++;
-        }
-      }
-
-      if (copy.length > 0) {
-        const newCopy = copy.map((r) => {
-          const key = `${r.user_id ?? ""}|${r.car_class ?? ""}`;
-          if (r?.dns || r?.dnf || r?.dsq) return { ...r, points: 0 };
-          const p = pointsByKey.get(key);
-          return p == null ? r : { ...r, points: p };
-        });
-        await supabaseAdmin
-          .from("divisions")
-          .update({ settings: { ...settings, results: newCopy } })
-          .eq("id", div.id);
-      }
+      const next = recalculateStoredRaceRows(
+        copy,
+        table,
+        Math.max(0, Math.min(100, Number((league.points_system as any)?.min_finish_percent ?? 0))),
+        categoryMap,
+      );
+      updatedRows += next.filter((row, index) =>
+        Number(row.class_position ?? 0) !== Number(copy[index]?.class_position ?? 0) ||
+        Number(row.points ?? 0) !== Number(copy[index]?.points ?? 0) ||
+        row.driver_category !== copy[index]?.driver_category,
+      ).length;
+      const { error: settingsError } = await supabaseAdmin
+        .from("divisions")
+        .update({ settings: { ...settings, results: next } })
+        .eq("id", div.id);
+      if (settingsError) throw new Error(settingsError.message);
+      await syncStoredRaceRowsToLeagueResults(supabaseAdmin, div.id, next);
     }
 
     return { updatedRows };
+  });
+
+const protestRulingSchema = z.object({
+  protestId: z.string().uuid(),
+  outcome: z.enum(["no_penalty", "warning", "time_penalty", "point_penalty", "disqualified"]),
+  reason: z.string().trim().min(1).max(2000),
+  seconds: z.number().min(0).default(0),
+  points: z.number().min(0).default(0),
+  penalizedUserIds: z.array(z.string().uuid()),
+});
+
+type AppliedPenalty = { seconds?: number; points?: number; dsq?: boolean };
+
+export const applyProtestRuling = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => protestRulingSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: protest, error: protestError } = await supabaseAdmin
+      .from("protests")
+      .select("id,division_id,verdict_details,divisions(id,league_id,settings,leagues(points_system))")
+      .eq("id", data.protestId)
+      .maybeSingle();
+    if (protestError) throw new Error(protestError.message);
+    const division = (protest as any)?.divisions;
+    if (!protest || !division) throw new Error("Protesten eller afdelingen findes ikke.");
+
+    const needsTargets = ["warning", "time_penalty", "point_penalty", "disqualified"].includes(data.outcome);
+    if (needsTargets && data.penalizedUserIds.length === 0) throw new Error("Vælg mindst én kører.");
+    if (data.outcome === "time_penalty" && data.seconds <= 0) throw new Error("Angiv antal sekunder.");
+    if (data.outcome === "point_penalty" && data.points <= 0) throw new Error("Angiv antal point.");
+
+    const previous = (((protest as any).verdict_details ?? {}).applied_penalties ?? {}) as Record<string, AppliedPenalty>;
+    const nextApplied: Record<string, AppliedPenalty> = {};
+    for (const userId of data.penalizedUserIds) {
+      if (data.outcome === "time_penalty") nextApplied[userId] = { seconds: data.seconds };
+      else if (data.outcome === "point_penalty") nextApplied[userId] = { points: data.points };
+      else if (data.outcome === "disqualified") nextApplied[userId] = { dsq: true };
+    }
+
+    const settings = (division.settings ?? {}) as Record<string, unknown>;
+    const source: StoredRaceRow[] = Array.isArray(settings.results) ? settings.results : [];
+    const affected = new Set([...Object.keys(previous), ...Object.keys(nextApplied)]);
+    const adjusted = source.map((row) => {
+      if (!row.user_id || !affected.has(row.user_id)) return row;
+      const oldPenalty = previous[row.user_id] ?? {};
+      const newPenalty = nextApplied[row.user_id] ?? {};
+      return {
+        ...row,
+        penalty_seconds: Math.max(0, Number(row.penalty_seconds ?? 0) - Number(oldPenalty.seconds ?? 0) + Number(newPenalty.seconds ?? 0)),
+        penalty_points: Math.max(0, Number(row.penalty_points ?? 0) - Number(oldPenalty.points ?? 0) + Number(newPenalty.points ?? 0)),
+        dsq: oldPenalty.dsq ? !!newPenalty.dsq : (!!row.dsq || !!newPenalty.dsq),
+      };
+    });
+
+    const [{ data: entries, error: entriesError }] = await Promise.all([
+      supabaseAdmin.from("entries").select("user_id,car_class,driver_category").eq("league_id", division.league_id).is("division_id", null),
+    ]);
+    if (entriesError) throw new Error(entriesError.message);
+    const categoryMap = new Map<string, string>();
+    for (const entry of entries ?? []) {
+      if (entry.driver_category) categoryMap.set(`${entry.user_id}|${entry.car_class}`, entry.driver_category);
+    }
+    const pointsSystem = (division.leagues?.points_system ?? {}) as any;
+    const pointsTable = Array.isArray(pointsSystem.points_per_position)
+      ? pointsSystem.points_per_position.map((value: unknown) => Number(value) || 0)
+      : [];
+    const recalculated = recalculateStoredRaceRows(
+      adjusted,
+      pointsTable,
+      Math.max(0, Math.min(100, Number(pointsSystem.min_finish_percent ?? 0))),
+      categoryMap,
+    );
+
+    const details: Record<string, unknown> = {
+      penalized_user_ids: data.penalizedUserIds,
+      applied_penalties: nextApplied,
+    };
+    if (data.outcome === "time_penalty") details.seconds = data.seconds;
+    if (data.outcome === "point_penalty") details.points = data.points;
+
+    const { error: divisionError } = await supabaseAdmin
+      .from("divisions")
+      .update({ settings: { ...settings, results: recalculated, results_confirmed: false, results_confirmed_at: null } })
+      .eq("id", division.id);
+    if (divisionError) throw new Error(divisionError.message);
+    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, division.id, recalculated);
+
+    const { error: rulingError } = await supabaseAdmin
+      .from("protests")
+      .update({
+        status: "ruled",
+        verdict_outcome: data.outcome,
+        verdict_reason: data.reason,
+        verdict_details: details,
+        ruled_by: context.userId,
+        ruled_at: new Date().toISOString(),
+      })
+      .eq("id", data.protestId);
+    if (rulingError) throw new Error(rulingError.message);
+    return { ok: true };
   });
 
 
