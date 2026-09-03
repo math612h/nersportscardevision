@@ -799,8 +799,9 @@ function DivisionDetail() {
                                           : ""}
                                 </span>
                                 {active === "race" && (
-                                  <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{r.points ?? 0}p</span>
+                                  <span className="w-10 text-right font-mono text-xs tabular-nums font-semibold">{Math.max(0, (r.points ?? 0) - Math.max(0, r.points_penalty ?? 0))}p</span>
                                 )}
+
                               </span>
                             </li>
                             );
