@@ -835,6 +835,7 @@ function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, te
 
 
 type ResultRow = {
+  user_id?: string;
   car_number: number;
   driver_name: string;
   car_class: string;
@@ -883,14 +884,14 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   const entryTeamMap = useMemo(() => {
     const m: Record<string, string | null> = {};
     for (const e of leagueEntries ?? []) {
-      if (e.car_number != null) m[`${e.car_class}|${e.driver_category}|${e.car_number}`] = e.team_id;
+      m[`${e.user_id}|${e.car_class}`] = e.team_id;
     }
     return m;
   }, [leagueEntries]);
   const entryUserMap = useMemo(() => {
     const m: Record<string, string> = {};
     for (const e of leagueEntries ?? []) {
-      if (e.car_number != null) m[`${e.car_class}|${e.driver_category}|${e.car_number}`] = e.user_id;
+      m[`${e.user_id}|${e.car_class}`] = e.user_id;
     }
     return m;
   }, [leagueEntries]);
@@ -940,7 +941,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     currentCatByUser.set(`${e.user_id}|${e.car_class}`, e.driver_category);
     if (e.car_number != null) currentCatByNumber.set(`${e.car_class}|${e.car_number}`, e.driver_category);
   }
-  const resolveCat = (r: ResultRow & { user_id?: string }) =>
+  const resolveCat = (r: ResultRow) =>
     (r.user_id ? currentCatByUser.get(`${r.user_id}|${r.car_class}`) : undefined) ??
     currentCatByNumber.get(`${r.car_class}|${r.car_number}`) ??
     r.driver_category;
@@ -949,7 +950,9 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   for (const d of completed as any[]) {
     for (const r of d.settings.results as ResultRow[]) {
       const cat = resolveCat(r as any);
-      const key = `${r.car_class}|${cat}|${r.car_number}`;
+      const key = r.user_id
+        ? `${r.user_id}|${r.car_class}`
+        : `legacy|${r.car_class}|${cat}|${r.car_number}`;
       const cur = map.get(key) ?? {
         car_number: r.car_number,
         driver_name: r.driver_name,
@@ -1018,12 +1021,13 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                 </thead>
                 <tbody>
                   {rows.map((r, i) => {
-                    const tId = entryTeamMap[`${r.car_class}|${r.driver_category}|${r.car_number}`];
+                    const identityKey = `${(r as Agg & { user_id?: string }).user_id ?? ""}|${r.car_class}`;
+                    const tId = entryTeamMap[identityKey];
                     const teamName = tId ? (teamMap?.[tId] ?? "") : "";
                     return (
                     <tr key={r.car_number} className="border-t border-border">
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
-                      <td className="py-1.5 pr-2 truncate"><UserAvatar userId={entryUserMap[`${r.car_class}|${r.driver_category}|${r.car_number}`] ?? null} name={r.driver_name} size="sm" /></td>
+                      <td className="py-1.5 pr-2 truncate"><UserAvatar userId={entryUserMap[identityKey] ?? null} name={r.driver_name} size="sm" /></td>
                       <td className="py-1.5 pr-2 truncate text-xs text-muted-foreground">{teamName || "–"}</td>
                       <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
                       {completed.map((d: any) => {
