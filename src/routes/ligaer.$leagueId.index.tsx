@@ -922,6 +922,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   }
 
   type Agg = {
+    user_id?: string;
     car_number: number;
     driver_name: string;
     car_class: string;
@@ -954,6 +955,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         ? `${r.user_id}|${r.car_class}`
         : `legacy|${r.car_class}|${cat}|${r.car_number}`;
       const cur = map.get(key) ?? {
+        user_id: r.user_id,
         car_number: r.car_number,
         driver_name: r.driver_name,
         car_class: r.car_class,
@@ -1021,7 +1023,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                 </thead>
                 <tbody>
                   {rows.map((r, i) => {
-                    const identityKey = `${(r as Agg & { user_id?: string }).user_id ?? ""}|${r.car_class}`;
+                    const identityKey = `${r.user_id ?? ""}|${r.car_class}`;
                     const tId = entryTeamMap[identityKey];
                     const teamName = tId ? (teamMap?.[tId] ?? "") : "";
                     return (
