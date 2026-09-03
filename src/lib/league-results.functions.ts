@@ -102,11 +102,11 @@ function recalculateStoredRaceRows(
     );
     eligible.forEach((row, index) => {
       row.class_position = index + 1;
-      row.points = Math.max(
-        0,
-        Number(pointsTable[index] ?? 0) - Math.max(0, Number(row.penalty_points ?? 0)),
-      );
+      // Gem BRUTTO-point. Straffepoint trækkes fra i visningerne, så de aldrig
+      // bliver trukket to gange.
+      row.points = Math.max(0, Number(pointsTable[index] ?? 0));
     });
+
   }
 
   return rows;

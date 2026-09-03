@@ -42,6 +42,8 @@ type ResultRow = {
   driver_category?: string;
   class_position?: number;
   points?: number;
+  penalty_points?: number;
+
   dns?: boolean;
   dnf?: boolean;
 };
@@ -403,7 +405,7 @@ function NewsHome() {
                             {row.driver_name}
                           </span>
                           <span className="ml-auto shrink-0 text-xs tabular-nums text-muted-foreground">
-                            {row.points ?? 0} p
+                            {Math.max(0, (row.points ?? 0) - Math.max(0, row.penalty_points ?? 0))} p
                           </span>
                         </li>
 
