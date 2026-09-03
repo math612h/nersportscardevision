@@ -14,9 +14,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { notifyProtestRuling } from "@/lib/protest-ruling-notify.functions";
+import { applyProtestRuling } from "@/lib/league-results.functions";
 import { UserAvatar } from "@/components/UserAvatar";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/protests/$protestId")({
@@ -31,16 +31,11 @@ const OUTCOMES = [
   { value: "disqualified", label: "Diskvalifikation" },
 ] as const;
 
-const POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
-const pointsFor = (pos: number) => (pos >= 1 && pos <= POINTS_TABLE.length ? POINTS_TABLE[pos - 1] : 0);
-
-type AppliedMap = Record<string, { seconds?: number; points?: number }>;
-
 function AdminProtestDetail() {
   const { protestId } = useParams({ from: "/_authenticated/_admin/admin/protests/$protestId" });
-  const { user } = useAuth();
   const qc = useQueryClient();
   const notifyRuling = useServerFn(notifyProtestRuling);
+  const applyRuling = useServerFn(applyProtestRuling);
 
   const { data: p } = useQuery({
     queryKey: ["admin-protest", protestId],
@@ -121,94 +116,16 @@ function AdminProtestDetail() {
         if (!pointsNum || pointsNum <= 0) throw new Error("Angiv antal point");
       }
 
-      // Compute delta vs previously applied penalties to avoid double-counting on re-ruling
-      const prevDetails = (p?.verdict_details ?? {}) as any;
-      const prevApplied: AppliedMap = (prevDetails.applied_penalties ?? {}) as AppliedMap;
-
-      const newApplied: AppliedMap = {};
-      if (outcome === "time_penalty") {
-        for (const uid of penalized) newApplied[uid] = { seconds: secondsNum };
-      } else if (outcome === "point_penalty") {
-        for (const uid of penalized) newApplied[uid] = { points: pointsNum };
-      }
-
-      // Apply delta to division.settings.results
-      const division = (p as any)?.divisions;
-      if (division) {
-        const settings = (division.settings ?? {}) as any;
-        const results: any[] = Array.isArray(settings.results) ? [...settings.results] : [];
-
-        const userIds = new Set<string>([...Object.keys(prevApplied), ...Object.keys(newApplied)]);
-        let changed = false;
-        for (const uid of userIds) {
-          const oldP = prevApplied[uid] ?? {};
-          const newP = newApplied[uid] ?? {};
-          const dSec = (newP.seconds ?? 0) - (oldP.seconds ?? 0);
-          const dPts = (newP.points ?? 0) - (oldP.points ?? 0);
-          if (dSec === 0 && dPts === 0) continue;
-          for (const r of results) {
-            if (r.user_id !== uid) continue;
-            if (dSec !== 0) {
-              r.penalty_seconds = Math.max(0, Number(r.penalty_seconds ?? 0) + dSec);
-              if (typeof r.finish_time_ms === "number" && r.finish_time_ms > 0 && !r.dnf && !r.dns) {
-                r.effective_ms = r.finish_time_ms + Math.max(0, r.penalty_seconds) * 1000;
-              }
-            }
-            if (dPts !== 0) {
-              r.penalty_points = Math.max(0, Number(r.penalty_points ?? 0) + dPts);
-            }
-            changed = true;
-          }
-        }
-
-        if (changed) {
-          // Recompute class_position + points per class group
-          const groups = new Map<string, any[]>();
-          for (const r of results) {
-            const k = `${r.car_class}|${r.driver_category}`;
-            if (!groups.has(k)) groups.set(k, []);
-            groups.get(k)!.push(r);
-          }
-          for (const list of groups.values()) {
-            const finished = list.filter((r) => !r.dnf && !r.dns && typeof r.effective_ms === "number" && r.effective_ms > 0);
-            const nonFinished = list.filter((r) => !finished.includes(r));
-            finished.sort((a, b) => a.effective_ms - b.effective_ms);
-            finished.forEach((r, idx) => {
-              r.class_position = idx + 1;
-              const base = pointsFor(r.class_position);
-              r.points = Math.max(0, base - Math.max(0, Number(r.penalty_points ?? 0)));
-            });
-            for (const r of nonFinished) {
-              r.class_position = 0;
-              r.points = 0;
-            }
-          }
-
-          const newSettings = { ...settings, results };
-          const { error: upErr } = await supabase
-            .from("divisions")
-            .update({ settings: newSettings })
-            .eq("id", division.id);
-          if (upErr) throw upErr;
-        }
-      }
-
-      const details: any = { penalized_user_ids: penalized, applied_penalties: newApplied };
-      if (outcome === "time_penalty") details.seconds = secondsNum;
-      if (outcome === "point_penalty") details.points = pointsNum;
-
-      const { error } = await supabase
-        .from("protests")
-        .update({
-          status: "ruled",
-          verdict_outcome: outcome as any,
-          verdict_reason: reason.trim(),
-          verdict_details: details,
-          ruled_by: user!.id,
-          ruled_at: new Date().toISOString(),
-        })
-        .eq("id", protestId);
-      if (error) throw error;
+      await applyRuling({
+        data: {
+          protestId,
+          outcome: outcome as "no_penalty" | "warning" | "time_penalty" | "point_penalty" | "disqualified",
+          reason: reason.trim(),
+          seconds: secondsNum,
+          points: pointsNum,
+          penalizedUserIds: penalized,
+        },
+      });
     },
     onSuccess: async () => {
       toast.success("Afgørelse sendt");
@@ -216,6 +133,7 @@ function AdminProtestDetail() {
       qc.invalidateQueries({ queryKey: ["protests-admin"] });
       qc.invalidateQueries({ queryKey: ["league-results"] });
       qc.invalidateQueries({ queryKey: ["divisions-admin"] });
+      qc.invalidateQueries({ queryKey: ["division-results"] });
       try {
         await notifyRuling({ data: { protestId } });
       } catch (e: any) {
