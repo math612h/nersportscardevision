@@ -42,6 +42,8 @@ type ResultRow = {
   driver_category?: string;
   class_position?: number;
   points?: number;
+  penalty_points?: number;
+
   dns?: boolean;
   dnf?: boolean;
 };
