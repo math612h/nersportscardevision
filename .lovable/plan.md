@@ -23,9 +23,23 @@ Derudover står DNS/DNF-kørere i kopien med `class_position: 0`, hvilket giver 
 3. **Ensartet sortering:** i alle visninger sorteres klassificerede kørere efter placering, derefter "No Time", og DNS/DNF nederst — også når kopien har `class_position: 0`.
 4. **Admin-knap "Genberegn point":** på ligaens stillinger-side, som kører pointtabellen igennem alle gemte afdelinger (begge lagringssteder) — så en fremtidig rettelse i pointsystemet kan slås igennem uden manuelle databaseindgreb.
 
+## Skjul ELO-rating helt
+
+ELO-rating må ikke længere være synlig for nogen brugere:
+
+- `RatingBadge` fjernes fra alle brugervendte visninger: profil (egen og andres), brugerlisten, teamsider, ligasiden og team-hub.
+- "Udvikling"-fanen med ELO-grafen fjernes fra Mit arkiv.
+- Selve beregningen og data i databasen bevares (bruges internt til Pro/Am-opdelingen i kontrolpanelet), men vises ikke ud mod brugerne. Admin-siderne (Pro/Am-preview og brugerdetaljer i kontrolpanelet) beholder tallet.
+
+## Entryliste pakkes væk på afdelingssiden
+
+Deltagerlisten på en afdeling vises ikke længere som standard. I stedet en knap "Vis deltagere (x/y)", som folder listen ud/ind. Lukket tilstand er standard ved sideindlæsning.
+
 ## Tekniske detaljer
 
 - Fælles hjælper (fx `src/lib/league-points.ts`): `pointsForPosition(pointsPerPosition, position, { dnf, dns })` og en `mergeResultRows()` der kobler `league_results` (autoritativ på position/points/straf) sammen med kopiens navn/nummer/DNS-flag på nøglen `user_id` med fallback `car_class|driver_category|car_number`.
-- Berørte filer: `src/routes/ligaer.$leagueId.index.tsx` (samlet stilling + team-point), `src/routes/index.tsx` (forsidens resultater), `src/routes/ligaer.$leagueId.afdeling.$divisionId.tsx` (sortering), `src/routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger.tsx` (genberegn-knap), `src/lib/league-results.functions.ts` (publish skriver point ét sted fra).
+- Berørte filer (points): `src/routes/ligaer.$leagueId.index.tsx` (samlet stilling + team-point), `src/routes/index.tsx` (forsidens resultater), `src/routes/ligaer.$leagueId.afdeling.$divisionId.tsx` (sortering), `src/routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger.tsx` (genberegn-knap), `src/lib/league-results.functions.ts` (publish skriver point ét sted fra).
+- Berørte filer (ELO): `src/routes/_authenticated.profil.index.tsx`, `src/routes/_authenticated.profil.$userId.tsx`, `src/routes/brugere.tsx`, `src/routes/teams.$teamId.tsx`, `src/components/TeamsHub.tsx`, `src/routes/ligaer.$leagueId.index.tsx`, `src/routes/_authenticated.arkiv.tsx`.
 - Datafixet køres som en dataopdatering (ingen skemaændring), der for hver afdeling mapper hver række i kopien til den tilsvarende `league_results`-række og overskriver `points`.
 - Ingen ændring af selve pointtabellen i ligaopsætningen — den bruges som den står nu.
+
