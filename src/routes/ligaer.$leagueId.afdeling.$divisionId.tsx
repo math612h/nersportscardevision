@@ -764,7 +764,13 @@ function DivisionDetail() {
                       <ul className="divide-y divide-border">
                         {sg.rows
                           .slice()
-                          .sort((a, b) => (a.position ?? 999) - (b.position ?? 999))
+                          .sort((a, b) => {
+                            // Placerede først, derefter "no time", DNS nederst
+                            const rank = (r: any) => (r.dns ? 2 : r.best_lap_ms == null ? 1 : 0);
+                            const d = rank(a) - rank(b);
+                            if (d !== 0) return d;
+                            return (a.position ?? 999) - (b.position ?? 999);
+                          })
                           .map((r: any) => (
                             <li key={r.id} className={`flex items-center gap-3 py-2 text-sm ${r.dns ? "opacity-60" : ""}`}>
                               <span className="inline-flex h-7 min-w-9 shrink-0 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
