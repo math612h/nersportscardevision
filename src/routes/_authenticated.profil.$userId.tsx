@@ -109,19 +109,6 @@ function PublicProfile() {
               <p className="whitespace-pre-wrap text-sm">{profile.achievements}</p>
             </section>
           )}
-          {rating && (
-            <section>
-              <h3 className="mb-2 text-sm font-semibold text-muted-foreground">ELO-rating</h3>
-              <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-muted-foreground">{rating.races_count} løb kørt</span>
-                <RatingBadge
-                  score={Number(rating.score)}
-                  percentile={rating.percentile != null ? Number(rating.percentile) : null}
-                  confidence={1}
-                />
-              </div>
-            </section>
-          )}
           {!profile.bio && !profile.achievements && (
             <p className="text-sm text-muted-foreground">Brugeren har endnu ikke udfyldt sin profil.</p>
           )}
