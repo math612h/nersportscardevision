@@ -14,7 +14,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { notifyProtestRuling } from "@/lib/protest-ruling-notify.functions";
 import { applyProtestRuling } from "@/lib/league-results.functions";
@@ -34,7 +33,6 @@ const OUTCOMES = [
 
 function AdminProtestDetail() {
   const { protestId } = useParams({ from: "/_authenticated/_admin/admin/protests/$protestId" });
-  const { user } = useAuth();
   const qc = useQueryClient();
   const notifyRuling = useServerFn(notifyProtestRuling);
   const applyRuling = useServerFn(applyProtestRuling);
