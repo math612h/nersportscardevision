@@ -442,7 +442,8 @@ async function ensureDiscordRolesMentionable(roleIds: string[], botToken: string
   });
   if (!rolesRes.ok) {
     const text = await rolesRes.text().catch(() => "");
-    throw new Error(`Kunne ikke kontrollere Discord-roller (${rolesRes.status}): ${text}`);
+    console.warn(`[Discord] Kunne ikke kontrollere Discord-roller (${rolesRes.status}): ${text}`);
+    return;
   }
 
   const guildRoles = (await rolesRes.json()) as Array<{
