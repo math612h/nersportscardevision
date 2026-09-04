@@ -233,14 +233,16 @@ function LeagueDetail() {
     queryKey: ["divisions-lobbies", leagueId, divisionIds.join(",")],
     enabled: canSeeLobby && divisionIds.length > 0,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("division_lobbies")
-        .select("division_id,lobby_code,lobby_password,server_name,am_lobby_code,am_lobby_password,am_server_name")
-        .in("division_id", divisionIds);
-      if (error) throw error;
       const m: Record<string, { lobby_code: string | null; lobby_password: string | null; server_name: string | null; am_lobby_code: string | null; am_lobby_password: string | null; am_server_name: string | null }> = {};
-
-      (data ?? []).forEach((l: any) => { m[l.division_id] = l; });
+      const results = await Promise.all(
+        divisionIds.map(async (id: string) => {
+          const { data, error } = await supabase.rpc("get_division_lobby", { _division_id: id });
+          if (error) return null;
+          const row = Array.isArray(data) ? data[0] ?? null : null;
+          return row ? { id, row } : null;
+        }),
+      );
+      for (const r of results) { if (r) m[r.id] = r.row as any; }
       return m;
     },
   });

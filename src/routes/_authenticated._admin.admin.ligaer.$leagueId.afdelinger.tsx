@@ -308,12 +308,9 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     queryKey: ["admin-division-lobby", division.id, open],
     enabled: open,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("division_lobbies")
-        .select("lobby_code,lobby_password,server_name,am_lobby_code,am_lobby_password,am_server_name")
-        .eq("division_id", division.id)
-        .maybeSingle();
+      const { data: rows, error } = await supabase.rpc("get_division_lobby", { _division_id: division.id });
       if (error) throw error;
+      const data = (Array.isArray(rows) ? rows[0] ?? null : null) as any;
       setLobbyCode(String(data?.lobby_code ?? ""));
       setLobbyPassword(String(data?.lobby_password ?? ""));
       setServerName(String((data as any)?.server_name ?? ""));
