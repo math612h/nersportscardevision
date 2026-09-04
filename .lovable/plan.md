@@ -26,13 +26,19 @@ Kvalifikation:
 - **DNS** — køreren står ikke i filen eller har 0 omgange (kom aldrig ud af pitten).
 - **NT (ingen tid)** — køreren kørte omgange, men uden en godkendt tid. Vises som "Ingen tid" og placeres efter alle med tid, men før DNS.
 
-Visning: RET, DNF, DNS og NT vises som mærkat i stillingerne på afdelingssiden og forsiden, med samme rækkefølge som i dag (klassificerede → ingen tid → ikke startet).
+Visning: RET, DNF, DNS og NT vises som mærkat i stillingerne på afdelingssiden, ligasiden og forsiden, med samme rækkefølge som i dag (klassificerede → ingen tid → ikke startet). Mærkatet vises også i selve stillingseditoren i kontrolpanelet.
+
+## Eksisterende data: ICE CUP 1. afdeling
+
+- Statusserne beregnes bagudrettet for 1. afdeling af ICE CUP ud fra de allerede gemte omgange og 70%-grænsen, så de nye mærkater også står korrekt der — både på hjemmesiden og i stillingseditoren.
+- Kun mærkatet sættes; point, placeringer og straffe røres ikke og skal være nøjagtigt de samme før og efter.
 
 ## Sikkerhed for eksisterende data
 
-- Ingen ændring af allerede gemte resultater. Gamle rækker uden RET-mærkat vises som hidtil.
+- Andre afdelinger end ICE CUP 1 ændres ikke. Rækker uden status vises som hidtil.
 - Point beregnes efter nøjagtigt samme regler som nu (samme pointtabel, samme 70%-grænse, straffe trukket én gang) — den nye status ændrer kun *mærkatet*, ikke pointene.
-- Efter ændringen laves en kontrolkørsel på den seneste ICE CUP-afdeling: point og placeringer skal være identiske med i dag, kun med korrekt DNF/RET/DNS.
+- Efter ændringen laves en kontrolkørsel: point og placeringer skal være identiske med i dag, kun med korrekt DNF/RET/DNS.
+
 
 ## Teknisk
 
