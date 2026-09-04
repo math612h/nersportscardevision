@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
+import { ResultStatusBadge } from "@/components/ResultStatusBadge";
+import { RESULT_STATUS_LABEL, isResultStatus, type ResultStatus } from "@/lib/result-status";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { triggerReserveOfferForAbsence, respondReserveOffer, undoDivisionAbsence } from "@/lib/division-reserves.functions";
