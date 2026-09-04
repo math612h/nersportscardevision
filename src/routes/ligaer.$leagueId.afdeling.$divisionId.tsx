@@ -216,7 +216,7 @@ function DivisionDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("league_results")
-        .select("id,user_id,car_class,car_model,position,points,best_lap_ms,laps,session_type")
+        .select("id,user_id,car_class,car_model,position,points,points_penalty,best_lap_ms,laps,session_type")
         .eq("division_id", divisionId)
         .order("session_type", { ascending: true })
         .order("car_class", { ascending: true })
