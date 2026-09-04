@@ -536,8 +536,13 @@ export const notifyTeamInvitation = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!team) throw new Error("Team findes ikke");
 
-    const { data: isAdmin } = await (context.supabase as any)
-      .rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    const { data: adminRow } = await (context.supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    const isAdmin = !!adminRow;
     if (team.owner_id !== context.userId && !isAdmin) {
       throw new Error("Kun teamejeren kan sende invitationer");
     }
