@@ -4,6 +4,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Save, Check, Upload, Trash2, Eye, EyeOff, Calculator } from "lucide-react";
 import { toast } from "sonner";
+import { ResultStatusBadge } from "@/components/ResultStatusBadge";
+import { raceStatusFor, qualiStatusFor, type ResultStatus } from "@/lib/result-status";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -469,7 +471,7 @@ function DivisionEditor({
 
   // Compute preview per session
   const preview = useMemo(() => {
-    const out: Record<string, (DraftRow & { effective_ms: number | null; position: number; points: number; best_ms: number | null })[]> = {};
+    const out: Record<string, (DraftRow & { effective_ms: number | null; position: number; points: number; best_ms: number | null; status: ResultStatus })[]> = {};
     for (const k of groupKeys) out[k] = [];
     for (const r of rows) {
       const k = `${r.car_class}|${r.driver_category}`;
@@ -483,6 +485,7 @@ function DivisionEditor({
         best_ms: qBest,
         position: 0,
         points: 0,
+        status: "classified" as ResultStatus,
       });
     }
     for (const k of Object.keys(out)) {
@@ -509,6 +512,9 @@ function DivisionEditor({
       let rank = 0;
       out[k].forEach((row) => {
         const finished = row.effective_ms != null;
+        row.status = session === "race"
+          ? raceStatusFor({ dns: row.dns, dnf: row.dnf, laps: row.laps, finished }, minLaps)
+          : qualiStatusFor({ dns: row.q_dns, nt: row.q_nt, best_lap_ms: row.best_ms, laps: row.q_laps });
         if (session === "race") {
           const meets = minLaps === 0 || (row.laps ?? 0) >= minLaps;
           const rankedDnf = !finished && row.dnf && !row.dns && meets && row.race_position != null;
@@ -555,6 +561,9 @@ function DivisionEditor({
           driver_category: r.driver_category,
           best_lap_ms: qBest ?? 0,
           dns: !!r.q_dns,
+          nt: !!r.q_nt && !(qBest && qBest > 0),
+          laps: r.q_laps,
+          status: qualiStatusFor({ dns: r.q_dns, nt: r.q_nt, best_lap_ms: qBest, laps: r.q_laps }),
           class_position: 0,
         });
         raceResults.push({
@@ -575,6 +584,8 @@ function DivisionEditor({
           penalty_points: Math.max(0, r.penalty_points),
           dnf: r.dnf && !r.dns,
           dns: r.dns,
+          finished: !r.dnf && !r.dns && raceBase != null,
+          status: "classified",
         });
       }
 
@@ -611,6 +622,12 @@ function DivisionEditor({
           // Brutto-point; straffepoint vises og trækkes fra i visningen.
           r.points = Math.max(0, pointsFor(idx + 1));
         });
+        for (const r of inClass) {
+          r.status = raceStatusFor(
+            { dns: r.dns, dnf: r.dnf, laps: r.laps, finished: r.finished },
+            minLaps,
+          );
+        }
 
       }
       // Rank quali per class
@@ -955,6 +972,7 @@ function DivisionEditor({
                         <th className="px-2 py-1.5 w-24">Straf (s)</th>
                         <th className="px-2 py-1.5 w-24">Pointstraf</th>
                         <th className="px-2 py-1.5 w-24">Effektiv</th>
+                        <th className="px-2 py-1.5 w-16">Status</th>
                         <th className="px-2 py-1.5 w-12 text-center">DNF</th>
                         <th className="px-2 py-1.5 w-12 text-center">DNS</th>
                         <th className="px-2 py-1.5 w-14 text-right">Pts</th>
@@ -967,7 +985,7 @@ function DivisionEditor({
                         const totalPts = Math.max(0, basePts - Math.max(0, r.penalty_points));
                         return (
                           <tr key={r.entry_id} className="border-t border-border">
-                            <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
+                            <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : "–"}</td>
                             <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
                             <td className="px-2 py-1.5 truncate">
                               {r.driver_name}
@@ -1026,6 +1044,9 @@ function DivisionEditor({
                             <td className="px-2 py-1.5 tabular-nums text-xs text-muted-foreground">
                               {r.effective_ms != null ? msToStr(r.effective_ms) : "–"}
                             </td>
+                            <td className="px-2 py-1.5">
+                              <ResultStatusBadge status={r.status} />
+                            </td>
                             <td className="px-2 py-1.5 text-center">
                               <input
                                 type="checkbox"
@@ -1059,6 +1080,7 @@ function DivisionEditor({
                         <th className="px-2 py-1.5 w-12">Nr.</th>
                         <th className="px-2 py-1.5">Kører</th>
                         <th className="px-2 py-1.5 w-40">Bedste omgang (m:ss.xxx)</th>
+                        <th className="px-2 py-1.5 w-20">Status</th>
                         <th className="px-2 py-1.5 w-16 text-center">DNS</th>
                       </tr>
                     </thead>
@@ -1067,7 +1089,7 @@ function DivisionEditor({
                         const i = rows.findIndex((x) => x.entry_id === r.entry_id);
                         return (
                           <tr key={r.entry_id} className="border-t border-border">
-                            <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : r.q_dns ? <span className="text-[10px] text-destructive">DNS</span> : "–"}</td>
+                            <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : "–"}</td>
                             <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
                             <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
                             <td className="px-2 py-1.5">
@@ -1078,11 +1100,14 @@ function DivisionEditor({
                                 disabled={r.q_dns}
                               />
                             </td>
+                            <td className="px-2 py-1.5">
+                              <ResultStatusBadge status={r.status} />
+                            </td>
                             <td className="px-2 py-1.5 text-center">
                               <input
                                 type="checkbox"
                                 checked={r.q_dns}
-                                onChange={(e) => setRow(i, { q_dns: e.target.checked })}
+                                onChange={(e) => setRow(i, { q_dns: e.target.checked, q_nt: e.target.checked ? false : r.q_nt })}
                               />
                             </td>
                           </tr>
