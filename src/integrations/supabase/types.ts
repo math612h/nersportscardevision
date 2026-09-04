@@ -1131,6 +1131,7 @@ export type Database = {
           position_penalty: number
           round: number | null
           session_type: string
+          status: string | null
           time_penalty_ms: number
           track: string
           updated_at: string
@@ -1155,6 +1156,7 @@ export type Database = {
           position_penalty?: number
           round?: number | null
           session_type?: string
+          status?: string | null
           time_penalty_ms?: number
           track: string
           updated_at?: string
@@ -1179,6 +1181,7 @@ export type Database = {
           position_penalty?: number
           round?: number | null
           session_type?: string
+          status?: string | null
           time_penalty_ms?: number
           track?: string
           updated_at?: string

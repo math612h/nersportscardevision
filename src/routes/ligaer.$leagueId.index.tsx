@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { toastError } from "@/lib/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { isResultsPublished } from "@/lib/results-visibility";
+import { ResultStatusBadge } from "@/components/ResultStatusBadge";
+import { isResultStatus, type ResultStatus } from "@/lib/result-status";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
@@ -933,7 +935,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     total: number;
     penalty: number;
     pointPenalty: number;
-    rounds: Record<string, { points: number; penalty: number; pointPenalty: number; dns: boolean }>;
+    rounds: Record<string, { points: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null }>;
   };
   // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
   // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
@@ -974,7 +976,12 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
       cur.total += Math.max(0, r.points - ptsPen);
       cur.penalty += pen;
       cur.pointPenalty += ptsPen;
-      cur.rounds[d.id] = { points: r.points, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns };
+      const rowStatus = isResultStatus((r as any).status)
+        ? ((r as any).status as ResultStatus)
+        : (r as any).dns
+          ? "dns"
+          : null;
+      cur.rounds[d.id] = { points: r.points, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus };
       map.set(key, cur);
     }
   }
@@ -1037,10 +1044,19 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
                         if (!cell) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
-                        if (cell.dns) return <td key={d.id} className="py-1.5 px-1 text-center text-[10px] font-semibold text-destructive">DNS</td>;
+                        const st = cell.status;
+                        if (st === "dns" || (cell.dns && !st)) {
+                          return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status="dns" /></td>;
+                        }
+                        if (st === "dnf" || st === "dsq") {
+                          return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status={st} /></td>;
+                        }
                         return (
                           <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
-                            <span>{cell.points}</span>
+                            <span className="inline-flex items-center gap-1">
+                              {cell.points}
+                              {st === "ret" && <ResultStatusBadge status="ret" />}
+                            </span>
                           </td>
                         );
 
