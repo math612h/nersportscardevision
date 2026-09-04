@@ -692,6 +692,7 @@ function DivisionEditor({
           position_penalty: 0,
           points_penalty: r.penalty_points ?? 0,
           dsq: false,
+          status: r.status ?? null,
         }));
       const dbQualiRows = qualiResults
         .filter((r) => r.class_position > 0)
@@ -713,6 +714,7 @@ function DivisionEditor({
           position_penalty: 0,
           points_penalty: 0,
           dsq: false,
+          status: r.status ?? null,
         }));
 
       const dbUserIds = Array.from(new Set([...dbRaceRows, ...dbQualiRows].map((r) => r.user_id)));
