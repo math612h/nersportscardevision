@@ -58,6 +58,11 @@ export const getLeaderboardRows = createServerFn({ method: "GET" }).handler(asyn
         cache = { rows, at: Date.now() };
         return rows;
       })
+      .catch((err) => {
+        // Ved fx timeout serverer vi hellere lidt gamle data end en fejlside.
+        if (cache) return cache.rows;
+        throw err;
+      })
       .finally(() => {
         inflight = undefined;
       });
