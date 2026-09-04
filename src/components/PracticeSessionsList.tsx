@@ -41,11 +41,13 @@ export function PracticeSessionsList({ divisionId }: { divisionId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_practice_sessions" as any)
-        .select("*")
+        .select("id,server_name,has_qualifying,has_race,practice_minutes,qualifying_minutes,race_minutes,starts_at")
         .eq("division_id", divisionId)
         .order("starts_at", { ascending: true, nullsFirst: false });
       if (error) throw error;
-      return (data ?? []) as any[];
+      const { data: creds } = await supabase.rpc("get_division_practice_credentials", { _division_id: divisionId });
+      const byId = new Map<string, any>((Array.isArray(creds) ? creds : []).map((c: any) => [c.id, c]));
+      return ((data ?? []) as any[]).map((s) => ({ ...s, ...(byId.get(s.id) ?? {}) }));
     },
   });
 

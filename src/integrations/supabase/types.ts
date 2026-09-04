@@ -2883,6 +2883,33 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_division_lobby: {
+        Args: { _division_id: string }
+        Returns: {
+          am_lobby_code: string
+          am_lobby_password: string
+          am_server_name: string
+          lobby_code: string
+          lobby_password: string
+          server_name: string
+        }[]
+      }
+      get_division_practice_credentials: {
+        Args: { _division_id: string }
+        Returns: {
+          id: string
+          lobby_code: string
+          lobby_password: string
+        }[]
+      }
+      get_practice_session_credentials: {
+        Args: { _session_id: string }
+        Returns: {
+          id: string
+          lobby_code: string
+          lobby_password: string
+        }[]
+      }
       get_profile_private: {
         Args: { _user_id: string }
         Returns: {

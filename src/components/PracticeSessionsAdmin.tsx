@@ -25,11 +25,13 @@ export function PracticeSessionsAdmin({ divisionId }: { divisionId: string }) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("division_practice_sessions" as any)
-        .select("*")
+        .select("id,division_id,server_name,has_qualifying,has_race,practice_minutes,qualifying_minutes,race_minutes,starts_at,settings,created_at,updated_at")
         .eq("division_id", divisionId)
         .order("created_at", { ascending: true });
       if (error) throw error;
-      return (data ?? []) as any[];
+      const { data: creds } = await supabase.rpc("get_division_practice_credentials", { _division_id: divisionId });
+      const byId = new Map<string, any>((Array.isArray(creds) ? creds : []).map((c: any) => [c.id, c]));
+      return ((data ?? []) as any[]).map((s) => ({ ...s, ...(byId.get(s.id) ?? {}) }));
     },
   });
 
@@ -114,8 +116,8 @@ function PracticeSessionDialog({ divisionId, session, onDone }: { divisionId: st
     const { data: div, error: dErr } = await supabase
       .from("divisions").select("settings, race_date").eq("id", divisionId).maybeSingle();
     if (dErr) return toast.error(dErr.message);
-    const { data: lobby } = await supabase
-      .from("division_lobbies").select("server_name,lobby_password").eq("division_id", divisionId).maybeSingle();
+    const { data: lobbyRows } = await supabase.rpc("get_division_lobby", { _division_id: divisionId });
+    const lobby = (Array.isArray(lobbyRows) ? lobbyRows[0] ?? null : null) as { server_name: string | null; lobby_password: string | null } | null;
     if (lobby?.server_name) setServerName(lobby.server_name);
     if (lobby?.lobby_password) setLobbyPassword(lobby.lobby_password);
     const evt = (div?.settings as any)?.event_settings ?? {};
