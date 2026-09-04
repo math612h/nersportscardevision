@@ -2894,6 +2894,14 @@ export type Database = {
           server_name: string
         }[]
       }
+      get_division_practice_credentials: {
+        Args: { _division_id: string }
+        Returns: {
+          id: string
+          lobby_code: string
+          lobby_password: string
+        }[]
+      }
       get_practice_session_credentials: {
         Args: { _session_id: string }
         Returns: {
