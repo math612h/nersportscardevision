@@ -664,7 +664,8 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
   });
   const { data: ratingMap } = useQuery({
     queryKey: ["entry-ratings", userIds.sort().join(",")],
-    enabled: userIds.length > 0,
+    // Ratings kræver login — gæster får ellers "permission denied".
+    enabled: userIds.length > 0 && !!ratingsUser,
     queryFn: async () => {
       const { data: rs, error } = await (supabase as any)
         .from("user_ratings")

@@ -52,6 +52,7 @@ async function signed(path: string) {
 }
 
 function UsersPage() {
+  const { user } = useAuth();
   const [q, setQ] = useState("");
   const [approval, setApproval] = useState<"all" | "approved" | "pending">("all");
   const [sort, setSort] = useState<"name" | "elo_desc" | "elo_asc">("name");
