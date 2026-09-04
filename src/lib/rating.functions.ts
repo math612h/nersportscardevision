@@ -2,23 +2,44 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizePatch, pickCurrentPatch } from "@/lib/lmu-version";
 
+// Den aktuelle patch ændrer sig sjældent, men beregningen skanner hele
+// tabellen. Derfor caches den i 5 minutter og deles mellem samtidige kald.
+const PATCH_CACHE_TTL_MS = 5 * 60_000;
+let patchCache: { value: string | null; at: number } | undefined;
+let patchInflight: Promise<string | null> | undefined;
+
+export async function getCurrentPatchCached(supabaseAdmin: any): Promise<string | null> {
+  if (patchCache && Date.now() - patchCache.at < PATCH_CACHE_TTL_MS) return patchCache.value;
+  if (!patchInflight) {
+    patchInflight = (async () => {
+      const versions: Array<string | null> = [];
+      const pageSize = 1000;
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabaseAdmin
+          .from("leaderboard_times")
+          .select("game_version")
+          .not("game_version", "is", null)
+          .range(from, from + pageSize - 1);
+        if (error) throw new Error(error.message);
+        versions.push(...((data ?? []) as Array<{ game_version: string | null }>).map((r: any) => r.game_version));
+        if ((data?.length ?? 0) < pageSize) break;
+      }
+      return pickCurrentPatch(versions);
+    })()
+      .then((v) => {
+        patchCache = { value: v, at: Date.now() };
+        return v;
+      })
+      .finally(() => {
+        patchInflight = undefined;
+      });
+  }
+  return patchInflight;
+}
+
 export const getCurrentPatch = createServerFn({ method: "GET" }).handler(async (): Promise<string | null> => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const versions: Array<string | null> = [];
-  const pageSize = 1000;
-
-  for (let from = 0; ; from += pageSize) {
-    const { data, error } = await supabaseAdmin
-      .from("leaderboard_times")
-      .select("game_version")
-      .not("game_version", "is", null)
-      .range(from, from + pageSize - 1);
-    if (error) throw new Error(error.message);
-    versions.push(...((data ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version));
-    if ((data?.length ?? 0) < pageSize) break;
-  }
-
-  return pickCurrentPatch(versions);
+  return getCurrentPatchCached(supabaseAdmin);
 });
 
 export type DriverSearchHit = {
@@ -239,19 +260,8 @@ export const getMyArchive = createServerFn({ method: "GET" })
     }>;
 
     // Beregn nyeste patch globalt (major.minor). Hotfixes tæller som samme patch.
-    const versions: Array<string | null> = [];
-    const pageSize = 1000;
-    for (let from = 0; ; from += pageSize) {
-      const { data: allVersionsData, error: allVersionsError } = await supabaseAdmin
-        .from("leaderboard_times")
-        .select("game_version")
-        .not("game_version", "is", null)
-        .range(from, from + pageSize - 1);
-      if (allVersionsError) throw new Error(allVersionsError.message);
-      versions.push(...((allVersionsData ?? []) as Array<{ game_version: string | null }>).map((r) => r.game_version));
-      if ((allVersionsData?.length ?? 0) < pageSize) break;
-    }
-    const currentVersion = pickCurrentPatch(versions);
+    // Resultatet caches, så hver sidevisning ikke skanner hele tabellen.
+    const currentVersion = await getCurrentPatchCached(supabaseAdmin);
     const timesCurrent = currentVersion
       ? times.filter((t) => normalizePatch(t.game_version) === currentVersion)
       : times;

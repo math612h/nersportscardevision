@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { Users, Search, CheckCircle2, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { signStreamPhotoUrl } from "@/lib/stream-photo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ async function signed(path: string) {
 }
 
 function UsersPage() {
+  const { user } = useAuth();
   const [q, setQ] = useState("");
   const [approval, setApproval] = useState<"all" | "approved" | "pending">("all");
   const [sort, setSort] = useState<"name" | "elo_desc" | "elo_asc">("name");
@@ -70,6 +72,8 @@ function UsersPage() {
 
   const { data: ratings } = useQuery({
     queryKey: ["all-user-ratings"],
+    // Ratings er kun læsbare for indloggede brugere — undgå fejl for gæster.
+    enabled: !!user,
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("user_ratings")

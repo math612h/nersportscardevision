@@ -442,7 +442,8 @@ async function ensureDiscordRolesMentionable(roleIds: string[], botToken: string
   });
   if (!rolesRes.ok) {
     const text = await rolesRes.text().catch(() => "");
-    throw new Error(`Kunne ikke kontrollere Discord-roller (${rolesRes.status}): ${text}`);
+    console.warn(`[Discord] Kunne ikke kontrollere Discord-roller (${rolesRes.status}): ${text}`);
+    return;
   }
 
   const guildRoles = (await rolesRes.json()) as Array<{
@@ -466,8 +467,9 @@ async function ensureDiscordRolesMentionable(roleIds: string[], botToken: string
     });
     if (!updateRes.ok) {
       const text = await updateRes.text().catch(() => "");
-      throw new Error(
-        `Discord-rollen “${role.name}” kan ikke sende notifikationer. Giv LMU Danmark-botten rettigheden “Manage Roles”, og placer bot-rollen over “${role.name}” (${updateRes.status}: ${text}).`,
+      // Beskeden må aldrig droppes, fordi rollen ikke kan gøres nævnbar.
+      console.warn(
+        `[Discord] Kunne ikke gøre rollen “${role.name}” nævnbar (${updateRes.status}: ${text}). Sender beskeden alligevel.`,
       );
     }
   }

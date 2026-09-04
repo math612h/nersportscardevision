@@ -646,6 +646,7 @@ function SeatsSummary({ leagueId, configs }: { leagueId: string; configs: ClassC
 
 function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassConfig[] }) {
   const { data } = useLeagueSignups(leagueId);
+  const { user: ratingsUser } = useAuth();
 
   const userIds = useMemo(() => Array.from(new Set((data ?? []).map((e) => e.user_id))), [data]);
   const teamIds = useMemo(() => (data ?? []).map((e: any) => e.team_id).filter(Boolean) as string[], [data]);
@@ -664,7 +665,8 @@ function SignupsList({ leagueId, configs }: { leagueId: string; configs: ClassCo
   });
   const { data: ratingMap } = useQuery({
     queryKey: ["entry-ratings", userIds.sort().join(",")],
-    enabled: userIds.length > 0,
+    // Ratings kræver login — gæster får ellers "permission denied".
+    enabled: userIds.length > 0 && !!ratingsUser,
     queryFn: async () => {
       const { data: rs, error } = await (supabase as any)
         .from("user_ratings")

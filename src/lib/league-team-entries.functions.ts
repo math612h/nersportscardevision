@@ -23,10 +23,13 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!team) throw new Error("Team findes ikke");
 
-    const { data: isAdmin } = await (context.supabase as any).rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    const { data: adminRow } = await (context.supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    const isAdmin = !!adminRow;
     if ((team as any).owner_id !== context.userId && !isAdmin) {
       throw new Error("Kun teamejeren kan tilmelde teamet til en liga");
     }
@@ -209,10 +212,13 @@ export const withdrawTeamFromLeague = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!entry) throw new Error("Tilmelding findes ikke");
 
-    const { data: isAdmin } = await (context.supabase as any).rpc("has_role", {
-      _user_id: context.userId,
-      _role: "admin",
-    });
+    const { data: adminRow } = await (context.supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    const isAdmin = !!adminRow;
     if ((entry as any).teams?.owner_id !== context.userId && !isAdmin) {
       throw new Error("Kun teamejeren kan trække tilmeldingen tilbage");
     }
