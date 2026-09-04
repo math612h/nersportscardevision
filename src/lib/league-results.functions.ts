@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { raceStatusFor } from "@/lib/result-status";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parseLmuRaceFileServer } from "@/lib/lmu-parser-server";
@@ -41,6 +42,8 @@ type StoredRaceRow = Record<string, unknown> & {
   dns?: boolean;
   dnf?: boolean;
   dsq?: boolean;
+  finished?: boolean;
+  status?: string | null;
 };
 
 function recalculateStoredRaceRows(
@@ -63,6 +66,8 @@ function recalculateStoredRaceRows(
         : 0,
       class_position: 0,
       points: 0,
+      finished: row.finished ?? (finishMs > 0 && !row.dnf && !row.dns),
+      status: row.status ?? null,
     };
   });
 
@@ -100,6 +105,12 @@ function recalculateStoredRaceRows(
     const eligible = active.filter((row) =>
       !row.dsq && (minLaps === 0 || Number(row.laps ?? 0) >= minLaps),
     );
+    for (const row of group) {
+      row.status = raceStatusFor(
+        { dns: row.dns, dnf: row.dnf, dsq: row.dsq, laps: row.laps, finished: row.finished },
+        minLaps,
+      );
+    }
     eligible.forEach((row, index) => {
       row.class_position = index + 1;
       // Gem BRUTTO-point. Straffepoint trækkes fra i visningerne, så de aldrig
@@ -127,6 +138,7 @@ async function syncStoredRaceRowsToLeagueResults(
         time_penalty_ms: Math.round(Math.max(0, Number(row.penalty_seconds ?? 0)) * 1000),
         points_penalty: Math.max(0, Number(row.penalty_points ?? 0)),
         dsq: !!row.dsq,
+        status: row.status ?? null,
       })
       .eq("division_id", divisionId)
       .eq("session_type", "race")
@@ -342,6 +354,8 @@ export const publishLeagueRaceResult = createServerFn({ method: "POST" })
         dns: false,
         dnf: !!r.dnf,
         dsq: !!r.dsq,
+        finished: !r.dnf && !r.dsq,
+        status: r.dsq ? "dsq" : r.dnf ? "ret" : "classified",
       }));
       const prev = ((division.settings as any) ?? {});
       const newSettings = {
@@ -460,6 +474,8 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
           car_number: ent?.car_number ?? null, driver_category: ent?.driver_category ?? null,
           class_position: r.position, position: r.position, best_lap_ms: r.best_lap_ms,
           laps: r.laps, points: r.points, dns: false, dnf: !!r._dnf,
+          finished: !r._dnf,
+          status: r._dnf ? "dnf" : "classified",
         };
       });
       const prevSettings = ((division.settings as any) ?? {});
