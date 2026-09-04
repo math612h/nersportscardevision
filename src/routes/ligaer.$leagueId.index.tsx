@@ -937,6 +937,8 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     total: number;
     penalty: number;
     pointPenalty: number;
+    dnsCount: number;
+    dnfCount: number;
     rounds: Record<string, { points: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null }>;
   };
   // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
@@ -970,6 +972,8 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         total: 0,
         penalty: 0,
         pointPenalty: 0,
+        dnsCount: 0,
+        dnfCount: 0,
         rounds: {},
       };
       const pen = Number(r.penalty_seconds ?? 0);
@@ -983,6 +987,8 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         : (r as any).dns
           ? "dns"
           : null;
+      if (rowStatus === "dns") cur.dnsCount += 1;
+      if (rowStatus === "dnf") cur.dnfCount += 1;
       cur.rounds[d.id] = { points: r.points, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus };
       map.set(key, cur);
     }
@@ -1004,7 +1010,15 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         const [cls, cat] = k.split(" · ");
         const rows = allRows
           .filter((r) => r.car_class === cls && r.driver_category === cat)
-          .sort((a, b) => b.total - a.total);
+          .sort((a, b) => {
+            if (b.total !== a.total) return b.total - a.total;
+            // Ved samme point: DNF over DNS (færre DNS-rækker først).
+            if (a.dnsCount !== b.dnsCount) return a.dnsCount - b.dnsCount;
+            // Derefter flest gennemførte løb (færrest DNF/NT/DSQ) først.
+            const aNonFinish = a.dnfCount + Object.values(a.rounds).filter((c) => c.status === "nt" || c.status === "dsq").length;
+            const bNonFinish = b.dnfCount + Object.values(b.rounds).filter((c) => c.status === "nt" || c.status === "dsq").length;
+            return aNonFinish - bNonFinish;
+          });
         if (rows.length === 0) return null;
         return (
           <Card key={k}>
