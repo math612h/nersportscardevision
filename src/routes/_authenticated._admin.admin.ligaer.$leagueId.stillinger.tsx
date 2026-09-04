@@ -51,6 +51,8 @@ type DraftRow = {
   // Quali
   q_best_str: string;        // best lap m:ss.xxx
   q_dns: boolean;
+  q_nt: boolean;             // kørte omgange, men ingen godkendt tid
+  q_laps: number | null;
 };
 
 type EntryRec = {
@@ -249,6 +251,8 @@ function DivisionEditor({
       source_server: race?.source_server === "pro" || race?.source_server === "am" ? race.source_server : null,
       q_best_str: quali && typeof quali.best_lap_ms === "number" && quali.best_lap_ms > 0 ? msToStr(quali.best_lap_ms) : "",
       q_dns: !!quali?.dns,
+      q_nt: !!quali?.nt,
+      q_laps: typeof quali?.laps === "number" ? quali.laps : null,
     };
   });
 
@@ -375,13 +379,15 @@ function DivisionEditor({
         if (p.finished && p.finishMs != null) {
           updates.set(row.entry_id, { ...common, time_str: msToStr(p.finishMs), laps: p.laps, race_position: racePosition, dnf: false, dns: false });
         } else {
-          updates.set(row.entry_id, { ...common, time_str: "", laps: p.laps, race_position: racePosition, dnf: true, dns: false });
+          const noLaps = !p.laps || p.laps <= 0;
+          updates.set(row.entry_id, { ...common, time_str: "", laps: p.laps, race_position: racePosition, dnf: !noLaps, dns: noLaps });
         }
       } else {
         if (p.bestLapMs != null) {
-          updates.set(row.entry_id, { q_best_str: msToStr(p.bestLapMs), q_dns: false });
+          updates.set(row.entry_id, { q_best_str: msToStr(p.bestLapMs), q_dns: false, q_nt: false, q_laps: p.laps ?? null });
         } else {
-          updates.set(row.entry_id, { q_best_str: "", q_dns: true });
+          const drove = (p.laps ?? 0) > 0;
+          updates.set(row.entry_id, { q_best_str: "", q_dns: !drove, q_nt: drove, q_laps: p.laps ?? null });
         }
       }
       matched++;
