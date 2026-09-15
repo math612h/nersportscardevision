@@ -124,7 +124,14 @@ export function LeagueTeamSignupCard({
                       const name = memberById.get(l.user_id)?.display_name ?? "Ukendt";
                       const icon = l.status === "accepted" ? "✅" : l.status === "declined" ? "❌" : "⏳";
                       return (
-                        <li key={l.id}>{icon} {name} <span className="opacity-60">— {l.status}</span></li>
+                        <li key={l.id}>
+                          {icon} {name} <span className="opacity-60">— {l.status}</span>
+                          {l.effective_from && (
+                            <span className="opacity-60">
+                              {" "}· tæller fra {new Date(l.effective_from).toLocaleDateString("da-DK")}
+                            </span>
+                          )}
+                        </li>
                       );
                     })}
                   </ul>
