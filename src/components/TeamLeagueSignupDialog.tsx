@@ -171,27 +171,39 @@ export function TeamLeagueSignupDialog({
     setSelected((prev) => {
       const next = new Set<string>();
       prev.forEach((id) => {
-        if (eligibleByMember.get(id)) next.add(id);
+        if (eligibleByMember.get(id) || lockedIds.has(id)) next.add(id);
       });
+      lockedIds.forEach((id) => next.add(id));
       return next;
     });
-  }, [eligibleByMember]);
+  }, [eligibleByMember, lockedIds]);
+
+  const newlySelected = useMemo(
+    () => Array.from(selected).filter((id) => !lockedIds.has(id)),
+    [selected, lockedIds],
+  );
 
   const submit = useMutation({
     mutationFn: async () => {
       if (!leagueId) throw new Error("Vælg en liga");
       if (!carClass) throw new Error("Vælg en bilklasse");
-      const userIds = Array.from(selected);
+      const userIds = isAdd ? newlySelected : Array.from(selected);
       return await submitFn({
-        data: { leagueId, teamId, carClass, userIds },
+        data: { leagueId, teamId, carClass, userIds, mode: isAdd ? "add" : "replace" },
       });
     },
     onSuccess: () => {
-      toast.success("Lineup sendt — kørerne får en Discord-besked");
+      toast.success(
+        isAdd
+          ? "Kørerne er tilføjet lineupet — de tæller med fra næste afdeling"
+          : "Lineup sendt — kørerne får en Discord-besked",
+      );
       setOpen(false);
-      setLeagueId(initialLeagueId ?? "");
-      setCarClass("");
-      setSelected(new Set());
+      if (!isAdd) {
+        setLeagueId(initialLeagueId ?? "");
+        setCarClass("");
+        setSelected(new Set());
+      }
       qc.invalidateQueries({ queryKey: ["team-league-entries", teamId] });
       qc.invalidateQueries({ queryKey: ["league-team-entries-mine"] });
       refetch();
@@ -205,19 +217,21 @@ export function TeamLeagueSignupDialog({
     return s;
   }, [entries]);
 
-  const availableLeagues = (leagues ?? []).filter((l) => {
-    const cfgs = Array.isArray(l.class_configs) ? (l.class_configs as any[]) : [];
-    const classes = new Set(cfgs.map((c) => c?.car_class).filter(Boolean));
-    if (classes.size === 0) return false;
-    for (const cc of classes) {
-      if (!takenCombos.has(`${l.id}:${cc}`)) return true;
-    }
-    return false;
-  });
+  const availableLeagues = isAdd
+    ? (leagues ?? []).filter((l) => l.id === leagueId)
+    : (leagues ?? []).filter((l) => {
+        const cfgs = Array.isArray(l.class_configs) ? (l.class_configs as any[]) : [];
+        const classes = new Set(cfgs.map((c) => c?.car_class).filter(Boolean));
+        if (classes.size === 0) return false;
+        for (const cc of classes) {
+          if (!takenCombos.has(`${l.id}:${cc}`)) return true;
+        }
+        return false;
+      });
 
-  const availableClasses = leagueClasses.filter(
-    (cc) => !takenCombos.has(`${leagueId}:${cc}`),
-  );
+  const availableClasses = isAdd
+    ? [carClass].filter(Boolean)
+    : leagueClasses.filter((cc) => !takenCombos.has(`${leagueId}:${cc}`));
 
   const hasEntries = (entries ?? []).length > 0;
 
