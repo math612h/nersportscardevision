@@ -1134,18 +1134,24 @@ function TeamStandings({
     },
   });
 
-  type Info = { teamId: string; teamName: string; carClass: string; userIds: Set<string> };
+  type Info = {
+    teamId: string;
+    teamName: string;
+    carClass: string;
+    userIds: Set<string>;
+    effectiveFrom: Map<string, string | null>;
+  };
   const teamInfos: Info[] = [];
   for (const e of ((teamData?.entries ?? []) as any[])) {
-    const accepted = ((e.league_team_lineup ?? []) as any[])
-      .filter((l) => l.status === "accepted")
-      .map((l) => l.user_id as string);
+    const acceptedRows = ((e.league_team_lineup ?? []) as any[]).filter((l) => l.status === "accepted");
+    const accepted = acceptedRows.map((l) => l.user_id as string);
     if (accepted.length < 2) continue;
     teamInfos.push({
       teamId: e.team_id,
       teamName: e.teams?.name ?? "Team",
       carClass: e.car_class,
       userIds: new Set(accepted),
+      effectiveFrom: new Map(acceptedRows.map((l) => [l.user_id as string, (l.effective_from as string | null) ?? null])),
     });
   }
 
