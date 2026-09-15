@@ -772,7 +772,7 @@ function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, te
         <ul className="divide-y divide-border">
           {visibleGrid.map((e) => (
             <DonorFrame as="li" userId={e.user_id} key={e.id} bare className="flex items-center gap-3 py-2 text-sm">
-              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+              <span className="inline-flex h-7 w-14 shrink-0 items-center justify-center rounded bg-muted px-1 font-mono text-xs font-semibold tabular-nums">
                 #{e.car_number}
               </span>
               <div className="flex-1 min-w-0">
@@ -790,16 +790,18 @@ function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, te
                   </div>
                 )}
               </div>
-              {e.team_id && teamMap?.[e.team_id] && (
-                <Badge variant="outline" className="hidden sm:inline-flex text-[10px] shrink-0" title="Team">
-                  {teamMap[e.team_id]}
-                </Badge>
-              )}
-              {approvedMap?.has(e.user_id) && (
-                <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
-                  <CheckCircle2 className="h-3 w-3" />Godkendt
-                </Badge>
-              )}
+              <span className="ml-auto flex shrink-0 items-center gap-1.5">
+                {e.team_id && teamMap?.[e.team_id] && (
+                  <Badge variant="outline" className="hidden sm:inline-flex whitespace-nowrap text-[10px]" title="Team">
+                    {teamMap[e.team_id]}
+                  </Badge>
+                )}
+                {approvedMap?.has(e.user_id) && (
+                  <Badge variant="outline" className="gap-1 whitespace-nowrap text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3 w-3" />Godkendt
+                  </Badge>
+                )}
+              </span>
             </DonorFrame>
           ))}
         </ul>
@@ -819,16 +821,18 @@ function EntryClassCard({ cls, cat, cfg, classCapacity, classGridCount, list, te
             <ul className="divide-y divide-border">
               {wait.map((e, idx) => (
                 <DonorFrame as="li" userId={e.user_id} key={e.id} bare className="flex items-center gap-3 py-2 text-sm">
-                  <span className="inline-flex h-6 min-w-6 items-center justify-center rounded bg-muted px-1.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                  <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded bg-muted text-[10px] font-semibold tabular-nums text-muted-foreground">
                     {idx + 1}
                   </span>
-                  <span className="font-mono text-xs text-muted-foreground">#{e.car_number}</span>
-                  <span className="flex-1 truncate"><UserAvatar userId={e.user_id} name={e.driver_name} size="xs" /></span>
-                  {approvedMap?.has(e.user_id) && (
-                    <Badge variant="outline" className="gap-1 text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400 shrink-0">
-                      <CheckCircle2 className="h-3 w-3" />Godkendt
-                    </Badge>
-                  )}
+                  <span className="w-12 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">#{e.car_number}</span>
+                  <span className="min-w-0 flex-1 truncate"><UserAvatar userId={e.user_id} name={e.driver_name} size="xs" /></span>
+                  <span className="ml-auto flex shrink-0 items-center gap-1.5">
+                    {approvedMap?.has(e.user_id) && (
+                      <Badge variant="outline" className="gap-1 whitespace-nowrap text-[10px] border-emerald-500/40 text-emerald-700 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3 w-3" />Godkendt
+                      </Badge>
+                    )}
+                  </span>
                 </DonorFrame>
               ))}
             </ul>
