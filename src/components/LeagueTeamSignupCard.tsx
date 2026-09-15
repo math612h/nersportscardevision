@@ -89,6 +89,17 @@ export function LeagueTeamSignupCard({
                     <Badge variant={e.status === "confirmed" ? "default" : "secondary"} className="text-[10px]">
                       {e.status === "confirmed" ? "Bekræftet" : "Afventer"}
                     </Badge>
+                    <TeamLeagueSignupDialog
+                      teamId={teamId}
+                      existingEntry={{
+                        entryId: e.id,
+                        leagueId: e.league_id,
+                        carClass: e.car_class,
+                        lockedUserIds: e.league_team_lineup
+                          .filter((l) => l.status !== "declined")
+                          .map((l) => l.user_id),
+                      }}
+                    />
                     <Button
                       variant="ghost"
                       size="icon"
