@@ -338,7 +338,9 @@ export function TeamLeagueSignupDialog({
               })}
             </ul>
             <p className="text-xs text-muted-foreground">
-              De valgte kørere får en Discord-DM og kan acceptere/afvise. Når mindst 2 har accepteret bliver tilmeldingen bekræftet. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling.
+              {isAdd
+                ? "Kørere der allerede er på lineupet kan ikke fjernes her. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling."
+                : "De valgte kørere får en Discord-DM og kan acceptere/afvise. Når mindst 2 har accepteret bliver tilmeldingen bekræftet. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling."}
             </p>
           </div>
         </div>
@@ -346,10 +348,15 @@ export function TeamLeagueSignupDialog({
           <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
           <Button
             onClick={() => submit.mutate()}
-            disabled={submit.isPending || !leagueId || !carClass || selected.size < 2}
+            disabled={
+              submit.isPending ||
+              !leagueId ||
+              !carClass ||
+              (isAdd ? newlySelected.length < 1 || selected.size < 2 : selected.size < 2)
+            }
           >
             {submit.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Send invitationer
+            {isAdd ? "Tilføj kørere" : "Send invitationer"}
           </Button>
         </DialogFooter>
       </DialogContent>
