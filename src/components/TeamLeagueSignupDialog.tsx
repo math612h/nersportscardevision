@@ -293,10 +293,13 @@ export function TeamLeagueSignupDialog({
             <ul className="divide-y divide-border rounded-md border border-border">
               {(members ?? []).map((m) => {
                 const eligible = eligibleByMember.get(m.user_id) ?? false;
-                const checked = selected.has(m.user_id);
-                const disabled = !carClass || !eligible;
+                const locked = lockedIds.has(m.user_id);
+                const checked = locked || selected.has(m.user_id);
+                const disabled = locked || !carClass || !eligible;
                 const reason =
-                  !carClass
+                  locked
+                    ? "allerede på lineupet"
+                    : !carClass
                     ? null
                     : m.car_class !== carClass
                       ? `ikke tildelt ${carClass} i teamet`
