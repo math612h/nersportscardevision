@@ -102,9 +102,13 @@ export function TeamLeagueSignupDialog({
   });
 
   const [open, setOpen] = useState(false);
-  const [leagueId, setLeagueId] = useState<string>(initialLeagueId ?? "");
-  const [carClass, setCarClass] = useState<string>("");
+  const [leagueId, setLeagueId] = useState<string>(existingEntry?.leagueId ?? initialLeagueId ?? "");
+  const [carClass, setCarClass] = useState<string>(existingEntry?.carClass ?? "");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const lockedIds = useMemo(
+    () => new Set(existingEntry?.lockedUserIds ?? []),
+    [existingEntry],
+  );
 
   const memberIds = useMemo(() => (members ?? []).map((m) => m.user_id), [members]);
 
