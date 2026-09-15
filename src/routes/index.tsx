@@ -199,6 +199,7 @@ function NewsHome() {
         })),
         teams,
         pointsPerPosition,
+        raceDate: (latest as any)?.race_date ?? null,
       });
       const groups: { car_class: string; teams: { teamId: string; name: string; points: number; drivers: number }[] }[] = [];
       for (const [cls, list] of ranked.entries()) {
