@@ -1,23 +1,22 @@
 # Hvorfor Daniel ikke kan tilføje kørere i Odyssé Cronos Racing
 
-## Hvad jeg har tjekket
+## Årsagen — bekræftet
 
-- Teamet har to team-tilmeldinger i ICE Cup: LMP2 (2 kørere på lineupet) og LMGT3 (4 kørere).
-- Mathias Gylden opfylder alle krav: han er teammedlem med klassen LMGT3 og er selv tilmeldt LMGT3 i ICE Cup. Han er ikke låst til et andet team.
-- Der er ingen regel i databasen, der blokerer tilføjelsen — hverken adgangsregler eller lås på ligaen.
+Knappen "Tilføj kører" findes kun i preview-versionen. Jeg har hentet den offentliggjorte side (lmudanmark.dk) for Odyssé Cronos Racing og gennemsøgt dens kode: teksten "Tilføj kører" findes ikke der. Du ser knappen på Frontline Motorsport, fordi du kigger i preview. Daniel er på det offentlige site, hvor den nye version endnu ikke er udgivet.
 
-Så selve funktionen ville virke; problemet er at knappen "Tilføj kører" ikke er synlig for Daniel ude på det offentlige site.
+Der er altså ikke noget galt med teamet, ligaen eller adgangsreglerne.
 
-## Årsag
+## Hvad jeg har tjekket i data
 
-Muligheden for at tilføje kørere midt i sæsonen blev bygget, men den nye version er ikke sendt live endnu. Derfor ser Daniel stadig den gamle teamside uden "Tilføj kører"-knappen.
+- Odyssé Cronos Racing har to tilmeldinger i ICE Cup: LMP2 (2 kørere) og LMGT3 (4 kørere).
+- Mathias Gylden opfylder alle krav for LMGT3: teammedlem med klassen LMGT3 og selv tilmeldt LMGT3 i ICE Cup. Han er ikke låst til et andet team.
+- Ingen adgangsregel eller lås blokerer tilføjelsen.
 
 ## Plan
 
-1. Åbn teamsiden i preview som teamejer og bekræft, at "Tilføj kører" står ud for både LMP2- og LMGT3-tilmeldingen, og at Mathias Gylden kan vælges under LMGT3.
-2. Hvis knappen mangler i preview også: undersøg den forespørgsel, teamsiden bruger til at hente tilmeldingerne, og ret fejlen, så listen (og dermed knapperne) vises.
-3. Udgiv appen, så Daniel får versionen med knappen.
-4. Bagefter kan Daniel selv tilføje Mathias Gylden — han tæller først med i teamets resultater fra næste afdeling.
+1. Udgiv appen, så den nye teamside med "Tilføj kører" kommer ud til alle.
+2. Bed Daniel genindlæse teamsiden (hårdt genindlæs, hvis han har den gamle side åben).
+3. Han kan så tilføje Mathias Gylden til LMGT3-lineupet; Mathias tæller først med i teamets resultater fra næste afdeling.
 
 ## Bemærkning
 
