@@ -42,11 +42,11 @@ export function raceStatusFor(
   const laps = Number(row.laps ?? 0);
   if (row.dns) return "dns";
   if (!row.finished && laps <= 0) return "dns";
+  // Under grænsen = ikke klassificeret (DNF), uanset om målstregen blev passeret
+  if (minLaps > 0 && laps < minLaps) return "dnf";
   if (row.finished) return "classified";
-  // Udgået: over grænsen = RET (klassificeret), under = DNF
-  if (minLaps > 0 && laps >= minLaps) return "ret";
-  if (minLaps === 0 && laps > 0) return "ret";
-  return "dnf";
+  // Udgået over grænsen = RET (klassificeret)
+  return "ret";
 }
 
 export function qualiStatusFor(row: {
@@ -58,5 +58,8 @@ export function qualiStatusFor(row: {
   if (Number(row.best_lap_ms ?? 0) > 0) return "classified";
   if (row.nt) return "nt";
   if (row.dns) return "dns";
-  return Number(row.laps ?? 0) > 0 ? "nt" : "dns";
+  // Ukendt omgangstal (ældre/manuelt indtastede rækker): antag at køreren
+  // forsøgte, så vedkommende ikke fejlagtigt markeres som udeblevet.
+  if (row.laps == null) return "nt";
+  return Number(row.laps) > 0 ? "nt" : "dns";
 }
