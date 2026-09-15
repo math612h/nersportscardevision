@@ -1119,7 +1119,7 @@ function TeamStandings({
       const [{ data, error }, { data: leagueRow }] = await Promise.all([
         (supabase as any)
           .from("league_team_entries")
-          .select("id, team_id, car_class, status, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status)")
+          .select("id, team_id, car_class, status, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status, effective_from)")
           .eq("league_id", leagueId)
           .eq("status", "confirmed"),
         supabase.from("leagues").select("points_system").eq("id", leagueId).maybeSingle(),
