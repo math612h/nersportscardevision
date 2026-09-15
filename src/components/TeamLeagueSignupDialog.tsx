@@ -19,17 +19,27 @@ import {
 type League = { id: string; name: string; class_configs: any };
 type Member = { user_id: string; display_name: string | null; car_class: string | null };
 
+export type ExistingEntryInfo = {
+  entryId: string;
+  leagueId: string;
+  carClass: string;
+  lockedUserIds: string[];
+};
+
 export function TeamLeagueSignupDialog({
   teamId,
   trigger,
   initialLeagueId,
+  existingEntry,
 }: {
   teamId: string;
   trigger?: React.ReactNode;
   initialLeagueId?: string;
+  existingEntry?: ExistingEntryInfo;
 }) {
   const qc = useQueryClient();
   const submitFn = useServerFn(submitTeamForLeague);
+  const isAdd = !!existingEntry;
 
   const { data: members } = useQuery({
     queryKey: ["team-members-signup", teamId],
