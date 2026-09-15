@@ -58,5 +58,8 @@ export function qualiStatusFor(row: {
   if (Number(row.best_lap_ms ?? 0) > 0) return "classified";
   if (row.nt) return "nt";
   if (row.dns) return "dns";
-  return Number(row.laps ?? 0) > 0 ? "nt" : "dns";
+  // Ukendt omgangstal (ældre/manuelt indtastede rækker): antag at køreren
+  // forsøgte, så vedkommende ikke fejlagtigt markeres som udeblevet.
+  if (row.laps == null) return "nt";
+  return Number(row.laps) > 0 ? "nt" : "dns";
 }
