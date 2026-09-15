@@ -581,26 +581,28 @@ function DivisionDetail() {
                               userId={e.user_id}
                               absent={!!ab}
                             >
-                              <span className="inline-flex h-7 min-w-9 items-center justify-center rounded bg-muted px-2 font-mono text-xs font-semibold tabular-nums">
+                              <span className="inline-flex h-7 w-14 shrink-0 items-center justify-center rounded bg-muted px-1 font-mono text-xs font-semibold tabular-nums">
                                 #{e.car_number}
                               </span>
-                              <DriverLink userId={e.user_id} name={e.driver_name} className={`flex-1 truncate ${ab ? "line-through" : ""}`} />
-                              {approvedSet?.has(e.user_id) && (
-                                <Badge variant="secondary" className="gap-1 text-[10px] text-green-700 dark:text-green-400" title="Godkendt kører">
-                                  <CheckCircle2 className="h-3 w-3" /> Godkendt
-                                </Badge>
-                              )}
-                              {e.waitlist && <Badge variant="outline" className="text-[10px]">Venteliste</Badge>}
-                              {e._kind === "reserve" && (
-                                <Badge variant="secondary" className="gap-1 text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" title="Reserve — kører kun denne afdeling">
-                                  Reserve
-                                </Badge>
-                              )}
-                              {ab && (
-                                <Badge variant="secondary" className="gap-1 text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
-                                  <UserX className="h-3 w-3" /> Deltager ikke
-                                </Badge>
-                              )}
+                              <DriverLink userId={e.user_id} name={e.driver_name} className={`min-w-0 flex-1 truncate ${ab ? "line-through" : ""}`} />
+                              <span className="ml-auto flex shrink-0 items-center gap-1.5">
+                                {approvedSet?.has(e.user_id) && (
+                                  <Badge variant="secondary" className="gap-1 whitespace-nowrap text-[10px] text-green-700 dark:text-green-400" title="Godkendt kører">
+                                    <CheckCircle2 className="h-3 w-3" /> Godkendt
+                                  </Badge>
+                                )}
+                                {e.waitlist && <Badge variant="outline" className="whitespace-nowrap text-[10px]">Venteliste</Badge>}
+                                {e._kind === "reserve" && (
+                                  <Badge variant="secondary" className="gap-1 whitespace-nowrap text-[10px] bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30" title="Reserve — kører kun denne afdeling">
+                                    Reserve
+                                  </Badge>
+                                )}
+                                {ab && (
+                                  <Badge variant="secondary" className="gap-1 whitespace-nowrap text-[10px]" title={reasonByUser.get(e.user_id) ?? undefined}>
+                                    <UserX className="h-3 w-3" /> Deltager ikke
+                                  </Badge>
+                                )}
+                              </span>
                             </DriverEntryRow>
                           );
                         })}

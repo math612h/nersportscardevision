@@ -156,21 +156,24 @@ function AdminEntries() {
                   const wait = sorted.filter((x) => x.waitlist);
                   const renderRow = (e: any, opts: { waitlist: boolean; pos?: number }) => (
                     <DonorFrame as="li" userId={e.user_id} key={e.id} bare className={`flex items-center justify-between rounded border px-3 py-1.5 text-sm ${opts.waitlist ? "border-amber-500/40 bg-amber-500/5" : e.profileApproved ? "border-emerald-500/40 bg-emerald-500/5" : "border-border"}`}>
-                      <span className="flex items-center gap-2 min-w-0">
-                        {opts.waitlist && opts.pos != null && (
-                          <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-amber-500/20 px-1.5 font-mono text-xs text-amber-700 dark:text-amber-300" title="Placering på ventelisten">V{opts.pos}</span>
-                        )}
-                        {!opts.waitlist && e.car_number != null && (
-                          <span className="inline-flex h-6 min-w-8 items-center justify-center rounded bg-muted px-1.5 font-mono text-xs">#{e.car_number}</span>
-                        )}
-                        <span className="truncate">{e.driver_name}</span>
-                        <span className="text-[10px] text-muted-foreground shrink-0" title="Tilmeldt">{fmtDate(e.created_at)}</span>
+                      <span className="flex min-w-0 flex-1 items-center gap-2">
+                        <span className="inline-flex h-6 w-12 shrink-0 items-center justify-center rounded bg-muted px-1 font-mono text-xs">
+                          {opts.waitlist && opts.pos != null ? (
+                            <span className="text-amber-700 dark:text-amber-300" title="Placering på ventelisten">V{opts.pos}</span>
+                          ) : e.car_number != null ? (
+                            <>#{e.car_number}</>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">{e.driver_name}</span>
+                        <span className="shrink-0 whitespace-nowrap text-[10px] text-muted-foreground" title="Tilmeldt">{fmtDate(e.created_at)}</span>
                         {e.profileApproved ? (
-                          <Badge variant="secondary" className="gap-1 text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+                          <Badge variant="secondary" className="shrink-0 gap-1 whitespace-nowrap text-[10px] bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
                             <CheckCircle2 className="h-3 w-3" />Godkendt profil
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="gap-1 text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">
+                          <Badge variant="outline" className="shrink-0 gap-1 whitespace-nowrap text-[10px] border-amber-500/50 text-amber-600 dark:text-amber-400">
                             <Clock className="h-3 w-3" />Afventer
                           </Badge>
                         )}
