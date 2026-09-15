@@ -239,19 +239,24 @@ export function TeamLeagueSignupDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button size="sm" disabled={availableLeagues.length === 0}>
-            {hasEntries ? "Tilmeld endnu et team lineup" : "Tilmeld team lineup"}
+          <Button size="sm" variant={isAdd ? "outline" : "default"} disabled={!isAdd && availableLeagues.length === 0}>
+            {isAdd ? "Tilføj kører" : hasEntries ? "Tilmeld endnu et team lineup" : "Tilmeld team lineup"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tilmeld team i liga</DialogTitle>
+          <DialogTitle>{isAdd ? "Tilføj kørere til lineupet" : "Tilmeld team i liga"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {isAdd && (
+            <p className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+              Nye kørere tæller først med i teamets resultater fra de afdelinger, der køres efter tilføjelsen. Allerede kørte afdelinger påvirkes ikke.
+            </p>
+          )}
           <div className="space-y-1.5">
             <Label>Liga</Label>
-            <Select value={leagueId} onValueChange={setLeagueId}>
+            <Select value={leagueId} onValueChange={setLeagueId} disabled={isAdd}>
               <SelectTrigger>
                 <SelectValue placeholder="Vælg liga…" />
               </SelectTrigger>
