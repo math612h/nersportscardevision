@@ -1173,6 +1173,7 @@ function TeamStandings({
       results,
       teams: teamInfos,
       pointsPerPosition: teamData?.pointsPerPosition ?? [],
+      raceDate: (d as any).race_date ?? null,
     });
     for (const [cls, list] of ranked.entries()) {
       const aggs = aggByClass.get(cls);
