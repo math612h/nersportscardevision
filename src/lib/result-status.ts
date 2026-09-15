@@ -42,11 +42,11 @@ export function raceStatusFor(
   const laps = Number(row.laps ?? 0);
   if (row.dns) return "dns";
   if (!row.finished && laps <= 0) return "dns";
+  // Under grænsen = ikke klassificeret (DNF), uanset om målstregen blev passeret
+  if (minLaps > 0 && laps < minLaps) return "dnf";
   if (row.finished) return "classified";
-  // Udgået: over grænsen = RET (klassificeret), under = DNF
-  if (minLaps > 0 && laps >= minLaps) return "ret";
-  if (minLaps === 0 && laps > 0) return "ret";
-  return "dnf";
+  // Udgået over grænsen = RET (klassificeret)
+  return "ret";
 }
 
 export function qualiStatusFor(row: {
