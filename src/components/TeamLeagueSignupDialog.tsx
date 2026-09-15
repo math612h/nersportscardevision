@@ -144,9 +144,10 @@ export function TeamLeagueSignupDialog({
   }, [selectedLeague]);
 
   useEffect(() => {
+    if (isAdd) return;
     setCarClass("");
     setSelected(new Set());
-  }, [leagueId]);
+  }, [leagueId, isAdd]);
 
   const eligibleByMember = useMemo(() => {
     const m = new Map<string, boolean>();
