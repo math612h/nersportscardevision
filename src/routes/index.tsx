@@ -163,7 +163,7 @@ function NewsHome() {
         supabase.from("leagues").select("points_system").eq("id", latest.league_id).maybeSingle(),
         (supabase as any)
           .from("league_team_entries")
-          .select("id, team_id, car_class, status, teams:team_id(name), league_team_lineup(user_id, status)")
+          .select("id, team_id, car_class, status, teams:team_id(name), league_team_lineup(user_id, status, effective_from)")
           .eq("league_id", latest.league_id)
           .eq("status", "confirmed"),
       ]);
