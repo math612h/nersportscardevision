@@ -126,6 +126,7 @@ export const Route = createFileRoute("/api/public/broadcast/team-lineups")({
                   driverName: p?.display_name || p?.lmu_name || ent?.driver_name || "",
                   status: l.status,
                   respondedAt: l.responded_at ?? null,
+                  effectiveFrom: l.effective_from ?? null,
                   carNumber: ent?.car_number != null ? String(ent.car_number) : null,
                   carClass: ent?.car_class ?? r.car_class ?? null,
                   category: ent?.driver_category ?? null,
