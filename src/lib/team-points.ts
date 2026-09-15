@@ -25,6 +25,11 @@ export type LineupTeamInfo = {
   carClass: string;
   // accepterede lineup-medlemmers user_ids
   userIds: Set<string>;
+  /**
+   * Valgfrit: tidspunkt hvorfra den enkelte kører tæller med i teamets resultater.
+   * Mangler kører i mappet (eller er værdien null) gælder han fra sæsonstart.
+   */
+  effectiveFrom?: Map<string, string | null>;
 };
 
 export type TeamPointsResult = {
