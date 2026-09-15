@@ -1286,6 +1286,7 @@ export type Database = {
           created_at: string
           discord_channel_id: string | null
           discord_message_id: string | null
+          effective_from: string | null
           id: string
           league_id: string
           league_team_entry_id: string
@@ -1298,6 +1299,7 @@ export type Database = {
           created_at?: string
           discord_channel_id?: string | null
           discord_message_id?: string | null
+          effective_from?: string | null
           id?: string
           league_id: string
           league_team_entry_id: string
@@ -1310,6 +1312,7 @@ export type Database = {
           created_at?: string
           discord_channel_id?: string | null
           discord_message_id?: string | null
+          effective_from?: string | null
           id?: string
           league_id?: string
           league_team_entry_id?: string

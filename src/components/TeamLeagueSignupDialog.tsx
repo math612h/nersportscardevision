@@ -19,17 +19,27 @@ import {
 type League = { id: string; name: string; class_configs: any };
 type Member = { user_id: string; display_name: string | null; car_class: string | null };
 
+export type ExistingEntryInfo = {
+  entryId: string;
+  leagueId: string;
+  carClass: string;
+  lockedUserIds: string[];
+};
+
 export function TeamLeagueSignupDialog({
   teamId,
   trigger,
   initialLeagueId,
+  existingEntry,
 }: {
   teamId: string;
   trigger?: React.ReactNode;
   initialLeagueId?: string;
+  existingEntry?: ExistingEntryInfo;
 }) {
   const qc = useQueryClient();
   const submitFn = useServerFn(submitTeamForLeague);
+  const isAdd = !!existingEntry;
 
   const { data: members } = useQuery({
     queryKey: ["team-members-signup", teamId],
@@ -92,9 +102,13 @@ export function TeamLeagueSignupDialog({
   });
 
   const [open, setOpen] = useState(false);
-  const [leagueId, setLeagueId] = useState<string>(initialLeagueId ?? "");
-  const [carClass, setCarClass] = useState<string>("");
+  const [leagueId, setLeagueId] = useState<string>(existingEntry?.leagueId ?? initialLeagueId ?? "");
+  const [carClass, setCarClass] = useState<string>(existingEntry?.carClass ?? "");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const lockedIds = useMemo(
+    () => new Set(existingEntry?.lockedUserIds ?? []),
+    [existingEntry],
+  );
 
   const memberIds = useMemo(() => (members ?? []).map((m) => m.user_id), [members]);
 
@@ -130,9 +144,10 @@ export function TeamLeagueSignupDialog({
   }, [selectedLeague]);
 
   useEffect(() => {
+    if (isAdd) return;
     setCarClass("");
     setSelected(new Set());
-  }, [leagueId]);
+  }, [leagueId, isAdd]);
 
   const eligibleByMember = useMemo(() => {
     const m = new Map<string, boolean>();
@@ -156,27 +171,39 @@ export function TeamLeagueSignupDialog({
     setSelected((prev) => {
       const next = new Set<string>();
       prev.forEach((id) => {
-        if (eligibleByMember.get(id)) next.add(id);
+        if (eligibleByMember.get(id) || lockedIds.has(id)) next.add(id);
       });
+      lockedIds.forEach((id) => next.add(id));
       return next;
     });
-  }, [eligibleByMember]);
+  }, [eligibleByMember, lockedIds]);
+
+  const newlySelected = useMemo(
+    () => Array.from(selected).filter((id) => !lockedIds.has(id)),
+    [selected, lockedIds],
+  );
 
   const submit = useMutation({
     mutationFn: async () => {
       if (!leagueId) throw new Error("Vælg en liga");
       if (!carClass) throw new Error("Vælg en bilklasse");
-      const userIds = Array.from(selected);
+      const userIds = isAdd ? newlySelected : Array.from(selected);
       return await submitFn({
-        data: { leagueId, teamId, carClass, userIds },
+        data: { leagueId, teamId, carClass, userIds, mode: isAdd ? "add" : "replace" },
       });
     },
     onSuccess: () => {
-      toast.success("Lineup sendt — kørerne får en Discord-besked");
+      toast.success(
+        isAdd
+          ? "Kørerne er tilføjet lineupet — de tæller med fra næste afdeling"
+          : "Lineup sendt — kørerne får en Discord-besked",
+      );
       setOpen(false);
-      setLeagueId(initialLeagueId ?? "");
-      setCarClass("");
-      setSelected(new Set());
+      if (!isAdd) {
+        setLeagueId(initialLeagueId ?? "");
+        setCarClass("");
+        setSelected(new Set());
+      }
       qc.invalidateQueries({ queryKey: ["team-league-entries", teamId] });
       qc.invalidateQueries({ queryKey: ["league-team-entries-mine"] });
       refetch();
@@ -190,19 +217,21 @@ export function TeamLeagueSignupDialog({
     return s;
   }, [entries]);
 
-  const availableLeagues = (leagues ?? []).filter((l) => {
-    const cfgs = Array.isArray(l.class_configs) ? (l.class_configs as any[]) : [];
-    const classes = new Set(cfgs.map((c) => c?.car_class).filter(Boolean));
-    if (classes.size === 0) return false;
-    for (const cc of classes) {
-      if (!takenCombos.has(`${l.id}:${cc}`)) return true;
-    }
-    return false;
-  });
+  const availableLeagues = isAdd
+    ? (leagues ?? []).filter((l) => l.id === leagueId)
+    : (leagues ?? []).filter((l) => {
+        const cfgs = Array.isArray(l.class_configs) ? (l.class_configs as any[]) : [];
+        const classes = new Set(cfgs.map((c) => c?.car_class).filter(Boolean));
+        if (classes.size === 0) return false;
+        for (const cc of classes) {
+          if (!takenCombos.has(`${l.id}:${cc}`)) return true;
+        }
+        return false;
+      });
 
-  const availableClasses = leagueClasses.filter(
-    (cc) => !takenCombos.has(`${leagueId}:${cc}`),
-  );
+  const availableClasses = isAdd
+    ? [carClass].filter(Boolean)
+    : leagueClasses.filter((cc) => !takenCombos.has(`${leagueId}:${cc}`));
 
   const hasEntries = (entries ?? []).length > 0;
 
@@ -210,19 +239,24 @@ export function TeamLeagueSignupDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
-          <Button size="sm" disabled={availableLeagues.length === 0}>
-            {hasEntries ? "Tilmeld endnu et team lineup" : "Tilmeld team lineup"}
+          <Button size="sm" variant={isAdd ? "outline" : "default"} disabled={!isAdd && availableLeagues.length === 0}>
+            {isAdd ? "Tilføj kører" : hasEntries ? "Tilmeld endnu et team lineup" : "Tilmeld team lineup"}
           </Button>
         )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Tilmeld team i liga</DialogTitle>
+          <DialogTitle>{isAdd ? "Tilføj kørere til lineupet" : "Tilmeld team i liga"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
+          {isAdd && (
+            <p className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+              Nye kørere tæller først med i teamets resultater fra de afdelinger, der køres efter tilføjelsen. Allerede kørte afdelinger påvirkes ikke.
+            </p>
+          )}
           <div className="space-y-1.5">
             <Label>Liga</Label>
-            <Select value={leagueId} onValueChange={setLeagueId}>
+            <Select value={leagueId} onValueChange={setLeagueId} disabled={isAdd}>
               <SelectTrigger>
                 <SelectValue placeholder="Vælg liga…" />
               </SelectTrigger>
@@ -235,7 +269,7 @@ export function TeamLeagueSignupDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Bilklasse</Label>
-            <Select value={carClass} onValueChange={setCarClass} disabled={!leagueId}>
+            <Select value={carClass} onValueChange={setCarClass} disabled={!leagueId || isAdd}>
               <SelectTrigger>
                 <SelectValue placeholder={leagueId ? "Vælg bilklasse…" : "Vælg liga først"} />
               </SelectTrigger>
@@ -259,10 +293,13 @@ export function TeamLeagueSignupDialog({
             <ul className="divide-y divide-border rounded-md border border-border">
               {(members ?? []).map((m) => {
                 const eligible = eligibleByMember.get(m.user_id) ?? false;
-                const checked = selected.has(m.user_id);
-                const disabled = !carClass || !eligible;
+                const locked = lockedIds.has(m.user_id);
+                const checked = locked || selected.has(m.user_id);
+                const disabled = locked || !carClass || !eligible;
                 const reason =
-                  !carClass
+                  locked
+                    ? "allerede på lineupet"
+                    : !carClass
                     ? null
                     : m.car_class !== carClass
                       ? `ikke tildelt ${carClass} i teamet`
@@ -301,7 +338,9 @@ export function TeamLeagueSignupDialog({
               })}
             </ul>
             <p className="text-xs text-muted-foreground">
-              De valgte kørere får en Discord-DM og kan acceptere/afvise. Når mindst 2 har accepteret bliver tilmeldingen bekræftet. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling.
+              {isAdd
+                ? "Kørere der allerede er på lineupet kan ikke fjernes her. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling."
+                : "De valgte kørere får en Discord-DM og kan acceptere/afvise. Når mindst 2 har accepteret bliver tilmeldingen bekræftet. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling."}
             </p>
           </div>
         </div>
@@ -309,10 +348,15 @@ export function TeamLeagueSignupDialog({
           <Button variant="outline" onClick={() => setOpen(false)}>Annullér</Button>
           <Button
             onClick={() => submit.mutate()}
-            disabled={submit.isPending || !leagueId || !carClass || selected.size < 2}
+            disabled={
+              submit.isPending ||
+              !leagueId ||
+              !carClass ||
+              (isAdd ? newlySelected.length < 1 || selected.size < 2 : selected.size < 2)
+            }
           >
             {submit.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-            Send invitationer
+            {isAdd ? "Tilføj kørere" : "Send invitationer"}
           </Button>
         </DialogFooter>
       </DialogContent>

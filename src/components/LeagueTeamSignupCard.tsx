@@ -33,7 +33,7 @@ export function LeagueTeamSignupCard({
       const { data, error } = await (supabase as any)
         .from("league_team_entries")
         .select(
-          "id, league_id, car_class, status, leagues:league_id(name), league_team_lineup(id, user_id, status)",
+          "id, league_id, car_class, status, leagues:league_id(name), league_team_lineup(id, user_id, status, effective_from)",
         )
         .eq("team_id", teamId)
         .neq("status", "withdrawn");
@@ -44,7 +44,7 @@ export function LeagueTeamSignupCard({
         car_class: string;
         status: string;
         leagues: { name: string } | null;
-        league_team_lineup: Array<{ id: string; user_id: string; status: string }>;
+        league_team_lineup: Array<{ id: string; user_id: string; status: string; effective_from: string | null }>;
       }>;
     },
   });
@@ -89,6 +89,17 @@ export function LeagueTeamSignupCard({
                     <Badge variant={e.status === "confirmed" ? "default" : "secondary"} className="text-[10px]">
                       {e.status === "confirmed" ? "Bekræftet" : "Afventer"}
                     </Badge>
+                    <TeamLeagueSignupDialog
+                      teamId={teamId}
+                      existingEntry={{
+                        entryId: e.id,
+                        leagueId: e.league_id,
+                        carClass: e.car_class,
+                        lockedUserIds: e.league_team_lineup
+                          .filter((l) => l.status !== "declined")
+                          .map((l) => l.user_id),
+                      }}
+                    />
                     <Button
                       variant="ghost"
                       size="icon"
@@ -113,7 +124,14 @@ export function LeagueTeamSignupCard({
                       const name = memberById.get(l.user_id)?.display_name ?? "Ukendt";
                       const icon = l.status === "accepted" ? "✅" : l.status === "declined" ? "❌" : "⏳";
                       return (
-                        <li key={l.id}>{icon} {name} <span className="opacity-60">— {l.status}</span></li>
+                        <li key={l.id}>
+                          {icon} {name} <span className="opacity-60">— {l.status}</span>
+                          {l.effective_from && (
+                            <span className="opacity-60">
+                              {" "}· tæller fra {new Date(l.effective_from).toLocaleDateString("da-DK")}
+                            </span>
+                          )}
+                        </li>
                       );
                     })}
                   </ul>

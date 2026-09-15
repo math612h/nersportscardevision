@@ -1119,7 +1119,7 @@ function TeamStandings({
       const [{ data, error }, { data: leagueRow }] = await Promise.all([
         (supabase as any)
           .from("league_team_entries")
-          .select("id, team_id, car_class, status, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status)")
+          .select("id, team_id, car_class, status, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status, effective_from)")
           .eq("league_id", leagueId)
           .eq("status", "confirmed"),
         supabase.from("leagues").select("points_system").eq("id", leagueId).maybeSingle(),
@@ -1134,18 +1134,24 @@ function TeamStandings({
     },
   });
 
-  type Info = { teamId: string; teamName: string; carClass: string; userIds: Set<string> };
+  type Info = {
+    teamId: string;
+    teamName: string;
+    carClass: string;
+    userIds: Set<string>;
+    effectiveFrom: Map<string, string | null>;
+  };
   const teamInfos: Info[] = [];
   for (const e of ((teamData?.entries ?? []) as any[])) {
-    const accepted = ((e.league_team_lineup ?? []) as any[])
-      .filter((l) => l.status === "accepted")
-      .map((l) => l.user_id as string);
+    const acceptedRows = ((e.league_team_lineup ?? []) as any[]).filter((l) => l.status === "accepted");
+    const accepted = acceptedRows.map((l) => l.user_id as string);
     if (accepted.length < 2) continue;
     teamInfos.push({
       teamId: e.team_id,
       teamName: e.teams?.name ?? "Team",
       carClass: e.car_class,
       userIds: new Set(accepted),
+      effectiveFrom: new Map(acceptedRows.map((l) => [l.user_id as string, (l.effective_from as string | null) ?? null])),
     });
   }
 
@@ -1167,6 +1173,7 @@ function TeamStandings({
       results,
       teams: teamInfos,
       pointsPerPosition: teamData?.pointsPerPosition ?? [],
+      raceDate: (d as any).race_date ?? null,
     });
     for (const [cls, list] of ranked.entries()) {
       const aggs = aggByClass.get(cls);

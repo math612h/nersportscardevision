@@ -63,7 +63,7 @@ export const Route = createFileRoute("/api/public/broadcast/team-lineups")({
           let entryQuery = (supabaseAdmin as any)
             .from("league_team_entries")
             .select(
-              "id, league_id, team_id, car_class, status, locked_at, created_at, leagues:league_id(id, name, published), teams:team_id(id, name, logo_url), league_team_lineup(id, user_id, status, responded_at)",
+              "id, league_id, team_id, car_class, status, locked_at, created_at, leagues:league_id(id, name, published), teams:team_id(id, name, logo_url), league_team_lineup(id, user_id, status, responded_at, effective_from)",
             );
           if (resolvedLeague) entryQuery = entryQuery.eq("league_id", resolvedLeague.id);
           if (teamId) entryQuery = entryQuery.eq("team_id", teamId);
@@ -126,6 +126,7 @@ export const Route = createFileRoute("/api/public/broadcast/team-lineups")({
                   driverName: p?.display_name || p?.lmu_name || ent?.driver_name || "",
                   status: l.status,
                   respondedAt: l.responded_at ?? null,
+                  effectiveFrom: l.effective_from ?? null,
                   carNumber: ent?.car_number != null ? String(ent.car_number) : null,
                   carClass: ent?.car_class ?? r.car_class ?? null,
                   category: ent?.driver_category ?? null,

@@ -163,7 +163,7 @@ function NewsHome() {
         supabase.from("leagues").select("points_system").eq("id", latest.league_id).maybeSingle(),
         (supabase as any)
           .from("league_team_entries")
-          .select("id, team_id, car_class, status, teams:team_id(name), league_team_lineup(user_id, status)")
+          .select("id, team_id, car_class, status, teams:team_id(name), league_team_lineup(user_id, status, effective_from)")
           .eq("league_id", latest.league_id)
           .eq("status", "confirmed"),
       ]);
@@ -174,15 +174,17 @@ function NewsHome() {
 
       const { computeTeamRacePoints } = await import("@/lib/team-points");
       const teams = ((teamEntries ?? []) as any[]).flatMap((e) => {
-        const accepted = ((e.league_team_lineup ?? []) as any[])
-          .filter((l) => l.status === "accepted")
-          .map((l) => l.user_id as string);
+        const acceptedRows = ((e.league_team_lineup ?? []) as any[]).filter((l) => l.status === "accepted");
+        const accepted = acceptedRows.map((l) => l.user_id as string);
         if (accepted.length < 2) return [];
         return [{
           teamId: e.team_id,
           teamName: e.teams?.name ?? "Team",
           carClass: e.car_class,
           userIds: new Set(accepted),
+          effectiveFrom: new Map<string, string | null>(
+            acceptedRows.map((l) => [l.user_id as string, (l.effective_from as string | null) ?? null]),
+          ),
         }];
       });
       if (teams.length === 0) return [];
@@ -197,6 +199,7 @@ function NewsHome() {
         })),
         teams,
         pointsPerPosition,
+        raceDate: (latest as any)?.race_date ?? null,
       });
       const groups: { car_class: string; teams: { teamId: string; name: string; points: number; drivers: number }[] }[] = [];
       for (const [cls, list] of ranked.entries()) {

@@ -282,6 +282,26 @@ function DivisionDetail() {
     },
   });
 
+  // Hvornår hvert lineup-medlem tæller med (kørere tilføjet midt i sæsonen
+  // tæller først fra afdelinger der køres efter tilføjelsen).
+  const { data: lineupEffectiveFrom } = useQuery({
+    queryKey: ["league-lineup-effective-from", leagueId],
+    enabled: !!leagueId,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("league_team_lineup")
+        .select("user_id, status, effective_from")
+        .eq("league_id", leagueId);
+      if (error) throw error;
+      const map = new Map<string, string | null>();
+      for (const r of (data ?? []) as any[]) {
+        if (r.status === "declined") continue;
+        map.set(r.user_id as string, (r.effective_from as string | null) ?? null);
+      }
+      return map;
+    },
+  });
+
   // My pending reserve offer for this division
   const { data: myOffer } = useQuery({
     queryKey: ["my-reserve-offer", divisionId, user?.id ?? "anon"],
@@ -677,9 +697,12 @@ function DivisionDetail() {
                 teamName: teamNameMap?.get(e.team_id) ?? "Team",
                 carClass: e.car_class,
                 userIds: new Set<string>(),
+                effectiveFrom: new Map<string, string | null>(),
               });
             }
-            teamAgg.get(key)!.userIds.add(e.user_id);
+            const info = teamAgg.get(key)!;
+            info.userIds.add(e.user_id);
+            info.effectiveFrom!.set(e.user_id, lineupEffectiveFrom?.get(e.user_id) ?? null);
           }
           const raceRows = (results ?? []).filter((r) => r.session_type === "race");
           const ppp: number[] = (league as any)?.points_system?.points_per_position ?? [];
@@ -687,6 +710,7 @@ function DivisionDetail() {
             results: raceRows as any,
             teams: Array.from(teamAgg.values()).filter((t) => t.userIds.size >= 2),
             pointsPerPosition: ppp,
+            raceDate: (div as any)?.race_date ?? null,
           }) as any;
         }
         return (
