@@ -1,23 +1,25 @@
-# Hvorfor Daniel ikke kan tilføje kørere i Odyssé Cronos Racing
+# Reserve kan ikke acceptere pladsen
 
-## Årsagen — bekræftet
+## Hvad der sker
 
-Knappen "Tilføj kører" findes kun i preview-versionen. Jeg har hentet den offentliggjorte side (lmudanmark.dk) for Odyssé Cronos Racing og gennemsøgt dens kode: teksten "Tilføj kører" findes ikke der. Du ser knappen på Frontline Motorsport, fordi du kigger i preview. Daniel er på det offentlige site, hvor den nye version endnu ikke er udgivet.
+Mathias Gylden har et aktivt reservetilbud til "Afdeling 2 - Interlagos" (LMGT3 Pro), men når han trykker "Accepter pladsen" i Discord, svarer botten:
 
-Der er altså ikke noget galt med teamet, ligaen eller adgangsreglerne.
+`duplicate key value violates unique constraint "entries_league_car_number_uniq"`
 
-## Hvad jeg har tjekket i data
+Årsagen er bekræftet i databasen: kørernumre er gjort unikke pr. liga på tværs af **alle** tilmeldingsrækker, også de afdelings-rækker der oprettes når en reserve accepterer. Reserven har allerede en ligatilmelding med sit nummer, så den nye afdelings-række med samme nummer bliver afvist. Det rammer enhver reserve, ikke kun Mathias — der findes i dag ingen afdelings-rækker overhovedet, så accept har aldrig kunnet lykkes.
 
-- Odyssé Cronos Racing har to tilmeldinger i ICE Cup: LMP2 (2 kørere) og LMGT3 (4 kørere).
-- Mathias Gylden opfylder alle krav for LMGT3: teammedlem med klassen LMGT3 og selv tilmeldt LMGT3 i ICE Cup. Han er ikke låst til et andet team.
-- Ingen adgangsregel eller lås blokerer tilføjelsen.
+## Hvad der rettes
 
-## Plan
+- Reserver kan acceptere en plads igen, og de beholder deres eget kørernummer.
+- Kørernumre er fortsat unikke pr. liga — to kørere kan stadig ikke få samme nummer.
+- Hvis noget alligevel går galt ved accept, får køreren en forståelig besked i stedet for en teknisk fejltekst.
+- Mathias' tilbud er stadig gyldigt (udløber i nat), så han kan trykke accepter igen bagefter.
 
-1. Udgiv appen, så den nye teamside med "Tilføj kører" kommer ud til alle.
-2. Bed Daniel genindlæse teamsiden (hårdt genindlæs, hvis han har den gamle side åben).
-3. Han kan så tilføje Mathias Gylden til LMGT3-lineupet; Mathias tæller først med i teamets resultater fra næste afdeling.
+## Teknisk
 
-## Bemærkning
+**Migration**
+- Genskab det unikke indeks `entries_league_car_number_uniq` med den ekstra betingelse `division_id IS NULL`, så nummer-unikheden gælder ligatilmeldinger (griddet), ikke afdelings-rækker for reserver.
 
-Under LMP2 kan der ikke tilføjes flere lige nu: Dennis Meisner og Mikkel Buch-hauritz er de eneste teammedlemmer med LMP2. Flere kræver, at de først får LMP2 tildelt på teamsiden og selv er tilmeldt LMP2 i ligaen.
+**Server**
+- `src/lib/division-reserves.server.ts` (`respondReserveOfferCore`): behold indsættelse af `car_number` fra ligatilmeldingen; ved en eventuel unik-konflikt prøv igen uden `car_number` i stedet for at fejle.
+- `src/routes/api/public/discord.interactions.ts`: ved fejl under accept vises en dansk besked ("Kunne ikke bekræfte reservepladsen — prøv på hjemmesiden") i stedet for den rå databasefejl.
