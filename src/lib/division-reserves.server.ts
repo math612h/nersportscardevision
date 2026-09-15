@@ -81,16 +81,23 @@ export async function respondReserveOfferCore(opts: {
       .maybeSingle();
     if (!leagueEntry) return { status: "no_league_entry" };
 
-    const { error: insErr } = await supabaseAdmin.from("entries").insert({
+    const baseRow = {
       division_id: offer.division_id,
       league_id: (div as any)!.league_id,
       user_id: actingUserId,
       driver_name: (leagueEntry as any).driver_name,
       car_class: offer.car_class,
       driver_category: offer.driver_category,
-      car_number: (leagueEntry as any).car_number,
       waitlist: false,
-    });
+    };
+    let { error: insErr } = await supabaseAdmin
+      .from("entries")
+      .insert({ ...baseRow, car_number: (leagueEntry as any).car_number });
+    if (insErr && /duplicate key|unique constraint/i.test(insErr.message)) {
+      // Fallback: keep the reserve on the grid even if the car number collides
+      const retry = await supabaseAdmin.from("entries").insert(baseRow);
+      insErr = retry.error;
+    }
     if (insErr) return { status: "error", message: insErr.message };
 
     await supabaseAdmin

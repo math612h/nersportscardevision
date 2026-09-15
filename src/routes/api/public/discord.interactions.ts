@@ -419,9 +419,14 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
                   text = `${headline}\n\nDu er ikke længere tilmeldt ligaen, så pladsen kan ikke accepteres.`;
                   break;
                 case "error":
+                  console.error("reserve offer response failed", offerId, res.message);
                   return Response.json({
                     type: CHANNEL_MESSAGE_WITH_SOURCE,
-                    data: { flags: FLAG_EPHEMERAL, content: `Noget gik galt: ${res.message}` },
+                    data: {
+                      flags: FLAG_EPHEMERAL,
+                      content:
+                        "Kunne ikke bekræfte reservepladsen — prøv på hjemmesiden under afdelingen, eller kontakt en admin.",
+                    },
                   });
               }
               return Response.json({
@@ -429,11 +434,13 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
                 data: { content: text, components: [] },
               });
             } catch (e) {
+              console.error("reserve offer handler crashed", offerId, e);
               return Response.json({
                 type: CHANNEL_MESSAGE_WITH_SOURCE,
                 data: {
                   flags: FLAG_EPHEMERAL,
-                  content: `Noget gik galt: ${(e as Error).message}`,
+                  content:
+                    "Kunne ikke bekræfte reservepladsen — prøv på hjemmesiden under afdelingen, eller kontakt en admin.",
                 },
               });
             }
