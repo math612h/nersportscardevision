@@ -697,9 +697,12 @@ function DivisionDetail() {
                 teamName: teamNameMap?.get(e.team_id) ?? "Team",
                 carClass: e.car_class,
                 userIds: new Set<string>(),
+                effectiveFrom: new Map<string, string | null>(),
               });
             }
-            teamAgg.get(key)!.userIds.add(e.user_id);
+            const info = teamAgg.get(key)!;
+            info.userIds.add(e.user_id);
+            info.effectiveFrom!.set(e.user_id, lineupEffectiveFrom?.get(e.user_id) ?? null);
           }
           const raceRows = (results ?? []).filter((r) => r.session_type === "race");
           const ppp: number[] = (league as any)?.points_system?.points_per_position ?? [];
@@ -707,6 +710,7 @@ function DivisionDetail() {
             results: raceRows as any,
             teams: Array.from(teamAgg.values()).filter((t) => t.userIds.size >= 2),
             pointsPerPosition: ppp,
+            raceDate: (div as any)?.race_date ?? null,
           }) as any;
         }
         return (
