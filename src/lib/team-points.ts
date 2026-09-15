@@ -110,6 +110,7 @@ export function computeTeamRacePoints(args: {
     const calcs: Calc[] = teamsInClass.map((t) => {
       const positions: number[] = [];
       for (const uid of t.userIds) {
+        if (!countsForRace(t, uid)) continue;
         const p = posByUid.get(uid);
         if (typeof p === "number" && p > 0) positions.push(p);
       }
