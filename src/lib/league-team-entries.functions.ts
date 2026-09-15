@@ -6,7 +6,10 @@ const submitSchema = z.object({
   leagueId: z.string().uuid(),
   teamId: z.string().uuid(),
   carClass: z.string().min(1, "Vælg en bilklasse"),
-  userIds: z.array(z.string().uuid()).min(2, "Et team-lineup skal indeholde mindst 2 kørere"),
+  userIds: z.array(z.string().uuid()).min(1, "Vælg mindst én kører"),
+  // "replace" (standard) = første tilmelding/fuld opdatering af lineupet.
+  // "add" = tilføj kørere til et eksisterende lineup midt i sæsonen.
+  mode: z.enum(["replace", "add"]).optional(),
 });
 
 export const submitTeamForLeague = createServerFn({ method: "POST" })
