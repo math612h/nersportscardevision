@@ -97,6 +97,8 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       }
     }
 
+    const isAdd = data.mode === "add";
+
     // Insert / fetch the entry (unique on league_id+team_id+car_class)
     const { data: existing } = await (supabaseAdmin as any)
       .from("league_team_entries")
@@ -105,6 +107,8 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       .eq("team_id", data.teamId)
       .eq("car_class", data.carClass)
       .maybeSingle();
+
+    if (isAdd && !existing) throw new Error("Teamet er ikke tilmeldt denne liga og klasse endnu");
 
     let entryId: string;
     if (existing) {
@@ -131,22 +135,49 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       entryId = (ins as any).id;
     }
 
-    // Reset lineup: remove existing rows that are not in the new selection
-    await (supabaseAdmin as any)
+    // Eksisterende lineup-rækker
+    const { data: currentRows } = await (supabaseAdmin as any)
       .from("league_team_lineup")
-      .delete()
-      .eq("league_team_entry_id", entryId)
-      .not("user_id", "in", `(${data.userIds.map((u) => `"${u}"`).join(",")})`);
+      .select("user_id, status")
+      .eq("league_team_entry_id", entryId);
+    const currentIds = new Set(
+      ((currentRows ?? []) as any[])
+        .filter((r) => r.status !== "declined")
+        .map((r) => r.user_id as string),
+    );
+
+    if (!isAdd && data.userIds.length < 2) {
+      throw new Error("Et team-lineup skal indeholde mindst 2 kørere");
+    }
+
+    const newIds = data.userIds.filter((uid) => !currentIds.has(uid));
+    const totalCount = new Set([...currentIds, ...data.userIds]).size;
+
+    if (isAdd) {
+      if (newIds.length === 0) throw new Error("Vælg mindst én ny kører");
+      if (totalCount < 2) throw new Error("Et team-lineup skal indeholde mindst 2 kørere");
+    } else {
+      // Reset lineup: remove existing rows that are not in the new selection
+      await (supabaseAdmin as any)
+        .from("league_team_lineup")
+        .delete()
+        .eq("league_team_entry_id", entryId)
+        .not("user_id", "in", `(${data.userIds.map((u) => `"${u}"`).join(",")})`);
+    }
 
     // Team owner submits the lineup on behalf of members they already have an agreement with,
     // so every selected driver is auto-accepted — no separate invitation flow.
     const nowIso = new Date().toISOString();
-    const lineupRows = data.userIds.map((uid) => ({
+    // Kørere tilføjet midt i sæsonen tæller først med fra afdelinger der køres
+    // efter tilføjelsen — tidligere afdelingers team-resultater er urørte.
+    const rowsToUpsert = isAdd ? newIds : data.userIds;
+    const lineupRows = rowsToUpsert.map((uid) => ({
       league_team_entry_id: entryId,
       league_id: data.leagueId,
       user_id: uid,
       status: "accepted" as const,
       responded_at: nowIso,
+      ...(isAdd ? { effective_from: nowIso } : { effective_from: null }),
     }));
     const { error: upErr } = await (supabaseAdmin as any)
       .from("league_team_lineup")
@@ -156,7 +187,7 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
 
     // With all lineup rows accepted, confirm the entry immediately when >= 2 drivers.
     try {
-      if (data.userIds.length >= 2) {
+      if (totalCount >= 2) {
         await (supabaseAdmin as any)
           .from("league_team_entries")
           .update({ status: "confirmed" })
@@ -167,14 +198,15 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
 
     // In-app notification (informational — no action required)
     try {
-      const rows = data.userIds.map((uid) => ({
+      const rows = rowsToUpsert.map((uid) => ({
         user_id: uid,
         title: `Du er sat på "${(team as any).name}" lineup i ${(league as any).name} (${data.carClass})`,
         body: "Teamejeren har tilmeldt dig til denne liga.",
         link: `/teams/${data.teamId}`,
       }));
-      await (supabaseAdmin as any).from("notifications").insert(rows);
+      if (rows.length > 0) await (supabaseAdmin as any).from("notifications").insert(rows);
     } catch (_) {}
+
 
 
     return { ok: true, entryId };
