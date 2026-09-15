@@ -269,7 +269,7 @@ export function TeamLeagueSignupDialog({
           </div>
           <div className="space-y-1.5">
             <Label>Bilklasse</Label>
-            <Select value={carClass} onValueChange={setCarClass} disabled={!leagueId}>
+            <Select value={carClass} onValueChange={setCarClass} disabled={!leagueId || isAdd}>
               <SelectTrigger>
                 <SelectValue placeholder={leagueId ? "Vælg bilklasse…" : "Vælg liga først"} />
               </SelectTrigger>
