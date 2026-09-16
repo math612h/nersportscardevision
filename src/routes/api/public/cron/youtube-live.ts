@@ -82,6 +82,7 @@ async function run() {
       state.videoId !== announcedVideoId;
 
     let discordMessageId: string | null = null;
+    let announceSent = false;
     if (shouldAnnounce && startsAt) {
       try {
         const res = await sendDiscordChannelMessage(
@@ -89,8 +90,10 @@ async function run() {
           buildUpcomingMessage(state.title, state.videoId, startsAt),
           [MEMBERS_ROLE_ID],
         );
-        if (res.ok) discordMessageId = res.messageId ?? null;
-        else console.error("[youtube-live] Discord-fejl", res.status, res.message);
+        if (res.ok) {
+          discordMessageId = res.messageId ?? null;
+          announceSent = true;
+        } else console.error("[youtube-live] Discord-fejl", res.status, res.message);
       } catch (e) {
         console.error("[youtube-live] Discord-fejl", e);
       }
@@ -105,7 +108,9 @@ async function run() {
         upcoming_video_id: state.videoId,
         upcoming_title: state.title,
         scheduled_start_at: startsAt ? startsAt.toISOString() : null,
-        ...(shouldAnnounce
+        // Markér kun som annonceret hvis Discord-beskeden faktisk gik igennem,
+        // så næste cron-kørsel prøver igen ved fejl.
+        ...(announceSent
           ? {
               upcoming_announced_video_id: state.videoId,
               upcoming_announced_at: new Date().toISOString(),
@@ -113,6 +118,7 @@ async function run() {
             }
           : {}),
       })
+
       .eq("platform", "youtube");
 
     return Response.json({
@@ -120,7 +126,7 @@ async function run() {
       live: false,
       upcoming: true,
       scheduledStart: startsAt ? startsAt.toISOString() : null,
-      announced: shouldAnnounce,
+      announced: announceSent,
     });
   }
 
