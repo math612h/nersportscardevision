@@ -225,6 +225,7 @@ function NewsHome() {
 
   return (
     <div className="space-y-10">
+      <LiveNowBanner />
       {user && !isGuest && <ProfileCompletionGate />}
       {user && !isGuest && <AddressConsentBanner />}
       <header className="relative space-y-3">

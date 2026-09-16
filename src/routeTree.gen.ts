@@ -60,6 +60,7 @@ import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/pub
 import { Route as ApiPublicDiscordLoginRouteImport } from './routes/api/public/discord.login'
 import { Route as ApiPublicDiscordInteractionsRouteImport } from './routes/api/public/discord.interactions'
 import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/public/discord.callback'
+import { Route as ApiPublicCronYoutubeLiveRouteImport } from './routes/api/public/cron/youtube-live'
 import { Route as ApiPublicCronStripUnverifiedMembersRouteImport } from './routes/api/public/cron/strip-unverified-members'
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
@@ -383,6 +384,12 @@ const ApiPublicDiscordCallbackRoute =
   ApiPublicDiscordCallbackRouteImport.update({
     id: '/api/public/discord/callback',
     path: '/api/public/discord/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronYoutubeLiveRoute =
+  ApiPublicCronYoutubeLiveRouteImport.update({
+    id: '/api/public/cron/youtube-live',
+    path: '/api/public/cron/youtube-live',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicCronStripUnverifiedMembersRoute =
@@ -768,6 +775,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
+  '/api/public/cron/youtube-live': typeof ApiPublicCronYoutubeLiveRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
@@ -868,6 +876,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
+  '/api/public/cron/youtube-live': typeof ApiPublicCronYoutubeLiveRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
@@ -973,6 +982,7 @@ export interface FileRoutesById {
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
+  '/api/public/cron/youtube-live': typeof ApiPublicCronYoutubeLiveRoute
   '/api/public/discord/callback': typeof ApiPublicDiscordCallbackRoute
   '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/discord/login': typeof ApiPublicDiscordLoginRoute
@@ -1077,6 +1087,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/cron/strip-unverified-members'
+    | '/api/public/cron/youtube-live'
     | '/api/public/discord/callback'
     | '/api/public/discord/interactions'
     | '/api/public/discord/login'
@@ -1177,6 +1188,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/cron/strip-unverified-members'
+    | '/api/public/cron/youtube-live'
     | '/api/public/discord/callback'
     | '/api/public/discord/interactions'
     | '/api/public/discord/login'
@@ -1281,6 +1293,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/expire-reserve-offers'
     | '/api/public/cron/league-open'
     | '/api/public/cron/strip-unverified-members'
+    | '/api/public/cron/youtube-live'
     | '/api/public/discord/callback'
     | '/api/public/discord/interactions'
     | '/api/public/discord/login'
@@ -1342,6 +1355,7 @@ export interface RootRouteChildren {
   ApiPublicCronExpireReserveOffersRoute: typeof ApiPublicCronExpireReserveOffersRoute
   ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
   ApiPublicCronStripUnverifiedMembersRoute: typeof ApiPublicCronStripUnverifiedMembersRoute
+  ApiPublicCronYoutubeLiveRoute: typeof ApiPublicCronYoutubeLiveRoute
   ApiPublicDiscordCallbackRoute: typeof ApiPublicDiscordCallbackRoute
   ApiPublicDiscordInteractionsRoute: typeof ApiPublicDiscordInteractionsRoute
   ApiPublicDiscordLoginRoute: typeof ApiPublicDiscordLoginRoute
@@ -1713,6 +1727,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/discord/callback'
       fullPath: '/api/public/discord/callback'
       preLoaderRoute: typeof ApiPublicDiscordCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/youtube-live': {
+      id: '/api/public/cron/youtube-live'
+      path: '/api/public/cron/youtube-live'
+      fullPath: '/api/public/cron/youtube-live'
+      preLoaderRoute: typeof ApiPublicCronYoutubeLiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/cron/strip-unverified-members': {
@@ -2314,6 +2335,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronLeagueOpenRoute: ApiPublicCronLeagueOpenRoute,
   ApiPublicCronStripUnverifiedMembersRoute:
     ApiPublicCronStripUnverifiedMembersRoute,
+  ApiPublicCronYoutubeLiveRoute: ApiPublicCronYoutubeLiveRoute,
   ApiPublicDiscordCallbackRoute: ApiPublicDiscordCallbackRoute,
   ApiPublicDiscordInteractionsRoute: ApiPublicDiscordInteractionsRoute,
   ApiPublicDiscordLoginRoute: ApiPublicDiscordLoginRoute,
