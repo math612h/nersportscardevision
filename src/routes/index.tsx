@@ -26,6 +26,7 @@ import { getCurrentWeekStartISO, shiftWeek, weekLabel, youtubeEmbedUrl } from "@
 import { DonorFrame } from "@/lib/donation-tier";
 import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
+import { LiveNowBanner } from "@/components/LiveNowBanner";
 
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
@@ -225,6 +226,7 @@ function NewsHome() {
 
   return (
     <div className="space-y-10">
+      <LiveNowBanner />
       {user && !isGuest && <ProfileCompletionGate />}
       {user && !isGuest && <AddressConsentBanner />}
       <header className="relative space-y-3">

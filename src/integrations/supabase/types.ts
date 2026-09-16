@@ -139,6 +139,45 @@ export type Database = {
           },
         ]
       }
+      broadcast_live_state: {
+        Row: {
+          announced_at: string | null
+          created_at: string
+          discord_message_id: string | null
+          id: string
+          is_live: boolean
+          platform: string
+          started_at: string | null
+          title: string | null
+          updated_at: string
+          video_id: string | null
+        }
+        Insert: {
+          announced_at?: string | null
+          created_at?: string
+          discord_message_id?: string | null
+          id?: string
+          is_live?: boolean
+          platform: string
+          started_at?: string | null
+          title?: string | null
+          updated_at?: string
+          video_id?: string | null
+        }
+        Update: {
+          announced_at?: string | null
+          created_at?: string
+          discord_message_id?: string | null
+          id?: string
+          is_live?: boolean
+          platform?: string
+          started_at?: string | null
+          title?: string | null
+          updated_at?: string
+          video_id?: string | null
+        }
+        Relationships: []
+      }
       chat_group_members: {
         Row: {
           group_id: string
