@@ -4,20 +4,28 @@ import { sendDiscordChannelMessage } from "@/lib/discord.server";
 
 const BROADCAST_CHANNEL_ID = "1549648346463871046";
 const MEMBERS_ROLE_ID = "1542536891486965962";
+const CHANNEL_LIVE_URL =
+  "https://www.youtube.com/channel/UCJUbwNmuLUXybJlUzJZbPjg/live";
+const ANNOUNCE_WINDOW_MS = 10 * 60 * 60 * 1000; // 10 timer før start
 
-function buildMessage(title: string | null, videoId: string | null): string {
-  const link = videoId
-    ? `https://www.youtube.com/watch?v=${videoId}`
-    : "https://www.youtube.com/channel/UCJUbwNmuLUXybJlUzJZbPjg/live";
+function buildUpcomingMessage(
+  title: string | null,
+  videoId: string | null,
+  startsAt: Date,
+): string {
+  const link = videoId ? `https://www.youtube.com/watch?v=${videoId}` : CHANNEL_LIVE_URL;
+  const unix = Math.floor(startsAt.getTime() / 1000);
   const parts: string[] = [];
   parts.push(`<@&${MEMBERS_ROLE_ID}>`);
   parts.push("");
-  parts.push("🔴🔴🔴  **VI ER LIVE PÅ YOUTUBE!**  🔴🔴🔴");
+  parts.push("📡  **VI GÅR SNART LIVE PÅ YOUTUBE!**");
   parts.push("");
   if (title) parts.push(`📺 **${title}**`);
+  parts.push(`🗓️ Starter <t:${unix}:F>`);
+  parts.push(`⏳ Nedtælling: **<t:${unix}:R>**`);
   parts.push(`👉 ${link}`);
   parts.push("");
-  parts.push("Kom ind og se med — vi ses i chatten! 🏁");
+  parts.push("Sæt en påmindelse på YouTube — vi ses i chatten! 🏁");
   return parts.join("\n");
 }
 
@@ -31,55 +39,106 @@ async function run() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: row } = await supabaseAdmin
     .from("broadcast_live_state")
-    .select("id, is_live, video_id")
+    .select("id, is_live, video_id, upcoming_announced_video_id")
     .eq("platform", "youtube")
     .maybeSingle();
 
   const wasLive = Boolean(row?.is_live);
-  const previousVideo = row?.video_id ?? null;
+  const announcedVideoId = (row as { upcoming_announced_video_id?: string | null } | null)
+    ?.upcoming_announced_video_id ?? null;
 
   if (state.status === "offline") {
     if (wasLive) {
       await supabaseAdmin
         .from("broadcast_live_state")
-        .update({ is_live: false, video_id: null, title: null, started_at: null })
+        .update({
+          is_live: false,
+          video_id: null,
+          title: null,
+          started_at: null,
+          upcoming_video_id: null,
+          upcoming_title: null,
+          scheduled_start_at: null,
+        })
+        .eq("platform", "youtube");
+    } else {
+      await supabaseAdmin
+        .from("broadcast_live_state")
+        .update({ upcoming_video_id: null, upcoming_title: null, scheduled_start_at: null })
         .eq("platform", "youtube");
     }
-    return Response.json({ ok: true, live: false, changed: wasLive });
+    return Response.json({ ok: true, live: false, upcoming: false, changed: wasLive });
   }
 
-  const isNewStream = !wasLive || (state.videoId != null && state.videoId !== previousVideo);
+  if (state.status === "upcoming") {
+    const startsAt = state.scheduledStart ? new Date(state.scheduledStart) : null;
+    const now = Date.now();
+    const shouldAnnounce =
+      startsAt != null &&
+      !Number.isNaN(startsAt.getTime()) &&
+      startsAt.getTime() > now &&
+      startsAt.getTime() - now <= ANNOUNCE_WINDOW_MS &&
+      state.videoId != null &&
+      state.videoId !== announcedVideoId;
 
-  if (!isNewStream) {
-    return Response.json({ ok: true, live: true, changed: false });
+    let discordMessageId: string | null = null;
+    if (shouldAnnounce && startsAt) {
+      try {
+        const res = await sendDiscordChannelMessage(
+          BROADCAST_CHANNEL_ID,
+          buildUpcomingMessage(state.title, state.videoId, startsAt),
+          [MEMBERS_ROLE_ID],
+        );
+        if (res.ok) discordMessageId = res.messageId ?? null;
+        else console.error("[youtube-live] Discord-fejl", res.status, res.message);
+      } catch (e) {
+        console.error("[youtube-live] Discord-fejl", e);
+      }
+    }
+
+    await supabaseAdmin
+      .from("broadcast_live_state")
+      .update({
+        is_live: false,
+        video_id: null,
+        started_at: null,
+        upcoming_video_id: state.videoId,
+        upcoming_title: state.title,
+        scheduled_start_at: startsAt ? startsAt.toISOString() : null,
+        ...(shouldAnnounce
+          ? {
+              upcoming_announced_video_id: state.videoId,
+              upcoming_announced_at: new Date().toISOString(),
+              upcoming_discord_message_id: discordMessageId,
+            }
+          : {}),
+      })
+      .eq("platform", "youtube");
+
+    return Response.json({
+      ok: true,
+      live: false,
+      upcoming: true,
+      scheduledStart: startsAt ? startsAt.toISOString() : null,
+      announced: shouldAnnounce,
+    });
   }
 
-  let discordMessageId: string | null = null;
-  try {
-    const res = await sendDiscordChannelMessage(
-      BROADCAST_CHANNEL_ID,
-      buildMessage(state.title, state.videoId),
-      [MEMBERS_ROLE_ID],
-    );
-    if (res.ok) discordMessageId = res.messageId ?? null;
-    else console.error("[youtube-live] Discord-fejl", res.status, res.message);
-  } catch (e) {
-    console.error("[youtube-live] Discord-fejl", e);
-  }
-
+  // Live: opdater kun status til live-bjælken — Discord-beskeden er allerede sendt 10 timer før.
   await supabaseAdmin
     .from("broadcast_live_state")
     .update({
       is_live: true,
       video_id: state.videoId,
       title: state.title,
-      started_at: new Date().toISOString(),
-      announced_at: new Date().toISOString(),
-      discord_message_id: discordMessageId,
+      started_at: wasLive ? undefined : new Date().toISOString(),
+      upcoming_video_id: null,
+      upcoming_title: null,
+      scheduled_start_at: null,
     })
     .eq("platform", "youtube");
 
-  return Response.json({ ok: true, live: true, changed: true, announced: Boolean(discordMessageId) });
+  return Response.json({ ok: true, live: true, changed: !wasLive });
 }
 
 export const Route = createFileRoute("/api/public/cron/youtube-live")({
