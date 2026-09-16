@@ -147,8 +147,14 @@ export type Database = {
           id: string
           is_live: boolean
           platform: string
+          scheduled_start_at: string | null
           started_at: string | null
           title: string | null
+          upcoming_announced_at: string | null
+          upcoming_announced_video_id: string | null
+          upcoming_discord_message_id: string | null
+          upcoming_title: string | null
+          upcoming_video_id: string | null
           updated_at: string
           video_id: string | null
         }
@@ -159,8 +165,14 @@ export type Database = {
           id?: string
           is_live?: boolean
           platform: string
+          scheduled_start_at?: string | null
           started_at?: string | null
           title?: string | null
+          upcoming_announced_at?: string | null
+          upcoming_announced_video_id?: string | null
+          upcoming_discord_message_id?: string | null
+          upcoming_title?: string | null
+          upcoming_video_id?: string | null
           updated_at?: string
           video_id?: string | null
         }
@@ -171,8 +183,14 @@ export type Database = {
           id?: string
           is_live?: boolean
           platform?: string
+          scheduled_start_at?: string | null
           started_at?: string | null
           title?: string | null
+          upcoming_announced_at?: string | null
+          upcoming_announced_video_id?: string | null
+          upcoming_discord_message_id?: string | null
+          upcoming_title?: string | null
+          upcoming_video_id?: string | null
           updated_at?: string
           video_id?: string | null
         }
