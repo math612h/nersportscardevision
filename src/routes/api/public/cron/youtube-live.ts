@@ -126,7 +126,7 @@ async function run() {
       live: false,
       upcoming: true,
       scheduledStart: startsAt ? startsAt.toISOString() : null,
-      announced: shouldAnnounce,
+      announced: announceSent,
     });
   }
 
