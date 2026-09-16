@@ -5,6 +5,12 @@ export const YOUTUBE_CHANNEL_ID = "UCJUbwNmuLUXybJlUzJZbPjg";
 
 export type YoutubeLiveResult =
   | { status: "live"; videoId: string | null; title: string | null }
+  | {
+      status: "upcoming";
+      videoId: string | null;
+      title: string | null;
+      scheduledStart: string | null;
+    }
   | { status: "offline" }
   | { status: "unknown"; error: string };
 
