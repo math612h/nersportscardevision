@@ -47,12 +47,17 @@ export async function fetchYoutubeLiveState(
   }
 
   // Live-signaler i den indlejrede player-data.
-  const isLive =
-    /"isLiveNow"\s*:\s*true/.test(html) ||
-    (/"isLive"\s*:\s*true/.test(html) && !/"isUpcoming"\s*:\s*true/.test(html)) ||
-    /<meta itemprop="isLiveBroadcast" content="True">/i.test(html);
+  const isUpcoming =
+    /"isUpcoming"\s*:\s*true/.test(html) ||
+    /"liveBroadcastContent"\s*:\s*"upcoming"/.test(html);
 
-  if (!isLive) return { status: "offline" };
+  const isLive =
+    !isUpcoming &&
+    (/"isLiveNow"\s*:\s*true/.test(html) ||
+      /"isLive"\s*:\s*true/.test(html) ||
+      /<meta itemprop="isLiveBroadcast" content="True">/i.test(html));
+
+  if (!isLive && !isUpcoming) return { status: "offline" };
 
   const videoId =
     firstMatch(html, /"videoId"\s*:\s*"([A-Za-z0-9_-]{11})"/) ??
@@ -71,6 +76,24 @@ export async function fetchYoutubeLiveState(
       .replace(/&#39;/g, "'")
       .replace(/\\u0026/g, "&")
       .trim();
+  }
+
+  if (isUpcoming) {
+    // Planlagt starttidspunkt: enten epoch-sekunder eller ISO-dato.
+    const epoch = firstMatch(html, /"scheduledStartTime"\s*:\s*"?(\d{10,13})"?/);
+    const iso =
+      firstMatch(html, /<meta itemprop="startDate" content="([^"]+)"/) ??
+      firstMatch(html, /"startTime"\s*:\s*"([0-9T:\-+.Z]{10,})"/);
+    let scheduledStart: string | null = null;
+    if (epoch) {
+      const n = Number(epoch);
+      const ms = epoch.length > 10 ? n : n * 1000;
+      if (Number.isFinite(ms)) scheduledStart = new Date(ms).toISOString();
+    } else if (iso) {
+      const d = new Date(iso);
+      if (!Number.isNaN(d.getTime())) scheduledStart = d.toISOString();
+    }
+    return { status: "upcoming", videoId, title: title || null, scheduledStart };
   }
 
   return { status: "live", videoId, title: title || null };
