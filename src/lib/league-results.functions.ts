@@ -157,7 +157,9 @@ async function matchDriversFromXml(
     supabaseAdmin
       .from("entries")
       .select("user_id,driver_name,car_class,car_number,driver_category,waitlist")
+      .is("withdrawn_at", null)
       .eq("league_id", leagueId),
+
     supabaseAdmin.from("profiles").select("id, lmu_name").not("lmu_name", "is", null),
   ]);
   if (eErr) throw new Error(eErr.message);

@@ -55,6 +55,7 @@ type DraftRow = {
   q_dns: boolean;
   q_nt: boolean;             // kørte omgange, men ingen godkendt tid
   q_laps: number | null;
+  withdrawn: boolean;
 };
 
 type EntryRec = {
@@ -66,6 +67,8 @@ type EntryRec = {
   car_number: number;
   waitlist: boolean;
   created_at: string;
+  withdrawn_at?: string | null;
+
 };
 
 function parseTimeToMs(s: string): number | null {
@@ -123,7 +126,7 @@ function AdminStandings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,withdrawn_at")
         .eq("league_id", leagueId)
         .is("division_id", null)
         .order("created_at", { ascending: true });
@@ -230,7 +233,11 @@ function DivisionEditor({
   const findRace = buildLookup(existingRace);
   const findQuali = buildLookup(existingQuali);
 
-  const gridEntries = entries.filter((e) => !e.waitlist);
+  // Udmeldte kørere vises kun i de afdelinger, hvor de allerede har et gemt resultat.
+  const gridEntries = entries.filter((e) =>
+    e.withdrawn_at ? !!findRace(e) || !!findQuali(e) : !e.waitlist,
+  );
+
 
   const buildInitial = (): DraftRow[] => gridEntries.map((e) => {
     const race = findRace(e) as any;
@@ -255,6 +262,7 @@ function DivisionEditor({
       q_dns: !!quali?.dns,
       q_nt: !!quali?.nt,
       q_laps: typeof quali?.laps === "number" ? quali.laps : null,
+      withdrawn: !!e.withdrawn_at,
     };
   });
 
@@ -286,6 +294,8 @@ function DivisionEditor({
     setPublished(isResultsPublished(division.settings));
     setImportedInfo(null);
     setImportedFiles({});
+    setUnmatched(null);
+    setMatchChoices({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
 
@@ -308,6 +318,7 @@ function DivisionEditor({
           driver_name: e.driver_name,
           car_class: e.car_class,
           driver_category: e.driver_category,
+          withdrawn: !!e.withdrawn_at,
         };
       });
     });
@@ -341,6 +352,15 @@ function DivisionEditor({
     names: string[];
   } | null>(null);
   const [matchChoices, setMatchChoices] = useState<Record<string, string>>({});
+  // Navne fra den seneste importfil, som ikke kunne kobles til en deltager.
+  // Gemmes så matchningen kan laves bagefter — uden at uploade filen igen.
+  const [unmatched, setUnmatched] = useState<{
+    parsedRace: ReturnType<typeof parseLmuRaceFile>;
+    kind: SessionKind;
+    server: ServerKind;
+    fileName: string;
+    names: string[];
+  } | null>(null);
 
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
@@ -374,7 +394,7 @@ function DivisionEditor({
       const userId = resolveUser(p.name, overrides);
       if (!userId) { missing.push(p.name); continue; }
       const row = rows.find((r) => r.user_id === userId);
-      if (!row) continue;
+      if (!row) { missing.push(p.name); continue; }
       if (kind === "race") {
         const racePosition = p.classPosition ?? p.position ?? null;
         const common = { best_lap_ms: p.bestLapMs ?? null, source_server: server };
@@ -434,6 +454,8 @@ function DivisionEditor({
       }
     }
 
+    const stillUnmatched = Array.from(new Set(missing.map((n) => n.trim()).filter(Boolean)));
+    setUnmatched(stillUnmatched.length > 0 ? { parsedRace, kind, server, fileName, names: stillUnmatched } : null);
     setImportedFiles((prev) => ({ ...prev, [server]: { fileName, matched } }));
     toast.success(`${SERVER_LABEL[server]}: importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
     if (missing.length > 0) toast.warning(`${missing.length} ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
@@ -447,16 +469,20 @@ function DivisionEditor({
       setImportedInfo({ track: parsedRace.track, layout: parsedRace.layout });
 
       const unresolved = Array.from(
-        new Set(parsedRace.drivers.filter((p) => !resolveUser(p.name)).map((p) => p.name.trim()).filter(Boolean)),
+        new Set(
+          parsedRace.drivers
+            .filter((p) => !resolveUser(p.name, matchChoices))
+            .map((p) => p.name.trim())
+            .filter(Boolean),
+        ),
       );
 
       if (unresolved.length > 0) {
         setPendingMatch({ parsedRace, kind, server, fileName: file.name, names: unresolved });
-        setMatchChoices({});
         return;
       }
 
-      await applyParsed(parsedRace, kind, server, file.name, {});
+      await applyParsed(parsedRace, kind, server, file.name, matchChoices);
     } catch (e: any) {
       toast.error(e.message ?? "Kunne ikke importere fil");
     }
@@ -747,7 +773,8 @@ function DivisionEditor({
         currentDivisionId: division.id,
         currentResults: raceResults,
         allDivisions,
-        entries,
+        entries: entries.filter((e) => !e.withdrawn_at),
+
         configs,
       });
 
@@ -787,6 +814,22 @@ function DivisionEditor({
                   ) : null,
                 )}
               </p>
+            )}
+            {unmatched && (
+              <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs">
+                <span className="font-semibold text-amber-600 dark:text-amber-400">
+                  {unmatched.names.length} navn(e) fra {unmatched.fileName} blev ikke matchet:
+                </span>
+                <span className="font-mono">{unmatched.names.join(", ")}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7"
+                  onClick={() => setPendingMatch(unmatched)}
+                >
+                  Match kørere
+                </Button>
+              </div>
             )}
             <p className="mt-1 text-xs text-muted-foreground">
               {!published
@@ -991,6 +1034,11 @@ function DivisionEditor({
                             <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
                             <td className="px-2 py-1.5 truncate">
                               {r.driver_name}
+                              {r.withdrawn ? (
+                                <span className="ml-2 rounded border border-amber-500/50 px-1 py-0.5 text-[10px] uppercase text-amber-500 align-middle">
+                                  Udmeldt
+                                </span>
+                              ) : null}
                               {r.source_server ? (
                                 <span className="ml-2 rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground align-middle">
                                   {r.source_server}
@@ -1093,7 +1141,14 @@ function DivisionEditor({
                           <tr key={r.entry_id} className="border-t border-border">
                             <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : "–"}</td>
                             <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
-                            <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
+                            <td className="px-2 py-1.5 truncate">
+                              {r.driver_name}
+                              {r.withdrawn ? (
+                                <span className="ml-2 rounded border border-amber-500/50 px-1 py-0.5 text-[10px] uppercase text-amber-500 align-middle">
+                                  Udmeldt
+                                </span>
+                              ) : null}
+                            </td>
                             <td className="px-2 py-1.5">
                               <Input
                                 className="h-8 min-w-[120px]"

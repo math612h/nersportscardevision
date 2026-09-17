@@ -889,7 +889,6 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
       const { data, error } = await supabase
         .from("entries")
         .select("user_id,car_class,driver_category,car_number,team_id")
-        .is("withdrawn_at", null)
         .eq("league_id", leagueId);
       if (error) throw error;
       return (data ?? []) as { user_id: string; car_class: string; driver_category: string; car_number: number | null; team_id: string | null }[];
