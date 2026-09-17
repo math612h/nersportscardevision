@@ -30,6 +30,12 @@ export type LineupTeamInfo = {
    * Mangler kører i mappet (eller er værdien null) gælder han fra sæsonstart.
    */
   effectiveFrom?: Map<string, string | null>;
+  /**
+   * Valgfrit: tidspunkt hvor kørerens medlemskab ophørte (fx udmeldelse).
+   * Køreren tæller med i alle afdelinger til og med denne dato.
+   */
+  effectiveUntil?: Map<string, string | null>;
+
 };
 
 export type TeamPointsResult = {
@@ -76,13 +82,20 @@ export function computeTeamRacePoints(args: {
   const { results, teams, pointsPerPosition, raceDate } = args;
   const raceTs = raceDate ? new Date(raceDate).getTime() : null;
   const countsForRace = (t: LineupTeamInfo, uid: string) => {
-    const from = t.effectiveFrom?.get(uid);
-    if (!from) return true;
     if (raceTs == null || !Number.isFinite(raceTs)) return true;
-    const fromTs = new Date(from).getTime();
-    if (!Number.isFinite(fromTs)) return true;
-    return fromTs <= raceTs;
+    const from = t.effectiveFrom?.get(uid);
+    if (from) {
+      const fromTs = new Date(from).getTime();
+      if (Number.isFinite(fromTs) && fromTs > raceTs) return false;
+    }
+    const until = t.effectiveUntil?.get(uid);
+    if (until) {
+      const untilTs = new Date(until).getTime();
+      if (Number.isFinite(untilTs) && untilTs < raceTs) return false;
+    }
+    return true;
   };
+
 
   // Brugbare resultater pr. klasse
   const validByClass = new Map<string, Map<string, number>>(); // class -> user_id -> position

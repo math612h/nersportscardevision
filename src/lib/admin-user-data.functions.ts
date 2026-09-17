@@ -43,6 +43,7 @@ export const adminGetUserData = createServerFn({ method: "POST" })
       supabaseAdmin
         .from("entries")
         .select("id, league_id, car_class, car_number, driver_category, waitlist, created_at, leagues(name)")
+        .is("withdrawn_at", null)
         .eq("user_id", uid)
         .order("created_at", { ascending: false })
         .limit(50),

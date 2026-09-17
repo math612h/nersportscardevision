@@ -54,6 +54,7 @@ export const splitClassIntoProAm = createServerFn({ method: "POST" })
     const { data: entries, error: eErr } = await supabaseAdmin
       .from("entries")
       .select("id, user_id, driver_name, car_class")
+      .is("withdrawn_at", null)
       .eq("league_id", data.leagueId)
       .eq("car_class", data.carClass)
       .eq("waitlist", false);

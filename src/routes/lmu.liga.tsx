@@ -67,6 +67,7 @@ function ParticipantDashboard() {
       const { data, error } = await supabase
         .from("entries")
         .select("league_id,car_class,driver_category,waitlist,division_id")
+        .is("withdrawn_at", null)
         .in("league_id", leagueIds)
         .is("division_id", null);
       if (error) throw error;

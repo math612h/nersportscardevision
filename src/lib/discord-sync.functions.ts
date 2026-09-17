@@ -50,6 +50,7 @@ export const syncDiscordRolesForLeague = createServerFn({ method: "POST" })
     const { data: entries } = await supabaseAdmin
       .from("entries")
       .select("user_id")
+      .is("withdrawn_at", null)
       .or(orFilter);
     const entryUserIds = Array.from(
       new Set((entries ?? []).map((e: { user_id: string }) => e.user_id).filter(Boolean)),
@@ -156,6 +157,7 @@ export const adminDeleteEntryWithRoleCleanup = createServerFn({ method: "POST" }
     const { data: stillThere } = await supabaseAdmin
       .from("entries")
       .select("id")
+      .is("withdrawn_at", null)
       .eq("user_id", entry.user_id)
       .or(orFilter)
       .limit(1);

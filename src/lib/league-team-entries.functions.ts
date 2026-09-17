@@ -75,6 +75,7 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
     const { data: entries } = await (supabaseAdmin as any)
       .from("entries")
       .select("user_id")
+      .is("withdrawn_at", null)
       .eq("league_id", data.leagueId)
       .eq("car_class", data.carClass)
       .in("user_id", data.userIds);

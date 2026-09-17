@@ -124,6 +124,7 @@ export const generateAutoMessage = createServerFn({ method: "POST" })
       const { data: entries } = await supabaseAdmin
         .from("entries")
         .select("car_class, driver_category, waitlist")
+        .is("withdrawn_at", null)
         .eq("league_id", league.id as string);
       const grid = (entries ?? []).filter((e: any) => !e.waitlist);
       const counts = new Map<string, number>();

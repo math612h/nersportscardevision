@@ -75,6 +75,7 @@ export async function respondReserveOfferCore(opts: {
     const { data: leagueEntry } = await supabaseAdmin
       .from("entries")
       .select("driver_name,car_number")
+      .is("withdrawn_at", null)
       .eq("league_id", (div as any)!.league_id)
       .is("division_id", null)
       .eq("user_id", actingUserId)

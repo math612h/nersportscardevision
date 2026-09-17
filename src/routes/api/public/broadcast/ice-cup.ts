@@ -37,6 +37,7 @@ export const Route = createFileRoute("/api/public/broadcast/ice-cup")({
           const { data: entryRows, error: eErr } = await supabaseAdmin
             .from("entries")
             .select("user_id, driver_name, car_number, car_class, driver_category, waitlist, team_id")
+            .is("withdrawn_at", null)
             .eq("league_id", league.id);
           if (eErr) throw eErr;
           const rows = (entryRows ?? []) as RawEntry[];

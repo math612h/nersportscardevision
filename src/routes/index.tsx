@@ -164,7 +164,7 @@ function NewsHome() {
         supabase.from("leagues").select("points_system").eq("id", latest.league_id).maybeSingle(),
         (supabase as any)
           .from("league_team_entries")
-          .select("id, team_id, car_class, status, teams:team_id(name), league_team_lineup(user_id, status, effective_from)")
+          .select("id, team_id, car_class, status, teams:team_id(name), league_team_lineup(user_id, status, effective_from, effective_until)")
           .eq("league_id", latest.league_id)
           .eq("status", "confirmed"),
       ]);
@@ -185,6 +185,9 @@ function NewsHome() {
           userIds: new Set(accepted),
           effectiveFrom: new Map<string, string | null>(
             acceptedRows.map((l) => [l.user_id as string, (l.effective_from as string | null) ?? null]),
+          ),
+          effectiveUntil: new Map<string, string | null>(
+            acceptedRows.map((l) => [l.user_id as string, (l.effective_until as string | null) ?? null]),
           ),
         }];
       });

@@ -191,6 +191,7 @@ function LeagueDetail() {
       const { count, error } = await supabase
         .from("entries")
         .select("id", { count: "exact", head: true })
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId)
         .eq("waitlist", false);
       if (error) throw error;
@@ -216,6 +217,7 @@ function LeagueDetail() {
       const { data, error } = await supabase
         .from("entries")
         .select("id")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId)
         .eq("user_id", user!.id)
         .limit(1)
@@ -570,6 +572,7 @@ function useLeagueSignups(leagueId: string) {
       const { data, error } = await supabase
         .from("entries")
         .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id,car_model")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId)
         .is("division_id", null)
         .order("created_at", { ascending: true });
@@ -886,6 +889,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
       const { data, error } = await supabase
         .from("entries")
         .select("user_id,car_class,driver_category,car_number,team_id")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId);
       if (error) throw error;
       return (data ?? []) as { user_id: string; car_class: string; driver_category: string; car_number: number | null; team_id: string | null }[];
@@ -1123,7 +1127,7 @@ function TeamStandings({
       const [{ data, error }, { data: leagueRow }] = await Promise.all([
         (supabase as any)
           .from("league_team_entries")
-          .select("id, team_id, car_class, status, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status, effective_from)")
+          .select("id, team_id, car_class, status, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status, effective_from, effective_until)")
           .eq("league_id", leagueId)
           .eq("status", "confirmed"),
         supabase.from("leagues").select("points_system").eq("id", leagueId).maybeSingle(),
@@ -1144,6 +1148,7 @@ function TeamStandings({
     carClass: string;
     userIds: Set<string>;
     effectiveFrom: Map<string, string | null>;
+    effectiveUntil: Map<string, string | null>;
   };
   const teamInfos: Info[] = [];
   for (const e of ((teamData?.entries ?? []) as any[])) {
@@ -1156,6 +1161,7 @@ function TeamStandings({
       carClass: e.car_class,
       userIds: new Set(accepted),
       effectiveFrom: new Map(acceptedRows.map((l) => [l.user_id as string, (l.effective_from as string | null) ?? null])),
+      effectiveUntil: new Map(acceptedRows.map((l) => [l.user_id as string, (l.effective_until as string | null) ?? null])),
     });
   }
 
@@ -1847,6 +1853,7 @@ function useMyEntry(leagueId: string, userId: string | null | undefined) {
       const { data, error } = await supabase
         .from("entries")
         .select("id,waitlist")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId)
         .is("division_id", null)
         .eq("user_id", userId!)

@@ -42,6 +42,7 @@ export const Route = createFileRoute("/api/public/broadcast/streaming-profiles")
             const { data: entries } = await supabaseAdmin
               .from("entries")
               .select("user_id")
+              .is("withdrawn_at", null)
               .eq("league_id", league.id);
             userFilter = [...new Set((entries ?? []).map((e: any) => e.user_id))];
           }

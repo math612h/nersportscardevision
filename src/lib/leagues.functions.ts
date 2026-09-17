@@ -101,6 +101,7 @@ export const setProfileApproval = createServerFn({ method: "POST" })
     const { data: myEntries } = await supabaseAdmin
       .from("entries")
       .select("id,league_id,car_class,driver_category,waitlist,driver_name,created_at")
+      .is("withdrawn_at", null)
       .is("division_id", null)
       .eq("user_id", data.targetUserId);
 
@@ -126,6 +127,7 @@ export const setProfileApproval = createServerFn({ method: "POST" })
         let siblingQuery = supabaseAdmin
           .from("entries")
           .select("id,waitlist")
+          .is("withdrawn_at", null)
           .eq("league_id", leagueId)
           .is("division_id", null)
           .eq("car_class", entry.car_class);
@@ -170,6 +172,7 @@ export const setProfileApproval = createServerFn({ method: "POST" })
         const { data: waitlisters } = await supabaseAdmin
           .from("entries")
           .select("id,user_id,driver_name,created_at")
+          .is("withdrawn_at", null)
           .eq("league_id", leagueId)
           .is("division_id", null)
           .eq("waitlist", true)
@@ -229,6 +232,7 @@ export const leaveLeague = createServerFn({ method: "POST" })
     const { data: myEntry, error: meErr } = await supabaseAdmin
       .from("entries")
       .select("id,car_class,driver_category,waitlist")
+      .is("withdrawn_at", null)
       .eq("league_id", data.leagueId)
       .is("division_id", null)
       .eq("user_id", userId)
@@ -246,9 +250,21 @@ export const leaveLeague = createServerFn({ method: "POST" })
       .maybeSingle();
     const leagueName = league?.name ?? "ligaen";
 
-    // Delete the entry
-    const { error: delErr } = await supabaseAdmin.from("entries").delete().eq("id", myEntry.id);
+    // Soft-withdraw: behold rækken, så tidligere resultater og team-point bevares
+    const { error: delErr } = await supabaseAdmin
+      .from("entries")
+      .update({ withdrawn_at: new Date().toISOString(), waitlist: false } as any)
+      .eq("id", myEntry.id);
     if (delErr) throw new Error(delErr.message);
+
+    // Lineup-medlemskabet lukkes fra i dag, så tidligere afdelinger er uændrede
+    await supabaseAdmin
+      .from("league_team_lineup")
+      .update({ effective_until: new Date().toISOString() } as any)
+      .eq("league_id", data.leagueId)
+      .eq("user_id", userId)
+      .is("effective_until", null);
+
 
     let promotedDriver: string | null = null;
 
@@ -257,6 +273,7 @@ export const leaveLeague = createServerFn({ method: "POST" })
       const { data: waitlisters, error: nextErr } = await supabaseAdmin
         .from("entries")
         .select("id,user_id,driver_name,created_at")
+        .is("withdrawn_at", null)
         .eq("league_id", data.leagueId)
         .is("division_id", null)
         .eq("waitlist", true)
@@ -335,6 +352,7 @@ export const updateMyLeagueEntry = createServerFn({ method: "POST" })
     const { data: entry, error: entryErr } = await supabaseAdmin
       .from("entries")
       .select("id,car_class")
+      .is("withdrawn_at", null)
       .eq("league_id", data.leagueId)
       .is("division_id", null)
       .eq("user_id", userId)
