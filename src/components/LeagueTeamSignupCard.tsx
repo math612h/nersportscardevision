@@ -27,6 +27,18 @@ export function LeagueTeamSignupCard({
 }) {
   const qc = useQueryClient();
   const withdrawFn = useServerFn(withdrawTeamFromLeague);
+  const removeFn = useServerFn(removeDriversFromLineup);
+
+  const removeDriver = useMutation({
+    mutationFn: async (v: { entryId: string; userId: string }) =>
+      await removeFn({ data: { entryId: v.entryId, userIds: [v.userId] } }),
+    onSuccess: () => {
+      toast.success("Køreren er fjernet fra lineupet — tidligere afdelingers team-point er uændrede");
+      qc.invalidateQueries({ queryKey: ["team-league-entries", teamId] });
+      qc.invalidateQueries({ queryKey: ["league-team-entries-mine"] });
+    },
+    onError: (e) => toastError((e as Error).message),
+  });
 
   const { data: entries } = useQuery({
     queryKey: ["team-league-entries", teamId],
