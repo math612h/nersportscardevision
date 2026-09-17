@@ -294,8 +294,18 @@ function DivisionEditor({
     setPublished(isResultsPublished(division.settings));
     setImportedInfo(null);
     setImportedFiles({});
-    setUnmatched(null);
     setMatchChoices({});
+    // Gendan "Ikke matchet"-panelet fra gemte imports, så matchning kan laves
+    // uden at uploade filen igen.
+    const storedImports = (((division.settings as any)?.imports ?? {}) as Record<string, any>);
+    const stored = Object.values(storedImports)
+      .filter((imp) => imp && imp.parsed && Array.isArray(imp.unmatched) && imp.unmatched.length > 0)
+      .sort((a, b) => String(b.uploadedAt ?? "").localeCompare(String(a.uploadedAt ?? "")))[0];
+    setUnmatched(
+      stored
+        ? { parsedRace: stored.parsed, kind: stored.kind, server: stored.server, fileName: stored.fileName, names: stored.unmatched }
+        : null,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
 
@@ -361,6 +371,37 @@ function DivisionEditor({
     fileName: string;
     names: string[];
   } | null>(null);
+
+  // Seneste kendte settings for afdelingen — bruges til at gemme imports
+  // uden at overskrive andre settings-felter.
+  const settingsRef = useRef<any>(division.settings ?? {});
+  useEffect(() => {
+    settingsRef.current = (division.settings ?? {}) as any;
+  }, [division.id, division.settings]);
+
+  // Gem den importerede fils parsede data + umatchede navne på afdelingen,
+  // så matchning kan genåbnes uden at uploade filen igen.
+  const persistImport = async (
+    parsedRace: ReturnType<typeof parseLmuRaceFile>,
+    kind: SessionKind,
+    server: ServerKind,
+    fileName: string,
+    unmatchedNames: string[],
+  ) => {
+    try {
+      const prevSettings = (settingsRef.current ?? {}) as any;
+      const key = `${server}_${kind}`;
+      const imports = {
+        ...(prevSettings.imports ?? {}),
+        [key]: { fileName, kind, server, uploadedAt: new Date().toISOString(), parsed: parsedRace, unmatched: unmatchedNames },
+      };
+      const newSettings = { ...prevSettings, imports };
+      settingsRef.current = newSettings;
+      await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
+    } catch {
+      // Persistens er nice-to-have; importen er allerede anvendt i editoren.
+    }
+  };
 
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
@@ -456,6 +497,9 @@ function DivisionEditor({
 
     const stillUnmatched = Array.from(new Set(missing.map((n) => n.trim()).filter(Boolean)));
     setUnmatched(stillUnmatched.length > 0 ? { parsedRace, kind, server, fileName, names: stillUnmatched } : null);
+    // Gem filens parsede data + umatchede navne på afdelingen, så matchning
+    // kan genåbnes uden at uploade filen igen.
+    void persistImport(parsedRace, kind, server, fileName, stillUnmatched);
     setImportedFiles((prev) => ({ ...prev, [server]: { fileName, matched } }));
     toast.success(`${SERVER_LABEL[server]}: importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
     if (missing.length > 0) toast.warning(`${missing.length} ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
