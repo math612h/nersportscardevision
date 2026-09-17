@@ -66,6 +66,8 @@ type EntryRec = {
   car_number: number;
   waitlist: boolean;
   created_at: string;
+  withdrawn_at?: string | null;
+
 };
 
 function parseTimeToMs(s: string): number | null {
