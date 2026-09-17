@@ -347,28 +347,6 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
           </div>
         )}
 
-        {/* Class badges in their own row — easier to scan on mobile */}
-        {(configs.length > 0 || (league as any)?.car_class) && (
-          <div className="flex flex-wrap gap-1.5 px-4 pt-3 sm:px-6">
-            {configs.length > 0
-              ? configs.map((c, i) => {
-                  const col = classColor(c.car_class);
-                  return (
-                    <Badge key={i} variant="outline" className={`gap-1.5 ${col.badge}`}>
-                      <span className={`h-2 w-2 rounded-full ${col.dot}`} />
-                      {c.car_class} {c.driver_category} · #{c.number_from}-{c.number_to}
-                    </Badge>
-                  );
-                })
-              : (
-                <>
-                  {(league as any)?.car_class && <Badge>{(league as any).car_class}</Badge>}
-                  {(league as any)?.driver_category && <Badge variant="secondary">{(league as any).driver_category}</Badge>}
-                </>
-              )}
-           </div>
-        )}
-
         {league && configs.length > 0 && <SeatsSummary leagueId={leagueId} configs={configs} />}
 
 
