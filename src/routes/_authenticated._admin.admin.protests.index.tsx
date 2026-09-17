@@ -37,6 +37,22 @@ function AdminProtests() {
     },
   });
 
+  // Navne på klagere (submitted_by → profiles.display_name)
+  const submitterIds = [...new Set((data ?? []).map((p: any) => p.submitted_by).filter(Boolean))];
+  const { data: submitters } = useQuery({
+    enabled: submitterIds.length > 0,
+    queryKey: ["protest-submitters", submitterIds],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", submitterIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const submitterName = new Map((submitters ?? []).map((s: any) => [s.id, s.display_name]));
+
   // Unikke ligaer og afdelinger udledt af de hentede protester
   const leagues = new Map<string, string>();
   const divisions = new Map<string, { name: string; leagueId: string | null }>();
