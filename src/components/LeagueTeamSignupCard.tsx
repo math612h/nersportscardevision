@@ -45,7 +45,7 @@ export function LeagueTeamSignupCard({
         car_class: string;
         status: string;
         leagues: { name: string } | null;
-        league_team_lineup: Array<{ id: string; user_id: string; status: string; effective_from: string | null }>;
+        league_team_lineup: Array<{ id: string; user_id: string; status: string; effective_from: string | null; effective_until: string | null }>;
       }>;
     },
   });
