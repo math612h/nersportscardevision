@@ -232,7 +232,11 @@ function DivisionEditor({
   const findRace = buildLookup(existingRace);
   const findQuali = buildLookup(existingQuali);
 
-  const gridEntries = entries.filter((e) => !e.waitlist);
+  // Udmeldte kørere vises kun i de afdelinger, hvor de allerede har et gemt resultat.
+  const gridEntries = entries.filter((e) =>
+    e.withdrawn_at ? !!findRace(e) || !!findQuali(e) : !e.waitlist,
+  );
+
 
   const buildInitial = (): DraftRow[] => gridEntries.map((e) => {
     const race = findRace(e) as any;
