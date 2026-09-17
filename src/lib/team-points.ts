@@ -30,6 +30,12 @@ export type LineupTeamInfo = {
    * Mangler kører i mappet (eller er værdien null) gælder han fra sæsonstart.
    */
   effectiveFrom?: Map<string, string | null>;
+  /**
+   * Valgfrit: tidspunkt hvor kørerens medlemskab ophørte (fx udmeldelse).
+   * Køreren tæller med i alle afdelinger til og med denne dato.
+   */
+  effectiveUntil?: Map<string, string | null>;
+
 };
 
 export type TeamPointsResult = {
