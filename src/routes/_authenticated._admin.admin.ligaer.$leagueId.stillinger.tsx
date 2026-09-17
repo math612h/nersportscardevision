@@ -294,8 +294,18 @@ function DivisionEditor({
     setPublished(isResultsPublished(division.settings));
     setImportedInfo(null);
     setImportedFiles({});
-    setUnmatched(null);
     setMatchChoices({});
+    // Gendan "Ikke matchet"-panelet fra gemte imports, så matchning kan laves
+    // uden at uploade filen igen.
+    const storedImports = (((division.settings as any)?.imports ?? {}) as Record<string, any>);
+    const stored = Object.values(storedImports)
+      .filter((imp) => imp && imp.parsed && Array.isArray(imp.unmatched) && imp.unmatched.length > 0)
+      .sort((a, b) => String(b.uploadedAt ?? "").localeCompare(String(a.uploadedAt ?? "")))[0];
+    setUnmatched(
+      stored
+        ? { parsedRace: stored.parsed, kind: stored.kind, server: stored.server, fileName: stored.fileName, names: stored.unmatched }
+        : null,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
 
