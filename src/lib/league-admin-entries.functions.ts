@@ -108,6 +108,7 @@ export const rebalanceLeagueWaitlist = createServerFn({ method: "POST" })
     const { data: entries, error: eErr } = await supabaseAdmin
       .from("entries")
       .select("id,user_id,car_class,driver_category,waitlist,created_at")
+      .is("withdrawn_at", null)
       .eq("league_id", data.leagueId)
       .order("created_at", { ascending: true });
     if (eErr) throw new Error(eErr.message);

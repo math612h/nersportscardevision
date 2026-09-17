@@ -134,6 +134,7 @@ function DivisionDetail() {
       const { data, error } = await supabase
         .from("entries")
         .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,team_id")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId)
         .is("division_id", null)
         .order("created_at", { ascending: true });
@@ -253,6 +254,7 @@ function DivisionDetail() {
       const { data, error } = await supabase
         .from("entries")
         .select("id,user_id,driver_name,car_class,driver_category,car_number,created_at,team_id")
+        .is("withdrawn_at", null)
         .eq("division_id", divisionId);
       if (error) throw error;
       return (data ?? []) as Array<{

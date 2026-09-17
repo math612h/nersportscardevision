@@ -71,6 +71,7 @@ function AdminProtestDetail() {
       const { data } = await supabase
         .from("entries")
         .select("user_id, car_class, driver_category, car_number")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId);
       return data ?? [];
     },

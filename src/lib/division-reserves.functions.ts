@@ -85,6 +85,7 @@ async function offerNextReserveImpl(
   const { data: waitlisters } = await admin
     .from("entries")
     .select("id,user_id,driver_name,created_at")
+    .is("withdrawn_at", null)
     .eq("league_id", div.league_id)
     .is("division_id", null)
     .eq("waitlist", true)
@@ -112,6 +113,7 @@ async function offerNextReserveImpl(
   const { data: divEntries } = await admin
     .from("entries")
     .select("user_id")
+    .is("withdrawn_at", null)
     .eq("division_id", divisionId);
   const alreadyOnDivision = new Set((divEntries ?? []).map((e: any) => e.user_id));
 
@@ -190,6 +192,7 @@ export const triggerReserveOfferForAbsence = createServerFn({ method: "POST" })
     const { data: entry } = await supabaseAdmin
       .from("entries")
       .select("car_class,driver_category,waitlist")
+      .is("withdrawn_at", null)
       .eq("league_id", div.league_id)
       .is("division_id", null)
       .eq("user_id", userId)
@@ -299,6 +302,7 @@ export const undoDivisionAbsence = createServerFn({ method: "POST" })
     const { data: myEntry } = await supabaseAdmin
       .from("entries")
       .select("car_class,driver_category")
+      .is("withdrawn_at", null)
       .eq("league_id", (div as any).league_id)
       .is("division_id", null)
       .eq("user_id", userId)
@@ -322,6 +326,7 @@ export const undoDivisionAbsence = createServerFn({ method: "POST" })
       const { data: waitlisters } = await supabaseAdmin
         .from("entries")
         .select("id")
+        .is("withdrawn_at", null)
         .eq("league_id", (div as any).league_id)
         .is("division_id", null)
         .eq("waitlist", true)

@@ -215,6 +215,7 @@ function useStreamingProfilesFilter() {
       const { data, error } = await (supabase as any)
         .from("entries")
         .select("user_id")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId);
       if (error) throw error;
       return new Set<string>((data ?? []).map((e: any) => e.user_id as string));
