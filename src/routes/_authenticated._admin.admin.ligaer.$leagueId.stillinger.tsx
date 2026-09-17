@@ -294,6 +294,8 @@ function DivisionEditor({
     setPublished(isResultsPublished(division.settings));
     setImportedInfo(null);
     setImportedFiles({});
+    setUnmatched(null);
+    setMatchChoices({});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [division.id]);
 
@@ -350,6 +352,15 @@ function DivisionEditor({
     names: string[];
   } | null>(null);
   const [matchChoices, setMatchChoices] = useState<Record<string, string>>({});
+  // Navne fra den seneste importfil, som ikke kunne kobles til en deltager.
+  // Gemmes så matchningen kan laves bagefter — uden at uploade filen igen.
+  const [unmatched, setUnmatched] = useState<{
+    parsedRace: ReturnType<typeof parseLmuRaceFile>;
+    kind: SessionKind;
+    server: ServerKind;
+    fileName: string;
+    names: string[];
+  } | null>(null);
 
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
@@ -383,7 +394,7 @@ function DivisionEditor({
       const userId = resolveUser(p.name, overrides);
       if (!userId) { missing.push(p.name); continue; }
       const row = rows.find((r) => r.user_id === userId);
-      if (!row) continue;
+      if (!row) { missing.push(p.name); continue; }
       if (kind === "race") {
         const racePosition = p.classPosition ?? p.position ?? null;
         const common = { best_lap_ms: p.bestLapMs ?? null, source_server: server };
@@ -443,6 +454,8 @@ function DivisionEditor({
       }
     }
 
+    const stillUnmatched = Array.from(new Set(missing.map((n) => n.trim()).filter(Boolean)));
+    setUnmatched(stillUnmatched.length > 0 ? { parsedRace, kind, server, fileName, names: stillUnmatched } : null);
     setImportedFiles((prev) => ({ ...prev, [server]: { fileName, matched } }));
     toast.success(`${SERVER_LABEL[server]}: importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
     if (missing.length > 0) toast.warning(`${missing.length} ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
@@ -456,16 +469,20 @@ function DivisionEditor({
       setImportedInfo({ track: parsedRace.track, layout: parsedRace.layout });
 
       const unresolved = Array.from(
-        new Set(parsedRace.drivers.filter((p) => !resolveUser(p.name)).map((p) => p.name.trim()).filter(Boolean)),
+        new Set(
+          parsedRace.drivers
+            .filter((p) => !resolveUser(p.name, matchChoices))
+            .map((p) => p.name.trim())
+            .filter(Boolean),
+        ),
       );
 
       if (unresolved.length > 0) {
         setPendingMatch({ parsedRace, kind, server, fileName: file.name, names: unresolved });
-        setMatchChoices({});
         return;
       }
 
-      await applyParsed(parsedRace, kind, server, file.name, {});
+      await applyParsed(parsedRace, kind, server, file.name, matchChoices);
     } catch (e: any) {
       toast.error(e.message ?? "Kunne ikke importere fil");
     }
@@ -796,6 +813,22 @@ function DivisionEditor({
                   ) : null,
                 )}
               </p>
+            )}
+            {unmatched && (
+              <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs">
+                <span className="font-semibold text-amber-600 dark:text-amber-400">
+                  {unmatched.names.length} navn(e) fra {unmatched.fileName} blev ikke matchet:
+                </span>
+                <span className="font-mono">{unmatched.names.join(", ")}</span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7"
+                  onClick={() => setPendingMatch(unmatched)}
+                >
+                  Match kørere
+                </Button>
+              </div>
             )}
             <p className="mt-1 text-xs text-muted-foreground">
               {!published
