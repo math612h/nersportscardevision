@@ -773,7 +773,8 @@ function DivisionEditor({
         currentDivisionId: division.id,
         currentResults: raceResults,
         allDivisions,
-        entries,
+        entries: entries.filter((e) => !e.withdrawn_at),
+
         configs,
       });
 
