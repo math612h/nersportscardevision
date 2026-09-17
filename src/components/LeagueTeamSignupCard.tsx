@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   withdrawTeamFromLeague,
   respondLeagueLineup,
+  removeDriversFromLineup,
 } from "@/lib/league-team-entries.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
