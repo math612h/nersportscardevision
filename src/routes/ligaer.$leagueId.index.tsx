@@ -151,6 +151,84 @@ function RaceCountdown({ raceDate }: { raceDate: string }) {
   );
 }
 
+function NextRaceCountdownCard({ leagueId, division }: { leagueId: string; division: any }) {
+  const raceDate = division?.race_date as string | undefined;
+  const target = raceDate ? new Date(raceDate).getTime() : NaN;
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  if (!raceDate || Number.isNaN(target)) return null;
+  const diffMs = target - now;
+  if (diffMs <= 0) return null;
+  const totalSec = Math.floor(diffMs / 1000);
+  const days = Math.floor(totalSec / 86400);
+  const hours = Math.floor((totalSec % 86400) / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  const eventDate = new Date(raceDate);
+  const dateStr = eventDate.toLocaleDateString("da-DK", { weekday: "short", day: "2-digit", month: "short" });
+  const timeStr = eventDate.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+
+  const Unit = ({ v, label }: { v: number; label: string }) => (
+    <div className="flex flex-col items-center">
+      <span className="font-mono text-lg font-bold tabular-nums leading-none text-primary sm:text-xl">
+        {String(v).padStart(2, "0")}
+      </span>
+      <span className="mt-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground">{label}</span>
+    </div>
+  );
+
+  return (
+    <Link
+      to="/ligaer/$leagueId/kalender"
+      params={{ leagueId }}
+      className="group relative block overflow-hidden rounded-xl border border-primary/30 bg-card p-3 transition hover:border-primary"
+    >
+      <div
+        className="absolute inset-y-0 left-0 w-1.5 opacity-90"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, hsl(var(--foreground)) 0 6px, transparent 6px 12px), repeating-linear-gradient(90deg, hsl(var(--foreground)) 0 6px, transparent 6px 12px)",
+          backgroundSize: "6px 12px, 12px 6px",
+        }}
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/20 blur-3xl transition group-hover:bg-primary/30"
+        aria-hidden
+      />
+      <div className="relative pl-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+            Næste afdeling
+          </p>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            {dateStr} · {timeStr}
+          </p>
+        </div>
+        <h2 className="mt-1.5 text-base font-black tracking-tight sm:text-lg">{division.name}</h2>
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-primary/20 bg-background/40 px-3 py-2">
+          <div className="flex items-center gap-2.5 sm:gap-4">
+            <Unit v={days} label="dg" />
+            <span className="font-mono text-lg font-bold text-primary/40">:</span>
+            <Unit v={hours} label="tm" />
+            <span className="font-mono text-lg font-bold text-primary/40">:</span>
+            <Unit v={mins} label="min" />
+            <span className="font-mono text-lg font-bold text-primary/40">:</span>
+            <Unit v={secs} label="sek" />
+          </div>
+          <span className="hidden items-center gap-1 text-xs font-semibold text-primary transition group-hover:translate-x-0.5 sm:inline-flex">
+            Se kalender <ArrowUpRight className="h-3.5 w-3.5" />
+          </span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
 export type LeaguePublicView = "overview" | "entryliste" | "teams" | "kalender" | "praemier" | "stillinger";
 
 export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView }) {
