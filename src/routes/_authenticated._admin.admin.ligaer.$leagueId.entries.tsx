@@ -47,6 +47,7 @@ function AdminEntries() {
       const { data: entries, error: entriesError } = await supabase
         .from("entries")
         .select("*")
+        .is("withdrawn_at", null)
         .or(orFilter)
         .order("created_at");
       if (entriesError) throw entriesError;
@@ -362,6 +363,7 @@ function MoveEntryDialog({ entry, leagueId, allEntries, onDone }: { entry: Entry
       const { data, error } = await supabase
         .from("entries")
         .select("id, car_number")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId)
         .not("car_number", "is", null);
       if (error) throw error;
@@ -696,6 +698,7 @@ function AdminAddUserDialog({ leagueId, onDone }: { leagueId: string; onDone: ()
       const { data, error } = await supabase
         .from("entries")
         .select("car_number")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId);
       if (error) throw error;
       return (data ?? []) as Array<{ car_number: number | null }>;

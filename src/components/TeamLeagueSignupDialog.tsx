@@ -119,6 +119,7 @@ export function TeamLeagueSignupDialog({
       const { data, error } = await (supabase as any)
         .from("entries")
         .select("user_id, car_class")
+        .is("withdrawn_at", null)
         .eq("league_id", leagueId)
         .in("user_id", memberIds);
       if (error) throw error;
