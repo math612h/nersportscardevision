@@ -135,14 +135,37 @@ export function LeagueTeamSignupCard({
                   <ul className="basis-full space-y-1 border-t border-border pt-2 text-xs text-muted-foreground">
                     {e.league_team_lineup.map((l) => {
                       const name = memberById.get(l.user_id)?.display_name ?? "Ukendt";
-                      const icon = l.status === "accepted" ? "✅" : l.status === "declined" ? "❌" : "⏳";
+                      const removed = !!l.effective_until;
+                      const icon = removed ? "🚫" : l.status === "accepted" ? "✅" : l.status === "declined" ? "❌" : "⏳";
                       return (
-                        <li key={l.id}>
-                          {icon} {name} <span className="opacity-60">— {l.status}</span>
-                          {l.effective_from && (
-                            <span className="opacity-60">
-                              {" "}· tæller fra {new Date(l.effective_from).toLocaleDateString("da-DK")}
-                            </span>
+                        <li key={l.id} className="flex items-center justify-between gap-2">
+                          <span className={removed ? "line-through opacity-70" : ""}>
+                            {icon} {name} <span className="opacity-60">— {removed ? "fjernet" : l.status}</span>
+                            {l.effective_from && !removed && (
+                              <span className="opacity-60">
+                                {" "}· tæller fra {new Date(l.effective_from).toLocaleDateString("da-DK")}
+                              </span>
+                            )}
+                            {removed && (
+                              <span className="opacity-60">
+                                {" "}· tæller ikke med fra {new Date(l.effective_until!).toLocaleDateString("da-DK")}
+                              </span>
+                            )}
+                          </span>
+                          {!removed && l.status !== "declined" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              title={`Fjern ${name} fra lineupet`}
+                              disabled={removeDriver.isPending}
+                              onClick={() => {
+                                if (!confirm(`Fjern ${name} fra lineupet? Kørerens bidrag i allerede kørte afdelinger bevares.`)) return;
+                                removeDriver.mutate({ entryId: e.id, userId: l.user_id });
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
                           )}
                         </li>
                       );
