@@ -336,7 +336,6 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
               <span className="inline-flex flex-wrap items-center gap-1.5 font-medium">
                 <Calendar className="h-3.5 w-3.5 text-primary" />
                 Næste: {format(new Date(nextDivision.race_date), "dd MMM HH:mm")}
-                <RaceCountdown raceDate={nextDivision.race_date} />
               </span>
             )}
             {typeof leagueSignupCount === "number" && (
