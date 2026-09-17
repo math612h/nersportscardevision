@@ -487,6 +487,9 @@ function DivisionEditor({
 
     const stillUnmatched = Array.from(new Set(missing.map((n) => n.trim()).filter(Boolean)));
     setUnmatched(stillUnmatched.length > 0 ? { parsedRace, kind, server, fileName, names: stillUnmatched } : null);
+    // Gem filens parsede data + umatchede navne på afdelingen, så matchning
+    // kan genåbnes uden at uploade filen igen.
+    void persistImport(parsedRace, kind, server, fileName, stillUnmatched);
     setImportedFiles((prev) => ({ ...prev, [server]: { fileName, matched } }));
     toast.success(`${SERVER_LABEL[server]}: importerede ${matched} kørere (${kind === "race" ? "race" : "quali"}).${lbInserted ? ` ${lbInserted} tider på leaderboard.` : ""}`);
     if (missing.length > 0) toast.warning(`${missing.length} ikke matchet: ${missing.slice(0, 5).join(", ")}${missing.length > 5 ? "…" : ""}`);
