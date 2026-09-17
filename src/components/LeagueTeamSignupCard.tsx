@@ -109,7 +109,7 @@ export function LeagueTeamSignupCard({
                         leagueId: e.league_id,
                         carClass: e.car_class,
                         lockedUserIds: e.league_team_lineup
-                          .filter((l) => l.status !== "declined")
+                          .filter((l) => l.status !== "declined" && !l.effective_until)
                           .map((l) => l.user_id),
                       }}
                     />
