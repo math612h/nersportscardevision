@@ -340,7 +340,7 @@ export function TeamLeagueSignupDialog({
             </ul>
             <p className="text-xs text-muted-foreground">
               {isAdd
-                ? "Kørere der allerede er på lineupet kan ikke fjernes her. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling."
+                ? "Kørere der allerede er på lineupet fjernes fra team-siden under Team-tilmeldinger. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling."
                 : "De valgte kørere får en Discord-DM og kan acceptere/afvise. Når mindst 2 har accepteret bliver tilmeldingen bekræftet. Hvis under 2 lineup-medlemmer deltager i en afdeling, modtager teamet ikke points i klassen for den afdeling."}
             </p>
           </div>

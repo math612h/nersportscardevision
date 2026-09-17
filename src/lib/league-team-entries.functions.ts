@@ -139,11 +139,11 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
     // Eksisterende lineup-rækker
     const { data: currentRows } = await (supabaseAdmin as any)
       .from("league_team_lineup")
-      .select("user_id, status")
+      .select("user_id, status, effective_until")
       .eq("league_team_entry_id", entryId);
     const currentIds = new Set(
       ((currentRows ?? []) as any[])
-        .filter((r) => r.status !== "declined")
+        .filter((r) => r.status !== "declined" && !r.effective_until)
         .map((r) => r.user_id as string),
     );
 
@@ -178,6 +178,8 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       user_id: uid,
       status: "accepted" as const,
       responded_at: nowIso,
+      // Genaktiverer en evt. tidligere fjernet kører (effective_until nulstilles)
+      effective_until: null,
       ...(isAdd ? { effective_from: nowIso } : { effective_from: null }),
     }));
     const { error: upErr } = await (supabaseAdmin as any)
@@ -232,6 +234,97 @@ export const respondLeagueLineup = createServerFn({ method: "POST" })
     if (res.status === "forbidden") throw new Error("Du har ikke adgang til denne invitation");
     if (res.status === "already") throw new Error("Invitationen er allerede besvaret");
     return { ok: true, teamName: res.teamName, allAccepted: res.allAccepted };
+  });
+
+const removeSchema = z.object({
+  entryId: z.string().uuid(),
+  userIds: z.array(z.string().uuid()).min(1, "Vælg mindst én kører"),
+});
+
+// Fjern kørere fra et lineup midt i sæsonen.
+// Accepterede kørere slettes ikke — de markeres med effective_until = nu, så
+// deres bidrag til teamets resultater i allerede kørte afdelinger bevares.
+// Inviterede (endnu ikke accepterede) rækker slettes helt.
+export const removeDriversFromLineup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => removeSchema.parse(i))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: entry } = await (supabaseAdmin as any)
+      .from("league_team_entries")
+      .select("id, team_id, league_id, car_class, status, teams:team_id(name, owner_id), leagues:league_id(name)")
+      .eq("id", data.entryId)
+      .maybeSingle();
+    if (!entry) throw new Error("Tilmelding findes ikke");
+
+    const { data: adminRow } = await (context.supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .maybeSingle();
+    const isAdmin = !!adminRow;
+    if ((entry as any).teams?.owner_id !== context.userId && !isAdmin) {
+      throw new Error("Kun teamejeren kan fjerne kørere fra lineupet");
+    }
+
+    const { data: rows } = await (supabaseAdmin as any)
+      .from("league_team_lineup")
+      .select("id, user_id, status, effective_until")
+      .eq("league_team_entry_id", data.entryId)
+      .in("user_id", data.userIds);
+    const found = (rows ?? []) as Array<{ id: string; user_id: string; status: string; effective_until: string | null }>;
+    if (found.length === 0) throw new Error("Ingen af de valgte kørere er på lineupet");
+
+    const nowIso = new Date().toISOString();
+    const invitedIds = found.filter((r) => r.status === "invited").map((r) => r.id);
+    const activeIds = found
+      .filter((r) => r.status !== "invited" && !r.effective_until)
+      .map((r) => r.id);
+
+    if (invitedIds.length > 0) {
+      await (supabaseAdmin as any)
+        .from("league_team_lineup")
+        .delete()
+        .in("id", invitedIds);
+    }
+    if (activeIds.length > 0) {
+      const { error: upErr } = await (supabaseAdmin as any)
+        .from("league_team_lineup")
+        .update({ effective_until: nowIso })
+        .in("id", activeIds);
+      if (upErr) throw new Error(upErr.message);
+    }
+
+    // Nedjuster entry-status hvis der er under 2 aktive kørere tilbage
+    try {
+      const { data: remaining } = await (supabaseAdmin as any)
+        .from("league_team_lineup")
+        .select("id, status, effective_until")
+        .eq("league_team_entry_id", data.entryId);
+      const activeCount = ((remaining ?? []) as any[]).filter(
+        (r) => r.status !== "declined" && !r.effective_until,
+      ).length;
+      if (activeCount < 2 && (entry as any).status === "confirmed") {
+        await (supabaseAdmin as any)
+          .from("league_team_entries")
+          .update({ status: "pending" })
+          .eq("id", data.entryId);
+      }
+    } catch (_) {}
+
+    // Besked til de fjernede kørere
+    try {
+      const notifRows = found.map((r) => ({
+        user_id: r.user_id,
+        title: `Du er fjernet fra "${(entry as any).teams?.name ?? "teamet"}" lineup i ${(entry as any).leagues?.name ?? "ligaen"} (${(entry as any).car_class})`,
+        body: "Teamejeren har fjernet dig fra lineupet. Dine resultater i allerede kørte afdelinger tæller stadig med for teamet.",
+        link: `/teams/${(entry as any).team_id}`,
+      }));
+      if (notifRows.length > 0) await (supabaseAdmin as any).from("notifications").insert(notifRows);
+    } catch (_) {}
+
+    return { ok: true, removed: found.map((r) => r.user_id) };
   });
 
 const withdrawSchema = z.object({ entryId: z.string().uuid() });

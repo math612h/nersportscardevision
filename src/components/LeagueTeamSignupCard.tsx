@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   withdrawTeamFromLeague,
   respondLeagueLineup,
+  removeDriversFromLineup,
 } from "@/lib/league-team-entries.functions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +27,18 @@ export function LeagueTeamSignupCard({
 }) {
   const qc = useQueryClient();
   const withdrawFn = useServerFn(withdrawTeamFromLeague);
+  const removeFn = useServerFn(removeDriversFromLineup);
+
+  const removeDriver = useMutation({
+    mutationFn: async (v: { entryId: string; userId: string }) =>
+      await removeFn({ data: { entryId: v.entryId, userIds: [v.userId] } }),
+    onSuccess: () => {
+      toast.success("Køreren er fjernet fra lineupet — tidligere afdelingers team-point er uændrede");
+      qc.invalidateQueries({ queryKey: ["team-league-entries", teamId] });
+      qc.invalidateQueries({ queryKey: ["league-team-entries-mine"] });
+    },
+    onError: (e) => toastError((e as Error).message),
+  });
 
   const { data: entries } = useQuery({
     queryKey: ["team-league-entries", teamId],
@@ -33,7 +46,7 @@ export function LeagueTeamSignupCard({
       const { data, error } = await (supabase as any)
         .from("league_team_entries")
         .select(
-          "id, league_id, car_class, status, leagues:league_id(name), league_team_lineup(id, user_id, status, effective_from)",
+          "id, league_id, car_class, status, leagues:league_id(name), league_team_lineup(id, user_id, status, effective_from, effective_until)",
         )
         .eq("team_id", teamId)
         .neq("status", "withdrawn");
@@ -44,7 +57,7 @@ export function LeagueTeamSignupCard({
         car_class: string;
         status: string;
         leagues: { name: string } | null;
-        league_team_lineup: Array<{ id: string; user_id: string; status: string; effective_from: string | null }>;
+        league_team_lineup: Array<{ id: string; user_id: string; status: string; effective_from: string | null; effective_until: string | null }>;
       }>;
     },
   });
@@ -69,7 +82,7 @@ export function LeagueTeamSignupCard({
         ) : (
           <ul className="space-y-2">
             {(entries ?? []).map((e) => {
-              const accepted = e.league_team_lineup.filter((l) => l.status === "accepted").length;
+              const accepted = e.league_team_lineup.filter((l) => l.status === "accepted" && !l.effective_until).length;
               const invited = e.league_team_lineup.filter((l) => l.status === "invited").length;
               const declined = e.league_team_lineup.filter((l) => l.status === "declined").length;
               return (
@@ -96,7 +109,7 @@ export function LeagueTeamSignupCard({
                         leagueId: e.league_id,
                         carClass: e.car_class,
                         lockedUserIds: e.league_team_lineup
-                          .filter((l) => l.status !== "declined")
+                          .filter((l) => l.status !== "declined" && !l.effective_until)
                           .map((l) => l.user_id),
                       }}
                     />
@@ -122,14 +135,37 @@ export function LeagueTeamSignupCard({
                   <ul className="basis-full space-y-1 border-t border-border pt-2 text-xs text-muted-foreground">
                     {e.league_team_lineup.map((l) => {
                       const name = memberById.get(l.user_id)?.display_name ?? "Ukendt";
-                      const icon = l.status === "accepted" ? "✅" : l.status === "declined" ? "❌" : "⏳";
+                      const removed = !!l.effective_until;
+                      const icon = removed ? "🚫" : l.status === "accepted" ? "✅" : l.status === "declined" ? "❌" : "⏳";
                       return (
-                        <li key={l.id}>
-                          {icon} {name} <span className="opacity-60">— {l.status}</span>
-                          {l.effective_from && (
-                            <span className="opacity-60">
-                              {" "}· tæller fra {new Date(l.effective_from).toLocaleDateString("da-DK")}
-                            </span>
+                        <li key={l.id} className="flex items-center justify-between gap-2">
+                          <span className={removed ? "line-through opacity-70" : ""}>
+                            {icon} {name} <span className="opacity-60">— {removed ? "fjernet" : l.status}</span>
+                            {l.effective_from && !removed && (
+                              <span className="opacity-60">
+                                {" "}· tæller fra {new Date(l.effective_from).toLocaleDateString("da-DK")}
+                              </span>
+                            )}
+                            {removed && (
+                              <span className="opacity-60">
+                                {" "}· tæller ikke med fra {new Date(l.effective_until!).toLocaleDateString("da-DK")}
+                              </span>
+                            )}
+                          </span>
+                          {!removed && l.status !== "declined" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                              title={`Fjern ${name} fra lineupet`}
+                              disabled={removeDriver.isPending}
+                              onClick={() => {
+                                if (!confirm(`Fjern ${name} fra lineupet? Kørerens bidrag i allerede kørte afdelinger bevares.`)) return;
+                                removeDriver.mutate({ entryId: e.id, userId: l.user_id });
+                              }}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
                           )}
                         </li>
                       );
