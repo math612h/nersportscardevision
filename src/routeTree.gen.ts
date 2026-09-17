@@ -38,7 +38,12 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.
 import { Route as LigaerLeagueIdIndexRouteImport } from './routes/ligaer.$leagueId.index'
 import { Route as AuthenticatedProfilIndexRouteImport } from './routes/_authenticated.profil.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as LigaerLeagueIdTeamsRouteImport } from './routes/ligaer.$leagueId.teams'
+import { Route as LigaerLeagueIdStillingerRouteImport } from './routes/ligaer.$leagueId.stillinger'
 import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
+import { Route as LigaerLeagueIdPraemierRouteImport } from './routes/ligaer.$leagueId.praemier'
+import { Route as LigaerLeagueIdKalenderRouteImport } from './routes/ligaer.$leagueId.kalender'
+import { Route as LigaerLeagueIdEntrylisteRouteImport } from './routes/ligaer.$leagueId.entryliste'
 import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/public/leaderboard-upload'
 import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
 import { Route as AuthenticatedCoachingMineBookingerRouteImport } from './routes/_authenticated.coaching.mine-bookinger'
@@ -258,11 +263,38 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LigaerLeagueIdTeamsRoute = LigaerLeagueIdTeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
+  getParentRoute: () => LigaerLeagueIdRoute,
+} as any)
+const LigaerLeagueIdStillingerRoute =
+  LigaerLeagueIdStillingerRouteImport.update({
+    id: '/stillinger',
+    path: '/stillinger',
+    getParentRoute: () => LigaerLeagueIdRoute,
+  } as any)
 const LigaerLeagueIdReglerRoute = LigaerLeagueIdReglerRouteImport.update({
   id: '/regler',
   path: '/regler',
   getParentRoute: () => LigaerLeagueIdRoute,
 } as any)
+const LigaerLeagueIdPraemierRoute = LigaerLeagueIdPraemierRouteImport.update({
+  id: '/praemier',
+  path: '/praemier',
+  getParentRoute: () => LigaerLeagueIdRoute,
+} as any)
+const LigaerLeagueIdKalenderRoute = LigaerLeagueIdKalenderRouteImport.update({
+  id: '/kalender',
+  path: '/kalender',
+  getParentRoute: () => LigaerLeagueIdRoute,
+} as any)
+const LigaerLeagueIdEntrylisteRoute =
+  LigaerLeagueIdEntrylisteRouteImport.update({
+    id: '/entryliste',
+    path: '/entryliste',
+    getParentRoute: () => LigaerLeagueIdRoute,
+  } as any)
 const ApiPublicLeaderboardUploadRoute =
   ApiPublicLeaderboardUploadRouteImport.update({
     id: '/api/public/leaderboard-upload',
@@ -731,7 +763,12 @@ export interface FileRoutesByFullPath {
   '/coaching/mine-bookinger': typeof AuthenticatedCoachingMineBookingerRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
+  '/ligaer/$leagueId/entryliste': typeof LigaerLeagueIdEntrylisteRoute
+  '/ligaer/$leagueId/kalender': typeof LigaerLeagueIdKalenderRoute
+  '/ligaer/$leagueId/praemier': typeof LigaerLeagueIdPraemierRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
+  '/ligaer/$leagueId/stillinger': typeof LigaerLeagueIdStillingerRoute
+  '/ligaer/$leagueId/teams': typeof LigaerLeagueIdTeamsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/profil/': typeof AuthenticatedProfilIndexRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
@@ -833,7 +870,12 @@ export interface FileRoutesByTo {
   '/coaching/mine-bookinger': typeof AuthenticatedCoachingMineBookingerRoute
   '/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
+  '/ligaer/$leagueId/entryliste': typeof LigaerLeagueIdEntrylisteRoute
+  '/ligaer/$leagueId/kalender': typeof LigaerLeagueIdKalenderRoute
+  '/ligaer/$leagueId/praemier': typeof LigaerLeagueIdPraemierRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
+  '/ligaer/$leagueId/stillinger': typeof LigaerLeagueIdStillingerRoute
+  '/ligaer/$leagueId/teams': typeof LigaerLeagueIdTeamsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/profil': typeof AuthenticatedProfilIndexRoute
   '/ligaer/$leagueId': typeof LigaerLeagueIdIndexRoute
@@ -938,7 +980,12 @@ export interface FileRoutesById {
   '/_authenticated/coaching/mine-bookinger': typeof AuthenticatedCoachingMineBookingerRoute
   '/_authenticated/profil/$userId': typeof AuthenticatedProfilUserIdRoute
   '/api/public/leaderboard-upload': typeof ApiPublicLeaderboardUploadRoute
+  '/ligaer/$leagueId/entryliste': typeof LigaerLeagueIdEntrylisteRoute
+  '/ligaer/$leagueId/kalender': typeof LigaerLeagueIdKalenderRoute
+  '/ligaer/$leagueId/praemier': typeof LigaerLeagueIdPraemierRoute
   '/ligaer/$leagueId/regler': typeof LigaerLeagueIdReglerRoute
+  '/ligaer/$leagueId/stillinger': typeof LigaerLeagueIdStillingerRoute
+  '/ligaer/$leagueId/teams': typeof LigaerLeagueIdTeamsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/profil/': typeof AuthenticatedProfilIndexRoute
   '/ligaer/$leagueId/': typeof LigaerLeagueIdIndexRoute
@@ -1043,7 +1090,12 @@ export interface FileRouteTypes {
     | '/coaching/mine-bookinger'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
+    | '/ligaer/$leagueId/entryliste'
+    | '/ligaer/$leagueId/kalender'
+    | '/ligaer/$leagueId/praemier'
     | '/ligaer/$leagueId/regler'
+    | '/ligaer/$leagueId/stillinger'
+    | '/ligaer/$leagueId/teams'
     | '/lovable/email/suppression'
     | '/profil/'
     | '/ligaer/$leagueId/'
@@ -1145,7 +1197,12 @@ export interface FileRouteTypes {
     | '/coaching/mine-bookinger'
     | '/profil/$userId'
     | '/api/public/leaderboard-upload'
+    | '/ligaer/$leagueId/entryliste'
+    | '/ligaer/$leagueId/kalender'
+    | '/ligaer/$leagueId/praemier'
     | '/ligaer/$leagueId/regler'
+    | '/ligaer/$leagueId/stillinger'
+    | '/ligaer/$leagueId/teams'
     | '/lovable/email/suppression'
     | '/profil'
     | '/ligaer/$leagueId'
@@ -1249,7 +1306,12 @@ export interface FileRouteTypes {
     | '/_authenticated/coaching/mine-bookinger'
     | '/_authenticated/profil/$userId'
     | '/api/public/leaderboard-upload'
+    | '/ligaer/$leagueId/entryliste'
+    | '/ligaer/$leagueId/kalender'
+    | '/ligaer/$leagueId/praemier'
     | '/ligaer/$leagueId/regler'
+    | '/ligaer/$leagueId/stillinger'
+    | '/ligaer/$leagueId/teams'
     | '/lovable/email/suppression'
     | '/_authenticated/profil/'
     | '/ligaer/$leagueId/'
@@ -1575,11 +1637,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ligaer/$leagueId/teams': {
+      id: '/ligaer/$leagueId/teams'
+      path: '/teams'
+      fullPath: '/ligaer/$leagueId/teams'
+      preLoaderRoute: typeof LigaerLeagueIdTeamsRouteImport
+      parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/ligaer/$leagueId/stillinger': {
+      id: '/ligaer/$leagueId/stillinger'
+      path: '/stillinger'
+      fullPath: '/ligaer/$leagueId/stillinger'
+      preLoaderRoute: typeof LigaerLeagueIdStillingerRouteImport
+      parentRoute: typeof LigaerLeagueIdRoute
+    }
     '/ligaer/$leagueId/regler': {
       id: '/ligaer/$leagueId/regler'
       path: '/regler'
       fullPath: '/ligaer/$leagueId/regler'
       preLoaderRoute: typeof LigaerLeagueIdReglerRouteImport
+      parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/ligaer/$leagueId/praemier': {
+      id: '/ligaer/$leagueId/praemier'
+      path: '/praemier'
+      fullPath: '/ligaer/$leagueId/praemier'
+      preLoaderRoute: typeof LigaerLeagueIdPraemierRouteImport
+      parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/ligaer/$leagueId/kalender': {
+      id: '/ligaer/$leagueId/kalender'
+      path: '/kalender'
+      fullPath: '/ligaer/$leagueId/kalender'
+      preLoaderRoute: typeof LigaerLeagueIdKalenderRouteImport
+      parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/ligaer/$leagueId/entryliste': {
+      id: '/ligaer/$leagueId/entryliste'
+      path: '/entryliste'
+      fullPath: '/ligaer/$leagueId/entryliste'
+      preLoaderRoute: typeof LigaerLeagueIdEntrylisteRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
     }
     '/api/public/leaderboard-upload': {
@@ -2281,13 +2378,23 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 )
 
 interface LigaerLeagueIdRouteChildren {
+  LigaerLeagueIdEntrylisteRoute: typeof LigaerLeagueIdEntrylisteRoute
+  LigaerLeagueIdKalenderRoute: typeof LigaerLeagueIdKalenderRoute
+  LigaerLeagueIdPraemierRoute: typeof LigaerLeagueIdPraemierRoute
   LigaerLeagueIdReglerRoute: typeof LigaerLeagueIdReglerRoute
+  LigaerLeagueIdStillingerRoute: typeof LigaerLeagueIdStillingerRoute
+  LigaerLeagueIdTeamsRoute: typeof LigaerLeagueIdTeamsRoute
   LigaerLeagueIdIndexRoute: typeof LigaerLeagueIdIndexRoute
   LigaerLeagueIdAfdelingDivisionIdRoute: typeof LigaerLeagueIdAfdelingDivisionIdRoute
 }
 
 const LigaerLeagueIdRouteChildren: LigaerLeagueIdRouteChildren = {
+  LigaerLeagueIdEntrylisteRoute: LigaerLeagueIdEntrylisteRoute,
+  LigaerLeagueIdKalenderRoute: LigaerLeagueIdKalenderRoute,
+  LigaerLeagueIdPraemierRoute: LigaerLeagueIdPraemierRoute,
   LigaerLeagueIdReglerRoute: LigaerLeagueIdReglerRoute,
+  LigaerLeagueIdStillingerRoute: LigaerLeagueIdStillingerRoute,
+  LigaerLeagueIdTeamsRoute: LigaerLeagueIdTeamsRoute,
   LigaerLeagueIdIndexRoute: LigaerLeagueIdIndexRoute,
   LigaerLeagueIdAfdelingDivisionIdRoute: LigaerLeagueIdAfdelingDivisionIdRoute,
 }

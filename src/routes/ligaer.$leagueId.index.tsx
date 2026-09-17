@@ -72,6 +72,8 @@ export const Route = createFileRoute("/ligaer/$leagueId/")({
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
       ],
       links: [{ rel: "canonical", href: url }],
     };
@@ -149,8 +151,10 @@ function RaceCountdown({ raceDate }: { raceDate: string }) {
   );
 }
 
-function LeagueDetail() {
-  const { leagueId } = useParams({ from: "/ligaer/$leagueId/" });
+export type LeaguePublicView = "overview" | "entryliste" | "teams" | "kalender" | "praemier" | "stillinger";
+
+export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView }) {
+  const { leagueId } = useParams({ strict: false }) as { leagueId: string };
   const { user, isAdmin, isSteward } = useAuth();
   const isGuest = !user;
 
@@ -296,6 +300,10 @@ function LeagueDetail() {
 
   const isOff = !!(league as any)?.is_offseason;
 
+  const hasPrizes =
+    ((((league as any)?.event_settings ?? {}) as EventSettings).podium_prizes ?? []).some((p) => p.trim().length > 0) ||
+    ((((league as any)?.event_settings ?? {}) as EventSettings).raffle_prizes ?? []).some((p) => p.trim().length > 0);
+
   return (
     <div className="space-y-8">
       <Link
@@ -305,7 +313,7 @@ function LeagueDetail() {
         <ArrowLeft className="h-3 w-3" /> Alle ligaer
       </Link>
 
-      <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      {view === "overview" ? <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="relative aspect-[21/9] w-full overflow-hidden bg-muted sm:aspect-[24/7]">
           {bannerUrl ? (
             <img src={bannerUrl} alt={league?.name ?? ""} className="h-full w-full object-cover" loading="eager" />
@@ -325,9 +333,10 @@ function LeagueDetail() {
         {(nextDivision?.race_date || typeof leagueSignupCount === "number") && (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-muted/30 px-4 py-2.5 text-xs sm:px-6">
             {nextDivision?.race_date && (
-              <span className="inline-flex items-center gap-1.5 font-medium">
+              <span className="inline-flex flex-wrap items-center gap-1.5 font-medium">
                 <Calendar className="h-3.5 w-3.5 text-primary" />
                 Næste: {format(new Date(nextDivision.race_date), "dd MMM HH:mm")}
+                <RaceCountdown raceDate={nextDivision.race_date} />
               </span>
             )}
             {typeof leagueSignupCount === "number" && (
@@ -390,29 +399,27 @@ function LeagueDetail() {
             </div>
           </div>
         </div>
-      </header>
+      </header> : (
+        <LeagueSubpageHeader leagueId={leagueId} leagueName={league?.name ?? "Liga"} view={view} />
+      )}
 
-      <QuickNav
-        teamsAllowed={!!(league as any)?.teams_allowed}
-        showStandings={!(league as any)?.separate_division_standings}
-        showPrizes={
-          ((((league as any)?.event_settings ?? {}) as EventSettings).podium_prizes ?? []).some((p) => p.trim().length > 0) ||
-          ((((league as any)?.event_settings ?? {}) as EventSettings).raffle_prizes ?? []).some((p) => p.trim().length > 0)
-        }
-      />
+      {view === "overview" && (
+        <>
+          {user && isSignedUp && <MyChampionshipPosition leagueId={leagueId} userId={user.id} />}
+          <LeagueShortcuts leagueId={leagueId} teamsAllowed={!!(league as any)?.teams_allowed} showPrizes={hasPrizes} />
+        </>
+      )}
 
+      {view === "entryliste" && league && <SignupsList leagueId={leagueId} configs={configs} />}
 
-      {league && <SignupsList leagueId={leagueId} configs={configs} />}
+      {view === "teams" && (league as any)?.teams_allowed && !isGuest && <LeagueTeamSignupEntry leagueId={leagueId} />}
+      {view === "teams" && (league as any)?.teams_allowed && <LeagueTeamsList leagueId={leagueId} />}
 
-      {(league as any)?.teams_allowed && !isGuest && <LeagueTeamSignupEntry leagueId={leagueId} />}
-      {(league as any)?.teams_allowed && <LeagueTeamsList leagueId={leagueId} />}
+      {view === "kalender" && <DriverAidsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />}
 
+      {view === "praemier" && <PrizesView settings={((league as any)?.event_settings ?? {}) as EventSettings} />}
 
-      <DriverAidsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
-
-      <PrizesView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
-
-      <section id="kalender" className="space-y-4">
+      {view === "kalender" && <section id="kalender" className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
           <Calendar className="h-4 w-4" />
           <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Afdelinger</h2>
@@ -430,8 +437,9 @@ function LeagueDetail() {
             const isActive = !completed && startedAt > 0 && Date.now() >= startedAt && Date.now() - startedAt < 4 * 60 * 60 * 1000;
             const lobby = lobbies?.[d.id];
             const hasLobby = !!(lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password || lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password);
+            const isNext = nextDivision?.id === d.id;
             const cardInner = (
-              <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : "border-border hover:border-primary"}`}>
+              <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : isNext ? "border-2 border-primary shadow-md" : "border-border hover:border-primary"}`}>
                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
                   {imgUrl ? (
                     <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
@@ -444,6 +452,9 @@ function LeagueDetail() {
                   </div>
                   {completed && (
                     <Badge variant="secondary" className="absolute left-3 top-3 text-[10px]">Afsluttet</Badge>
+                  )}
+                  {isNext && !isActive && (
+                    <Badge className="absolute left-3 top-3 text-[10px]">Næste afdeling</Badge>
                   )}
                   {isActive && (
                     <Badge className="absolute left-3 top-3 gap-1 bg-green-500 text-white text-[10px] hover:bg-green-500">
@@ -553,9 +564,9 @@ function LeagueDetail() {
         );
           })}
         </div>
-      </section>
+      </section>}
 
-      {!(league as any)?.separate_division_standings && (
+      {view === "stillinger" && (
         <>
           <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={false} />
         </>
@@ -946,7 +957,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     pointPenalty: number;
     dnsCount: number;
     dnfCount: number;
-    rounds: Record<string, { points: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null }>;
+    rounds: Record<string, { points: number; position: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null }>;
   };
   // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
   // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
@@ -996,7 +1007,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
           : null;
       if (rowStatus === "dns") cur.dnsCount += 1;
       if (rowStatus === "dnf") cur.dnfCount += 1;
-      cur.rounds[d.id] = { points: r.points, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus };
+      cur.rounds[d.id] = { points: r.points, position: r.class_position, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus };
       map.set(key, cur);
     }
   }
@@ -1077,7 +1088,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                         return (
                           <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
                             <span className="inline-flex items-center gap-1">
-                              {cell.points}
+                               {cell.position || "–"}
                               {st === "ret" && <ResultStatusBadge status="ret" />}
                             </span>
                           </td>
@@ -1683,40 +1694,78 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   );
 }
 
-function QuickNav({ teamsAllowed = false, showStandings = true, showPrizes = true }: { teamsAllowed?: boolean; showStandings?: boolean; showPrizes?: boolean }) {
-  const items = [
-    { id: "entryliste", label: "Entryliste", icon: Users },
-    ...(teamsAllowed ? [{ id: "teams", label: "Teams", icon: Shield }] : []),
-    { id: "driveraids", label: "Driver Aids", icon: SettingsIcon },
-    ...(showPrizes ? [{ id: "praemier", label: "Præmier", icon: Gift }] : []),
-    { id: "kalender", label: "Kalender", icon: Calendar },
-    ...(showStandings ? [{ id: "stillinger", label: "Stillinger", icon: Trophy }] : []),
-  ];
+const VIEW_LABELS: Record<Exclude<LeaguePublicView, "overview">, string> = {
+  entryliste: "Entryliste",
+  teams: "Teams",
+  kalender: "Kalender",
+  praemier: "Præmier",
+  stillinger: "Stillinger",
+};
 
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
+function LeagueSubpageHeader({ leagueId, leagueName, view }: { leagueId: string; leagueName: string; view: Exclude<LeaguePublicView, "overview"> }) {
   return (
-    <nav
-      aria-label="Spring til sektion"
-      className="sticky top-14 z-20 -mx-4 border-y border-border bg-background/85 px-4 py-2 backdrop-blur"
-    >
-      <div className="flex gap-1.5 overflow-x-auto">
+    <header className="sticky top-14 z-20 -mx-4 flex items-center gap-3 border-y border-border bg-background/90 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:rounded-md sm:border sm:bg-card sm:px-5">
+      <Button asChild variant="ghost" size="icon" aria-label="Tilbage til ligaens overblik">
+        <Link to="/ligaer/$leagueId" params={{ leagueId }}><ArrowLeft className="h-4 w-4" /></Link>
+      </Button>
+      <div className="min-w-0">
+        <p className="truncate text-xs text-muted-foreground">{leagueName}</p>
+        <h1 className="text-xl font-bold">{VIEW_LABELS[view]}</h1>
+      </div>
+    </header>
+  );
+}
+
+function LeagueShortcuts({ leagueId, teamsAllowed, showPrizes }: { leagueId: string; teamsAllowed: boolean; showPrizes: boolean }) {
+  const items = [
+    { to: "/ligaer/$leagueId/entryliste" as const, title: "Entryliste", description: "Se kørere, klasser og venteliste.", icon: Users },
+    ...(teamsAllowed ? [{ to: "/ligaer/$leagueId/teams" as const, title: "Teams", description: "Se lineups og teamtilmeldinger.", icon: Shield }] : []),
+    { to: "/ligaer/$leagueId/kalender" as const, title: "Kalender", description: "Se afdelinger, tider og practice sessions.", icon: Calendar },
+    ...(showPrizes ? [{ to: "/ligaer/$leagueId/praemier" as const, title: "Præmier", description: "Se alle præmier og kategorier.", icon: Gift }] : []),
+    { to: "/ligaer/$leagueId/stillinger" as const, title: "Stillinger", description: "Se kører- og teammesterskabet.", icon: Trophy },
+  ];
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Genveje</h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => scrollTo(item.id)}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground transition hover:border-primary hover:bg-primary/10 hover:text-primary"
-          >
-            <item.icon className="h-3.5 w-3.5" />
-            {item.label}
-          </button>
+          <Link key={item.to} to={item.to} params={{ leagueId }} className="group flex min-h-28 items-start gap-4 rounded-md border border-border bg-card p-4 transition hover:border-primary hover:shadow-md">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"><item.icon className="h-5 w-5" /></span>
+            <span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2 font-semibold">{item.title}<ArrowUpRight className="h-4 w-4 text-muted-foreground transition group-hover:text-primary" /></span><span className="mt-1 block text-sm text-muted-foreground">{item.description}</span></span>
+          </Link>
         ))}
       </div>
-    </nav>
+    </section>
   );
+}
+
+function MyChampionshipPosition({ leagueId, userId }: { leagueId: string; userId: string }) {
+  const { data } = useQuery({
+    queryKey: ["my-championship-position", leagueId, userId],
+    queryFn: async () => {
+      const [{ data: entry }, { data: divisions }] = await Promise.all([
+        supabase.from("entries").select("car_class,driver_category").eq("league_id", leagueId).eq("user_id", userId).is("withdrawn_at", null).maybeSingle(),
+        supabase.from("divisions").select("settings").eq("league_id", leagueId),
+      ]);
+      if (!entry) return null;
+      const totals = new Map<string, { userId: string; total: number }>();
+      for (const division of divisions ?? []) {
+        const settings = division.settings as any;
+        if (!settings?.completed || !isResultsPublished(settings) || !Array.isArray(settings.results)) continue;
+        for (const row of settings.results as ResultRow[]) {
+          if (row.car_class !== entry.car_class || row.driver_category !== entry.driver_category || !row.user_id) continue;
+          const current = totals.get(row.user_id) ?? { userId: row.user_id, total: 0 };
+          current.total += Math.max(0, Number(row.points ?? 0) - Math.max(0, Number(row.penalty_points ?? 0)));
+          totals.set(row.user_id, current);
+        }
+      }
+      const ranked = Array.from(totals.values()).sort((a, b) => b.total - a.total);
+      const index = ranked.findIndex((row) => row.userId === userId);
+      return index < 0 ? { position: null, total: 0, label: `${entry.car_class} ${entry.driver_category}` } : { position: index + 1, total: ranked[index].total, label: `${entry.car_class} ${entry.driver_category}` };
+    },
+  });
+  if (!data) return null;
+  return <section className="flex items-center gap-4 rounded-md border border-primary/30 bg-primary/5 p-4"><Trophy className="h-6 w-6 text-primary" /><div><p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Din mesterskabsplacering · {data.label}</p><p className="mt-1 text-xl font-bold">{data.position ? `#${data.position} · ${data.total} point` : "Ingen offentliggjorte resultater endnu"}</p></div></section>;
 }
 
 function DriverAidsView({ settings }: { settings: EventSettings }) {
