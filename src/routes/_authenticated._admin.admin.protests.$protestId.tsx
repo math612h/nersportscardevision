@@ -173,7 +173,30 @@ function AdminProtestDetail() {
           </div>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
-          {p.involved_drivers && <p><span className="text-muted-foreground">Indklaget:</span> {p.involved_drivers}</p>}
+          <div className="grid gap-3 rounded-md border border-border bg-muted/30 p-3 sm:grid-cols-2">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Klager</p>
+              <div className="mt-1">
+                {p.submitted_by ? (
+                  <UserAvatar userId={p.submitted_by} name={submitter?.display_name ?? "Klager"} size="sm" />
+                ) : (
+                  <span className="text-muted-foreground">Ukendt</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Indklaget</p>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {involved.length > 0
+                  ? involved.map((r: any) => (
+                      <UserAvatar key={r.id} userId={r.user_id} name={r.driver_name} size="sm" />
+                    ))
+                  : p.involved_drivers
+                    ? <span>{p.involved_drivers}</span>
+                    : <span className="text-muted-foreground">Ingen</span>}
+              </div>
+            </div>
+          </div>
           <div>
             <p className="font-semibold">Klagers beskrivelse</p>
             <p className="whitespace-pre-wrap">{p.description}</p>

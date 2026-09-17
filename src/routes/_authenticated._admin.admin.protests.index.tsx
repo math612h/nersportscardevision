@@ -37,6 +37,22 @@ function AdminProtests() {
     },
   });
 
+  // Navne på klagere (submitted_by → profiles.display_name)
+  const submitterIds = [...new Set((data ?? []).map((p: any) => p.submitted_by).filter(Boolean))];
+  const { data: submitters } = useQuery({
+    enabled: submitterIds.length > 0,
+    queryKey: ["protest-submitters", submitterIds],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", submitterIds);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const submitterName = new Map((submitters ?? []).map((s: any) => [s.id, s.display_name]));
+
   // Unikke ligaer og afdelinger udledt af de hentede protester
   const leagues = new Map<string, string>();
   const divisions = new Map<string, { name: string; leagueId: string | null }>();
@@ -115,7 +131,18 @@ function AdminProtests() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm">
-                  {p.involved_drivers && <p><span className="text-muted-foreground">Indklaget:</span> {p.involved_drivers}</p>}
+                  <div className="flex flex-wrap gap-x-4 gap-y-1">
+                    <p>
+                      <span className="text-muted-foreground">Klager:</span>{" "}
+                      <span className="font-medium">{submitterName.get(p.submitted_by) ?? "Ukendt"}</span>
+                    </p>
+                    {p.involved_drivers && (
+                      <p>
+                        <span className="text-muted-foreground">Indklaget:</span>{" "}
+                        <span className="font-medium">{p.involved_drivers}</span>
+                      </p>
+                    )}
+                  </div>
                   <p className="line-clamp-2 whitespace-pre-wrap">{p.description}</p>
                 </CardContent>
               </Card>
