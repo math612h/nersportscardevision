@@ -63,7 +63,7 @@ export const Route = createFileRoute("/api/public/broadcast/team-lineups")({
           let entryQuery = (supabaseAdmin as any)
             .from("league_team_entries")
             .select(
-              "id, league_id, team_id, car_class, status, locked_at, created_at, leagues:league_id(id, name, published), teams:team_id(id, name, logo_url), league_team_lineup(id, user_id, status, responded_at, effective_from)",
+              "id, league_id, team_id, car_class, status, locked_at, created_at, leagues:league_id(id, name, published), teams:team_id(id, name, logo_url), league_team_lineup(id, user_id, status, responded_at, effective_from, effective_until)",
             );
           if (resolvedLeague) entryQuery = entryQuery.eq("league_id", resolvedLeague.id);
           if (teamId) entryQuery = entryQuery.eq("team_id", teamId);
@@ -115,8 +115,17 @@ export const Route = createFileRoute("/api/public/broadcast/team-lineups")({
           for (const e of (entriesRows ?? []) as any[]) entryByKey.set(`${e.league_id}:${e.user_id}`, e);
 
           const lineups = rows.map((r) => {
+            const nowTs = Date.now();
             const drivers = ((r.league_team_lineup ?? []) as any[])
               .filter((l) => (includeAll ? true : l.status !== "declined"))
+              // Kørere fjernet fra lineupet (effective_until) vises ikke i feedet,
+              // medmindre man eksplicit beder om alt inkl. historik.
+              .filter((l) => {
+                if (includeAll) return true;
+                if (!l.effective_until) return true;
+                const untilTs = new Date(l.effective_until).getTime();
+                return !Number.isFinite(untilTs) || untilTs > nowTs;
+              })
               .map((l) => {
                 const p = profileById.get(l.user_id);
                 const ent = entryByKey.get(`${r.league_id}:${l.user_id}`);
