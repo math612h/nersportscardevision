@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anyone can view stream photos" ON storage.objects;
