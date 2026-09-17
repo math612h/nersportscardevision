@@ -32,3 +32,6 @@ I dag vises ikke-matchede navne kun i en engangsdialog under upload, og bagefter
 - `src/routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger.tsx`: `entries`-query henter også udmeldte; `buildInitial` medtager en udmeldt entry kun hvis `division.settings.results` (eller `quali_results`) allerede indeholder hans `user_id`; rækken markeres med badge "Udmeldt".
 - Samme fil: parsede navne uden match gemmes i state (`unresolvedNames`) i stedet for kun i `pendingMatch`, vises i et banner, og `pendingMatch` kan genåbnes via knap. Drivere der matcher en profil men ikke har en række i griddet (i dag `continue` uden besked) tilføjes til samme liste.
 - Kenneth genskabes med en `INSERT` i `entries` (league `68f86ec5…`, user `a400010e…`, LMGT3/Pro, car_number 134, `withdrawn_at` sat).
+
+### 4. Team-point bevares
+Kenneths plads i sit team-lineup findes stadig, og team-point regnes ud fra lineup-medlemmernes placeringer i hvert løb — ikke fra tilmeldingslisten. Hans bidrag til teamets resultater i Afdeling 1 og 2 står derfor uændret, når hans resultatrækker igen er synlige. Ved fremtidig udmeldelse sættes `effective_until` på lineup-rækken (tilsvarende det eksisterende `effective_from`), så køreren tæller med til og med sit sidste løb og udelades i afdelinger derefter — tidligere afdelingers medianer og point ændres ikke.
