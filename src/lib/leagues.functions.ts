@@ -250,9 +250,21 @@ export const leaveLeague = createServerFn({ method: "POST" })
       .maybeSingle();
     const leagueName = league?.name ?? "ligaen";
 
-    // Delete the entry
-    const { error: delErr } = await supabaseAdmin.from("entries").delete().eq("id", myEntry.id);
+    // Soft-withdraw: behold rækken, så tidligere resultater og team-point bevares
+    const { error: delErr } = await supabaseAdmin
+      .from("entries")
+      .update({ withdrawn_at: new Date().toISOString(), waitlist: false } as any)
+      .eq("id", myEntry.id);
     if (delErr) throw new Error(delErr.message);
+
+    // Lineup-medlemskabet lukkes fra i dag, så tidligere afdelinger er uændrede
+    await supabaseAdmin
+      .from("league_team_lineup")
+      .update({ effective_until: new Date().toISOString() } as any)
+      .eq("league_id", data.leagueId)
+      .eq("user_id", userId)
+      .is("effective_until", null);
+
 
     let promotedDriver: string | null = null;
 
