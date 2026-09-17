@@ -108,7 +108,6 @@ export const Route = createFileRoute("/api/public/broadcast/team-lineups")({
             ? await supabaseAdmin
                 .from("entries")
                 .select("user_id, league_id, car_number, car_class, driver_category, driver_name, waitlist")
-                .is("withdrawn_at", null)
                 .in("league_id", leagueIds)
                 .in("user_id", userIds)
             : { data: [] as any[] };
