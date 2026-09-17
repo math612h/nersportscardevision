@@ -72,6 +72,8 @@ export const Route = createFileRoute("/ligaer/$leagueId/")({
         { property: "og:title", content: title },
         { property: "og:description", content: desc },
         { property: "og:url", content: url },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary" },
       ],
       links: [{ rel: "canonical", href: url }],
     };
@@ -331,9 +333,10 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
         {(nextDivision?.race_date || typeof leagueSignupCount === "number") && (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border bg-muted/30 px-4 py-2.5 text-xs sm:px-6">
             {nextDivision?.race_date && (
-              <span className="inline-flex items-center gap-1.5 font-medium">
+              <span className="inline-flex flex-wrap items-center gap-1.5 font-medium">
                 <Calendar className="h-3.5 w-3.5 text-primary" />
                 Næste: {format(new Date(nextDivision.race_date), "dd MMM HH:mm")}
+                <RaceCountdown raceDate={nextDivision.race_date} />
               </span>
             )}
             {typeof leagueSignupCount === "number" && (
