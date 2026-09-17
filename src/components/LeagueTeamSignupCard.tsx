@@ -82,7 +82,7 @@ export function LeagueTeamSignupCard({
         ) : (
           <ul className="space-y-2">
             {(entries ?? []).map((e) => {
-              const accepted = e.league_team_lineup.filter((l) => l.status === "accepted").length;
+              const accepted = e.league_team_lineup.filter((l) => l.status === "accepted" && !l.effective_until).length;
               const invited = e.league_team_lineup.filter((l) => l.status === "invited").length;
               const declined = e.league_team_lineup.filter((l) => l.status === "declined").length;
               return (
