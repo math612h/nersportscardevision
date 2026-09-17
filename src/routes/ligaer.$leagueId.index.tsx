@@ -382,6 +382,7 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
 
       {view === "overview" && (
         <>
+          {nextDivision && <NextRaceCountdownCard leagueId={leagueId} division={nextDivision} />}
           {user && isSignedUp && <MyChampionshipPosition leagueId={leagueId} userId={user.id} />}
           <LeagueShortcuts leagueId={leagueId} teamsAllowed={!!(league as any)?.teams_allowed} showPrizes={hasPrizes} />
         </>
