@@ -976,6 +976,7 @@ export type Database = {
           team_id: string | null
           user_id: string
           waitlist: boolean
+          withdrawn_at: string | null
         }
         Insert: {
           car_class: string
@@ -990,6 +991,7 @@ export type Database = {
           team_id?: string | null
           user_id: string
           waitlist?: boolean
+          withdrawn_at?: string | null
         }
         Update: {
           car_class?: string
@@ -1004,6 +1006,7 @@ export type Database = {
           team_id?: string | null
           user_id?: string
           waitlist?: boolean
+          withdrawn_at?: string | null
         }
         Relationships: [
           {
@@ -1344,6 +1347,7 @@ export type Database = {
           discord_channel_id: string | null
           discord_message_id: string | null
           effective_from: string | null
+          effective_until: string | null
           id: string
           league_id: string
           league_team_entry_id: string
@@ -1357,6 +1361,7 @@ export type Database = {
           discord_channel_id?: string | null
           discord_message_id?: string | null
           effective_from?: string | null
+          effective_until?: string | null
           id?: string
           league_id: string
           league_team_entry_id: string
@@ -1370,6 +1375,7 @@ export type Database = {
           discord_channel_id?: string | null
           discord_message_id?: string | null
           effective_from?: string | null
+          effective_until?: string | null
           id?: string
           league_id?: string
           league_team_entry_id?: string
