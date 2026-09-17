@@ -712,7 +712,8 @@ function DivisionEditor({
       const hasRaceData = raceResults.some((r) => r.class_position > 0);
       const effectiveCompleted = hasRaceData || (completed && hasRaceData);
 
-      const prevSettings = (division.settings ?? {}) as any;
+      // Brug seneste kendte settings (inkl. gemte imports/unmatched) som base
+      const prevSettings = (settingsRef.current ?? division.settings ?? {}) as any;
       const newSettings = {
         ...prevSettings,
         completed: effectiveCompleted,
@@ -729,6 +730,7 @@ function DivisionEditor({
       };
       const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
       if (error) throw error;
+      settingsRef.current = newSettings;
       if (effectiveCompleted && !completed) setCompleted(true);
       setConfirmed(false);
       setPublished(isResultsPublished(prevSettings));
@@ -979,7 +981,7 @@ function DivisionEditor({
                   if (session === "race") setCompleted(false);
                   // Also clear from settings
                   const key = session === "race" ? "results" : "quali_results";
-                  const newSettings = { ...(division.settings ?? {}), [key]: [] };
+                  const newSettings: any = { ...((settingsRef.current ?? division.settings ?? {}) as any), [key]: [] };
                   if (session === "race") {
                     newSettings.completed = false;
                     newSettings.completed_at = null;
@@ -991,6 +993,7 @@ function DivisionEditor({
                     setPublished(false);
                   }
                   await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
+                  settingsRef.current = newSettings;
                   toast.success(`${label} nulstillet (${res.deleted} rækker fjernet)`);
                   onSaved();
                 } catch (e: any) {
