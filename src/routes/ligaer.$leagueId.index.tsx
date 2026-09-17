@@ -149,8 +149,10 @@ function RaceCountdown({ raceDate }: { raceDate: string }) {
   );
 }
 
-function LeagueDetail() {
-  const { leagueId } = useParams({ from: "/ligaer/$leagueId/" });
+export type LeaguePublicView = "overview" | "entryliste" | "teams" | "kalender" | "praemier" | "stillinger";
+
+export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView }) {
+  const { leagueId } = useParams({ strict: false }) as { leagueId: string };
   const { user, isAdmin, isSteward } = useAuth();
   const isGuest = !user;
 
@@ -296,6 +298,10 @@ function LeagueDetail() {
 
   const isOff = !!(league as any)?.is_offseason;
 
+  const hasPrizes =
+    ((((league as any)?.event_settings ?? {}) as EventSettings).podium_prizes ?? []).some((p) => p.trim().length > 0) ||
+    ((((league as any)?.event_settings ?? {}) as EventSettings).raffle_prizes ?? []).some((p) => p.trim().length > 0);
+
   return (
     <div className="space-y-8">
       <Link
@@ -305,7 +311,7 @@ function LeagueDetail() {
         <ArrowLeft className="h-3 w-3" /> Alle ligaer
       </Link>
 
-      <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      {view === "overview" ? <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="relative aspect-[21/9] w-full overflow-hidden bg-muted sm:aspect-[24/7]">
           {bannerUrl ? (
             <img src={bannerUrl} alt={league?.name ?? ""} className="h-full w-full object-cover" loading="eager" />
@@ -390,29 +396,27 @@ function LeagueDetail() {
             </div>
           </div>
         </div>
-      </header>
+      </header> : (
+        <LeagueSubpageHeader leagueId={leagueId} leagueName={league?.name ?? "Liga"} view={view} />
+      )}
 
-      <QuickNav
-        teamsAllowed={!!(league as any)?.teams_allowed}
-        showStandings={!(league as any)?.separate_division_standings}
-        showPrizes={
-          ((((league as any)?.event_settings ?? {}) as EventSettings).podium_prizes ?? []).some((p) => p.trim().length > 0) ||
-          ((((league as any)?.event_settings ?? {}) as EventSettings).raffle_prizes ?? []).some((p) => p.trim().length > 0)
-        }
-      />
+      {view === "overview" && (
+        <>
+          {user && isSignedUp && <MyChampionshipPosition leagueId={leagueId} userId={user.id} />}
+          <LeagueShortcuts leagueId={leagueId} teamsAllowed={!!(league as any)?.teams_allowed} showPrizes={hasPrizes} />
+        </>
+      )}
 
+      {view === "entryliste" && league && <SignupsList leagueId={leagueId} configs={configs} />}
 
-      {league && <SignupsList leagueId={leagueId} configs={configs} />}
+      {view === "teams" && (league as any)?.teams_allowed && !isGuest && <LeagueTeamSignupEntry leagueId={leagueId} />}
+      {view === "teams" && (league as any)?.teams_allowed && <LeagueTeamsList leagueId={leagueId} />}
 
-      {(league as any)?.teams_allowed && !isGuest && <LeagueTeamSignupEntry leagueId={leagueId} />}
-      {(league as any)?.teams_allowed && <LeagueTeamsList leagueId={leagueId} />}
+      {view === "kalender" && <DriverAidsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />}
 
+      {view === "praemier" && <PrizesView settings={((league as any)?.event_settings ?? {}) as EventSettings} />}
 
-      <DriverAidsView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
-
-      <PrizesView settings={((league as any)?.event_settings ?? {}) as EventSettings} />
-
-      <section id="kalender" className="space-y-4">
+      {view === "kalender" && <section id="kalender" className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
           <Calendar className="h-4 w-4" />
           <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Afdelinger</h2>
@@ -430,8 +434,9 @@ function LeagueDetail() {
             const isActive = !completed && startedAt > 0 && Date.now() >= startedAt && Date.now() - startedAt < 4 * 60 * 60 * 1000;
             const lobby = lobbies?.[d.id];
             const hasLobby = !!(lobby?.server_name || lobby?.lobby_code || lobby?.lobby_password || lobby?.am_server_name || lobby?.am_lobby_code || lobby?.am_lobby_password);
+            const isNext = nextDivision?.id === d.id;
             const cardInner = (
-              <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : "border-border hover:border-primary"}`}>
+              <Card className={`flex h-full flex-col overflow-hidden transition hover:shadow-[0_8px_30px_-12px_hsl(var(--primary)/0.35)] ${isActive ? "border-2 border-green-500 shadow-[0_0_0_1px_rgb(34_197_94_/_0.6),0_0_24px_-4px_rgb(34_197_94_/_0.5)] hover:border-green-400" : isNext ? "border-2 border-primary shadow-md" : "border-border hover:border-primary"}`}>
                 <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
                   {imgUrl ? (
                     <img src={imgUrl} alt={d.track ?? d.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" />
@@ -444,6 +449,9 @@ function LeagueDetail() {
                   </div>
                   {completed && (
                     <Badge variant="secondary" className="absolute left-3 top-3 text-[10px]">Afsluttet</Badge>
+                  )}
+                  {isNext && !isActive && (
+                    <Badge className="absolute left-3 top-3 text-[10px]">Næste afdeling</Badge>
                   )}
                   {isActive && (
                     <Badge className="absolute left-3 top-3 gap-1 bg-green-500 text-white text-[10px] hover:bg-green-500">
@@ -553,9 +561,9 @@ function LeagueDetail() {
         );
           })}
         </div>
-      </section>
+      </section>}
 
-      {!(league as any)?.separate_division_standings && (
+      {view === "stillinger" && (
         <>
           <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={false} />
         </>
