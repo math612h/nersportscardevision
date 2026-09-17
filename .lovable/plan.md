@@ -19,7 +19,8 @@ Hvis brugeren ikke er tilmeldt, vises ingen personlig placering. Hvis der endnu 
 - **Teams:** den nuværende teamoversigt og teamtilmelding. Genvejen vises kun for ligaer, hvor teams er aktiveret.
 - **Kalender:** alle afdelingskort, nedtællinger og serveroplysninger. Practice sessions forbliver under den relevante afdeling og samles ikke separat. Næste afdeling fremhæves tydeligt. Den nuværende Driver Aids-visning flyttes hertil.
 - **Præmier:** alle nuværende præmier og kategorier bevares. Genvejen vises kun, når ligaen har præmier.
-- **Stillinger:** både den samlede kører- og teamstilling bevares, opdelt efter klasse/kategori. Individuelle mesterskabsstillinger pr. afdeling fjernes; afdelingssiderne beholder deres enkelte løbsresultater og øvrige eksisterende funktioner.
+- **Stillinger:** både den samlede kører- og teamstilling bevares, opdelt efter klasse/kategori. Det samlede kørerskema viser fortsat hver kørers placering i hver afdeling samt samlede point og aktuelle mesterskabsplacering; afdelingskolonnerne viser kun placeringen, ikke afdelingens point.
+- **Afdelingssider:** den synlige visning af individuelle afdelingsresultater under afdelingskortene fjernes. De bagvedliggende resultater, pointberegningen og afdelingsplaceringerne til den samlede mesterskabsstilling ændres ikke.
 
 Alle undersider får en ensartet ligatitel og tydelig tilbage-navigation til ligaens overblik. Navigationen skal være let tilgængelig på både mobil og desktop.
 
@@ -30,6 +31,7 @@ Genvejene bliver rigtige links med egne adresser under ligaen, så hver visning 
 - Opret fem nye ligaundersider og flyt/genbrug de eksisterende visninger uden at ændre databasen, administratorfunktionerne eller den eksisterende datalogik.
 - Saml fælles ligaindlæsning, titel og navigation, så siderne viser samme data og adgangsregler.
 - Beregn den personlige placering fra de samme offentliggjorte, afsluttede resultater som den samlede stilling, matchet på bruger, klasse og kategori.
+- Ændr kun præsentationen af stillinger og afdelingsresultater; datagrundlag, gemte resultater og beregningsfunktioner forbliver urørte.
 - Bevar alle eksisterende funktioner og data, herunder udmeldte kørere, statusmærker, pointstraffe, team-lineups, serveradgang, tilmeldingsregler, practice sessions, præmiekategorier og administratorfunktioner.
 - Giv hver ny side sin egen titel og beskrivelse til deling og søgning.
 - Bevar ligaens nuværende visuelle identitet, farver og stil; ændringen begrænses til informationsarkitektur og overskuelighed.
