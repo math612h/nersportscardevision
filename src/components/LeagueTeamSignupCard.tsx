@@ -34,7 +34,7 @@ export function LeagueTeamSignupCard({
       const { data, error } = await (supabase as any)
         .from("league_team_entries")
         .select(
-          "id, league_id, car_class, status, leagues:league_id(name), league_team_lineup(id, user_id, status, effective_from)",
+          "id, league_id, car_class, status, leagues:league_id(name), league_team_lineup(id, user_id, status, effective_from, effective_until)",
         )
         .eq("team_id", teamId)
         .neq("status", "withdrawn");
