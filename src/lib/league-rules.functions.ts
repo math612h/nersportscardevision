@@ -33,6 +33,7 @@ export const acknowledgeLeagueRules = createServerFn({ method: "POST" })
     const { data: myEntry } = await supabaseAdmin
       .from("entries")
       .select("id,car_class,driver_category,waitlist")
+      .is("withdrawn_at", null)
       .eq("league_id", data.leagueId)
       .is("division_id", null)
       .eq("user_id", userId)
@@ -51,6 +52,7 @@ export const acknowledgeLeagueRules = createServerFn({ method: "POST" })
     let siblingQuery = supabaseAdmin
       .from("entries")
       .select("id,waitlist")
+      .is("withdrawn_at", null)
       .eq("league_id", data.leagueId)
       .is("division_id", null)
       .eq("car_class", myEntry.car_class);

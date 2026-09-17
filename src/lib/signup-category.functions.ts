@@ -68,6 +68,7 @@ export const suggestSignupCategory = createServerFn({ method: "POST" })
     const { data: entries } = await supabaseAdmin
       .from("entries")
       .select("user_id, driver_category")
+      .is("withdrawn_at", null)
       .eq("league_id", data.leagueId)
       .eq("car_class", data.carClass);
     const rows = ((entries ?? []) as Array<{ user_id: string; driver_category: string }>).filter(
