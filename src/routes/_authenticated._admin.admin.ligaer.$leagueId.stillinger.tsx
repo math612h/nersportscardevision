@@ -55,6 +55,7 @@ type DraftRow = {
   q_dns: boolean;
   q_nt: boolean;             // kørte omgange, men ingen godkendt tid
   q_laps: number | null;
+  withdrawn: boolean;
 };
 
 type EntryRec = {
@@ -261,6 +262,7 @@ function DivisionEditor({
       q_dns: !!quali?.dns,
       q_nt: !!quali?.nt,
       q_laps: typeof quali?.laps === "number" ? quali.laps : null,
+      withdrawn: !!e.withdrawn_at,
     };
   });
 
@@ -314,6 +316,7 @@ function DivisionEditor({
           driver_name: e.driver_name,
           car_class: e.car_class,
           driver_category: e.driver_category,
+          withdrawn: !!e.withdrawn_at,
         };
       });
     });
@@ -997,6 +1000,11 @@ function DivisionEditor({
                             <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
                             <td className="px-2 py-1.5 truncate">
                               {r.driver_name}
+                              {r.withdrawn ? (
+                                <span className="ml-2 rounded border border-amber-500/50 px-1 py-0.5 text-[10px] uppercase text-amber-500 align-middle">
+                                  Udmeldt
+                                </span>
+                              ) : null}
                               {r.source_server ? (
                                 <span className="ml-2 rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground align-middle">
                                   {r.source_server}
@@ -1099,7 +1107,14 @@ function DivisionEditor({
                           <tr key={r.entry_id} className="border-t border-border">
                             <td className="px-2 py-1.5 font-semibold tabular-nums">{r.position > 0 ? r.position : "–"}</td>
                             <td className="px-2 py-1.5 font-mono text-xs">{r.car_number}</td>
-                            <td className="px-2 py-1.5 truncate">{r.driver_name}</td>
+                            <td className="px-2 py-1.5 truncate">
+                              {r.driver_name}
+                              {r.withdrawn ? (
+                                <span className="ml-2 rounded border border-amber-500/50 px-1 py-0.5 text-[10px] uppercase text-amber-500 align-middle">
+                                  Udmeldt
+                                </span>
+                              ) : null}
+                            </td>
                             <td className="px-2 py-1.5">
                               <Input
                                 className="h-8 min-w-[120px]"
