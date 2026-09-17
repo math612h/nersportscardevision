@@ -362,6 +362,37 @@ function DivisionEditor({
     names: string[];
   } | null>(null);
 
+  // Seneste kendte settings for afdelingen — bruges til at gemme imports
+  // uden at overskrive andre settings-felter.
+  const settingsRef = useRef<any>(division.settings ?? {});
+  useEffect(() => {
+    settingsRef.current = (division.settings ?? {}) as any;
+  }, [division.id, division.settings]);
+
+  // Gem den importerede fils parsede data + umatchede navne på afdelingen,
+  // så matchning kan genåbnes uden at uploade filen igen.
+  const persistImport = async (
+    parsedRace: ReturnType<typeof parseLmuRaceFile>,
+    kind: SessionKind,
+    server: ServerKind,
+    fileName: string,
+    unmatchedNames: string[],
+  ) => {
+    try {
+      const prevSettings = (settingsRef.current ?? {}) as any;
+      const key = `${server}_${kind}`;
+      const imports = {
+        ...(prevSettings.imports ?? {}),
+        [key]: { fileName, kind, server, uploadedAt: new Date().toISOString(), parsed: parsedRace, unmatched: unmatchedNames },
+      };
+      const newSettings = { ...prevSettings, imports };
+      settingsRef.current = newSettings;
+      await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
+    } catch {
+      // Persistens er nice-to-have; importen er allerede anvendt i editoren.
+    }
+  };
+
   const setRow = (i: number, patch: Partial<DraftRow>) =>
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
 
