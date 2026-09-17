@@ -139,11 +139,11 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
     // Eksisterende lineup-rækker
     const { data: currentRows } = await (supabaseAdmin as any)
       .from("league_team_lineup")
-      .select("user_id, status")
+      .select("user_id, status, effective_until")
       .eq("league_team_entry_id", entryId);
     const currentIds = new Set(
       ((currentRows ?? []) as any[])
-        .filter((r) => r.status !== "declined")
+        .filter((r) => r.status !== "declined" && !r.effective_until)
         .map((r) => r.user_id as string),
     );
 
@@ -178,6 +178,8 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       user_id: uid,
       status: "accepted" as const,
       responded_at: nowIso,
+      // Genaktiverer en evt. tidligere fjernet kører (effective_until nulstilles)
+      effective_until: null,
       ...(isAdd ? { effective_from: nowIso } : { effective_from: null }),
     }));
     const { error: upErr } = await (supabaseAdmin as any)
