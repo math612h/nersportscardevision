@@ -517,7 +517,7 @@ function DivisionDetail() {
       )}
 
       <div className="flex flex-wrap gap-2">
-        {(results?.length ?? 0) > 0 && (
+        {false && (results?.length ?? 0) > 0 && (
           <Button
             variant="secondary"
             className="gap-1"
@@ -635,7 +635,7 @@ function DivisionDetail() {
         </Collapsible>
       </section>
 
-      {(results?.length ?? 0) > 0 && (resultsPublished || isAdmin || isSteward) && (() => {
+      {false && (results?.length ?? 0) > 0 && (resultsPublished || isAdmin || isSteward) && (() => {
         const allSessions: { type: "race" | "qualifying"; label: string; short: string }[] = [
           { type: "race", label: "Race resultater", short: "Race results" },
           { type: "qualifying", label: "Kvalifikation", short: "Quali results" },

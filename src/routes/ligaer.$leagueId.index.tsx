@@ -1747,8 +1747,9 @@ function MyChampionshipPosition({ leagueId, userId }: { leagueId: string; userId
       if (!entry) return null;
       const totals = new Map<string, { userId: string; total: number }>();
       for (const division of divisions ?? []) {
-        if (!division.settings?.completed || !isResultsPublished(division.settings) || !Array.isArray((division.settings as any).results)) continue;
-        for (const row of (division.settings as any).results as ResultRow[]) {
+        const settings = division.settings as any;
+        if (!settings?.completed || !isResultsPublished(settings) || !Array.isArray(settings.results)) continue;
+        for (const row of settings.results as ResultRow[]) {
           if (row.car_class !== entry.car_class || row.driver_category !== entry.driver_category || !row.user_id) continue;
           const current = totals.get(row.user_id) ?? { userId: row.user_id, total: 0 };
           current.total += Math.max(0, Number(row.points ?? 0) - Math.max(0, Number(row.penalty_points ?? 0)));
