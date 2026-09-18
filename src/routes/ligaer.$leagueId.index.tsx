@@ -14,6 +14,7 @@ import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { leaveLeague, updateMyLeagueEntry } from "@/lib/leagues.functions";
+import { ensureMyJoinerPoints } from "@/lib/league-results.functions";
 import { assignDiscordRoleForEntry, removeDiscordRoleForEntry } from "@/lib/discord.functions";
 import { suggestSignupCategory } from "@/lib/signup-category.functions";
 
@@ -1357,6 +1358,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const checkGuild = useServerFn(checkDiscordGuildMembership);
   const ackFn = useServerFn(acknowledgeLeagueRules);
   const suggestCategoryFn = useServerFn(suggestSignupCategory);
+  const ensureJoinerFn = useServerFn(ensureMyJoinerPoints);
   const [open, setOpen] = useState(false);
   const [carClassSel, setCarClassSel] = useState<string>(configs[0]?.car_class ?? "");
   const [carNumber, setCarNumber] = useState<number | null>(null);
