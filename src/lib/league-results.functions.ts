@@ -896,13 +896,8 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
     if (data.outcome === "time_penalty") details.seconds = data.seconds;
     if (data.outcome === "point_penalty") details.points = data.points;
 
-    const { error: divisionError } = await supabaseAdmin
-      .from("divisions")
-      .update({ settings: { ...settings, results: recalculated as any, results_confirmed: false, results_confirmed_at: null } })
-      .eq("id", division.id);
-    if (divisionError) throw new Error(divisionError.message);
-    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, division.id, recalculated, division.league_id);
-
+    // Gem afgørelsen FØR resultaterne skrives. Fejler noget bagefter, er straffen
+    // registreret, så et nyt forsøg genberegner samme tal i stedet for at lægge oveni.
     const { error: rulingError } = await supabaseAdmin
       .from("protests")
       .update({
@@ -915,6 +910,14 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
       })
       .eq("id", data.protestId);
     if (rulingError) throw new Error(rulingError.message);
+
+    const { error: divisionError } = await supabaseAdmin
+      .from("divisions")
+      .update({ settings: { ...settings, results: recalculated as any, results_confirmed: false, results_confirmed_at: null } })
+      .eq("id", division.id);
+    if (divisionError) throw new Error(divisionError.message);
+    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, division.id, recalculated, division.league_id);
+
     return { ok: true };
   });
 
