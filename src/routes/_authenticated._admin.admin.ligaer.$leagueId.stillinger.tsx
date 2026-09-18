@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Save, Check, Upload, Trash2, Eye, EyeOff, Calculator } from "lucide-react";
+import { ArrowLeft, Save, Check, Upload, Trash2, Eye, EyeOff, Calculator, Send } from "lucide-react";
 import { toast } from "sonner";
 import { ResultStatusBadge } from "@/components/ResultStatusBadge";
 import { raceStatusFor, qualiStatusFor, type ResultStatus } from "@/lib/result-status";
@@ -21,12 +21,37 @@ import { deleteLeagueRaceResults, setResultsConfirmed, setResultsPublished, reca
 import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { seatCap, isSplitClass } from "@/lib/class-capacity";
+import { postLeagueStandingsToDiscord } from "@/lib/discord-standings.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/stillinger")({
   component: AdminStandings,
 });
 
 const DEFAULT_POINTS_TABLE = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
+
+function PostStandingsButton({ leagueId }: { leagueId: string }) {
+  const post = useServerFn(postLeagueStandingsToDiscord);
+  const [sending, setSending] = useState(false);
+  const handle = async () => {
+    if (sending) return;
+    if (!confirm("Sende den aktuelle stilling til liga-kanalen på Discord?")) return;
+    setSending(true);
+    try {
+      const res = await post({ data: { leagueId } });
+      toast.success(`Stillinger sendt til Discord (${res.sections} tabeller).`);
+    } catch (e) {
+      toast.error((e as Error).message || "Kunne ikke sende til Discord.");
+    } finally {
+      setSending(false);
+    }
+  };
+  return (
+    <Button variant="outline" size="sm" onClick={handle} disabled={sending}>
+      <Send className="h-3 w-3 mr-1" />
+      {sending ? "Sender..." : "Opdater stillinger på Discord"}
+    </Button>
+  );
+}
 
 type SessionKind = "race" | "qualifying";
 
@@ -154,9 +179,12 @@ function AdminStandings() {
         <ArrowLeft className="h-3 w-3" /> Ligaer
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold">Stillinger</h1>
-        {league && <p className="mt-1 text-sm text-muted-foreground">{league.name}</p>}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">Stillinger</h1>
+          {league && <p className="mt-1 text-sm text-muted-foreground">{league.name}</p>}
+        </div>
+        <PostStandingsButton leagueId={leagueId} />
       </div>
 
       {(!divisions || divisions.length === 0) && (

@@ -597,6 +597,7 @@ export function LeagueFormWizard({
   const [teamsAllowed, setTeamsAllowed] = useState<boolean>(!!initial.teams_allowed);
   const [discordRoleId, setDiscordRoleId] = useState<string>(initial.discord_role_id ?? "");
   const [incidentChannelId, setIncidentChannelId] = useState<string>((initial as any).incident_channel_id ?? "");
+  const [standingsChannelId, setStandingsChannelId] = useState<string>((initial as any).standings_channel_id ?? "");
 
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
 
@@ -696,6 +697,7 @@ export function LeagueFormWizard({
       signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
       discord_role_id: discordRoleId.trim() || null,
       incident_channel_id: incidentChannelId.trim() || null,
+      standings_channel_id: standingsChannelId.trim() || null,
       car_lock_never: carLockNever,
       car_lock_at: carLockNever ? null : carLockAt ? new Date(carLockAt).toISOString() : null,
       published: publish,
@@ -936,6 +938,19 @@ export function LeagueFormWizard({
                 <p className="text-xs text-muted-foreground">
                   Afgørelser på protester i denne liga sendes til denne Discord-kanal.
                   Hvis feltet er tomt, bruges den fælles protest-kanal.
+                </p>
+              </div>
+              <div className="space-y-1 rounded-md border border-border p-2">
+                <Label>Discord kanal-ID til stillinger</Label>
+                <Input
+                  value={standingsChannelId}
+                  onChange={(e) => setStandingsChannelId(e.target.value)}
+                  placeholder="fx 1234567890123456789"
+                  inputMode="numeric"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Knappen "Opdater stillinger på Discord" i kontrolpanelet sender kører- og
+                  holdstillinger til denne kanal.
                 </p>
               </div>
             </div>
