@@ -40,6 +40,10 @@ Funktionen er idempotent: den opretter kun rækker, der mangler, og ændrer aldr
 
 Efter implementering køres funktionen én gang for igangværende ligaer (bl.a. ICE Cup), så eksisterende sene tilmeldinger og klasseskift — herunder Kenneths skift til LMP2 — får deres tiltrædelsespoint for allerede kørte afdelinger.
 
+### 5. Indstilling pr. liga
+
+I liga-oprettelsen og -redigeringen (liga-guiden) tilføjes feltet **"Tiltrædelsespoint pr. afdeling"** med 8 som standard. Tallet gemmes i ligaens pointsystem og bruges af beregningen, så det kan justeres pr. liga uden kodeændring. Ændres tallet senere, opdateres eksisterende tiltrædelsesrækker ved næste genberegning.
+
 ## Tekniske detaljer
 
 - Ny delt helper `ensureJoinerPoints(supabaseAdmin, leagueId)` i `src/lib/league-results.functions.ts` (eller nyt modul): henter godkendte, ikke-udmeldte entries (med `created_at`) og afdelinger med resultater; indsætter manglende joiner-rækker i `divisions.settings.results` pr. (bruger, klasse) hvor `entry.created_at` er efter afdelingens løbsdato, og synkroniserer dem til `league_results` (status `"joiner"`, position NULL, points 8).
@@ -48,7 +52,7 @@ Efter implementering køres funktionen én gang for igangværende ligaer (bl.a. 
 - Kaldsites: tilmeldingsflowet på ligasiden (efter succesfuld tilmelding, fire-and-forget), `adminAddEntryToLeague`, `uploadLeagueRaceResult`/`publishLeagueRaceResult`, `recalcLeaguePoints`.
 - `league_results.status`-check-constraint udvides med værdien `"joiner"` (migration, hvis nødvendigt).
 - Visning: `ligaer.$leagueId.index.tsx` (stillingsceller) og `ligaer.$leagueId.afdeling.$divisionId.tsx` (afdelingens resultatliste) håndterer joiner-rækker; admin-uploadsiden (`admin.ligaer.$leagueId.stillinger.tsx`) bevarer dem ved import/gem.
-- Antal point (8) læses fra ligaens pointsystem (`points_system.joiner_points`) med 8 som standard — så tallet kan justeres pr. liga senere uden kodeændring.
+- Antal point læses fra ligaens pointsystem (`points_system.joiner_points`) med 8 som standard; nyt tal felt i `LeagueFormWizard.tsx` (opret + rediger) skriver værdien.
 
 ## Verifikation
 
