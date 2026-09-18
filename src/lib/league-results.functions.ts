@@ -516,6 +516,9 @@ export const publishLeagueRaceResult = createServerFn({ method: "POST" })
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
 
+    // Tildel tiltrædelsespoint for sene tilmeldinger i denne afdeling m.fl.
+    await ensureJoinerPoints(supabaseAdmin, data.leagueId);
+
     return { ok: true };
   });
 
