@@ -172,6 +172,22 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
     // Team owner submits the lineup on behalf of members they already have an agreement with,
     // so every selected driver is auto-accepted — no separate invitation flow.
     const nowIso = new Date().toISOString();
+
+    // Er sæsonen i gang? Findes der mindst én afdeling med gemte resultater,
+    // tæller nye kørere først med fra nu — tidligere afdelinger er urørte.
+    let seasonStarted = false;
+    try {
+      const { data: divs } = await (supabaseAdmin as any)
+        .from("divisions")
+        .select("id, settings")
+        .eq("league_id", data.leagueId);
+      seasonStarted = ((divs ?? []) as any[]).some((d) => {
+        const res = (d?.settings as any)?.results;
+        return Array.isArray(res) && res.length > 0;
+      });
+    } catch (_) {}
+    const joinFrom = seasonStarted ? nowIso : null;
+
     // Kørere tilføjet midt i sæsonen tæller først med fra afdelinger der køres
     // efter tilføjelsen — tidligere afdelingers team-resultater er urørte.
     const rowsToUpsert = isAdd ? newIds : data.userIds;
@@ -183,7 +199,11 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       responded_at: nowIso,
       // Genaktiverer en evt. tidligere fjernet kører (effective_until nulstilles)
       effective_until: null,
-      ...(isAdd ? { effective_from: nowIso } : { effective_from: null }),
+      // Eksisterende kørere beholder deres oprindelige starttidspunkt;
+      // nye kørere starter fra nu, hvis sæsonen allerede er i gang.
+      effective_from: existingEffectiveFrom.has(uid)
+        ? (existingEffectiveFrom.get(uid) ?? null)
+        : joinFrom,
     }));
     const { error: upErr } = await (supabaseAdmin as any)
       .from("league_team_lineup")
