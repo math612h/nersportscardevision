@@ -139,8 +139,11 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
     // Eksisterende lineup-rækker
     const { data: currentRows } = await (supabaseAdmin as any)
       .from("league_team_lineup")
-      .select("user_id, status, effective_until")
+      .select("user_id, status, effective_until, effective_from")
       .eq("league_team_entry_id", entryId);
+    const existingEffectiveFrom = new Map<string, string | null>(
+      ((currentRows ?? []) as any[]).map((r) => [r.user_id as string, (r.effective_from as string | null) ?? null]),
+    );
     const currentIds = new Set(
       ((currentRows ?? []) as any[])
         .filter((r) => r.status !== "declined" && !r.effective_until)
