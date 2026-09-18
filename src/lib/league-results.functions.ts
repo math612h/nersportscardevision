@@ -796,7 +796,7 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => protestRulingSchema.parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertAdminOrSteward(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: protest, error: protestError } = await supabaseAdmin
       .from("protests")
