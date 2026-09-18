@@ -829,31 +829,44 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
       .eq("status", "ruled");
     if (otherError) throw new Error(otherError.message);
 
-    const totals = new Map<string, { seconds: number; points: number; dsq: boolean }>();
-    const addPenalty = (userId: string, p: AppliedPenalty) => {
-      const cur = totals.get(userId) ?? { seconds: 0, points: 0, dsq: false };
+    type Totals = { seconds: number; points: number; dsq: boolean };
+    const emptyTotals = (): Totals => ({ seconds: 0, points: 0, dsq: false });
+    const addPenalty = (map: Map<string, Totals>, userId: string, p: AppliedPenalty) => {
+      const cur = map.get(userId) ?? emptyTotals();
       cur.seconds += Math.max(0, Number(p.seconds ?? 0));
       cur.points += Math.max(0, Number(p.points ?? 0));
       cur.dsq = cur.dsq || !!p.dsq;
-      totals.set(userId, cur);
+      map.set(userId, cur);
     };
+
+    // stored = straffe som protesterne allerede har lagt på rækkerne (inkl. denne protests
+    // tidligere version). next = straffene efter denne afgørelse. Differencen mellem
+    // rækkens nuværende værdi og "stored" er manuelt indtastede straffe, som bevares.
+    const stored = new Map<string, Totals>();
+    const next = new Map<string, Totals>();
     for (const other of otherProtests ?? []) {
-      if ((other as any).id === data.protestId) continue;
       const applied = (((other as any).verdict_details ?? {}).applied_penalties ?? {}) as Record<string, AppliedPenalty>;
-      for (const [userId, p] of Object.entries(applied)) addPenalty(userId, p ?? {});
+      for (const [userId, p] of Object.entries(applied)) {
+        addPenalty(stored, userId, p ?? {});
+        if ((other as any).id !== data.protestId) addPenalty(next, userId, p ?? {});
+      }
     }
-    for (const [userId, p] of Object.entries(nextApplied)) addPenalty(userId, p);
+    for (const [userId, p] of Object.entries(nextApplied)) addPenalty(next, userId, p);
 
     const settings = (division.settings ?? {}) as Record<string, unknown>;
     const source: StoredRaceRow[] = Array.isArray(settings.results) ? settings.results : [];
     const adjusted = source.map((row) => {
       if (!row.user_id) return row;
-      const total = totals.get(row.user_id) ?? { seconds: 0, points: 0, dsq: false };
+      const was = stored.get(row.user_id) ?? emptyTotals();
+      const now = next.get(row.user_id) ?? emptyTotals();
+      if (was.seconds === now.seconds && was.points === now.points && was.dsq === now.dsq) return row;
+      const manualSeconds = Math.max(0, Number(row.penalty_seconds ?? 0) - was.seconds);
+      const manualPoints = Math.max(0, Number(row.penalty_points ?? 0) - was.points);
       return {
         ...row,
-        penalty_seconds: total.seconds,
-        penalty_points: total.points,
-        dsq: total.dsq,
+        penalty_seconds: manualSeconds + now.seconds,
+        penalty_points: manualPoints + now.points,
+        dsq: now.dsq ? true : was.dsq ? false : !!row.dsq,
       };
     });
 
