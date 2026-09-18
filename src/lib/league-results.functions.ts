@@ -404,6 +404,18 @@ async function assertAdmin(userId: string) {
   }
 }
 
+// Protester må også afgøres af stewards.
+async function assertAdminOrSteward(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+  if (!(roles ?? []).some((r: { role: string }) => r.role === "admin" || r.role === "steward")) {
+    throw new Error("Kun admins og stewards kan afgøre protester.");
+  }
+}
+
 // =============================================================
 // Preview: parse XML + match drivers, NO writes.
 // =============================================================
