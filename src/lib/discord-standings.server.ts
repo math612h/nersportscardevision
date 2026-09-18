@@ -19,25 +19,41 @@ type ResultRow = {
 export type StandingsEmbed = { title: string; description: string; color: number };
 
 const COLOR = 0xe11d48;
+const TEAM_COLOR = 0x0ea5e9;
 
-function chunkLines(lines: string[], limit = 3900): string[] {
-  const out: string[] = [];
-  let cur = "";
-  for (const l of lines) {
-    if (cur.length + l.length + 1 > limit) {
-      out.push(cur);
-      cur = "";
-    }
-    cur += (cur ? "\n" : "") + l;
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function truncateName(s: string, n: number): string {
+  return s.length > n ? s.slice(0, Math.max(1, n - 1)) + "…" : s;
+}
+
+type TableRow = { pos: number; name: string; pts: number };
+
+// Opstillet monospace-tabel i en Discord-kodeblok: POS / NAVN / POINT.
+// Lange lister deles i flere tabeller (én pr. embed) med gentaget overskrift.
+function buildTableParts(rows: TableRow[], rowsPerPart = 25): string[] {
+  if (rows.length === 0) return [];
+  const nameW = Math.min(26, Math.max(6, ...rows.map((r) => r.name.length)));
+  const ptsW = Math.max(5, ...rows.map((r) => String(r.pts).length));
+  const posW = 4;
+  const header = `${"POS".padEnd(posW)}${"NAVN".padEnd(nameW + 2)}${"POINT".padStart(ptsW)}`;
+  const sep = "─".repeat(header.length);
+  const parts: string[] = [];
+  for (let i = 0; i < rows.length; i += rowsPerPart) {
+    const slice = rows.slice(i, i + rowsPerPart);
+    const lines = slice.map((r) => {
+      const pos = (MEDALS[r.pos - 1] ?? `${r.pos}.`).padEnd(posW);
+      return `${pos}${truncateName(r.name, nameW).padEnd(nameW + 2)}${String(r.pts).padStart(ptsW)}`;
+    });
+    parts.push("```\n" + header + "\n" + sep + "\n" + lines.join("\n") + "\n```");
   }
-  if (cur) out.push(cur);
-  return out.length > 0 ? out : [""];
+  return parts;
 }
 
 export async function buildLeagueStandingsEmbeds(
   supabaseAdmin: any,
   leagueId: string,
-): Promise<{ leagueName: string; channelId: string | null; embeds: StandingsEmbed[] }> {
+): Promise<{ leagueName: string; channelId: string | null; rounds: number; embeds: StandingsEmbed[] }> {
   const { data: league, error: lerr } = await supabaseAdmin
     .from("leagues")
     .select("id,name,class_configs,points_system,standings_channel_id")
@@ -141,11 +157,15 @@ export async function buildLeagueStandingsEmbeds(
         return a.dnfCount + a.otherNonFinish - (b.dnfCount + b.otherNonFinish);
       });
     if (rows.length === 0) continue;
-    const lines = rows.map((r, i) => {
-      const out = r.user_id && withdrawn.has(`${r.user_id}|${r.car_class}`) ? " *(udmeldt)*" : "";
-      return `**${i + 1}.** ${r.driver_name}${out} — **${r.total}**`;
-    });
-    const parts = chunkLines(lines);
+    const tableRows: TableRow[] = rows.map((r, i) => ({
+      pos: i + 1,
+      name:
+        r.user_id && withdrawn.has(`${r.user_id}|${r.car_class}`)
+          ? `${r.driver_name} (udmeldt)`
+          : r.driver_name,
+      pts: r.total,
+    }));
+    const parts = buildTableParts(tableRows);
     parts.forEach((p, idx) => {
       embeds.push({
         title: `🏁 ${cls} ${cat}${parts.length > 1 ? ` (${idx + 1}/${parts.length})` : ""}`,
@@ -200,13 +220,12 @@ export async function buildLeagueStandingsEmbeds(
       .filter((t) => t.cls === cls && t.scored)
       .sort((a, b) => b.total - a.total);
     if (list.length === 0) continue;
-    const lines = list.map((t, i) => `**${i + 1}.** ${t.name} — **${t.total}**`);
-    const parts = chunkLines(lines);
+    const parts = buildTableParts(list.map((t, i) => ({ pos: i + 1, name: t.name, pts: t.total })));
     parts.forEach((p, idx) => {
       embeds.push({
         title: `👥 Teams — ${cls}${parts.length > 1 ? ` (${idx + 1}/${parts.length})` : ""}`,
         description: p,
-        color: 0x0ea5e9,
+        color: TEAM_COLOR,
       });
     });
   }
@@ -214,6 +233,7 @@ export async function buildLeagueStandingsEmbeds(
   return {
     leagueName: league.name as string,
     channelId: (league.standings_channel_id as string | null) ?? null,
+    rounds: completed.length,
     embeds,
   };
 }

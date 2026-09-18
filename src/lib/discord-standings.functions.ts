@@ -20,7 +20,7 @@ export const postLeagueStandingsToDiscord = createServerFn({ method: "POST" })
     const { buildLeagueStandingsEmbeds } = await import("./discord-standings.server");
     const { sendDiscordChannelRichMessage } = await import("./discord.server");
 
-    const { leagueName, channelId, embeds } = await buildLeagueStandingsEmbeds(supabaseAdmin, data.leagueId);
+    const { leagueName, channelId, rounds, embeds } = await buildLeagueStandingsEmbeds(supabaseAdmin, data.leagueId);
     const target = data.channelId ?? channelId;
     if (!target) {
       throw new Error("Ingen Discord-kanal til stillinger. Indsæt kanal-ID i liga-redigeringen.");
@@ -32,7 +32,10 @@ export const postLeagueStandingsToDiscord = createServerFn({ method: "POST" })
     for (let i = 0; i < embeds.length; i += 10) {
       const batch = embeds.slice(i, i + 10);
       const res = await sendDiscordChannelRichMessage(target, {
-        content: i === 0 ? `📊 **${leagueName} — stillinger**\nOpdateret ${stamp}` : undefined,
+        content:
+          i === 0
+            ? `## 📊 ${leagueName} — Stillinger\n*Efter ${rounds} ${rounds === 1 ? "afdeling" : "afdelinger"} · Opdateret ${stamp}*`
+            : undefined,
         embeds: batch as unknown as Array<Record<string, unknown>>,
       });
       if (!res.ok) throw new Error(`Discord afviste beskeden (HTTP ${res.status}): ${res.message ?? ""}`);
