@@ -28,6 +28,7 @@ export type PointsSystem = {
   points_per_position?: number[];
   fastest_lap_points?: number;
   min_finish_percent?: number; // % af vinderens omgange — under denne tærskel = DNF (0 point). 0 = deaktiveret.
+  joiner_points?: number; // tiltrædelsespoint pr. allerede afholdt afdeling ved sen tilmelding/klasseskift. Standard 8.
 };
 
 export const DEFAULT_POINTS: number[] = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
@@ -201,6 +202,27 @@ export function PointsSystemEditor({
         <p className="text-xs text-muted-foreground">
           Fx 75 = kører skal have kørt mindst 75% af vinderens omgange i sin klasse, ellers
           markeres som DNF og får 0 point. Læses fra race-filen ved upload.
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Tiltrædelsespoint pr. afdeling</Label>
+        <Input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          className="max-w-40"
+          value={value.joiner_points == null ? "8" : String(value.joiner_points)}
+          placeholder="8"
+          onChange={(e) => {
+            const raw = e.target.value.replace(/[^0-9]/g, "");
+            const num = raw === "" ? 0 : Number(raw);
+            onChange({ ...value, joiner_points: num });
+          }}
+        />
+        <p className="text-xs text-muted-foreground">
+          Point en kører får for hver allerede afholdte afdeling i klassen, når vedkommende
+          tilmelder sig efter sæsonstart eller skifter klasse. 8 anbefales. 0 = deaktiveret.
         </p>
       </div>
 
