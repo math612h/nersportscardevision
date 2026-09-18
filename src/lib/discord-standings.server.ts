@@ -53,7 +53,7 @@ function buildTableParts(rows: TableRow[], rowsPerPart = 25): string[] {
 export async function buildLeagueStandingsEmbeds(
   supabaseAdmin: any,
   leagueId: string,
-): Promise<{ leagueName: string; channelId: string | null; embeds: StandingsEmbed[] }> {
+): Promise<{ leagueName: string; channelId: string | null; rounds: number; embeds: StandingsEmbed[] }> {
   const { data: league, error: lerr } = await supabaseAdmin
     .from("leagues")
     .select("id,name,class_configs,points_system,standings_channel_id")
@@ -233,6 +233,7 @@ export async function buildLeagueStandingsEmbeds(
   return {
     leagueName: league.name as string,
     channelId: (league.standings_channel_id as string | null) ?? null,
+    rounds: completed.length,
     embeds,
   };
 }
