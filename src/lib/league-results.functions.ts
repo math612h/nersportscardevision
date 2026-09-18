@@ -109,6 +109,7 @@ function recalculateStoredRaceRows(
       !row.dsq && (minLaps === 0 || Number(row.laps ?? 0) >= minLaps),
     );
     for (const row of group) {
+      if (row.joiner) continue;
       row.status = raceStatusFor(
         { dns: row.dns, dnf: row.dnf, dsq: row.dsq, laps: row.laps, finished: row.finished },
         minLaps,
