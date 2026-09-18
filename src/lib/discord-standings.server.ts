@@ -157,11 +157,15 @@ export async function buildLeagueStandingsEmbeds(
         return a.dnfCount + a.otherNonFinish - (b.dnfCount + b.otherNonFinish);
       });
     if (rows.length === 0) continue;
-    const lines = rows.map((r, i) => {
-      const out = r.user_id && withdrawn.has(`${r.user_id}|${r.car_class}`) ? " *(udmeldt)*" : "";
-      return `**${i + 1}.** ${r.driver_name}${out} — **${r.total}**`;
-    });
-    const parts = chunkLines(lines);
+    const tableRows: TableRow[] = rows.map((r, i) => ({
+      pos: i + 1,
+      name:
+        r.user_id && withdrawn.has(`${r.user_id}|${r.car_class}`)
+          ? `${r.driver_name} (udmeldt)`
+          : r.driver_name,
+      pts: r.total,
+    }));
+    const parts = buildTableParts(tableRows);
     parts.forEach((p, idx) => {
       embeds.push({
         title: `🏁 ${cls} ${cat}${parts.length > 1 ? ` (${idx + 1}/${parts.length})` : ""}`,
@@ -216,13 +220,12 @@ export async function buildLeagueStandingsEmbeds(
       .filter((t) => t.cls === cls && t.scored)
       .sort((a, b) => b.total - a.total);
     if (list.length === 0) continue;
-    const lines = list.map((t, i) => `**${i + 1}.** ${t.name} — **${t.total}**`);
-    const parts = chunkLines(lines);
+    const parts = buildTableParts(list.map((t, i) => ({ pos: i + 1, name: t.name, pts: t.total })));
     parts.forEach((p, idx) => {
       embeds.push({
         title: `👥 Teams — ${cls}${parts.length > 1 ? ` (${idx + 1}/${parts.length})` : ""}`,
         description: p,
-        color: 0x0ea5e9,
+        color: TEAM_COLOR,
       });
     });
   }
