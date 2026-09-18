@@ -738,6 +738,9 @@ function DivisionEditor({
 
       // Brug seneste kendte settings (inkl. gemte imports/unmatched) som base
       const prevSettings = (settingsRef.current ?? division.settings ?? {}) as any;
+      // Tiltrædelsesrækker (joiner) bevares — men ikke hvis køreren nu har et rigtigt resultat
+      const realKeys = new Set(raceResults.map((r) => `${r.user_id}|${r.car_class}`));
+      const preservedJoiners = joinerRowsPrev.filter((r) => !realKeys.has(`${r.user_id}|${r.car_class}`));
       const newSettings = {
         ...prevSettings,
         completed: effectiveCompleted,
@@ -749,7 +752,7 @@ function DivisionEditor({
         results_confirmed_at: null,
         // Resultater vises først offentligt når admin trykker "Vis resultater"
         results_published: isResultsPublished(prevSettings),
-        results: raceResults,
+        results: [...raceResults, ...preservedJoiners],
         quali_results: qualiResults,
       };
       const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
@@ -826,8 +829,15 @@ function DivisionEditor({
       const validRaceRows = dbRaceRows.filter((r) => validUserIds.has(r.user_id));
       const validQualiRows = dbQualiRows.filter((r) => validUserIds.has(r.user_id));
 
-      const { error: deleteRaceErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "race");
+      // Bevar tiltrædelsesrækker (status 'joiner') — de synkes separat
+      const { error: deleteRaceErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "race").or("status.is.null,status.neq.joiner");
       if (deleteRaceErr) throw deleteRaceErr;
+      // Fjern joiner-rækker for kørere der nu har et rigtigt resultat i klassen
+      for (const r of validRaceRows) {
+        await supabase.from("league_results").delete()
+          .eq("division_id", division.id).eq("session_type", "race").eq("status", "joiner")
+          .eq("user_id", r.user_id).eq("car_class", r.car_class);
+      }
       const { error: deleteQualiErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "qualifying");
       if (deleteQualiErr) throw deleteQualiErr;
       if (validRaceRows.length > 0) {
