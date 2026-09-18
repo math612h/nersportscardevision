@@ -44,6 +44,7 @@ type StoredRaceRow = Record<string, unknown> & {
   dsq?: boolean;
   finished?: boolean;
   status?: string | null;
+  joiner?: boolean;
 };
 
 function recalculateStoredRaceRows(
