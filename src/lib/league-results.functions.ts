@@ -638,6 +638,7 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       };
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
+    await ensureJoinerPoints(supabaseAdmin, data.leagueId);
     return { inserted: resultRows.length, leaderboard_inserted: 0, unmatched, track, layout };
   });
 
