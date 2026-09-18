@@ -173,8 +173,12 @@ export async function buildLeagueStandingsEmbeds(
     });
   }
   const teamClasses = Array.from(new Set(teamInfos.map((t) => t.carClass)));
+  // NB: samme team kan have tilmeldinger i flere klasser — nøglen skal derfor
+  // indeholde både team-id og klasse, ellers overskriver den ene den anden.
   const totals = new Map<string, { name: string; cls: string; total: number; scored: boolean }>();
-  for (const t of teamInfos) totals.set(t.teamId, { name: t.teamName, cls: t.carClass, total: 0, scored: false });
+  for (const t of teamInfos) {
+    totals.set(`${t.teamId}|${t.carClass}`, { name: t.teamName, cls: t.carClass, total: 0, scored: false });
+  }
   for (const d of completed) {
     const ranked = computeTeamRacePoints({
       results: (d.settings?.results ?? []) as any[],
@@ -182,9 +186,9 @@ export async function buildLeagueStandingsEmbeds(
       pointsPerPosition,
       raceDate: d.race_date ?? null,
     });
-    for (const list of ranked.values()) {
+    for (const [cls, list] of ranked.entries()) {
       for (const t of list) {
-        const agg = totals.get(t.teamId);
+        const agg = totals.get(`${t.teamId}|${cls}`);
         if (!agg) continue;
         agg.total += t.points;
         agg.scored = true;
