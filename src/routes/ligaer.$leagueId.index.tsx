@@ -1510,10 +1510,15 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
       car_model: carModel || null,
     } as any);
     if (error) return toastError(error.message);
+    // Tildel tiltrædelsespoint for allerede afholdte afdelinger (non-blocking)
+    if (!goesToWaitlist) {
+      ensureJoinerFn({ data: { leagueId } }).catch(() => {});
+    }
     toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
     setOpen(false);
     setCarNumber(null);
     qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
+    qc.invalidateQueries({ queryKey: ["league-results", leagueId] });
     qc.invalidateQueries({ queryKey: ["profile", user.id] });
     // Send signup-confirmation email (non-blocking)
     if (user.email) {
