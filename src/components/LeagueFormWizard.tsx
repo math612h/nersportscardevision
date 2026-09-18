@@ -697,6 +697,7 @@ export function LeagueFormWizard({
       signup_opens_at: signupOpensAt ? new Date(signupOpensAt).toISOString() : null,
       discord_role_id: discordRoleId.trim() || null,
       incident_channel_id: incidentChannelId.trim() || null,
+      standings_channel_id: standingsChannelId.trim() || null,
       car_lock_never: carLockNever,
       car_lock_at: carLockNever ? null : carLockAt ? new Date(carLockAt).toISOString() : null,
       published: publish,
