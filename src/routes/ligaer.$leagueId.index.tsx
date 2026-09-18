@@ -14,6 +14,7 @@ import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { leaveLeague, updateMyLeagueEntry } from "@/lib/leagues.functions";
+import { ensureMyJoinerPoints } from "@/lib/league-results.functions";
 import { assignDiscordRoleForEntry, removeDiscordRoleForEntry } from "@/lib/discord.functions";
 import { suggestSignupCategory } from "@/lib/signup-category.functions";
 
@@ -1013,7 +1014,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     pointPenalty: number;
     dnsCount: number;
     dnfCount: number;
-    rounds: Record<string, { points: number; position: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null }>;
+    rounds: Record<string, { points: number; position: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null; joiner: boolean }>;
   };
   // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
   // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
@@ -1063,7 +1064,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
           : null;
       if (rowStatus === "dns") cur.dnsCount += 1;
       if (rowStatus === "dnf") cur.dnfCount += 1;
-      cur.rounds[d.id] = { points: r.points, position: r.class_position, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus };
+      cur.rounds[d.id] = { points: r.points, position: r.class_position, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus, joiner: !!(r as any).joiner };
       map.set(key, cur);
     }
   }
@@ -1140,6 +1141,13 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
                         if (!cell) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                        if (cell.joiner) {
+                          return (
+                            <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`Tiltrædelsespoint (+${cell.points})`}>
+                              –
+                            </td>
+                          );
+                        }
                         const st = cell.status;
                         if (st === "dns" || (cell.dns && !st)) {
                           return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status="dns" /></td>;
@@ -1357,6 +1365,7 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
   const checkGuild = useServerFn(checkDiscordGuildMembership);
   const ackFn = useServerFn(acknowledgeLeagueRules);
   const suggestCategoryFn = useServerFn(suggestSignupCategory);
+  const ensureJoinerFn = useServerFn(ensureMyJoinerPoints);
   const [open, setOpen] = useState(false);
   const [carClassSel, setCarClassSel] = useState<string>(configs[0]?.car_class ?? "");
   const [carNumber, setCarNumber] = useState<number | null>(null);
@@ -1510,10 +1519,15 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
       car_model: carModel || null,
     } as any);
     if (error) return toastError(error.message);
+    // Tildel tiltrædelsespoint for allerede afholdte afdelinger (non-blocking)
+    if (!goesToWaitlist) {
+      ensureJoinerFn({ data: { leagueId } }).catch(() => {});
+    }
     toast.success(goesToWaitlist ? "Klassen er fyldt – du er tilføjet til ventelisten." : "Du er tilmeldt!");
     setOpen(false);
     setCarNumber(null);
     qc.invalidateQueries({ queryKey: ["league-signups", leagueId] });
+    qc.invalidateQueries({ queryKey: ["league-results", leagueId] });
     qc.invalidateQueries({ queryKey: ["profile", user.id] });
     // Send signup-confirmation email (non-blocking)
     if (user.email) {

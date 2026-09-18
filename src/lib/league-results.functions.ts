@@ -44,6 +44,7 @@ type StoredRaceRow = Record<string, unknown> & {
   dsq?: boolean;
   finished?: boolean;
   status?: string | null;
+  joiner?: boolean;
 };
 
 function recalculateStoredRaceRows(
@@ -52,7 +53,9 @@ function recalculateStoredRaceRows(
   minFinishPercent: number,
   currentCategoryByUserClass: Map<string, string>,
 ) {
-  const rows = source.map((row) => {
+  const rows: StoredRaceRow[] = source.map((row): StoredRaceRow => {
+    // Tiltrædelsesrækker (joiner) røres aldrig af genberegning.
+    if (row.joiner) return { ...row };
     const category = row.user_id && row.car_class
       ? currentCategoryByUserClass.get(`${row.user_id}|${row.car_class}`)
       : undefined;
@@ -106,6 +109,7 @@ function recalculateStoredRaceRows(
       !row.dsq && (minLaps === 0 || Number(row.laps ?? 0) >= minLaps),
     );
     for (const row of group) {
+      if (row.joiner) continue;
       row.status = raceStatusFor(
         { dns: row.dns, dnf: row.dnf, dsq: row.dsq, laps: row.laps, finished: row.finished },
         minLaps,
@@ -127,8 +131,10 @@ async function syncStoredRaceRowsToLeagueResults(
   supabaseAdmin: any,
   divisionId: string,
   rows: StoredRaceRow[],
+  leagueId?: string,
 ) {
   for (const row of rows) {
+    if (row.joiner) continue;
     if (!row.user_id || !row.car_class || Number(row.class_position ?? 0) <= 0) continue;
     const { error } = await supabaseAdmin
       .from("league_results")
@@ -146,7 +152,145 @@ async function syncStoredRaceRowsToLeagueResults(
       .eq("car_class", row.car_class);
     if (error) throw new Error(error.message);
   }
+
+  // Tiltrædelsesrækker har ingen placering og kan derfor ikke UPDATEs —
+  // de synkes i stedet som delete + insert af status "joiner".
+  if (leagueId) {
+    const { error: delErr } = await supabaseAdmin
+      .from("league_results")
+      .delete()
+      .eq("division_id", divisionId)
+      .eq("session_type", "race")
+      .eq("status", "joiner");
+    if (delErr) throw new Error(delErr.message);
+    const joinerRows = rows
+      .filter((row) => row.joiner && row.user_id && row.car_class)
+      .map((row) => ({
+        user_id: row.user_id,
+        league_id: leagueId,
+        division_id: divisionId,
+        car_class: row.car_class,
+        position: null,
+        points: Math.max(0, Number(row.points ?? 0)),
+        session_type: "race",
+        status: "joiner",
+      }));
+    if (joinerRows.length > 0) {
+      const { error: insErr } = await supabaseAdmin.from("league_results").insert(joinerRows);
+      if (insErr) throw new Error(insErr.message);
+    }
+  }
 }
+
+// =============================================================
+// Tiltrædelsespoint: kørere der tilmelder sig efter sæsonstart (eller
+// skifter klasse) får ligaens joiner_points for hver allerede afholdte
+// afdeling, hvor de ikke har et resultat i klassen. Rækkerne gemmes i
+// afdelingens settings.results med joiner: true og synkes til
+// league_results med status "joiner". Idempotent: opretter kun
+// manglende rækker, fjerner overflødige, og opdaterer pointværdien.
+// =============================================================
+export async function ensureJoinerPoints(
+  supabaseAdmin: any,
+  leagueId: string,
+  opts?: { userId?: string },
+) {
+  const { data: league, error: lErr } = await supabaseAdmin
+    .from("leagues").select("id,points_system").eq("id", leagueId).maybeSingle();
+  if (lErr) throw new Error(lErr.message);
+  if (!league) return { added: 0 };
+  const joinerPoints = Math.max(0, Number((league.points_system as any)?.joiner_points ?? 8));
+  if (joinerPoints <= 0) return { added: 0 };
+
+  let entriesQuery = supabaseAdmin
+    .from("entries")
+    .select("user_id,driver_name,car_class,driver_category,car_number,created_at")
+    .eq("league_id", leagueId)
+    .is("withdrawn_at", null)
+    .eq("waitlist", false);
+  if (opts?.userId) entriesQuery = entriesQuery.eq("user_id", opts.userId);
+  const [{ data: entries, error: eErr }, { data: divisions, error: dErr }] = await Promise.all([
+    entriesQuery,
+    supabaseAdmin
+      .from("divisions")
+      .select("id,league_id,race_date,created_at,settings")
+      .eq("league_id", leagueId),
+  ]);
+  if (eErr) throw new Error(eErr.message);
+  if (dErr) throw new Error(dErr.message);
+
+  let added = 0;
+  for (const div of divisions ?? []) {
+    const settings = ((div.settings as any) ?? {});
+    const results: StoredRaceRow[] = Array.isArray(settings.results) ? settings.results : [];
+    if (results.length === 0) continue; // afdelingen er ikke afholdt endnu
+    const raceTsRaw = div.race_date ?? settings.completed_at ?? div.created_at ?? null;
+    const raceTs = raceTsRaw ? new Date(raceTsRaw).getTime() : null;
+    if (raceTs == null || !Number.isFinite(raceTs)) continue;
+
+    const realRows = results.filter((r) => !r.joiner);
+    const realKeys = new Set(realRows.map((r) => `${r.user_id}|${r.car_class}`));
+    const wanted = new Map<string, StoredRaceRow>();
+    for (const e of (entries ?? []) as any[]) {
+      const entryTs = e.created_at ? new Date(e.created_at).getTime() : null;
+      if (entryTs == null || !Number.isFinite(entryTs) || entryTs <= raceTs) continue;
+      const key = `${e.user_id}|${e.car_class}`;
+      if (realKeys.has(key)) continue;
+      wanted.set(key, {
+        joiner: true,
+        user_id: e.user_id,
+        driver_name: e.driver_name ?? "",
+        car_class: e.car_class,
+        driver_category: e.driver_category ?? null,
+        car_number: e.car_number ?? null,
+        class_position: null as any,
+        position: null as any,
+        laps: null,
+        best_lap_ms: null,
+        points: joinerPoints,
+        penalty_seconds: 0,
+        penalty_points: 0,
+        dns: false,
+        dnf: false,
+        dsq: false,
+        finished: false,
+        status: "joiner",
+      });
+    }
+
+    // Behold kun de eksisterende joiner-rækker der stadig er gyldige,
+    // og opdatér deres point til ligaens aktuelle værdi.
+    const keptJoiners = results
+      .filter((r) => r.joiner && wanted.has(`${r.user_id}|${r.car_class}`))
+      .map((r) => ({ ...r, points: joinerPoints, status: "joiner" }));
+    const keptKeys = new Set(keptJoiners.map((r) => `${r.user_id}|${r.car_class}`));
+    const newJoiners = Array.from(wanted.values()).filter((r) => !keptKeys.has(`${r.user_id}|${r.car_class}`));
+    added += newJoiners.length;
+
+    const removedCount = results.filter((r) => r.joiner).length - keptJoiners.length;
+    if (newJoiners.length === 0 && removedCount === 0
+      && keptJoiners.every((r) => Number(r.points) === joinerPoints)) continue;
+
+    const next = [...realRows, ...keptJoiners, ...newJoiners];
+    const { error: uErr } = await supabaseAdmin
+      .from("divisions")
+      .update({ settings: { ...settings, results: next as any } })
+      .eq("id", div.id);
+    if (uErr) throw new Error(uErr.message);
+    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, div.id, next, leagueId);
+  }
+  return { added };
+}
+
+// Kaldes efter en almindelig bruger tilmelder sig en liga — tildeler
+// tiltrædelsespoint for allerede afholdte afdelinger i den valgte klasse.
+export const ensureMyJoinerPoints = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ leagueId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return await ensureJoinerPoints(supabaseAdmin, data.leagueId, { userId: context.userId });
+  });
 
 async function matchDriversFromXml(
   xml: string,
@@ -372,6 +516,9 @@ export const publishLeagueRaceResult = createServerFn({ method: "POST" })
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
 
+    // Tildel tiltrædelsespoint for sene tilmeldinger i denne afdeling m.fl.
+    await ensureJoinerPoints(supabaseAdmin, data.leagueId);
+
     return { ok: true };
   });
 
@@ -491,6 +638,7 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       };
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
+    await ensureJoinerPoints(supabaseAdmin, data.leagueId);
     return { inserted: resultRows.length, leaderboard_inserted: 0, unmatched, track, layout };
   });
 
@@ -588,8 +736,11 @@ export const recalcLeaguePoints = createServerFn({ method: "POST" })
         .update({ settings: { ...settings, results: next } })
         .eq("id", div.id);
       if (settingsError) throw new Error(settingsError.message);
-      await syncStoredRaceRowsToLeagueResults(supabaseAdmin, div.id, next);
+      await syncStoredRaceRowsToLeagueResults(supabaseAdmin, div.id, next, data.leagueId);
     }
+
+    // Tildel/ret tiltrædelsespoint for sene tilmeldinger på tværs af afdelinger.
+    await ensureJoinerPoints(supabaseAdmin, data.leagueId);
 
     return { updatedRows };
   });
@@ -676,10 +827,10 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
 
     const { error: divisionError } = await supabaseAdmin
       .from("divisions")
-      .update({ settings: { ...settings, results: recalculated, results_confirmed: false, results_confirmed_at: null } })
+      .update({ settings: { ...settings, results: recalculated as any, results_confirmed: false, results_confirmed_at: null } })
       .eq("id", division.id);
     if (divisionError) throw new Error(divisionError.message);
-    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, division.id, recalculated);
+    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, division.id, recalculated, division.league_id);
 
     const { error: rulingError } = await supabaseAdmin
       .from("protests")

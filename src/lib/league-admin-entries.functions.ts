@@ -80,6 +80,10 @@ export const adminAddEntryToLeague = createServerFn({ method: "POST" })
     } as any);
     if (insErr) throw new Error(insErr.message);
 
+    // Tildel tiltrædelsespoint for allerede afholdte afdelinger i klassen.
+    const { ensureJoinerPoints } = await import("@/lib/league-results.functions");
+    await ensureJoinerPoints(supabaseAdmin, data.leagueId, { userId: data.targetUserId });
+
     return { ok: true };
   });
 

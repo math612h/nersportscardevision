@@ -632,10 +632,21 @@ function DivisionEditor({
       const raceResults: any[] = [];
       const qualiResults: any[] = [];
 
+      // Tiltrædelsesrækker (joiner) hører ikke til i grid'et — de bevares,
+      // medmindre admin har indtastet rigtige data for køreren i denne afdeling.
+      const prevForJoiners = (settingsRef.current ?? division.settings ?? {}) as any;
+      const prevStoredResults: any[] = Array.isArray(prevForJoiners.results) ? prevForJoiners.results : [];
+      const joinerRowsPrev: any[] = prevStoredResults.filter((r) => r?.joiner);
+      const joinerKeySet = new Set(joinerRowsPrev.map((r) => `${r.user_id}|${r.car_class}`));
+
       for (const r of rows) {
         const raceBase = parseTimeToMs(r.time_str);
         const raceEff = r.dnf || r.dns || raceBase == null ? null : raceBase + Math.max(0, r.penalty_seconds) * 1000;
         const qBest = parseTimeToMs(r.q_best_str);
+        // Tom række for en kører med tiltrædelsespoint → spring over (bevares som joiner)
+        const joinerKey = `${r.user_id}|${r.car_class}`;
+        const hasRaceData = raceBase != null || (r.laps ?? 0) > 0 || r.race_position != null || r.dnf || r.dns;
+        const skipRaceRow = joinerKeySet.has(joinerKey) && !hasRaceData;
         qualiResults.push({
           user_id: r.user_id,
           car_number: r.car_number,
@@ -649,7 +660,7 @@ function DivisionEditor({
           status: qualiStatusFor({ dns: r.q_dns, nt: r.q_nt, best_lap_ms: qBest, laps: r.q_laps }),
           class_position: 0,
         });
-        raceResults.push({
+        if (!skipRaceRow) raceResults.push({
           user_id: r.user_id,
           car_number: r.car_number,
           driver_name: r.driver_name,
@@ -727,6 +738,9 @@ function DivisionEditor({
 
       // Brug seneste kendte settings (inkl. gemte imports/unmatched) som base
       const prevSettings = (settingsRef.current ?? division.settings ?? {}) as any;
+      // Tiltrædelsesrækker (joiner) bevares — men ikke hvis køreren nu har et rigtigt resultat
+      const realKeys = new Set(raceResults.map((r) => `${r.user_id}|${r.car_class}`));
+      const preservedJoiners = joinerRowsPrev.filter((r) => !realKeys.has(`${r.user_id}|${r.car_class}`));
       const newSettings = {
         ...prevSettings,
         completed: effectiveCompleted,
@@ -738,7 +752,7 @@ function DivisionEditor({
         results_confirmed_at: null,
         // Resultater vises først offentligt når admin trykker "Vis resultater"
         results_published: isResultsPublished(prevSettings),
-        results: raceResults,
+        results: [...raceResults, ...preservedJoiners],
         quali_results: qualiResults,
       };
       const { error } = await supabase.from("divisions").update({ settings: newSettings }).eq("id", division.id);
@@ -815,8 +829,15 @@ function DivisionEditor({
       const validRaceRows = dbRaceRows.filter((r) => validUserIds.has(r.user_id));
       const validQualiRows = dbQualiRows.filter((r) => validUserIds.has(r.user_id));
 
-      const { error: deleteRaceErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "race");
+      // Bevar tiltrædelsesrækker (status 'joiner') — de synkes separat
+      const { error: deleteRaceErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "race").or("status.is.null,status.neq.joiner");
       if (deleteRaceErr) throw deleteRaceErr;
+      // Fjern joiner-rækker for kørere der nu har et rigtigt resultat i klassen
+      for (const r of validRaceRows) {
+        await supabase.from("league_results").delete()
+          .eq("division_id", division.id).eq("session_type", "race").eq("status", "joiner")
+          .eq("user_id", r.user_id).eq("car_class", r.car_class);
+      }
       const { error: deleteQualiErr } = await supabase.from("league_results").delete().eq("division_id", division.id).eq("session_type", "qualifying");
       if (deleteQualiErr) throw deleteQualiErr;
       if (validRaceRows.length > 0) {
