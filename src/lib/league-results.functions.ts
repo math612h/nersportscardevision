@@ -736,8 +736,11 @@ export const recalcLeaguePoints = createServerFn({ method: "POST" })
         .update({ settings: { ...settings, results: next } })
         .eq("id", div.id);
       if (settingsError) throw new Error(settingsError.message);
-      await syncStoredRaceRowsToLeagueResults(supabaseAdmin, div.id, next);
+      await syncStoredRaceRowsToLeagueResults(supabaseAdmin, div.id, next, data.leagueId);
     }
+
+    // Tildel/ret tiltrædelsespoint for sene tilmeldinger på tværs af afdelinger.
+    await ensureJoinerPoints(supabaseAdmin, data.leagueId);
 
     return { updatedRows };
   });
