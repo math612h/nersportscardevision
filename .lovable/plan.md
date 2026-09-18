@@ -52,7 +52,7 @@ I liga-oprettelsen og -redigeringen (liga-guiden) tilføjes feltet **"Tiltrædel
 - Kaldsites: tilmeldingsflowet på ligasiden (efter succesfuld tilmelding, fire-and-forget), `adminAddEntryToLeague`, `uploadLeagueRaceResult`/`publishLeagueRaceResult`, `recalcLeaguePoints`.
 - `league_results.status`-check-constraint udvides med værdien `"joiner"` (migration, hvis nødvendigt).
 - Visning: `ligaer.$leagueId.index.tsx` (stillingsceller) og `ligaer.$leagueId.afdeling.$divisionId.tsx` (afdelingens resultatliste) håndterer joiner-rækker; admin-uploadsiden (`admin.ligaer.$leagueId.stillinger.tsx`) bevarer dem ved import/gem.
-- Antal point (8) læses fra ligaens pointsystem (`points_system.joiner_points`) med 8 som standard — så tallet kan justeres pr. liga senere uden kodeændring.
+- Antal point læses fra ligaens pointsystem (`points_system.joiner_points`) med 8 som standard; nyt tal felt i `LeagueFormWizard.tsx` (opret + rediger) skriver værdien.
 
 ## Verifikation
 
