@@ -154,9 +154,12 @@ function AdminStandings() {
         <ArrowLeft className="h-3 w-3" /> Ligaer
       </Link>
 
-      <div>
-        <h1 className="text-2xl font-bold">Stillinger</h1>
-        {league && <p className="mt-1 text-sm text-muted-foreground">{league.name}</p>}
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-2xl font-bold">Stillinger</h1>
+          {league && <p className="mt-1 text-sm text-muted-foreground">{league.name}</p>}
+        </div>
+        <PostStandingsButton leagueId={leagueId} />
       </div>
 
       {(!divisions || divisions.length === 0) && (
