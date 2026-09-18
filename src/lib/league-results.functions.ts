@@ -179,13 +179,12 @@ async function syncStoredRaceRowsToLeagueResults(
       if (!track) {
         const { data: div } = await supabaseAdmin
           .from("divisions")
-          .select("name,track,layout,round,settings")
+          .select("name,track,layout,settings")
           .eq("id", divisionId)
           .maybeSingle();
         const ds = ((div as any)?.settings ?? {}) as Record<string, any>;
         track = (div as any)?.track ?? ds.track ?? (div as any)?.name ?? "Ukendt";
         layout = layout ?? (div as any)?.layout ?? ds.layout ?? null;
-        round = round ?? (div as any)?.round ?? null;
       }
       const joinerRows = pending.map((row) => ({
         user_id: row.user_id,
