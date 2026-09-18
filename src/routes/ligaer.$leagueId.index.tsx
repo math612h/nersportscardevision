@@ -1014,7 +1014,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     pointPenalty: number;
     dnsCount: number;
     dnfCount: number;
-    rounds: Record<string, { points: number; position: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null }>;
+    rounds: Record<string, { points: number; position: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null; joiner: boolean }>;
   };
   // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
   // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
@@ -1064,7 +1064,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
           : null;
       if (rowStatus === "dns") cur.dnsCount += 1;
       if (rowStatus === "dnf") cur.dnfCount += 1;
-      cur.rounds[d.id] = { points: r.points, position: r.class_position, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus };
+      cur.rounds[d.id] = { points: r.points, position: r.class_position, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus, joiner: !!(r as any).joiner };
       map.set(key, cur);
     }
   }
