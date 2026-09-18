@@ -54,6 +54,8 @@ function recalculateStoredRaceRows(
   currentCategoryByUserClass: Map<string, string>,
 ) {
   const rows = source.map((row) => {
+    // Tiltrædelsesrækker (joiner) røres aldrig af genberegning.
+    if (row.joiner) return { ...row };
     const category = row.user_id && row.car_class
       ? currentCategoryByUserClass.get(`${row.user_id}|${row.car_class}`)
       : undefined;
