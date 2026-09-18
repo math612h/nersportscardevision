@@ -200,7 +200,6 @@ async function syncStoredRaceRowsToLeagueResults(
         layout,
         round,
       }));
-    if (joinerRows.length > 0) {
       const { error: insErr } = await supabaseAdmin.from("league_results").insert(joinerRows);
       if (insErr) throw new Error(insErr.message);
     }
