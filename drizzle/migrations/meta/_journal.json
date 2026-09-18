@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789724877917,
+      "tag": "0000_league_results_status_joiner",
+      "breakpoints": true
+    }
+  ]
+}
