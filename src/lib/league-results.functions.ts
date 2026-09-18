@@ -163,9 +163,30 @@ async function syncStoredRaceRowsToLeagueResults(
       .eq("session_type", "race")
       .eq("status", "joiner");
     if (delErr) throw new Error(delErr.message);
-    const joinerRows = rows
-      .filter((row) => row.joiner && row.user_id && row.car_class)
-      .map((row) => ({
+    const pending = rows.filter((row) => row.joiner && row.user_id && row.car_class);
+    if (pending.length > 0) {
+      // track er NOT NULL — find afdelingens bane/layout/runde fra en
+      // eksisterende resultatrække, ellers fra selve afdelingen.
+      const { data: sample } = await supabaseAdmin
+        .from("league_results")
+        .select("track,layout,round")
+        .eq("division_id", divisionId)
+        .limit(1)
+        .maybeSingle();
+      let track: string | null = sample?.track ?? null;
+      let layout: string | null = sample?.layout ?? null;
+      let round: number | null = sample?.round ?? null;
+      if (!track) {
+        const { data: div } = await supabaseAdmin
+          .from("divisions")
+          .select("name,track,layout,settings")
+          .eq("id", divisionId)
+          .maybeSingle();
+        const ds = ((div as any)?.settings ?? {}) as Record<string, any>;
+        track = (div as any)?.track ?? ds.track ?? (div as any)?.name ?? "Ukendt";
+        layout = layout ?? (div as any)?.layout ?? ds.layout ?? null;
+      }
+      const joinerRows = pending.map((row) => ({
         user_id: row.user_id,
         league_id: leagueId,
         division_id: divisionId,
@@ -174,8 +195,10 @@ async function syncStoredRaceRowsToLeagueResults(
         points: Math.max(0, Number(row.points ?? 0)),
         session_type: "race",
         status: "joiner",
+        track,
+        layout,
+        round,
       }));
-    if (joinerRows.length > 0) {
       const { error: insErr } = await supabaseAdmin.from("league_results").insert(joinerRows);
       if (insErr) throw new Error(insErr.message);
     }
@@ -377,6 +400,18 @@ async function assertAdmin(userId: string) {
     .eq("user_id", userId);
   if (!(roles ?? []).some((r: { role: string }) => r.role === "admin")) {
     throw new Error("Kun admins kan håndtere liga-resultater.");
+  }
+}
+
+// Protester må også afgøres af stewards.
+async function assertAdminOrSteward(userId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId);
+  if (!(roles ?? []).some((r: { role: string }) => r.role === "admin" || r.role === "steward")) {
+    throw new Error("Kun admins og stewards kan afgøre protester.");
   }
 }
 
@@ -760,7 +795,7 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => protestRulingSchema.parse(input))
   .handler(async ({ data, context }) => {
-    await assertAdmin(context.userId);
+    await assertAdminOrSteward(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: protest, error: protestError } = await supabaseAdmin
       .from("protests")

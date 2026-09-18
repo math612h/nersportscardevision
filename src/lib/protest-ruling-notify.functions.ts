@@ -27,13 +27,13 @@ export const notifyProtestRuling = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Caller must be admin
+    // Caller must be admin or steward
     const { data: roles } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId);
-    const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
-    if (!isAdmin) throw new Error("Kun admins kan sende afgørelser.");
+    const allowed = (roles ?? []).some((r: { role: string }) => r.role === "admin" || r.role === "steward");
+    if (!allowed) throw new Error("Kun admins og stewards kan sende afgørelser.");
 
     const { data: protest, error: pErr } = await supabaseAdmin
       .from("protests")
