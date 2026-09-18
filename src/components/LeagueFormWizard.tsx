@@ -940,6 +940,19 @@ export function LeagueFormWizard({
                   Hvis feltet er tomt, bruges den fælles protest-kanal.
                 </p>
               </div>
+              <div className="space-y-1 rounded-md border border-border p-2">
+                <Label>Discord kanal-ID til stillinger</Label>
+                <Input
+                  value={standingsChannelId}
+                  onChange={(e) => setStandingsChannelId(e.target.value)}
+                  placeholder="fx 1234567890123456789"
+                  inputMode="numeric"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Knappen "Opdater stillinger på Discord" i kontrolpanelet sender kører- og
+                  holdstillinger til denne kanal.
+                </p>
+              </div>
             </div>
           )}
 
