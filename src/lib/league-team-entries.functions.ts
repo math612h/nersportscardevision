@@ -141,8 +141,12 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       .from("league_team_lineup")
       .select("user_id, status, effective_until, effective_from")
       .eq("league_team_entry_id", entryId);
+    // Kun aktive rækker beholder deres oprindelige starttidspunkt. En tidligere
+    // fjernet kører, der sættes på igen, behandles som en ny tilføjelse.
     const existingEffectiveFrom = new Map<string, string | null>(
-      ((currentRows ?? []) as any[]).map((r) => [r.user_id as string, (r.effective_from as string | null) ?? null]),
+      ((currentRows ?? []) as any[])
+        .filter((r) => !r.effective_until)
+        .map((r) => [r.user_id as string, (r.effective_from as string | null) ?? null]),
     );
     const currentIds = new Set(
       ((currentRows ?? []) as any[])
