@@ -1,0 +1,1 @@
+ALTER TABLE public.leagues ADD COLUMN IF NOT EXISTS standings_channel_id text;

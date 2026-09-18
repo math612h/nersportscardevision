@@ -8,6 +8,13 @@
       "when": 1789724877917,
       "tag": "0000_league_results_status_joiner",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789764074951,
+      "tag": "0001_add_leagues_standings_channel_id",
+      "breakpoints": true
     }
   ]
 }

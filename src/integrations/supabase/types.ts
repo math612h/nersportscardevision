@@ -1428,6 +1428,7 @@ export type Database = {
           signup_open_notified_at: string | null
           signup_opens_at: string | null
           sort_order: number
+          standings_channel_id: string | null
           teams_allowed: boolean
         }
         Insert: {
@@ -1456,6 +1457,7 @@ export type Database = {
           signup_open_notified_at?: string | null
           signup_opens_at?: string | null
           sort_order?: number
+          standings_channel_id?: string | null
           teams_allowed?: boolean
         }
         Update: {
@@ -1484,6 +1486,7 @@ export type Database = {
           signup_open_notified_at?: string | null
           signup_opens_at?: string | null
           sort_order?: number
+          standings_channel_id?: string | null
           teams_allowed?: boolean
         }
         Relationships: []
