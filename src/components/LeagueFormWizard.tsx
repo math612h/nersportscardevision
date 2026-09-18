@@ -597,6 +597,7 @@ export function LeagueFormWizard({
   const [teamsAllowed, setTeamsAllowed] = useState<boolean>(!!initial.teams_allowed);
   const [discordRoleId, setDiscordRoleId] = useState<string>(initial.discord_role_id ?? "");
   const [incidentChannelId, setIncidentChannelId] = useState<string>((initial as any).incident_channel_id ?? "");
+  const [standingsChannelId, setStandingsChannelId] = useState<string>((initial as any).standings_channel_id ?? "");
 
   const [cfgs, setCfgs] = useState<ClassConfig[]>(initialCfgs);
 
