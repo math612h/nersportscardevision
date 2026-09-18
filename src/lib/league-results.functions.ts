@@ -811,7 +811,6 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
     if (data.outcome === "time_penalty" && data.seconds <= 0) throw new Error("Angiv antal sekunder.");
     if (data.outcome === "point_penalty" && data.points <= 0) throw new Error("Angiv antal point.");
 
-    const previous = (((protest as any).verdict_details ?? {}).applied_penalties ?? {}) as Record<string, AppliedPenalty>;
     const nextApplied: Record<string, AppliedPenalty> = {};
     for (const userId of data.penalizedUserIds) {
       if (data.outcome === "time_penalty") nextApplied[userId] = { seconds: data.seconds };
@@ -819,18 +818,55 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
       else if (data.outcome === "disqualified") nextApplied[userId] = { dsq: true };
     }
 
+    // Deterministisk: byg det samlede straf-map for afdelingen ud fra ALLE afgjorte
+    // protester (denne afgørelse erstatter sin egen tidligere version), i stedet for
+    // at lægge til/trække fra på de eksisterende rækker. Så kan samme afgørelse gemmes
+    // flere gange uden at straffen hober sig op.
+    const { data: otherProtests, error: otherError } = await supabaseAdmin
+      .from("protests")
+      .select("id,verdict_details,status")
+      .eq("division_id", division.id)
+      .eq("status", "ruled");
+    if (otherError) throw new Error(otherError.message);
+
+    type Totals = { seconds: number; points: number; dsq: boolean };
+    const emptyTotals = (): Totals => ({ seconds: 0, points: 0, dsq: false });
+    const addPenalty = (map: Map<string, Totals>, userId: string, p: AppliedPenalty) => {
+      const cur = map.get(userId) ?? emptyTotals();
+      cur.seconds += Math.max(0, Number(p.seconds ?? 0));
+      cur.points += Math.max(0, Number(p.points ?? 0));
+      cur.dsq = cur.dsq || !!p.dsq;
+      map.set(userId, cur);
+    };
+
+    // stored = straffe som protesterne allerede har lagt på rækkerne (inkl. denne protests
+    // tidligere version). next = straffene efter denne afgørelse. Differencen mellem
+    // rækkens nuværende værdi og "stored" er manuelt indtastede straffe, som bevares.
+    const stored = new Map<string, Totals>();
+    const next = new Map<string, Totals>();
+    for (const other of otherProtests ?? []) {
+      const applied = (((other as any).verdict_details ?? {}).applied_penalties ?? {}) as Record<string, AppliedPenalty>;
+      for (const [userId, p] of Object.entries(applied)) {
+        addPenalty(stored, userId, p ?? {});
+        if ((other as any).id !== data.protestId) addPenalty(next, userId, p ?? {});
+      }
+    }
+    for (const [userId, p] of Object.entries(nextApplied)) addPenalty(next, userId, p);
+
     const settings = (division.settings ?? {}) as Record<string, unknown>;
     const source: StoredRaceRow[] = Array.isArray(settings.results) ? settings.results : [];
-    const affected = new Set([...Object.keys(previous), ...Object.keys(nextApplied)]);
     const adjusted = source.map((row) => {
-      if (!row.user_id || !affected.has(row.user_id)) return row;
-      const oldPenalty = previous[row.user_id] ?? {};
-      const newPenalty = nextApplied[row.user_id] ?? {};
+      if (!row.user_id) return row;
+      const was = stored.get(row.user_id) ?? emptyTotals();
+      const now = next.get(row.user_id) ?? emptyTotals();
+      if (was.seconds === now.seconds && was.points === now.points && was.dsq === now.dsq) return row;
+      const manualSeconds = Math.max(0, Number(row.penalty_seconds ?? 0) - was.seconds);
+      const manualPoints = Math.max(0, Number(row.penalty_points ?? 0) - was.points);
       return {
         ...row,
-        penalty_seconds: Math.max(0, Number(row.penalty_seconds ?? 0) - Number(oldPenalty.seconds ?? 0) + Number(newPenalty.seconds ?? 0)),
-        penalty_points: Math.max(0, Number(row.penalty_points ?? 0) - Number(oldPenalty.points ?? 0) + Number(newPenalty.points ?? 0)),
-        dsq: oldPenalty.dsq ? !!newPenalty.dsq : (!!row.dsq || !!newPenalty.dsq),
+        penalty_seconds: manualSeconds + now.seconds,
+        penalty_points: manualPoints + now.points,
+        dsq: now.dsq ? true : was.dsq ? false : !!row.dsq,
       };
     });
 
@@ -860,13 +896,8 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
     if (data.outcome === "time_penalty") details.seconds = data.seconds;
     if (data.outcome === "point_penalty") details.points = data.points;
 
-    const { error: divisionError } = await supabaseAdmin
-      .from("divisions")
-      .update({ settings: { ...settings, results: recalculated as any, results_confirmed: false, results_confirmed_at: null } })
-      .eq("id", division.id);
-    if (divisionError) throw new Error(divisionError.message);
-    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, division.id, recalculated, division.league_id);
-
+    // Gem afgørelsen FØR resultaterne skrives. Fejler noget bagefter, er straffen
+    // registreret, så et nyt forsøg genberegner samme tal i stedet for at lægge oveni.
     const { error: rulingError } = await supabaseAdmin
       .from("protests")
       .update({
@@ -879,6 +910,14 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
       })
       .eq("id", data.protestId);
     if (rulingError) throw new Error(rulingError.message);
+
+    const { error: divisionError } = await supabaseAdmin
+      .from("divisions")
+      .update({ settings: { ...settings, results: recalculated as any, results_confirmed: false, results_confirmed_at: null } })
+      .eq("id", division.id);
+    if (divisionError) throw new Error(divisionError.message);
+    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, division.id, recalculated, division.league_id);
+
     return { ok: true };
   });
 
