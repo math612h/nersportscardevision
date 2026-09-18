@@ -632,10 +632,21 @@ function DivisionEditor({
       const raceResults: any[] = [];
       const qualiResults: any[] = [];
 
+      // Tiltrædelsesrækker (joiner) hører ikke til i grid'et — de bevares,
+      // medmindre admin har indtastet rigtige data for køreren i denne afdeling.
+      const prevForJoiners = (settingsRef.current ?? division.settings ?? {}) as any;
+      const prevStoredResults: any[] = Array.isArray(prevForJoiners.results) ? prevForJoiners.results : [];
+      const joinerRowsPrev: any[] = prevStoredResults.filter((r) => r?.joiner);
+      const joinerKeySet = new Set(joinerRowsPrev.map((r) => `${r.user_id}|${r.car_class}`));
+
       for (const r of rows) {
         const raceBase = parseTimeToMs(r.time_str);
         const raceEff = r.dnf || r.dns || raceBase == null ? null : raceBase + Math.max(0, r.penalty_seconds) * 1000;
         const qBest = parseTimeToMs(r.q_best_str);
+        // Tom række for en kører med tiltrædelsespoint → spring over (bevares som joiner)
+        const joinerKey = `${r.user_id}|${r.car_class}`;
+        const hasRaceData = raceBase != null || (r.laps ?? 0) > 0 || r.race_position != null || r.dnf || r.dns;
+        const skipRaceRow = joinerKeySet.has(joinerKey) && !hasRaceData;
         qualiResults.push({
           user_id: r.user_id,
           car_number: r.car_number,
