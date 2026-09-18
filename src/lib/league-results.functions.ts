@@ -53,7 +53,7 @@ function recalculateStoredRaceRows(
   minFinishPercent: number,
   currentCategoryByUserClass: Map<string, string>,
 ) {
-  const rows = source.map((row) => {
+  const rows: StoredRaceRow[] = source.map((row): StoredRaceRow => {
     // Tiltrædelsesrækker (joiner) røres aldrig af genberegning.
     if (row.joiner) return { ...row };
     const category = row.user_id && row.car_class
