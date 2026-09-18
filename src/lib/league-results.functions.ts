@@ -811,7 +811,6 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
     if (data.outcome === "time_penalty" && data.seconds <= 0) throw new Error("Angiv antal sekunder.");
     if (data.outcome === "point_penalty" && data.points <= 0) throw new Error("Angiv antal point.");
 
-    const previous = (((protest as any).verdict_details ?? {}).applied_penalties ?? {}) as Record<string, AppliedPenalty>;
     const nextApplied: Record<string, AppliedPenalty> = {};
     for (const userId of data.penalizedUserIds) {
       if (data.outcome === "time_penalty") nextApplied[userId] = { seconds: data.seconds };
@@ -819,18 +818,42 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
       else if (data.outcome === "disqualified") nextApplied[userId] = { dsq: true };
     }
 
+    // Deterministisk: byg det samlede straf-map for afdelingen ud fra ALLE afgjorte
+    // protester (denne afgørelse erstatter sin egen tidligere version), i stedet for
+    // at lægge til/trække fra på de eksisterende rækker. Så kan samme afgørelse gemmes
+    // flere gange uden at straffen hober sig op.
+    const { data: otherProtests, error: otherError } = await supabaseAdmin
+      .from("protests")
+      .select("id,verdict_details,status")
+      .eq("division_id", division.id)
+      .eq("status", "ruled");
+    if (otherError) throw new Error(otherError.message);
+
+    const totals = new Map<string, { seconds: number; points: number; dsq: boolean }>();
+    const addPenalty = (userId: string, p: AppliedPenalty) => {
+      const cur = totals.get(userId) ?? { seconds: 0, points: 0, dsq: false };
+      cur.seconds += Math.max(0, Number(p.seconds ?? 0));
+      cur.points += Math.max(0, Number(p.points ?? 0));
+      cur.dsq = cur.dsq || !!p.dsq;
+      totals.set(userId, cur);
+    };
+    for (const other of otherProtests ?? []) {
+      if ((other as any).id === data.protestId) continue;
+      const applied = (((other as any).verdict_details ?? {}).applied_penalties ?? {}) as Record<string, AppliedPenalty>;
+      for (const [userId, p] of Object.entries(applied)) addPenalty(userId, p ?? {});
+    }
+    for (const [userId, p] of Object.entries(nextApplied)) addPenalty(userId, p);
+
     const settings = (division.settings ?? {}) as Record<string, unknown>;
     const source: StoredRaceRow[] = Array.isArray(settings.results) ? settings.results : [];
-    const affected = new Set([...Object.keys(previous), ...Object.keys(nextApplied)]);
     const adjusted = source.map((row) => {
-      if (!row.user_id || !affected.has(row.user_id)) return row;
-      const oldPenalty = previous[row.user_id] ?? {};
-      const newPenalty = nextApplied[row.user_id] ?? {};
+      if (!row.user_id) return row;
+      const total = totals.get(row.user_id) ?? { seconds: 0, points: 0, dsq: false };
       return {
         ...row,
-        penalty_seconds: Math.max(0, Number(row.penalty_seconds ?? 0) - Number(oldPenalty.seconds ?? 0) + Number(newPenalty.seconds ?? 0)),
-        penalty_points: Math.max(0, Number(row.penalty_points ?? 0) - Number(oldPenalty.points ?? 0) + Number(newPenalty.points ?? 0)),
-        dsq: oldPenalty.dsq ? !!newPenalty.dsq : (!!row.dsq || !!newPenalty.dsq),
+        penalty_seconds: total.seconds,
+        penalty_points: total.points,
+        dsq: total.dsq,
       };
     });
 
