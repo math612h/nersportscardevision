@@ -19,19 +19,35 @@ type ResultRow = {
 export type StandingsEmbed = { title: string; description: string; color: number };
 
 const COLOR = 0xe11d48;
+const TEAM_COLOR = 0x0ea5e9;
 
-function chunkLines(lines: string[], limit = 3900): string[] {
-  const out: string[] = [];
-  let cur = "";
-  for (const l of lines) {
-    if (cur.length + l.length + 1 > limit) {
-      out.push(cur);
-      cur = "";
-    }
-    cur += (cur ? "\n" : "") + l;
+const MEDALS = ["🥇", "🥈", "🥉"];
+
+function truncateName(s: string, n: number): string {
+  return s.length > n ? s.slice(0, Math.max(1, n - 1)) + "…" : s;
+}
+
+type TableRow = { pos: number; name: string; pts: number };
+
+// Opstillet monospace-tabel i en Discord-kodeblok: POS / NAVN / POINT.
+// Lange lister deles i flere tabeller (én pr. embed) med gentaget overskrift.
+function buildTableParts(rows: TableRow[], rowsPerPart = 25): string[] {
+  if (rows.length === 0) return [];
+  const nameW = Math.min(26, Math.max(6, ...rows.map((r) => r.name.length)));
+  const ptsW = Math.max(5, ...rows.map((r) => String(r.pts).length));
+  const posW = 4;
+  const header = `${"POS".padEnd(posW)}${"NAVN".padEnd(nameW + 2)}${"POINT".padStart(ptsW)}`;
+  const sep = "─".repeat(header.length);
+  const parts: string[] = [];
+  for (let i = 0; i < rows.length; i += rowsPerPart) {
+    const slice = rows.slice(i, i + rowsPerPart);
+    const lines = slice.map((r) => {
+      const pos = (MEDALS[r.pos - 1] ?? `${r.pos}.`).padEnd(posW);
+      return `${pos}${truncateName(r.name, nameW).padEnd(nameW + 2)}${String(r.pts).padStart(ptsW)}`;
+    });
+    parts.push("```\n" + header + "\n" + sep + "\n" + lines.join("\n") + "\n```");
   }
-  if (cur) out.push(cur);
-  return out.length > 0 ? out : [""];
+  return parts;
 }
 
 export async function buildLeagueStandingsEmbeds(
