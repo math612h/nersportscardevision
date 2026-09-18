@@ -221,14 +221,27 @@ function DivisionEditor({
   const existingQuali: any[] = Array.isArray(division.settings?.quali_results) ? division.settings.quali_results : [];
   // Nøgl gemte resultater på bruger-id (bilnummer som reserve). Klasse/kategori
   // duer ikke som nøgle: flyttes en kører mellem Pro og Am mister vi hans data.
+  // Et gemt resultat må kun bruges af én tilmelding. Har en kører både en
+  // gammel (udmeldt) tilmelding i én klasse og en ny i en anden, skal resultatet
+  // følge den klasse det blev kørt i — ikke kopieres over i den nye klasse.
   const buildLookup = (arr: any[]) => {
-    const byUser = new Map<string, any>();
-    const byNumber = new Map<number, any>();
-    for (const r of arr) {
-      if (r?.user_id && !byUser.has(r.user_id)) byUser.set(r.user_id, r);
-      if (typeof r?.car_number === "number" && !byNumber.has(r.car_number)) byNumber.set(r.car_number, r);
-    }
-    return (e: EntryRec) => byUser.get(e.user_id) ?? (e.car_number != null ? byNumber.get(e.car_number) : undefined);
+    const pool = (arr ?? []).filter(Boolean);
+    const claimed = new Set<any>();
+    const map = new Map<string, any>();
+    const claim = (e: EntryRec, pred: (r: any) => boolean) => {
+      if (map.has(e.id)) return;
+      const hit = pool.find((r) => !claimed.has(r) && pred(r));
+      if (hit) {
+        claimed.add(hit);
+        map.set(e.id, hit);
+      }
+    };
+    for (const e of entries)
+      claim(e, (r) => r.user_id === e.user_id && r.car_class === e.car_class);
+    for (const e of entries) claim(e, (r) => r.user_id === e.user_id);
+    for (const e of entries)
+      claim(e, (r) => e.car_number != null && r.car_number === e.car_number);
+    return (e: EntryRec) => map.get(e.id);
   };
   const findRace = buildLookup(existingRace);
   const findQuali = buildLookup(existingQuali);
