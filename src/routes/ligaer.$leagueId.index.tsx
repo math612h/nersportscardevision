@@ -1141,6 +1141,13 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
                         if (!cell) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                        if (cell.joiner) {
+                          return (
+                            <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`Tiltrædelsespoint (+${cell.points})`}>
+                              –
+                            </td>
+                          );
+                        }
                         const st = cell.status;
                         if (st === "dns" || (cell.dns && !st)) {
                           return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status="dns" /></td>;
