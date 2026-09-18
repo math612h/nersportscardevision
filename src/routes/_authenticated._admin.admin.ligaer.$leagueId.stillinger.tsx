@@ -660,7 +660,7 @@ function DivisionEditor({
           status: qualiStatusFor({ dns: r.q_dns, nt: r.q_nt, best_lap_ms: qBest, laps: r.q_laps }),
           class_position: 0,
         });
-        raceResults.push({
+        if (!skipRaceRow) raceResults.push({
           user_id: r.user_id,
           car_number: r.car_number,
           driver_name: r.driver_name,
