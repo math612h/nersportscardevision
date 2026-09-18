@@ -830,7 +830,7 @@ export const applyProtestRuling = createServerFn({ method: "POST" })
       .update({ settings: { ...settings, results: recalculated as any, results_confirmed: false, results_confirmed_at: null } })
       .eq("id", division.id);
     if (divisionError) throw new Error(divisionError.message);
-    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, division.id, recalculated);
+    await syncStoredRaceRowsToLeagueResults(supabaseAdmin, division.id, recalculated, division.league_id);
 
     const { error: rulingError } = await supabaseAdmin
       .from("protests")
