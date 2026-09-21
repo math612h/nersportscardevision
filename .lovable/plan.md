@@ -19,9 +19,13 @@
 - Bekræftelses-teksten før fjernelse nævner kørerens navn tydeligere, så man ikke rammer forkert række.
 - I "Tilføj kører"-dialogen får en kører, der mangler den rigtige klasse på team-siden, en tydeligere forklaring med en direkte henvisning til, hvor klassen ændres.
 
+### 3. Tidligere ligaer vises ikke længere som aktive lineups
+- Lineups i ligaer, der er afviklet (sidste afdeling er kørt), flyttes ud af "Team-tilmeldinger" og ned i en sammenklappet "Tidligere ligaer"-sektion.
+- Historikken bevares og kan foldes ud, men kun igangværende ligaer fremstår som aktive lineups.
+
 ## Teknisk
 
 - Datafix køres som SQL: `league_team_lineup.effective_until = NULL` for Daniels LMGT3-række (`ecd320fc-…`), og `team_members.car_class = 'LMP2'` for Kenneth i team `066b0678-…`.
-- `src/components/LeagueTeamSignupCard.tsx`: opdel `league_team_lineup` i aktive og fjernede (`effective_until != null`); fjernede vises i en `details`-lignende sammenklappet blok. Ingen ændring i server-funktioner eller pointlogik.
+- `src/components/LeagueTeamSignupCard.tsx`: opdel `league_team_lineup` i aktive og fjernede (`effective_until != null`); fjernede vises i en `details`-lignende sammenklappet blok. Samme fil får en ekstra query mod `divisions` (max `race_date` pr. liga) og deler tilmeldingerne i aktive ligaer og afviklede ligaer (sidste `race_date` er passeret) — afviklede vises sammenklappet. Ingen ændring i server-funktioner eller pointlogik.
 - `src/components/TeamLeagueSignupDialog.tsx`: kun tekstændring på den eksisterende `reason`-visning.
 - Ingen ændringer i `removeDriversFromLineup`, `submitTeamForLeague` eller team-pointberegningen.
