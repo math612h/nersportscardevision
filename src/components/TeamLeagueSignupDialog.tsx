@@ -303,7 +303,7 @@ export function TeamLeagueSignupDialog({
                     : !carClass
                     ? null
                     : m.car_class !== carClass
-                      ? `ikke tildelt ${carClass} i teamet`
+                      ? `ikke tildelt ${carClass} i teamet — ret klassen på medlemslisten ovenfor`
                       : !(memberEntries ?? []).some((e) => e.user_id === m.user_id && e.car_class === carClass)
                         ? `ikke selv tilmeldt ${carClass} i ligaen`
                         : null;
