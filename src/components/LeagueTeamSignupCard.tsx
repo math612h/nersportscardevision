@@ -29,17 +29,6 @@ export function LeagueTeamSignupCard({
   const withdrawFn = useServerFn(withdrawTeamFromLeague);
   const removeFn = useServerFn(removeDriversFromLineup);
 
-  const removeDriver = useMutation({
-    mutationFn: async (v: { entryId: string; userId: string }) =>
-      await removeFn({ data: { entryId: v.entryId, userIds: [v.userId] } }),
-    onSuccess: () => {
-      toast.success("Køreren er fjernet fra lineupet — tidligere afdelingers team-point er uændrede");
-      qc.invalidateQueries({ queryKey: ["team-league-entries", teamId] });
-      qc.invalidateQueries({ queryKey: ["league-team-entries-mine"] });
-    },
-    onError: (e) => toastError((e as Error).message),
-  });
-
   const { data: entries } = useQuery({
     queryKey: ["team-league-entries", teamId],
     queryFn: async () => {
@@ -60,6 +49,35 @@ export function LeagueTeamSignupCard({
         league_team_lineup: Array<{ id: string; user_id: string; status: string; effective_from: string | null; effective_until: string | null }>;
       }>;
     },
+  });
+
+  const removeDriver = useMutation({
+    mutationFn: async (v: { entryId: string; userId: string }) =>
+      await removeFn({ data: { entryId: v.entryId, userIds: [v.userId] } }),
+    onSuccess: async (_result, removed) => {
+      // Update the visible lineup only after the server confirms the removal,
+      // then fetch the authoritative rows so a refresh cannot revive the driver.
+      qc.setQueryData<typeof entries>(["team-league-entries", teamId], (current) =>
+        current?.map((entry) =>
+          entry.id !== removed.entryId
+            ? entry
+            : {
+                ...entry,
+                league_team_lineup: entry.league_team_lineup.map((driver) =>
+                  driver.user_id === removed.userId
+                    ? { ...driver, effective_until: new Date().toISOString() }
+                    : driver,
+                ),
+              },
+        ),
+      );
+      await Promise.all([
+        qc.refetchQueries({ queryKey: ["team-league-entries", teamId], exact: true }),
+        qc.invalidateQueries({ queryKey: ["league-team-entries-mine"] }),
+      ]);
+      toast.success("Køreren er fjernet fra lineupet — tidligere afdelingers team-point er uændrede");
+    },
+    onError: (e) => toastError((e as Error).message),
   });
 
   const leagueIds = useMemo(
@@ -213,9 +231,11 @@ export function LeagueTeamSignupCard({
                     return (
                       <li key={l.id} className="line-through opacity-70">
                         🚫 {name}
-                        <span className="opacity-70">
-                          {" "}· fjernet {new Date(l.effective_until!).toLocaleDateString("da-DK")}
-                        </span>
+                        {l.effective_until && (
+                          <span className="opacity-70">
+                            {" "}· fjernet {new Date(l.effective_until).toLocaleDateString("da-DK")}
+                          </span>
+                        )}
                       </li>
                     );
                   })}
