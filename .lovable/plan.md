@@ -25,10 +25,9 @@ Der er desuden en konkret fejl i den fælles lineup-lås: den medregner historis
 - Historiske teampoint bevares uændrede via start- og slutdatoerne.
 
 ### 3. Gør flytningen tydelig og sikker
-- Vis fjernede kørere tydeligt som historik og aldrig som en del af det aktive lineup eller den aktive optælling.
-- I dialogen til LMP2 skal Kenneth kunne vælges som ny kører, selv om han tidligere var på LMGT3-lineupet.
-- Efter tilføjelse genhentes både LMGT3- og LMP2-lineupet, så den gamle visning ikke bliver hængende.
-- Fejl fra gemningen vises tydeligt og må ikke efterlade en falsk succesbesked.
+- Bevar den nuværende visning, hvor fjernede kørere kun står under historik og ikke tæller som aktive; gennemgangen viser, at denne filtrering allerede er korrekt.
+- Når låsen er rettet, skal Kenneth kunne vælges til LMP2, selv om hans historiske LMGT3-række bevares.
+- Bevar den eksisterende genindlæsning efter tilføjelse og fjernelse; den er allerede korrekt koblet til lineup-dataene.
 
 ## Kontrol
 - Log ind som almindelig bruger, skift streambillede, genindlæs siden og bekræft, at det nye billede stadig vises.
@@ -40,5 +39,5 @@ Der er desuden en konkret fejl i den fælles lineup-lås: den medregner historis
 ## Teknisk
 - Databaseændring: erstat `Users can update own profile` med en regel, der kun kontrollerer ejerskab og uændret `approved`; triggeren `prevent_privileged_profile_field_edits` beskytter fortsat donationer/præstationer.
 - Databaseændring: opdater `user_locked_team`, så den kræver `league_team_lineup.effective_until IS NULL`.
-- Klient: brug aktive rækker konsekvent i lineup-dialogen og genindlæs begge relevante lineup-forespørgsler efter ændringer.
+- Ingen unødvendig ændring af lineup-visningen: den filtrerer allerede korrekt på aktive rækker og genindlæser efter ændringer.
 - Ingen ændring i den eksisterende historiske team-pointberegning.
