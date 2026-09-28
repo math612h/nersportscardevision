@@ -1,17 +1,43 @@
-# Ret: brugere kan ikke gemme ændringer på deres profil (bl.a. streambillede)
+# Ret streambillede og flytning mellem team-lineups
 
-## Årsag (bekræftet)
-Ved sikkerhedsrettelsen blev donationsbeløb og donationsnote skjult for almindelige brugere. Men reglen for "brugere må opdatere egen profil" slår selv netop de to felter op for at tjekke, at de ikke ændres. Opslaget bliver nu afvist, så **alle** profilopdateringer fra ikke-admins fejler — også når man skifter streambillede (billedet uploades, men profilen kan ikke pege på det nye billede).
+## Bekræftede årsager
 
-## Rettelse
-- Fjern tjekket af donationsbeløb, donationsnote, donationsniveau og præstationer fra opdateringsreglen. De er allerede beskyttet af en eksisterende database-trigger, som automatisk nulstiller ændringer i de felter fra ikke-admins.
-- Behold tjekket af "godkendt"-feltet (så man ikke kan godkende sig selv).
-- Donationsdata forbliver skjult for besøgende og almindelige brugere.
-- Lille ekstra: grænsen i appen (10 MB) sættes, så den matcher lagerets grænse, så billeder lige under 10 MB ikke fejler uden forklaring.
+### Streambillede
+Sikkerhedsreglen for profilopdateringer kontrollerer donationsfelter, som almindelige brugere ikke længere må læse. Derfor afvises hele profilopdateringen efter upload, og profilen kan ikke gemme henvisningen til det nye billede.
+
+### Kenneth Dahl i Odyssé
+Databasen viser, at Kenneth allerede er fjernet fra Odyssés LMGT3-lineup (`effective_until` er sat 19. september). Han står derfor kun som historisk medlem, selv om visningen stadig kan få det til at ligne et aktivt lineup. Hans team-klasse er allerede LMP2, og hans aktive ligatilmelding er LMP2.
+
+Der er desuden en konkret fejl i den fælles lineup-lås: den medregner historiske lineup-rækker uden at kontrollere slutdatoen. Det kan få fjernede kørere til fortsat at fremstå låst til deres gamle lineup.
+
+## Ændringer
+
+### 1. Gør profilopdatering mulig igen
+- Forenkle reglen for opdatering af egen profil, så den ikke læser de skjulte donationsfelter.
+- Behold beskyttelsen mod selvgodkendelse.
+- Behold den eksisterende ekstra sikring, der forhindrer almindelige brugere i at ændre donationer og præstationer.
+- Donationsoplysninger forbliver skjulte.
+- Sørg for, at appens billedgrænse matcher lagerets præcise 10 MB-grænse.
+
+### 2. Ret lineup-låsen
+- Historiske lineup-rækker med en slutdato må ikke længere gøre en kører aktiv eller låst.
+- Kun accepterede rækker uden slutdato i en aktiv liga kan låse en kører.
+- Historiske teampoint bevares uændrede via start- og slutdatoerne.
+
+### 3. Gør flytningen tydelig og sikker
+- Bevar den nuværende visning, hvor fjernede kørere kun står under historik og ikke tæller som aktive; gennemgangen viser, at denne filtrering allerede er korrekt.
+- Når låsen er rettet, skal Kenneth kunne vælges til LMP2, selv om hans historiske LMGT3-række bevares.
+- Bevar den eksisterende genindlæsning efter tilføjelse og fjernelse; den er allerede korrekt koblet til lineup-dataene.
 
 ## Kontrol
-- Log ind som almindelig bruger, upload/skift streambillede og gem streamingprofil — begge skal lykkes.
-- Bekræft at donationsfelter stadig ikke kan ændres eller læses af almindelige brugere.
+- Log ind som almindelig bruger, skift streambillede, genindlæs siden og bekræft, at det nye billede stadig vises.
+- Log ind som Daniel Kokborg og bekræft, at Kenneth ikke står aktivt i LMGT3.
+- Tilføj Kenneth til Odyssés LMP2-lineup og genindlæs; han skal fortsat stå aktivt i LMP2 og kun historisk i LMGT3.
+- Kontrollér, at tidligere teamresultater er uændrede, og at kommende resultater kun bruger det aktive LMP2-lineup.
+- Kontrollér, at donationsfelter fortsat hverken kan læses eller ændres af almindelige brugere.
 
 ## Teknisk
-Migration: `DROP POLICY "Users can update own profile"` og genopret med `USING (auth.uid() = id) WITH CHECK (auth.uid() = id AND approved = (select p.approved from profiles p where p.id = auth.uid()))`. Trigger `prevent_privileged_profile_field_edits` håndterer donation_*/achievements. Klient: 10 MB-check i StreamingProfileCard → 10_000_000 bytes.
+- Databaseændring: erstat `Users can update own profile` med en regel, der kun kontrollerer ejerskab og uændret `approved`; triggeren `prevent_privileged_profile_field_edits` beskytter fortsat donationer/præstationer.
+- Databaseændring: opdater `user_locked_team`, så den kræver `league_team_lineup.effective_until IS NULL`.
+- Ingen unødvendig ændring af lineup-visningen: den filtrerer allerede korrekt på aktive rækker og genindlæser efter ændringer.
+- Ingen ændring i den eksisterende historiske team-pointberegning.
