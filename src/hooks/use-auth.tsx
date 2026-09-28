@@ -39,20 +39,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let lastUserId: string | null | undefined = undefined;
 
     const applySession = async (s: Session | null) => {
       if (!mounted) return;
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
-        const { data } = await supabase.from("user_roles").select("role").eq("user_id", s.user.id);
-        if (mounted) {
+        const sameUser = lastUserId === s.user.id;
+        lastUserId = s.user.id;
+        // Ved ny bruger: hold loading, indtil rollerne er hentet, så vagter ikke omdirigerer for tidligt.
+        if (!sameUser) setLoading(true);
+        const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", s.user.id);
+        // Ved fejl beholdes de kendte roller i stedet for at nedgradere brugeren.
+        if (mounted && !error) {
           setIsAdmin(!!data?.some((r) => r.role === "admin"));
           setIsGuest(!!data?.some((r) => r.role === "guest"));
           setIsCoach(!!data?.some((r) => r.role === "coach"));
           setIsSteward(!!data?.some((r) => r.role === "steward"));
         }
       } else {
+        lastUserId = null;
         setIsAdmin(false);
         setIsGuest(false);
         setIsCoach(false);
@@ -61,10 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (mounted) setLoading(false);
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
+      const identityChanged = (s?.user?.id ?? null) !== (lastUserId ?? null);
       setTimeout(() => { void applySession(s).catch(() => mounted && setLoading(false)); }, 0);
+      // Kun ved reelle login/logud-skift — ikke ved automatisk sessionsfornyelse.
+      if (event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") return;
+      if (!identityChanged && event !== "USER_UPDATED") return;
       router.invalidate();
-      qc.invalidateQueries();
+      if (event !== "SIGNED_OUT") qc.invalidateQueries();
     });
 
     supabase.auth.getSession()
