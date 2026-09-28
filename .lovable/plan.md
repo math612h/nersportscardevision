@@ -1,19 +1,17 @@
-# Genstart databasen så hjemmesiden virker igen
+# Ret: brugere kan ikke gemme ændringer på deres profil (bl.a. streambillede)
 
-## Hvad er galt
-Siden selv svarer, men databasen bag den er sat på pause. Derfor kan forsiden ikke hente ligaer, nyheder, resultater og login — den står tom eller hænger.
+## Årsag (bekræftet)
+Ved sikkerhedsrettelsen blev donationsbeløb og donationsnote skjult for almindelige brugere. Men reglen for "brugere må opdatere egen profil" slår selv netop de to felter op for at tjekke, at de ikke ændres. Opslaget bliver nu afvist, så **alle** profilopdateringer fra ikke-admins fejler — også når man skifter streambillede (billedet uploades, men profilen kan ikke pege på det nye billede).
 
-## Hvad der skal gøres
-1. Genoptag databasen (Lovable Cloud).
-2. Vent til den melder klar, og tjek derefter at forsiden på www.lmudanmark.dk henter nyheder, ligaer og resultater igen.
-3. Tjek at login virker.
+## Rettelse
+- Fjern tjekket af donationsbeløb, donationsnote, donationsniveau og præstationer fra opdateringsreglen. De er allerede beskyttet af en eksisterende database-trigger, som automatisk nulstiller ændringer i de felter fra ikke-admins.
+- Behold tjekket af "godkendt"-feltet (så man ikke kan godkende sig selv).
+- Donationsdata forbliver skjult for besøgende og almindelige brugere.
+- Lille ekstra: grænsen i appen (10 MB) sættes, så den matcher lagerets grænse, så billeder lige under 10 MB ikke fejler uden forklaring.
 
-Ingen ændringer i koden eller i data.
+## Kontrol
+- Log ind som almindelig bruger, upload/skift streambillede og gem streamingprofil — begge skal lykkes.
+- Bekræft at donationsfelter stadig ikke kan ændres eller læses af almindelige brugere.
 
-## Hvorfor er den stoppet
-Workspacet har brugt næsten alle sine credits for denne måned: månedens 200, overførte 200 og alle 3.650 købte er brugt, og der er kun 3 daglige tilbage. Den mest sandsynlige årsag til pausen er, at der ikke er flere credits til at holde databasen kørende.
-
-## Så det ikke sker igen
-1. Køb flere credits, eller opgradér planen under Settings → Plans & credits, før databasen genoptages.
-2. Genoptag databasen under Cloud i projektet.
-3. Hold øje med saldoen, eller slå automatisk opfyldning til, så siden ikke går ned næste gang.
+## Teknisk
+Migration: `DROP POLICY "Users can update own profile"` og genopret med `USING (auth.uid() = id) WITH CHECK (auth.uid() = id AND approved = (select p.approved from profiles p where p.id = auth.uid()))`. Trigger `prevent_privileged_profile_field_edits` håndterer donation_*/achievements. Klient: 10 MB-check i StreamingProfileCard → 10_000_000 bytes.
