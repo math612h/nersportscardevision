@@ -9,3 +9,5 @@
 - [x] Remove only the visible individual result tables from division pages and verify mobile/desktop navigation
 - [x] Joiner points: 8 points per missed division on late signup and class switch, shown as per-division result rows
 - [x] League create/edit: field for joiner points per division (default 8)
+- [x] Fix ordinary profile updates so stream photos can be saved again
+- [x] Exclude removed historical drivers from the active team-lineup lock
