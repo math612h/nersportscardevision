@@ -605,7 +605,7 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
                       )}
                     </div>
                   )}
-              {canSeePractice && <PracticeSessionsList divisionId={d.id} />}
+              <PracticeSessionsList divisionId={d.id} />
             </CardContent>
           </Card>
         );
