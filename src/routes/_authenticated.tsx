@@ -17,13 +17,18 @@ function Gate() {
 
   const { data: status, isLoading: statusLoading } = useQuery({
     queryKey: ["onboarding-status", user?.id],
+    retry: 2,
     enabled: !!user && !isGuest,
     queryFn: async () => {
-      const [{ data: profile }, { data: priv }] = await Promise.all([
+      const [profileRes, privRes] = await Promise.all([
         supabase.from("profiles").select("display_name, lmu_name, accepts_danish, media_consent").eq("id", user!.id).maybeSingle(),
         (supabase as unknown as { from: (t: string) => any }).from("profiles_private")
           .select("discord_user_id, address, postal_code, city").eq("user_id", user!.id).maybeSingle(),
       ]);
+      if (profileRes.error) throw profileRes.error;
+      if (privRes.error) throw privRes.error;
+      const { data: profile } = profileRes;
+      const { data: priv } = privRes;
       const p = (priv ?? {}) as { discord_user_id?: string | null; address?: string | null; postal_code?: string | null; city?: string | null };
       const pr = (profile ?? {}) as { display_name?: string | null; lmu_name?: string | null; accepts_danish?: boolean | null; media_consent?: boolean | null };
       const discordLinked = !!p.discord_user_id;

@@ -310,7 +310,7 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
     },
   });
   const isSignedUp = !!mySignup;
-  const canSeePractice = !!user && (isSignedUp || isAdmin || isSteward);
+  // Practice sessions er nu synlige for alle.
   const canSeeLobby = !!user && (isAdmin || isSteward || (isApproved && isSignedUp));
 
   const divisionIds = useMemo(() => (divisions ?? []).map((d: any) => d.id), [divisions]);
@@ -605,7 +605,7 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
                       )}
                     </div>
                   )}
-              {canSeePractice && <PracticeSessionsList divisionId={d.id} />}
+              <PracticeSessionsList divisionId={d.id} />
             </CardContent>
           </Card>
         );
