@@ -25,3 +25,17 @@ Diagnosen er baseret på koden; den er ikke genskabt live endnu.
 - `src/routes/_authenticated.tsx`: kast ved fejl i profil-queryen (så `status` bevarer sidste gode værdi), redirect kun når `status` er fra succesfuldt opslag.
 - `rg` efter `navigate({ to: "/" })` kombineret med rolletjek i andre ruter og ret tilsvarende.
 - Ingen database-ændringer.
+
+# Practice sessions synlige for alle
+
+Alle besøgende (også uden login) skal kunne se practice sessions under hver afdeling i kalenderen, inklusive lobbykode og adgangskode.
+
+## Ændringer
+- Kalenderen viser practice sessions for alle, ikke kun tilmeldte/admins/stewards.
+- Databasen tillader alle at læse practice sessions (ny offentlig læseregel; de eksisterende regler bevares).
+- Funktionen der udleverer lobbykode/adgangskode til practice sessions returnerer dem til alle. Lobbykoder til selve løbene forbliver kun for tilmeldte.
+
+## Teknisk
+- `src/routes/ligaer.$leagueId.index.tsx`: `PracticeSessionsList` vises uden `canSeePractice`-betingelsen (variablen bevares hvis brugt andre steder).
+- Migration: `CREATE POLICY "Anyone can read practice sessions" ON division_practice_sessions FOR SELECT TO anon, authenticated USING (true)` + `GRANT SELECT ... TO anon`; `get_division_practice_credentials` og `get_practice_session_credentials` fjerner deltager-tjekket og får `GRANT EXECUTE ... TO anon`.
+- `get_division_lobby` (løbs-lobby) røres ikke.
