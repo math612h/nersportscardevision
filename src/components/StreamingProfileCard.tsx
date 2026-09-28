@@ -43,7 +43,7 @@ function StreamPhotoSection({ userId }: { userId: string }) {
 
   const onFile = async (file: File) => {
     if (!file.type.startsWith("image/")) return toast.error("Vælg venligst en billedfil");
-    if (file.size > 10 * 1024 * 1024) return toast.error("Billedet må maks. fylde 10 MB");
+    if (file.size > 10_000_000) return toast.error("Billedet må maks. fylde 10 MB");
     setBusy(true);
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
