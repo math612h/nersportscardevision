@@ -26,7 +26,8 @@ import { getCurrentWeekStartISO, shiftWeek, weekLabel, youtubeEmbedUrl } from "@
 import { DonorFrame } from "@/lib/donation-tier";
 import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
-import { LiveNowBanner } from "@/components/LiveNowBanner";
+import { LivestreamSection, useLiveStatus } from "@/components/LivestreamSection";
+import { useActiveLeague } from "@/hooks/use-active-league";
 
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
@@ -229,7 +230,6 @@ function NewsHome() {
 
   return (
     <div className="space-y-10">
-      <LiveNowBanner />
       {user && !isGuest && <ProfileCompletionGate />}
       {user && !isGuest && <AddressConsentBanner />}
       <header className="relative space-y-3">
@@ -245,11 +245,13 @@ function NewsHome() {
           <p className="text-sm text-muted-foreground">{t("home.subtitle")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button asChild className="gap-2">
-            <Link to="/lmu/liga">
-              <Flag className="h-4 w-4" /> {t("home.leagues")}
-            </Link>
-          </Button>
+          {activeLeague && (
+            <Button asChild className="gap-2">
+              <Link to="/ligaer/$leagueId" params={{ leagueId: activeLeague.id }}>
+                <Flag className="h-4 w-4" /> {activeLeague.name}
+              </Link>
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2">
@@ -301,20 +303,21 @@ function NewsHome() {
 
       <NewsPostsSection />
 
-      <OvertakingWinnerSection />
 
 
-      {isLoading && (
+      {liveStatus?.isLive && <LivestreamSection status={liveStatus} mode="live" />}
+
+      {!liveStatus?.isLive && isLoading && (
         <div className="h-96 animate-pulse rounded-xl border border-border bg-card/50" />
       )}
 
-      {!isLoading && !latest && (
+      {!liveStatus?.isLive && !isLoading && !latest && (
         <section className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           {t("home.emptyState")}
         </section>
       )}
 
-      {latest && (
+      {!liveStatus?.isLive && latest && (
         <section className="space-y-4">
           <div className="flex items-center justify-between gap-2 text-primary">
             <div className="flex items-center gap-2">
@@ -468,28 +471,7 @@ function NewsHome() {
 
 
 
-      {otherResults.length > 0 && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 text-primary">
-            <Calendar className="h-4 w-4" />
-            <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Tidligere løb</h2>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-3">
-            {otherResults.map((d) => (
-              <div key={d.id} className="rounded-xl border border-border bg-card p-4">
-                <p className="text-sm font-semibold">{d.name}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{d.leagues?.name ?? "Liga"}</p>
-                {d.track && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {d.track}
-                    {d.layout ? ` · ${d.layout}` : ""}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {!liveStatus?.isLive && <LivestreamSection status={liveStatus} mode="last" />}
     </div>
   );
 }
