@@ -3,6 +3,7 @@ import { Flag, Gauge, GraduationCap, Handshake, Home, LayoutGrid, LogOut, Menu, 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
+import { useActiveLeague } from "@/hooks/use-active-league";
 import { useProfileComplete } from "@/hooks/use-profile-complete";
 import { Button } from "@/components/ui/button";
 import { NotificationsBell } from "@/components/NotificationsBell";
@@ -26,10 +27,11 @@ export function AppHeader() {
   const navigate = useNavigate();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const activeLeague = useActiveLeague();
 
   const navItems: { to: string; label: string; icon: React.ReactNode; show: boolean; exact?: boolean; highlight?: boolean }[] = [
     { to: "/", label: t("nav.home"), icon: <Home className="h-4 w-4" />, show: !isAdminRoute, exact: true },
-    { to: "/lmu/liga", label: t("nav.leagues"), icon: <Flag className="h-4 w-4" />, show: !isAdminRoute },
+    { to: activeLeague ? `/ligaer/${activeLeague.id}` : "/", label: activeLeague?.name ?? "", icon: <Flag className="h-4 w-4" />, show: !isAdminRoute && !!activeLeague },
     { to: "/leaderboard", label: t("nav.leaderboard"), icon: <Trophy className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/teams", label: t("nav.teams"), icon: <Shield className="h-4 w-4" />, show: !isAdminRoute },
     { to: "/brugere", label: t("nav.users"), icon: <Users className="h-4 w-4" />, show: !isAdminRoute },
@@ -42,7 +44,7 @@ export function AppHeader() {
   ];
 
   const visibleItems = navItems.filter((i) => i.show && (!gated || (i.to === "/" && i.exact)));
-  const primarySet = new Set(["/", "/lmu/liga", "/leaderboard", "/admin"]);
+  const primarySet = new Set(["/", activeLeague ? `/ligaer/${activeLeague.id}` : "/", "/leaderboard", "/admin"]);
   const primaryItems = visibleItems.filter((i) => primarySet.has(i.to) || i.highlight);
   const secondaryItems = visibleItems.filter((i) => !primaryItems.includes(i));
 

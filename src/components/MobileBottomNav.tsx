@@ -2,6 +2,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { Flag, Home, Trophy, UserCircle2, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/use-auth";
+import { useActiveLeague } from "@/hooks/use-active-league";
 
 type Item = { to: string; label: string; icon: React.ReactNode; exact?: boolean };
 
@@ -9,11 +10,12 @@ export function MobileBottomNav() {
   const { user } = useAuth();
   const { t } = useTranslation();
   const location = useLocation();
+  const activeLeague = useActiveLeague();
   if (location.pathname.startsWith("/admin") || location.pathname.startsWith("/login")) return null;
 
   const items: Item[] = [
     { to: "/", label: t("nav.home"), icon: <Home className="h-5 w-5" />, exact: true },
-    { to: "/lmu/liga", label: t("nav.leagues"), icon: <Flag className="h-5 w-5" /> },
+    ...(activeLeague ? [{ to: `/ligaer/${activeLeague.id}`, label: activeLeague.name.replace(/^LMU Danmark\s*/i, ""), icon: <Flag className="h-5 w-5" /> }] : []),
     { to: "/leaderboard", label: t("nav.times"), icon: <Trophy className="h-5 w-5" /> },
     { to: "/brugere", label: t("nav.users"), icon: <Users className="h-5 w-5" /> },
     { to: user ? "/profil" : "/login", label: user ? t("nav.profile") : t("nav.login"), icon: <UserCircle2 className="h-5 w-5" /> },
@@ -25,7 +27,7 @@ export function MobileBottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Navigation"
     >
-      <ul className="mx-auto grid max-w-6xl grid-cols-5">
+      <ul className="mx-auto grid max-w-6xl" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map((item) => (
           <li key={item.to + item.label} className="flex">
             <Link

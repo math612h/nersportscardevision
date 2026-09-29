@@ -70,6 +70,8 @@ function NewsHome() {
   const { t } = useTranslation();
   const gated = signedIn && !profileComplete && !isGuest;
   const qc = useQueryClient();
+  const activeLeague = useActiveLeague();
+  const liveStatus = useLiveStatus();
 
   const { data: pendingIncidents = 0 } = useQuery({
     queryKey: ["home-pending-incidents", user?.id],
@@ -135,7 +137,6 @@ function NewsHome() {
   };
 
   const latest = divisions?.[0] as any | undefined;
-  const otherResults = (divisions ?? []).slice(1, 4) as any[];
   const trackFile = getTrackImageFile(latest?.track);
 
   const { data: trackImageMap } = useQuery({
