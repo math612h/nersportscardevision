@@ -146,6 +146,9 @@ export type Database = {
           discord_message_id: string | null
           id: string
           is_live: boolean
+          last_ended_at: string | null
+          last_title: string | null
+          last_video_id: string | null
           platform: string
           scheduled_start_at: string | null
           started_at: string | null
@@ -164,6 +167,9 @@ export type Database = {
           discord_message_id?: string | null
           id?: string
           is_live?: boolean
+          last_ended_at?: string | null
+          last_title?: string | null
+          last_video_id?: string | null
           platform: string
           scheduled_start_at?: string | null
           started_at?: string | null
@@ -182,6 +188,9 @@ export type Database = {
           discord_message_id?: string | null
           id?: string
           is_live?: boolean
+          last_ended_at?: string | null
+          last_title?: string | null
+          last_video_id?: string | null
           platform?: string
           scheduled_start_at?: string | null
           started_at?: string | null

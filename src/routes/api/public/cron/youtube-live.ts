@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { fetchYoutubeLiveState } from "@/lib/youtube-live.server";
+import { fetchYoutubeLiveState, fetchLatestYoutubeStream } from "@/lib/youtube-live.server";
 import { sendDiscordChannelMessage } from "@/lib/discord.server";
 
 const BROADCAST_CHANNEL_ID = "1549648346463871046";
@@ -39,13 +39,27 @@ async function run() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: row } = await supabaseAdmin
     .from("broadcast_live_state")
-    .select("id, is_live, video_id, upcoming_announced_video_id")
+    .select("id, is_live, video_id, title, upcoming_announced_video_id, last_video_id")
     .eq("platform", "youtube")
     .maybeSingle();
 
   const wasLive = Boolean(row?.is_live);
   const announcedVideoId = (row as { upcoming_announced_video_id?: string | null } | null)
     ?.upcoming_announced_video_id ?? null;
+
+  // Seneste livestream til forsiden: udfyld første gang fra kanalens /streams-side.
+  if (!(row as any)?.last_video_id && state.status !== "live") {
+    const latest = await fetchLatestYoutubeStream(
+      state.status === "upcoming" ? state.videoId : null,
+    );
+    if (latest) {
+      const { error: lastErr } = await supabaseAdmin
+        .from("broadcast_live_state")
+        .update({ last_video_id: latest.videoId, last_title: latest.title })
+        .eq("platform", "youtube");
+      if (lastErr) console.error("[youtube-live] kunne ikke gemme seneste stream", lastErr);
+    }
+  }
 
   if (state.status === "offline") {
     if (wasLive) {
@@ -56,6 +70,9 @@ async function run() {
           video_id: null,
           title: null,
           started_at: null,
+          ...(row?.video_id
+            ? { last_video_id: row.video_id, last_title: row.title, last_ended_at: new Date().toISOString() }
+            : {}),
           upcoming_video_id: null,
           upcoming_title: null,
           scheduled_start_at: null,

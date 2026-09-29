@@ -1,0 +1,1 @@
+ALTER TABLE public.broadcast_live_state ADD COLUMN IF NOT EXISTS last_video_id text, ADD COLUMN IF NOT EXISTS last_title text, ADD COLUMN IF NOT EXISTS last_ended_at timestamptz;

@@ -2,22 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 
-export type LiveStatus = {
-  isLive: boolean;
-  videoId: string | null;
-  title: string | null;
-  startedAt: string | null;
-  lastVideoId: string | null;
-  lastTitle: string | null;
-};
+export type ActiveLeague = { id: string; name: string } | null;
 
-export const getLiveStatus = createServerFn({ method: "GET" }).handler(
-  async (): Promise<LiveStatus> => {
+/** Den aktive liga: nyeste offentlige liga, som ikke er sat til offseason. */
+export const getActiveLeague = createServerFn({ method: "GET" }).handler(
+  async (): Promise<ActiveLeague> => {
     const key =
       process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
     const url = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
-    if (!key || !url) return { isLive: false, videoId: null, title: null, startedAt: null, lastVideoId: null, lastTitle: null };
-
+    if (!key || !url) return null;
     const client = createClient<Database>(url, key, {
       auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
       global: {
@@ -31,20 +24,14 @@ export const getLiveStatus = createServerFn({ method: "GET" }).handler(
         },
       },
     });
-
     const { data } = await client
-      .from("broadcast_live_state")
-      .select("is_live, video_id, title, started_at, last_video_id, last_title")
-      .eq("platform", "youtube")
+      .from("leagues")
+      .select("id, name")
+      .eq("published", true)
+      .eq("is_offseason", false)
+      .order("created_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
-
-    return {
-      isLive: Boolean(data?.is_live),
-      videoId: data?.video_id ?? null,
-      title: data?.title ?? null,
-      startedAt: data?.started_at ?? null,
-      lastVideoId: data?.last_video_id ?? null,
-      lastTitle: data?.last_title ?? null,
-    };
+    return data ? { id: data.id, name: data.name } : null;
   },
 );

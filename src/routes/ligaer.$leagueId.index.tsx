@@ -386,10 +386,10 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
   return (
     <div className="space-y-8">
       <Link
-        to="/lmu/liga"
+        to="/"
         className="inline-flex items-center gap-1 text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground transition hover:text-foreground"
       >
-        <ArrowLeft className="h-3 w-3" /> Alle ligaer
+        <ArrowLeft className="h-3 w-3" /> Tilbage til forsiden
       </Link>
 
       {view === "overview" ? <header className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
