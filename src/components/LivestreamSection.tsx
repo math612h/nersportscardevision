@@ -40,16 +40,41 @@ export function LivestreamSection({ status, mode }: { status: LiveStatus | undef
         )}
       </div>
       <article className="overflow-hidden rounded-xl border border-border bg-card">
-        <div className="aspect-video w-full bg-muted">
-          <iframe
-            src={`https://www.youtube.com/embed/${videoId}${mode === "live" ? "?autoplay=1&mute=1" : ""}`}
-            title={title ?? "LMU Danmark livestream"}
-            className="h-full w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            loading={mode === "live" ? "eager" : "lazy"}
-          />
-        </div>
+        {mode === "live" ? (
+          <div className="aspect-video w-full bg-muted">
+            <iframe
+              src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1`}
+              title={title ?? "LMU Danmark livestream"}
+              className="h-full w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              loading="eager"
+            />
+          </div>
+        ) : (
+          <a
+            href={`https://www.youtube.com/watch?v=${videoId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative block aspect-video w-full bg-muted"
+          >
+            <img
+              src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`}
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (!img.src.includes("hqdefault")) img.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+              }}
+              alt={title ?? "LMU Danmark livestream"}
+              className="h-full w-full object-cover"
+              loading="lazy"
+            />
+            <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition group-hover:bg-black/40">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition group-hover:scale-105">
+                <Youtube className="h-7 w-7" />
+              </span>
+            </span>
+          </a>
+        )}
         {title && <p className="p-4 text-sm font-semibold">{title}</p>}
       </article>
     </section>
