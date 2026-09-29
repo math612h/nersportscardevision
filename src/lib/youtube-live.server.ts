@@ -98,3 +98,26 @@ export async function fetchYoutubeLiveState(
 
   return { status: "live", videoId, title: title || null };
 }
+
+/** Seneste (afsluttede) livestream fra kanalens /streams-side. */
+export async function fetchLatestYoutubeStream(
+  channelId: string = YOUTUBE_CHANNEL_ID,
+): Promise<{ videoId: string; title: string | null } | null> {
+  try {
+    const res = await fetch(`https://www.youtube.com/channel/${channelId}/streams`, {
+      headers: { "User-Agent": UA, "Accept-Language": "da,en;q=0.8", Accept: "text/html" },
+    });
+    if (!res.ok) return null;
+    const html = await res.text();
+    const re = /"videoRenderer"\s*:\s*\{\s*"videoId"\s*:\s*"([A-Za-z0-9_-]{11})"([\s\S]{0,3000}?)"title"\s*:\s*\{\s*"runs"\s*:\s*\[\s*\{\s*"text"\s*:\s*"([^"]+)"/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(html))) {
+      const chunk = html.slice(m.index, m.index + 6000);
+      if (/"style"\s*:\s*"(LIVE|UPCOMING)"/.test(chunk.slice(0, 4000)) && /upcomingEventData|"LIVE"/.test(chunk.slice(0, 4000))) continue;
+      return { videoId: m[1], title: m[3].replace(/\\u0026/g, "&") };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

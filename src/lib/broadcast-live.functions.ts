@@ -7,6 +7,8 @@ export type LiveStatus = {
   videoId: string | null;
   title: string | null;
   startedAt: string | null;
+  lastVideoId: string | null;
+  lastTitle: string | null;
 };
 
 export const getLiveStatus = createServerFn({ method: "GET" }).handler(
@@ -14,7 +16,7 @@ export const getLiveStatus = createServerFn({ method: "GET" }).handler(
     const key =
       process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["VITE_SUPABASE_PUBLISHABLE_KEY"];
     const url = process.env["SUPABASE_URL"] || process.env["VITE_SUPABASE_URL"];
-    if (!key || !url) return { isLive: false, videoId: null, title: null, startedAt: null };
+    if (!key || !url) return { isLive: false, videoId: null, title: null, startedAt: null, lastVideoId: null, lastTitle: null };
 
     const client = createClient<Database>(url, key, {
       auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
@@ -32,7 +34,7 @@ export const getLiveStatus = createServerFn({ method: "GET" }).handler(
 
     const { data } = await client
       .from("broadcast_live_state")
-      .select("is_live, video_id, title, started_at")
+      .select("is_live, video_id, title, started_at, last_video_id, last_title")
       .eq("platform", "youtube")
       .maybeSingle();
 
@@ -41,6 +43,8 @@ export const getLiveStatus = createServerFn({ method: "GET" }).handler(
       videoId: data?.video_id ?? null,
       title: data?.title ?? null,
       startedAt: data?.started_at ?? null,
+      lastVideoId: data?.last_video_id ?? null,
+      lastTitle: data?.last_title ?? null,
     };
   },
 );
