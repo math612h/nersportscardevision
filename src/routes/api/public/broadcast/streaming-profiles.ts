@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import defaultStreamPhoto from "@/assets/stream-photo-default.png.asset.json";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -93,8 +94,9 @@ export const Route = createFileRoute("/api/public/broadcast/streaming-profiles")
           const drivers = (profiles ?? []).map((p: any) => ({
             driverId: p.id,
             driverName: p.display_name || p.lmu_name || "",
-            photoUrl: photoUrls.get(p.id) ?? null,
-            avatarUrl: photoUrls.get(p.id) ?? p.discord_avatar_url ?? p.avatar_url ?? null,
+            // Uden eget streambillede bruges LMU Danmarks standardbillede (ikke Discord-avatar).
+            photoUrl: photoUrls.get(p.id) ?? `${origin}${defaultStreamPhoto.url}`,
+            avatarUrl: photoUrls.get(p.id) ?? `${origin}${defaultStreamPhoto.url}`,
             hasStreamPhoto: !!p.stream_photo_path,
             answers: rows
               .filter((a: any) => a.user_id === p.id && questionText.has(a.question_id))
