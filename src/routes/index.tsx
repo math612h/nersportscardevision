@@ -308,6 +308,8 @@ function NewsHome() {
 
       {liveStatus?.isLive && <LivestreamSection status={liveStatus} mode="live" />}
 
+      {!liveStatus?.isLive && <LivestreamSection status={liveStatus} mode="last" />}
+
       {!liveStatus?.isLive && isLoading && (
         <div className="h-96 animate-pulse rounded-xl border border-border bg-card/50" />
       )}
@@ -472,7 +474,6 @@ function NewsHome() {
 
 
 
-      {!liveStatus?.isLive && <LivestreamSection status={liveStatus} mode="last" />}
     </div>
   );
 }
