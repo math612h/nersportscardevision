@@ -1,0 +1,1 @@
+GRANT SELECT (last_video_id, last_title, last_ended_at) ON public.broadcast_live_state TO anon, authenticated;

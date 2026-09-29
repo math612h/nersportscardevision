@@ -50,6 +50,13 @@
       "when": 1790709915769,
       "tag": "0006_broadcast_last_stream",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790709944317,
+      "tag": "0007_grant_broadcast_last_stream",
+      "breakpoints": true
     }
   ]
 }
