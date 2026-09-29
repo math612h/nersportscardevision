@@ -10,7 +10,7 @@
 
 **2. Liga-oversigtssiden fjernes**
 - Siden med alle ligaer fjernes. Gamle links til den (fx fra beskeder, tilbage-knapper og Google) sendes automatisk videre til den aktive liga — eller forsiden, hvis der ingen er.
-- Tilbage-knapper på ligasiden og leaderboard, der pegede derhen, peger på forsiden i stedet.
+- Tilbage-knapper på ligasiden og leaderboard, der pegede derhen, peger på forsiden i stedet — og teksten ændres til "Tilbage til forsiden" (ikke længere "Tilbage til ligaside").
 
 **3. "Tidligere løb" nederst fjernes**
 - Listen over ældre løb nederst på forsiden fjernes. Kortet "Seneste løb" med resultater bliver.
@@ -23,6 +23,10 @@
 - Når vi går live: "Seneste løb" erstattes af den indlejrede livestream øverst (med LIVE-mærke).
 - Når streamen slutter: "Seneste løb" kommer tilbage, og den netop afsluttede stream bliver den nye "Seneste livestream".
 - Den eksisterende LIVE-bjælke øverst fjernes, da streamen nu vises direkte.
+
+**6. Standard-streambillede i stedet for Discord-avatar**
+- Kørere uden eget uploadet streambillede får fremover det vedhæftede LMU Danmark-billede (hjelm og køredragt) til streamen — ikke deres Discord-avatar.
+- Alle allerede uploadede streambilleder bevares uændret.
 
 ## Teknisk
 - `src/lib/active-league.functions.ts`: offentlig `getActiveLeague` (publishable-klient) → nyeste `leagues` med `published = true AND is_offseason = false`, returnerer `{id, name} | null`. Hook `useActiveLeague` (react-query) bruges i `index.tsx`, `AppHeader.tsx`, `MobileBottomNav.tsx`.
