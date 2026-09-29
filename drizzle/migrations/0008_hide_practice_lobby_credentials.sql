@@ -1,0 +1,2 @@
+REVOKE SELECT ON public.division_practice_sessions FROM anon, authenticated;
+GRANT SELECT (id,division_id,server_name,has_qualifying,has_race,practice_minutes,qualifying_minutes,race_minutes,starts_at,settings,created_at,updated_at) ON public.division_practice_sessions TO anon, authenticated;
