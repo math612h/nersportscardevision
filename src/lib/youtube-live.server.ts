@@ -113,7 +113,7 @@ export async function fetchLatestYoutubeStream(
     let m: RegExpExecArray | null;
     while ((m = re.exec(html))) {
       const chunk = html.slice(m.index, m.index + 6000);
-      if (/"style"\s*:\s*"(LIVE|UPCOMING)"/.test(chunk.slice(0, 4000)) && /upcomingEventData|"LIVE"/.test(chunk.slice(0, 4000))) continue;
+      if (/upcomingEventData|BADGE_STYLE_TYPE_LIVE_NOW/.test(chunk.slice(0, 4000))) continue;
       return { videoId: m[1], title: m[3].replace(/\\u0026/g, "&") };
     }
     return null;
