@@ -49,12 +49,15 @@ async function run() {
 
   // Seneste livestream til forsiden: udfyld første gang fra kanalens /streams-side.
   if (!(row as any)?.last_video_id && state.status !== "live") {
-    const latest = await fetchLatestYoutubeStream();
+    const latest = await fetchLatestYoutubeStream(
+      state.status === "upcoming" ? state.videoId : null,
+    );
     if (latest) {
-      await supabaseAdmin
+      const { error: lastErr } = await supabaseAdmin
         .from("broadcast_live_state")
         .update({ last_video_id: latest.videoId, last_title: latest.title })
         .eq("platform", "youtube");
+      if (lastErr) console.error("[youtube-live] kunne ikke gemme seneste stream", lastErr);
     }
   }
 

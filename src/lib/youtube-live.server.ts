@@ -101,6 +101,7 @@ export async function fetchYoutubeLiveState(
 
 /** Seneste (afsluttede) livestream fra kanalens /streams-side. */
 export async function fetchLatestYoutubeStream(
+  excludeVideoId: string | null = null,
   channelId: string = YOUTUBE_CHANNEL_ID,
 ): Promise<{ videoId: string; title: string | null } | null> {
   try {
@@ -118,7 +119,8 @@ export async function fetchLatestYoutubeStream(
       const videoId = chunk.match(/"videoId"\s*:\s*"([A-Za-z0-9_-]{11})"/)?.[1];
       if (!videoId) continue;
       // Spring planlagte og igangværende streams over.
-      if (/upcomingEventData|"Upcoming"|UPCOMING|BADGE_STYLE_TYPE_LIVE_NOW|"LIVE"/.test(chunk)) continue;
+      if (/upcomingEventData|"Upcoming"|UPCOMING|BADGE_STYLE_TYPE_LIVE_NOW|"LIVE"|"Kommende"|"Live nu"|"LIVE NU"/.test(chunk)) continue;
+      if (excludeVideoId && videoId === excludeVideoId) continue;
       const title =
         chunk.match(/"title"\s*:\s*\{\s*"content"\s*:\s*"([^"]+)"/)?.[1] ??
         chunk.match(/"title"\s*:\s*\{\s*"runs"\s*:\s*\[\s*\{\s*"text"\s*:\s*"([^"]+)"/)?.[1] ??
