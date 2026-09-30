@@ -21,3 +21,9 @@
 - Ny hemmelig nøgle `YOUTUBE_API_KEY`.
 - `youtube-live.server.ts`: primær kilde er RSS (`feeds/videos.xml?channel_id=...`) plus `videos.list?part=snippet,liveStreamingDetails`. Status udledes af `snippet.liveBroadcastContent` og `scheduledStartTime` / `actualEndTime`. Fallback til den nuværende HTML-parsing. Seneste afsluttede stream hentes samme sted.
 - Cron-endpointet er uændret ud over den nye kilde. Returnér fejlårsagen i svaret.
+
+## Alternativ: tjek én gang i timen (ingen nøgle nødvendig)
+- Vi henter YouTube-siden 12 gange sjældnere, så risikoen for at blive blokeret falder meget. Men YouTube kan stadig blokere, fordi hjemmesiden deler servere med mange andre sider. Det er altså ikke sikkert.
+- Beskeden bliver sendt 9-10 timer før start i stedet for præcis 10 timer før. Det er fint.
+- Ulempen: "LIVE NU"-visningen på forsiden kan komme op til 1 time for sent, og det samme gælder, når den forsvinder igen. For at undgå det tjekker vi hvert 5. minut i den sidste time før en planlagt start og mens streamen kører. Resten af tiden tjekker vi én gang i timen.
+- Kan kombineres med den officielle løsning ovenfor senere, hvis blokeringen fortsætter.
