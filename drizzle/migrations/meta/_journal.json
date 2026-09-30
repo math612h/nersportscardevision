@@ -64,6 +64,13 @@
       "when": 1790710442140,
       "tag": "0008_hide_practice_lobby_credentials",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790803356443,
+      "tag": "0009_prevent_duplicate_protests",
+      "breakpoints": true
     }
   ]
 }

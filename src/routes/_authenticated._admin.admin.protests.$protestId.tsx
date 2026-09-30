@@ -18,6 +18,46 @@ import { useServerFn } from "@tanstack/react-start";
 import { notifyProtestRuling } from "@/lib/protest-ruling-notify.functions";
 import { applyProtestRuling } from "@/lib/league-results.functions";
 import { UserAvatar } from "@/components/UserAvatar";
+import { useNavigate } from "@tanstack/react-router";
+import { deleteProtest } from "@/lib/protest-delete.functions";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+function DeleteProtestButton({ protestId }: { protestId: string }) {
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const del = useServerFn(deleteProtest);
+  const m = useMutation({
+    mutationFn: () => del({ data: { protestId } }),
+    onSuccess: () => {
+      toast.success("Protesten er slettet – de indklagede har fået besked");
+      qc.invalidateQueries({ queryKey: ["protests-admin"] });
+      navigate({ to: "/admin/protests" });
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Kunne ikke slette protesten"),
+  });
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="sm" disabled={m.isPending}>Slet protest</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Slet protest?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Protesten fjernes helt uden følger for nogen. Klageren mister ikke en protest-billet, og de indklagede får besked om, at sagen er fjernet.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Annuller</AlertDialogCancel>
+          <AlertDialogAction onClick={() => m.mutate()}>Slet</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/protests/$protestId")({
   component: AdminProtestDetail,
@@ -152,9 +192,12 @@ function AdminProtestDetail() {
 
   return (
     <div className="space-y-4">
-      <Link to="/admin/protests" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-3 w-3" /> Tilbage til oversigt
-      </Link>
+      <div className="flex items-center justify-between gap-2">
+        <Link to="/admin/protests" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-3 w-3" /> Tilbage til oversigt
+        </Link>
+        {!ruled && <DeleteProtestButton protestId={p.id} />}
+      </div>
 
       <Card>
         <CardHeader>
