@@ -1,16 +1,23 @@
-# Sikre at stream-beskeden altid kommer ud
+# Få stream-beskeden på Discord til at virke igen
 
-## Hvad skete der
-- Imola-streamen starter kl. 19:50 dansk tid, så beskeden skulle være sendt kl. ca. 09:50 (10 timer før).
-- Det automatiske tjek, der kører hvert 5. minut, kørte sidst kl. 06:40 dansk tid. Efter det er det ikke kommet igennem, så beskeden blev aldrig sendt.
-- Sandsynligvis hænger det sammen med, at databasen blev sat på pause på grund af credits. Den årsag er ikke bekræftet.
-- Jeg har kørt tjekket manuelt nu, og beskeden er **sendt til Discord** (Broadcast-kanalen med ping til medlemmer).
+## Hvad der gik galt
+- Jobbet kører faktisk hvert 5. minut. Listen over seneste kørsler blandes med andre job, der kører hvert minut, så det ser ud som om det kører sjældnere.
+- "succeeded" betyder kun, at jobbet fik sendt sin forespørgsel afsted. Det betyder ikke, at tjekket lykkedes.
+- Siden kl. 06:45 dansk tid har YouTube afvist hjemmesidens tjek med "for mange forespørgsler" (fejlkode 429). Hver kørsel er derfor sprunget over, også den kl. 11:00. Beskeden skulle være sendt kl. 09:50, men gik aldrig ud.
+- Årsagen er, at vi læser YouTubes almindelige webside. Den blokerer servere, der henter den tit.
+- Beskeden for Imola er nu sendt manuelt.
 
-## Forslag, så det ikke sker igen
-1. Tjek i kontrolpanelet under Cron-jobs, at jobbet "youtube-live-check" er aktivt, og at det rammer den rigtige adresse. Opret det igen, hvis det mangler.
-2. Vis "sidst kørt" og "sidste resultat" for YouTube-tjekket i kontrolpanelet, så man kan se, hvis det er gået i stå.
-3. Beskeden sendes også, hvis tjekket først kommer i gang senere end 10 timer før start. Det virker allerede i dag, så længe streamen ikke er startet endnu.
+## Løsning
+1. Skift til YouTubes officielle, gratis adgang til kanaldata i stedet for at læse websiden. Den bliver ikke blokeret på samme måde.
+   - Kanalens offentlige videofeed giver de nyeste video-id'er. Det kræver ingen nøgle.
+   - YouTubes officielle opslag giver status for de videoer: live, planlagt med starttid eller slut. Det koster 1 enhed pr. opslag ud af 10.000 gratis pr. dag.
+2. Det gamle websidetjek beholdes som reserve.
+3. Hvis tjekket fejler flere gange i træk, og en stream er planlagt inden for 10 timer, bliver fejlen logget tydeligt. "Tjek YouTube live" i kontrolpanelet viser også den rigtige fejl.
+
+## Det skal du gøre
+- Opret en gratis YouTube Data API-nøgle i Google Cloud Console, og indsæt den, når jeg beder om den. Jeg guider dig igennem det.
 
 ## Teknisk
-- Kontrollér pg_cron-jobbet `youtube-live-check`, og genopret det om nødvendigt mod den stabile produktions-URL `/api/public/cron/youtube-live`.
-- Vis `broadcast_live_state.updated_at` samt announce-felterne på siden `admin/cron`.
+- Ny hemmelig nøgle `YOUTUBE_API_KEY`.
+- `youtube-live.server.ts`: primær kilde er RSS (`feeds/videos.xml?channel_id=...`) plus `videos.list?part=snippet,liveStreamingDetails`. Status udledes af `snippet.liveBroadcastContent` og `scheduledStartTime` / `actualEndTime`. Fallback til den nuværende HTML-parsing. Seneste afsluttede stream hentes samme sted.
+- Cron-endpointet er uændret ud over den nye kilde. Returnér fejlårsagen i svaret.
