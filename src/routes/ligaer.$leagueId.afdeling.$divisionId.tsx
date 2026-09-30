@@ -786,6 +786,7 @@ function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPe
   const [involved, setInvolved] = useState<string[]>([""]);
   const [desc, setDesc] = useState("");
   const [video, setVideo] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   // Tally how many tickets the user has used in this league.
   // A ticket is "spent" when a protest the user submitted has been ruled with
@@ -829,6 +830,12 @@ function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPe
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    try { await doSubmit(); } finally { setSubmitting(false); }
+  };
+
+  const doSubmit = async () => {
     if (outOfTickets) { toast.error("Du har ingen protest-billetter tilbage i denne liga"); return; }
     if (video && !/^https?:\/\//i.test(video)) { toast.error("Video link skal være en gyldig URL"); return; }
 
@@ -923,7 +930,7 @@ function ProtestDialog({ leagueId, divisionId, entries, currentUserId, ticketsPe
           </div>
           <div><Label>Beskrivelse</Label><Textarea required maxLength={2000} value={desc} onChange={(e) => setDesc(e.target.value)} rows={4} /></div>
           <div><Label>Video-link (valgfri)</Label><Input type="url" maxLength={500} value={video} onChange={(e) => setVideo(e.target.value)} placeholder="https://…" /></div>
-          <DialogFooter><Button type="submit" disabled={outOfTickets}>Send</Button></DialogFooter>
+          <DialogFooter><Button type="submit" disabled={outOfTickets || submitting}>{submitting ? "Sender…" : "Send"}</Button></DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
