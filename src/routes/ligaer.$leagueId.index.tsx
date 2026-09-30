@@ -463,7 +463,7 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
         <>
           {nextDivision && <NextRaceCountdownCard leagueId={leagueId} division={nextDivision} />}
           {user && isSignedUp && <MyChampionshipPosition leagueId={leagueId} userId={user.id} />}
-          <LeagueShortcuts leagueId={leagueId} teamsAllowed={!!(league as any)?.teams_allowed} showPrizes={hasPrizes} />
+          <LeagueShortcuts leagueId={leagueId} teamsAllowed={!!(league as any)?.teams_allowed} showPrizes={hasPrizes} showStandings={!(league as any)?.separate_division_standings} />
         </>
       )}
 
@@ -625,7 +625,7 @@ export function LeagueDetail({ view = "overview" }: { view?: LeaguePublicView })
 
       {view === "stillinger" && (
         <>
-          <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={false} />
+          <Standings leagueId={leagueId} configs={configs} separateDivisionStandings={!!(league as any)?.separate_division_standings} />
         </>
       )}
 
@@ -983,7 +983,13 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   const completed: any[] = allCompleted;
 
   if (separateDivisionStandings) {
-    return null;
+    return (
+      <Card>
+        <CardContent className="py-6 text-center text-sm text-muted-foreground">
+          I denne liga er hver afdeling sin egen serie, så der er ingen samlet stilling.
+        </CardContent>
+      </Card>
+    );
   }
 
   if (allCompleted.length === 0) {
@@ -1792,13 +1798,13 @@ function LeagueSubpageHeader({ leagueId, leagueName, view }: { leagueId: string;
   );
 }
 
-function LeagueShortcuts({ leagueId, teamsAllowed, showPrizes }: { leagueId: string; teamsAllowed: boolean; showPrizes: boolean }) {
+function LeagueShortcuts({ leagueId, teamsAllowed, showPrizes, showStandings }: { leagueId: string; teamsAllowed: boolean; showPrizes: boolean; showStandings: boolean }) {
   const items = [
     { to: "/ligaer/$leagueId/entryliste" as const, title: "Entryliste", description: "Se kørere, klasser og venteliste.", icon: Users },
     ...(teamsAllowed ? [{ to: "/ligaer/$leagueId/teams" as const, title: "Teams", description: "Se lineups og teamtilmeldinger.", icon: Shield }] : []),
     { to: "/ligaer/$leagueId/kalender" as const, title: "Kalender", description: "Se afdelinger, tider og practice sessions.", icon: Calendar },
     ...(showPrizes ? [{ to: "/ligaer/$leagueId/praemier" as const, title: "Præmier", description: "Se alle præmier og kategorier.", icon: Gift }] : []),
-    { to: "/ligaer/$leagueId/stillinger" as const, title: "Stillinger", description: "Se kører- og teammesterskabet.", icon: Trophy },
+    ...(showStandings ? [{ to: "/ligaer/$leagueId/stillinger" as const, title: "Stillinger", description: "Se kører- og teammesterskabet.", icon: Trophy }] : []),
   ];
   return (
     <section className="space-y-3">
