@@ -1459,11 +1459,13 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
     queryKey: ["my-lb-count", user?.id, selected?.car_class],
     enabled: !!user && !!selected,
     queryFn: async () => {
+      const cls = selected!.car_class;
+      const classes = cls === "LMP2" || cls === "LMP2_ELMS" ? ["LMP2", "LMP2_ELMS"] : [cls];
       const { count, error } = await supabase
         .from("leaderboard_times")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user!.id)
-        .eq("car_class", selected!.car_class);
+        .in("car_class", classes);
       if (error) throw error;
       return count ?? 0;
     },
