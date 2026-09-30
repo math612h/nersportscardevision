@@ -91,14 +91,14 @@ export function LeagueTeamSignupCard({
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("divisions")
-        .select("league_id, race_date")
+        .select("league_id, settings")
         .in("league_id", leagueIds);
       if (error) throw error;
-      const m = new Map<string, string>();
-      for (const d of (data ?? []) as Array<{ league_id: string; race_date: string | null }>) {
-        if (!d.race_date) continue;
-        const prev = m.get(d.league_id);
-        if (!prev || d.race_date > prev) m.set(d.league_id, d.race_date);
+      // A league counts as finished only when every division is marked completed.
+      const m = new Map<string, boolean>();
+      for (const d of (data ?? []) as Array<{ league_id: string; settings: any }>) {
+        const done = !!d.settings?.completed;
+        m.set(d.league_id, (m.get(d.league_id) ?? true) && done);
       }
       return m;
     },
@@ -113,11 +113,7 @@ export function LeagueTeamSignupCard({
   const { active, finished } = useMemo(() => {
     const all = entries ?? [];
     if (!lastRaceByLeague) return { active: all, finished: [] as typeof all };
-    const now = Date.now();
-    const fin = all.filter((e) => {
-      const last = lastRaceByLeague.get(e.league_id);
-      return !!last && new Date(last).getTime() < now;
-    });
+    const fin = all.filter((e) => lastRaceByLeague.get(e.league_id) === true);
     const finIds = new Set(fin.map((e) => e.id));
     return { active: all.filter((e) => !finIds.has(e.id)), finished: fin };
   }, [entries, lastRaceByLeague]);
