@@ -22,9 +22,67 @@ function firstMatch(html: string, re: RegExp): string | null {
   return m && m[1] ? m[1] : null;
 }
 
+type ApiVideo = {
+  id: string;
+  snippet?: { title?: string; liveBroadcastContent?: string };
+  liveStreamingDetails?: {
+    scheduledStartTime?: string;
+    actualStartTime?: string;
+    actualEndTime?: string;
+  };
+};
+
+/** Officiel YouTube Data API: uploads-playlisten + videos.list (2 enheder pr. kørsel). */
+async function fetchViaApi(channelId: string, apiKey: string): Promise<YoutubeLiveResult> {
+  const uploads = "UU" + channelId.slice(2);
+  const plRes = await fetch(
+    `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=15&playlistId=${uploads}&key=${apiKey}`,
+  );
+  if (!plRes.ok) return { status: "unknown", error: `API playlist ${plRes.status}: ${(await plRes.text()).slice(0, 200)}` };
+  const pl = (await plRes.json()) as { items?: Array<{ contentDetails?: { videoId?: string } }> };
+  const ids = (pl.items ?? []).map((i) => i.contentDetails?.videoId).filter(Boolean) as string[];
+  if (ids.length === 0) return { status: "offline" };
+  const vRes = await fetch(
+    `https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails&id=${ids.join(",")}&key=${apiKey}`,
+  );
+  if (!vRes.ok) return { status: "unknown", error: `API videos ${vRes.status}: ${(await vRes.text()).slice(0, 200)}` };
+  const vids = ((await vRes.json()) as { items?: ApiVideo[] }).items ?? [];
+  const live = vids.find((v) => v.snippet?.liveBroadcastContent === "live");
+  if (live) return { status: "live", videoId: live.id, title: live.snippet?.title ?? null };
+  const now = Date.now();
+  const upcoming = vids
+    .filter((v) => v.snippet?.liveBroadcastContent === "upcoming" && v.liveStreamingDetails?.scheduledStartTime)
+    // Ignorér gamle, glemte planlagte streams.
+    .filter((v) => new Date(v.liveStreamingDetails!.scheduledStartTime!).getTime() > now - 6 * 3600_000)
+    .sort(
+      (a, b) =>
+        new Date(a.liveStreamingDetails!.scheduledStartTime!).getTime() -
+        new Date(b.liveStreamingDetails!.scheduledStartTime!).getTime(),
+    )[0];
+  if (upcoming) {
+    return {
+      status: "upcoming",
+      videoId: upcoming.id,
+      title: upcoming.snippet?.title ?? null,
+      scheduledStart: new Date(upcoming.liveStreamingDetails!.scheduledStartTime!).toISOString(),
+    };
+  }
+  return { status: "offline" };
+}
+
 export async function fetchYoutubeLiveState(
   channelId: string = YOUTUBE_CHANNEL_ID,
 ): Promise<YoutubeLiveResult> {
+  const apiKey = process.env["YOUTUBE_API_KEY"];
+  if (apiKey) {
+    try {
+      const r = await fetchViaApi(channelId, apiKey);
+      if (r.status !== "unknown") return r;
+      console.warn("[youtube-live] API fejlede, prøver websiden:", r.error);
+    } catch (e) {
+      console.warn("[youtube-live] API fejlede, prøver websiden:", (e as Error).message);
+    }
+  }
   const url = `https://www.youtube.com/channel/${channelId}/live`;
   let html: string;
   try {
