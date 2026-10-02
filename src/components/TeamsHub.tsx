@@ -98,13 +98,29 @@ export function TeamsHub({ headerLabel = "Teams Hub" }: { headerLabel?: string }
     },
   });
 
+  const { data: myTeamIds } = useQuery({
+    queryKey: ["my-team-memberships", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", user!.id);
+      if (error) throw error;
+      return new Set(((data ?? []) as { team_id: string }[]).map((m) => m.team_id));
+    },
+  });
+
   const filtered = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    if (!needle) return teams ?? [];
-    return (teams ?? []).filter(
-      (t) => t.name.toLowerCase().includes(needle) || (t.bio ?? "").toLowerCase().includes(needle),
-    );
-  }, [teams, q]);
+    const base = !needle
+      ? (teams ?? [])
+      : (teams ?? []).filter(
+          (t) => t.name.toLowerCase().includes(needle) || (t.bio ?? "").toLowerCase().includes(needle),
+        );
+    if (!myTeamIds || myTeamIds.size === 0) return base;
+    return [...base].sort((a, b) => Number(myTeamIds.has(b.id)) - Number(myTeamIds.has(a.id)));
+  }, [teams, q, myTeamIds]);
 
   const totalMembers = useMemo(
     () => Object.values(memberCounts).reduce((a, b) => a + b, 0),

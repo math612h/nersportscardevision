@@ -330,7 +330,6 @@ function TeamDetailPage() {
         </CardContent>
       </Card>
 
-      <RecentResultsCard members={members ?? []} profiles={profiles ?? {}} />
 
       {isMember && <MyLineupInvitations teamId={teamId} />}
       {canManage && (
