@@ -17,7 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
-import { deleteLeagueRaceResults, setResultsConfirmed, setResultsPublished, recalcLeaguePoints } from "@/lib/league-results.functions";
+import { deleteLeagueRaceResults, setResultsConfirmed, setResultsPublished, recalcLeaguePoints, enforceLeagueDnsLimit } from "@/lib/league-results.functions";
 import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { seatCap, isSplitClass } from "@/lib/class-capacity";
@@ -877,14 +877,14 @@ function DivisionEditor({
         if (qErr) throw qErr;
       }
 
-      await reconcileWaitlist({
-        currentDivisionId: division.id,
-        currentResults: raceResults,
-        allDivisions,
-        entries: entries.filter((e) => !e.withdrawn_at),
-
-        configs,
-      });
+      try {
+        const dnsRes = await enforceLeagueDnsLimit({ data: { leagueId: (division as any).league_id } });
+        if (dnsRes.removed.length > 0) {
+          toast.message(`${dnsRes.removed.length} kører(e) meldt ud pga. DNS-grænsen, ${dnsRes.promoted.length} rykket op fra ventelisten.`);
+        }
+      } catch (err) {
+        console.error(err);
+      }
 
       toast.success("Stillinger gemt");
       onSaved();
