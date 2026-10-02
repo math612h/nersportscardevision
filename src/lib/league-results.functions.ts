@@ -553,6 +553,10 @@ export const publishLeagueRaceResult = createServerFn({ method: "POST" })
 
     // Tildel tiltrædelsespoint for sene tilmeldinger i denne afdeling m.fl.
     await ensureJoinerPoints(supabaseAdmin, data.leagueId);
+    try {
+      const { enforceDnsLimit } = await import("./dns-limit.server");
+      await enforceDnsLimit(supabaseAdmin, data.leagueId);
+    } catch (e) { console.error("enforceDnsLimit failed", e); }
 
     return { ok: true };
   });
@@ -674,6 +678,10 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
     await ensureJoinerPoints(supabaseAdmin, data.leagueId);
+    try {
+      const { enforceDnsLimit } = await import("./dns-limit.server");
+      await enforceDnsLimit(supabaseAdmin, data.leagueId);
+    } catch (e) { console.error("enforceDnsLimit failed", e); }
     return { inserted: resultRows.length, leaderboard_inserted: 0, unmatched, track, layout };
   });
 
@@ -776,6 +784,10 @@ export const recalcLeaguePoints = createServerFn({ method: "POST" })
 
     // Tildel/ret tiltrædelsespoint for sene tilmeldinger på tværs af afdelinger.
     await ensureJoinerPoints(supabaseAdmin, data.leagueId);
+    try {
+      const { enforceDnsLimit } = await import("./dns-limit.server");
+      await enforceDnsLimit(supabaseAdmin, data.leagueId);
+    } catch (e) { console.error("enforceDnsLimit failed", e); }
 
     return { updatedRows };
   });
@@ -994,3 +1006,13 @@ export const setResultsPublished = createServerFn({ method: "POST" })
     return { published: data.published };
   });
 
+
+export const enforceLeagueDnsLimit = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ leagueId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { enforceDnsLimit } = await import("./dns-limit.server");
+    return await enforceDnsLimit(supabaseAdmin, data.leagueId);
+  });

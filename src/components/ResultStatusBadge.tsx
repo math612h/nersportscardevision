@@ -8,6 +8,7 @@ const STYLE: Record<ResultStatus, string> = {
   dns: "border-muted-foreground/40 text-muted-foreground",
   dsq: "border-destructive text-destructive",
   nt: "border-muted-foreground/40 text-muted-foreground",
+  tp: "border-primary/50 text-primary",
 };
 
 export function ResultStatusBadge({
@@ -28,5 +29,25 @@ export function ResultStatusBadge({
     >
       {RESULT_STATUS_LABEL[status]}
     </span>
+  );
+}
+
+const LEGEND: { status: ResultStatus; text: string }[] = [
+  { status: "dnf", text: "Did Not Finish" },
+  { status: "dns", text: "Did Not Show" },
+  { status: "ret", text: "Retired" },
+  { status: "tp", text: "Tiltrædelsespoint" },
+];
+
+export function StatusLegend({ className }: { className?: string }) {
+  return (
+    <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-muted-foreground", className)}>
+      {LEGEND.map((l) => (
+        <span key={l.status} className="inline-flex items-center gap-1.5">
+          <ResultStatusBadge status={l.status} />
+          <span className="uppercase tracking-wide">{l.text}</span>
+        </span>
+      ))}
+    </div>
   );
 }

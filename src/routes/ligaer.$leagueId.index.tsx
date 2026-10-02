@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { toastError } from "@/lib/toast";
 import { supabase } from "@/integrations/supabase/client";
 import { isResultsPublished } from "@/lib/results-visibility";
-import { ResultStatusBadge } from "@/components/ResultStatusBadge";
+import { ResultStatusBadge, StatusLegend } from "@/components/ResultStatusBadge";
 import { isResultStatus, type ResultStatus } from "@/lib/result-status";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { useAuth } from "@/hooks/use-auth";
@@ -956,10 +956,10 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("user_id,car_class,driver_category,car_number,team_id")
+        .select("user_id,car_class,driver_category,car_number,team_id,created_at,waitlist,withdrawn_at,division_id")
         .eq("league_id", leagueId);
       if (error) throw error;
-      return (data ?? []) as { user_id: string; car_class: string; driver_category: string; car_number: number | null; team_id: string | null }[];
+      return (data ?? []) as { user_id: string; car_class: string; driver_category: string; car_number: number | null; team_id: string | null; created_at: string; waitlist: boolean | null; withdrawn_at: string | null; division_id: string | null }[];
     },
   });
   const entryTeamMap = useMemo(() => {
@@ -1086,6 +1086,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         <Trophy className="h-4 w-4" />
         <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger</h2>
       </div>
+      <StatusLegend />
       <div className="space-y-4">
       {groupKeys.map((k) => {
         const [cls, cat] = k.split(" · ");
@@ -1146,11 +1147,21 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
-                        if (!cell) return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                        if (!cell) {
+                          const ent = r.user_id
+                            ? (leagueEntries ?? []).find((e) => e.user_id === r.user_id && e.car_class === r.car_class && !e.division_id)
+                            : undefined;
+                          const raceAt = d.race_date ? new Date(d.race_date).getTime() : null;
+                          const wasOnGrid = !!ent && !ent.waitlist && raceAt != null &&
+                            new Date(ent.created_at).getTime() < raceAt &&
+                            (!ent.withdrawn_at || new Date(ent.withdrawn_at).getTime() > raceAt);
+                          if (wasOnGrid) return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status="dns" /></td>;
+                          return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                        }
                         if (cell.joiner) {
                           return (
-                            <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`Tiltrædelsespoint (+${cell.points})`}>
-                              –
+                            <td key={d.id} className="py-1.5 px-1 text-center" title={`Tiltrædelsespoint (+${cell.points})`}>
+                              <ResultStatusBadge status="tp" />
                             </td>
                           );
                         }

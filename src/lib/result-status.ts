@@ -7,7 +7,7 @@
 // nt         = kvalifikation: kørte omgange, men uden godkendt tid
 // dsq        = diskvalificeret
 
-export type ResultStatus = "classified" | "ret" | "dnf" | "dns" | "dsq" | "nt";
+export type ResultStatus = "classified" | "ret" | "dnf" | "dns" | "dsq" | "nt" | "tp";
 
 export const RESULT_STATUS_LABEL: Record<ResultStatus, string> = {
   classified: "",
@@ -16,6 +16,7 @@ export const RESULT_STATUS_LABEL: Record<ResultStatus, string> = {
   dns: "DNS",
   dsq: "DSQ",
   nt: "Ingen tid",
+  tp: "TP",
 };
 
 export function isResultStatus(v: unknown): v is ResultStatus {
