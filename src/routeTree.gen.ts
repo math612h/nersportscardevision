@@ -9,158 +9,119 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as AppGuideRouteImport } from './routes/app-guide'
-import { Route as BrugereRouteImport } from './routes/brugere'
-import { Route as DonationerRouteImport } from './routes/donationer'
-import { Route as LeaderboardRouteImport } from './routes/leaderboard'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as NyhederRouteImport } from './routes/nyheder'
-import { Route as PrivatlivspolitikRouteImport } from './routes/privatlivspolitik'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as UgensOverhalingRouteImport } from './routes/ugens-overhaling'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
-import { Route as AuthenticatedArkivRouteImport } from './routes/_authenticated.arkiv'
-import { Route as AuthenticatedBeskederRouteImport } from './routes/_authenticated.beskeder'
-import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated.feedback'
-import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
-import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
-import { Route as CoachingIndexRouteImport } from './routes/coaching.index'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
-import { Route as LmuLigaRouteImport } from './routes/lmu.liga'
-import { Route as LmuTeamsRouteImport } from './routes/lmu.teams'
-import { Route as PartnerfordeleIndexRouteImport } from './routes/partnerfordele.index'
-import { Route as PartnerfordeleBenefitIdRouteImport } from './routes/partnerfordele.$benefitId'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as PrivatlivspolitikRouteImport } from './routes/privatlivspolitik'
+import { Route as NyhederRouteImport } from './routes/nyheder'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as DonationerRouteImport } from './routes/donationer'
+import { Route as BrugereRouteImport } from './routes/brugere'
+import { Route as AppGuideRouteImport } from './routes/app-guide'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as TeamsIndexRouteImport } from './routes/teams.index'
+import { Route as PartnerfordeleIndexRouteImport } from './routes/partnerfordele.index'
+import { Route as CoachingIndexRouteImport } from './routes/coaching.index'
 import { Route as TeamsTeamIdRouteImport } from './routes/teams.$teamId'
-import { Route as AuthenticatedBeskederThreadIdRouteImport } from './routes/_authenticated.beskeder.$threadId'
-import { Route as AuthenticatedBeskederSystemRouteImport } from './routes/_authenticated.beskeder.system'
-import { Route as AuthenticatedCoachingBookRouteImport } from './routes/_authenticated.coaching.book'
-import { Route as AuthenticatedCoachingMinKalenderRouteImport } from './routes/_authenticated.coaching.min-kalender'
-import { Route as AuthenticatedCoachingMinProfilRouteImport } from './routes/_authenticated.coaching.min-profil'
-import { Route as AuthenticatedCoachingMineBookingerRouteImport } from './routes/_authenticated.coaching.mine-bookinger'
-import { Route as AuthenticatedProfilIndexRouteImport } from './routes/_authenticated.profil.index'
-import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
-import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/public/leaderboard-upload'
+import { Route as PartnerfordeleBenefitIdRouteImport } from './routes/partnerfordele.$benefitId'
+import { Route as LmuTeamsRouteImport } from './routes/lmu.teams'
+import { Route as LmuLigaRouteImport } from './routes/lmu.liga'
+import { Route as LigaerLeagueIdRouteImport } from './routes/ligaer.$leagueId'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated.onboarding'
+import { Route as AuthenticatedMineProtestsRouteImport } from './routes/_authenticated.mine-protests'
+import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated.feedback'
+import { Route as AuthenticatedBeskederRouteImport } from './routes/_authenticated.beskeder'
+import { Route as AuthenticatedArkivRouteImport } from './routes/_authenticated.arkiv'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated._admin'
 import { Route as LigaerLeagueIdIndexRouteImport } from './routes/ligaer.$leagueId.index'
-import { Route as LigaerLeagueIdEntrylisteRouteImport } from './routes/ligaer.$leagueId.entryliste'
-import { Route as LigaerLeagueIdKalenderRouteImport } from './routes/ligaer.$leagueId.kalender'
-import { Route as LigaerLeagueIdPraemierRouteImport } from './routes/ligaer.$leagueId.praemier'
-import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
-import { Route as LigaerLeagueIdStillingerRouteImport } from './routes/ligaer.$leagueId.stillinger'
-import { Route as LigaerLeagueIdTeamsRouteImport } from './routes/ligaer.$leagueId.teams'
+import { Route as AuthenticatedProfilIndexRouteImport } from './routes/_authenticated.profil.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as LigaerLeagueIdTeamsRouteImport } from './routes/ligaer.$leagueId.teams'
+import { Route as LigaerLeagueIdStillingerRouteImport } from './routes/ligaer.$leagueId.stillinger'
+import { Route as LigaerLeagueIdReglerRouteImport } from './routes/ligaer.$leagueId.regler'
+import { Route as LigaerLeagueIdPraemierRouteImport } from './routes/ligaer.$leagueId.praemier'
+import { Route as LigaerLeagueIdKalenderRouteImport } from './routes/ligaer.$leagueId.kalender'
+import { Route as LigaerLeagueIdEntrylisteRouteImport } from './routes/ligaer.$leagueId.entryliste'
+import { Route as ApiPublicLeaderboardUploadRouteImport } from './routes/api/public/leaderboard-upload'
+import { Route as AuthenticatedProfilUserIdRouteImport } from './routes/_authenticated.profil.$userId'
+import { Route as AuthenticatedCoachingMineBookingerRouteImport } from './routes/_authenticated.coaching.mine-bookinger'
+import { Route as AuthenticatedCoachingMinProfilRouteImport } from './routes/_authenticated.coaching.min-profil'
+import { Route as AuthenticatedCoachingMinKalenderRouteImport } from './routes/_authenticated.coaching.min-kalender'
+import { Route as AuthenticatedCoachingBookRouteImport } from './routes/_authenticated.coaching.book'
+import { Route as AuthenticatedBeskederSystemRouteImport } from './routes/_authenticated.beskeder.system'
+import { Route as AuthenticatedBeskederThreadIdRouteImport } from './routes/_authenticated.beskeder.$threadId'
 import { Route as AuthenticatedAdminAdminIndexRouteImport } from './routes/_authenticated._admin.admin.index'
-import { Route as AuthenticatedAdminAdminAfventerRouteImport } from './routes/_authenticated._admin.admin.afventer'
-import { Route as AuthenticatedAdminAdminAnalyticsRouteImport } from './routes/_authenticated._admin.admin.analytics'
-import { Route as AuthenticatedAdminAdminAuditRouteImport } from './routes/_authenticated._admin.admin.audit'
-import { Route as AuthenticatedAdminAdminBeskederRouteImport } from './routes/_authenticated._admin.admin.beskeder'
-import { Route as AuthenticatedAdminAdminBetalingerRouteImport } from './routes/_authenticated._admin.admin.betalinger'
-import { Route as AuthenticatedAdminAdminBriefingRouteImport } from './routes/_authenticated._admin.admin.briefing'
-import { Route as AuthenticatedAdminAdminCoachesRouteImport } from './routes/_authenticated._admin.admin.coaches'
-import { Route as AuthenticatedAdminAdminCoachingBookingsRouteImport } from './routes/_authenticated._admin.admin.coaching-bookings'
-import { Route as AuthenticatedAdminAdminCronRouteImport } from './routes/_authenticated._admin.admin.cron'
-import { Route as AuthenticatedAdminAdminDonationerRouteImport } from './routes/_authenticated._admin.admin.donationer'
-import { Route as AuthenticatedAdminAdminFeedbackRouteImport } from './routes/_authenticated._admin.admin.feedback'
-import { Route as AuthenticatedAdminAdminFejlRouteImport } from './routes/_authenticated._admin.admin.fejl'
-import { Route as AuthenticatedAdminAdminGaesterRouteImport } from './routes/_authenticated._admin.admin.gaester'
-import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
-import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
-import { Route as AuthenticatedAdminAdminOnlineRouteImport } from './routes/_authenticated._admin.admin.online'
-import { Route as AuthenticatedAdminAdminOverhalingerRouteImport } from './routes/_authenticated._admin.admin.overhalinger'
-import { Route as AuthenticatedAdminAdminPaceSammenligningRouteImport } from './routes/_authenticated._admin.admin.pace-sammenligning'
-import { Route as AuthenticatedAdminAdminPartnerfordeleRouteImport } from './routes/_authenticated._admin.admin.partnerfordele'
-import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
-import { Route as AuthenticatedAdminAdminReplaysRouteImport } from './routes/_authenticated._admin.admin.replays'
-import { Route as AuthenticatedAdminAdminRollerRouteImport } from './routes/_authenticated._admin.admin.roller'
-import { Route as AuthenticatedAdminAdminSponsorerRouteImport } from './routes/_authenticated._admin.admin.sponsorer'
-import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
-import { Route as AuthenticatedAdminAdminStreamingProfilRouteImport } from './routes/_authenticated._admin.admin.streaming-profil'
-import { Route as AuthenticatedAdminAdminStreamingToolRouteImport } from './routes/_authenticated._admin.admin.streaming-tool'
-import { Route as AuthenticatedAdminAdminTeamsRouteImport } from './routes/_authenticated._admin.admin.teams'
-import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
-import { Route as AuthenticatedCoachingRateBookingIdRouteImport } from './routes/_authenticated.coaching.rate.$bookingId'
-import { Route as ApiPublicBroadcastIceCupRouteImport } from './routes/api/public/broadcast/ice-cup'
-import { Route as ApiPublicBroadcastLeaderboardRouteImport } from './routes/api/public/broadcast/leaderboard'
-import { Route as ApiPublicBroadcastSponsorsRouteImport } from './routes/api/public/broadcast/sponsors'
-import { Route as ApiPublicBroadcastStreamingProfilesRouteImport } from './routes/api/public/broadcast/streaming-profiles'
-import { Route as ApiPublicBroadcastTeamLineupsRouteImport } from './routes/api/public/broadcast/team-lineups'
-import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
-import { Route as ApiPublicCronCoachingRatingRequestsRouteImport } from './routes/api/public/cron/coaching-rating-requests'
-import { Route as ApiPublicCronCoachingRemindersRouteImport } from './routes/api/public/cron/coaching-reminders'
-import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './routes/api/public/cron/delete-expired-host-sessions'
-import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
-import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
-import { Route as ApiPublicCronStripUnverifiedMembersRouteImport } from './routes/api/public/cron/strip-unverified-members'
-import { Route as ApiPublicCronYoutubeLiveRouteImport } from './routes/api/public/cron/youtube-live'
-import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/public/discord.callback'
-import { Route as ApiPublicDiscordInteractionsRouteImport } from './routes/api/public/discord.interactions'
-import { Route as ApiPublicDiscordLoginRouteImport } from './routes/api/public/discord.login'
-import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
-import { Route as ApiPublicHooksPostOvertakingWinnerRouteImport } from './routes/api/public/hooks/post-overtaking-winner'
-import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
-import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
-import { Route as AuthenticatedAdminAdminBrugereIndexRouteImport } from './routes/_authenticated._admin.admin.brugere.index'
-import { Route as AuthenticatedAdminAdminBrugereUserIdRouteImport } from './routes/_authenticated._admin.admin.brugere.$userId'
-import { Route as AuthenticatedAdminAdminProtestsIndexRouteImport } from './routes/_authenticated._admin.admin.protests.index'
-import { Route as AuthenticatedAdminAdminProtestsProtestIdRouteImport } from './routes/_authenticated._admin.admin.protests.$protestId'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LigaerLeagueIdAfdelingDivisionIdRouteImport } from './routes/ligaer.$leagueId.afdeling.$divisionId'
+import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as ApiPublicHooksPostOvertakingWinnerRouteImport } from './routes/api/public/hooks/post-overtaking-winner'
+import { Route as ApiPublicDownloadCompanionRouteImport } from './routes/api/public/download/companion'
+import { Route as ApiPublicDiscordLoginRouteImport } from './routes/api/public/discord.login'
+import { Route as ApiPublicDiscordInteractionsRouteImport } from './routes/api/public/discord.interactions'
+import { Route as ApiPublicDiscordCallbackRouteImport } from './routes/api/public/discord.callback'
+import { Route as ApiPublicCronYoutubeLiveRouteImport } from './routes/api/public/cron/youtube-live'
+import { Route as ApiPublicCronStripUnverifiedMembersRouteImport } from './routes/api/public/cron/strip-unverified-members'
+import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
+import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
+import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './routes/api/public/cron/delete-expired-host-sessions'
+import { Route as ApiPublicCronCoachingRemindersRouteImport } from './routes/api/public/cron/coaching-reminders'
+import { Route as ApiPublicCronCoachingRatingRequestsRouteImport } from './routes/api/public/cron/coaching-rating-requests'
+import { Route as ApiPublicCompanionVerifyTokenRouteImport } from './routes/api/public/companion/verify-token'
+import { Route as ApiPublicBroadcastTeamLineupsRouteImport } from './routes/api/public/broadcast/team-lineups'
+import { Route as ApiPublicBroadcastStreamingProfilesRouteImport } from './routes/api/public/broadcast/streaming-profiles'
+import { Route as ApiPublicBroadcastSponsorsRouteImport } from './routes/api/public/broadcast/sponsors'
+import { Route as ApiPublicBroadcastLeaderboardRouteImport } from './routes/api/public/broadcast/leaderboard'
+import { Route as ApiPublicBroadcastIceCupRouteImport } from './routes/api/public/broadcast/ice-cup'
+import { Route as AuthenticatedCoachingRateBookingIdRouteImport } from './routes/_authenticated.coaching.rate.$bookingId'
+import { Route as AuthenticatedBeskederGruppeGroupIdRouteImport } from './routes/_authenticated.beskeder.gruppe.$groupId'
+import { Route as AuthenticatedAdminAdminTeamsRouteImport } from './routes/_authenticated._admin.admin.teams'
+import { Route as AuthenticatedAdminAdminStreamingToolRouteImport } from './routes/_authenticated._admin.admin.streaming-tool'
+import { Route as AuthenticatedAdminAdminStreamingProfilRouteImport } from './routes/_authenticated._admin.admin.streaming-profil'
+import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
+import { Route as AuthenticatedAdminAdminSponsorerRouteImport } from './routes/_authenticated._admin.admin.sponsorer'
+import { Route as AuthenticatedAdminAdminRollerRouteImport } from './routes/_authenticated._admin.admin.roller'
+import { Route as AuthenticatedAdminAdminReplaysRouteImport } from './routes/_authenticated._admin.admin.replays'
+import { Route as AuthenticatedAdminAdminProtestsRouteImport } from './routes/_authenticated._admin.admin.protests'
+import { Route as AuthenticatedAdminAdminPartnerfordeleRouteImport } from './routes/_authenticated._admin.admin.partnerfordele'
+import { Route as AuthenticatedAdminAdminPaceSammenligningRouteImport } from './routes/_authenticated._admin.admin.pace-sammenligning'
+import { Route as AuthenticatedAdminAdminOverhalingerRouteImport } from './routes/_authenticated._admin.admin.overhalinger'
+import { Route as AuthenticatedAdminAdminOnlineRouteImport } from './routes/_authenticated._admin.admin.online'
+import { Route as AuthenticatedAdminAdminNyhedsbrevRouteImport } from './routes/_authenticated._admin.admin.nyhedsbrev'
+import { Route as AuthenticatedAdminAdminLigaerRouteImport } from './routes/_authenticated._admin.admin.ligaer'
+import { Route as AuthenticatedAdminAdminGaesterRouteImport } from './routes/_authenticated._admin.admin.gaester'
+import { Route as AuthenticatedAdminAdminFejlRouteImport } from './routes/_authenticated._admin.admin.fejl'
+import { Route as AuthenticatedAdminAdminFeedbackRouteImport } from './routes/_authenticated._admin.admin.feedback'
+import { Route as AuthenticatedAdminAdminDonationerRouteImport } from './routes/_authenticated._admin.admin.donationer'
+import { Route as AuthenticatedAdminAdminCronRouteImport } from './routes/_authenticated._admin.admin.cron'
+import { Route as AuthenticatedAdminAdminCoachingBookingsRouteImport } from './routes/_authenticated._admin.admin.coaching-bookings'
+import { Route as AuthenticatedAdminAdminCoachesRouteImport } from './routes/_authenticated._admin.admin.coaches'
+import { Route as AuthenticatedAdminAdminBriefingRouteImport } from './routes/_authenticated._admin.admin.briefing'
+import { Route as AuthenticatedAdminAdminBetalingerRouteImport } from './routes/_authenticated._admin.admin.betalinger'
+import { Route as AuthenticatedAdminAdminBeskederRouteImport } from './routes/_authenticated._admin.admin.beskeder'
+import { Route as AuthenticatedAdminAdminAuditRouteImport } from './routes/_authenticated._admin.admin.audit'
+import { Route as AuthenticatedAdminAdminAnalyticsRouteImport } from './routes/_authenticated._admin.admin.analytics'
+import { Route as AuthenticatedAdminAdminAfventerRouteImport } from './routes/_authenticated._admin.admin.afventer'
 import { Route as AuthenticatedAdminAdminRegelsaetIndexRouteImport } from './routes/_authenticated._admin.admin.regelsaet.index'
+import { Route as AuthenticatedAdminAdminProtestsIndexRouteImport } from './routes/_authenticated._admin.admin.protests.index'
+import { Route as AuthenticatedAdminAdminBrugereIndexRouteImport } from './routes/_authenticated._admin.admin.brugere.index'
 import { Route as AuthenticatedAdminAdminRegelsaetTemplateIdRouteImport } from './routes/_authenticated._admin.admin.regelsaet.$templateId'
-import { Route as AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.afdelinger'
-import { Route as AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.entries'
-import { Route as AuthenticatedAdminAdminLigaerLeagueIdReglerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.regler'
-import { Route as AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger'
+import { Route as AuthenticatedAdminAdminProtestsProtestIdRouteImport } from './routes/_authenticated._admin.admin.protests.$protestId'
+import { Route as AuthenticatedAdminAdminBrugereUserIdRouteImport } from './routes/_authenticated._admin.admin.brugere.$userId'
 import { Route as ApiPublicBroadcastStorageBucketSplatRouteImport } from './routes/api/public/broadcast/storage/$bucket/$'
+import { Route as AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger'
+import { Route as AuthenticatedAdminAdminLigaerLeagueIdReglerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.regler'
+import { Route as AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.entries'
+import { Route as AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.afdelinger'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppGuideRoute = AppGuideRouteImport.update({
-  id: '/app-guide',
-  path: '/app-guide',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BrugereRoute = BrugereRouteImport.update({
-  id: '/brugere',
-  path: '/brugere',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DonationerRoute = DonationerRouteImport.update({
-  id: '/donationer',
-  path: '/donationer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LeaderboardRoute = LeaderboardRouteImport.update({
-  id: '/leaderboard',
-  path: '/leaderboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const NyhederRoute = NyhederRouteImport.update({
-  id: '/nyheder',
-  path: '/nyheder',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivatlivspolitikRoute = PrivatlivspolitikRouteImport.update({
-  id: '/privatlivspolitik',
-  path: '/privatlivspolitik',
+const UgensOverhalingRoute = UgensOverhalingRouteImport.update({
+  id: '/ugens-overhaling',
+  path: '/ugens-overhaling',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -168,28 +129,98 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UgensOverhalingRoute = UgensOverhalingRouteImport.update({
-  id: '/ugens-overhaling',
-  path: '/ugens-overhaling',
+const PrivatlivspolitikRoute = PrivatlivspolitikRouteImport.update({
+  id: '/privatlivspolitik',
+  path: '/privatlivspolitik',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/_admin',
-  getParentRoute: () => AuthenticatedRoute,
+const NyhederRoute = NyhederRouteImport.update({
+  id: '/nyheder',
+  path: '/nyheder',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedArkivRoute = AuthenticatedArkivRouteImport.update({
-  id: '/arkiv',
-  path: '/arkiv',
-  getParentRoute: () => AuthenticatedRoute,
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedBeskederRoute = AuthenticatedBeskederRouteImport.update({
-  id: '/beskeder',
-  path: '/beskeder',
-  getParentRoute: () => AuthenticatedRoute,
+const LeaderboardRoute = LeaderboardRouteImport.update({
+  id: '/leaderboard',
+  path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
-  id: '/feedback',
-  path: '/feedback',
+const DonationerRoute = DonationerRouteImport.update({
+  id: '/donationer',
+  path: '/donationer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BrugereRoute = BrugereRouteImport.update({
+  id: '/brugere',
+  path: '/brugere',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppGuideRoute = AppGuideRouteImport.update({
+  id: '/app-guide',
+  path: '/app-guide',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsIndexRoute = TeamsIndexRouteImport.update({
+  id: '/teams/',
+  path: '/teams/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerfordeleIndexRoute = PartnerfordeleIndexRouteImport.update({
+  id: '/partnerfordele/',
+  path: '/partnerfordele/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoachingIndexRoute = CoachingIndexRouteImport.update({
+  id: '/coaching/',
+  path: '/coaching/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeamsTeamIdRoute = TeamsTeamIdRouteImport.update({
+  id: '/teams/$teamId',
+  path: '/teams/$teamId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartnerfordeleBenefitIdRoute = PartnerfordeleBenefitIdRouteImport.update({
+  id: '/partnerfordele/$benefitId',
+  path: '/partnerfordele/$benefitId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LmuTeamsRoute = LmuTeamsRouteImport.update({
+  id: '/lmu/teams',
+  path: '/lmu/teams',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LmuLigaRoute = LmuLigaRouteImport.update({
+  id: '/lmu/liga',
+  path: '/lmu/liga',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LigaerLeagueIdRoute = LigaerLeagueIdRouteImport.update({
+  id: '/ligaer/$leagueId',
+  path: '/ligaer/$leagueId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedMineProtestsRoute =
@@ -198,134 +229,44 @@ const AuthenticatedMineProtestsRoute =
     path: '/mine-protests',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
-  id: '/onboarding',
-  path: '/onboarding',
+const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const CoachingIndexRoute = CoachingIndexRouteImport.update({
-  id: '/coaching/',
-  path: '/coaching/',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedBeskederRoute = AuthenticatedBeskederRouteImport.update({
+  id: '/beskeder',
+  path: '/beskeder',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedArkivRoute = AuthenticatedArkivRouteImport.update({
+  id: '/arkiv',
+  path: '/arkiv',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const LigaerLeagueIdRoute = LigaerLeagueIdRouteImport.update({
-  id: '/ligaer/$leagueId',
-  path: '/ligaer/$leagueId',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
-const LmuLigaRoute = LmuLigaRouteImport.update({
-  id: '/lmu/liga',
-  path: '/lmu/liga',
-  getParentRoute: () => rootRouteImport,
+const LigaerLeagueIdIndexRoute = LigaerLeagueIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => LigaerLeagueIdRoute,
 } as any)
-const LmuTeamsRoute = LmuTeamsRouteImport.update({
-  id: '/lmu/teams',
-  path: '/lmu/teams',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PartnerfordeleIndexRoute = PartnerfordeleIndexRouteImport.update({
-  id: '/partnerfordele/',
-  path: '/partnerfordele/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PartnerfordeleBenefitIdRoute = PartnerfordeleBenefitIdRouteImport.update({
-  id: '/partnerfordele/$benefitId',
-  path: '/partnerfordele/$benefitId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TeamsIndexRoute = TeamsIndexRouteImport.update({
-  id: '/teams/',
-  path: '/teams/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TeamsTeamIdRoute = TeamsTeamIdRouteImport.update({
-  id: '/teams/$teamId',
-  path: '/teams/$teamId',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedBeskederThreadIdRoute =
-  AuthenticatedBeskederThreadIdRouteImport.update({
-    id: '/$threadId',
-    path: '/$threadId',
-    getParentRoute: () => AuthenticatedBeskederRoute,
-  } as any)
-const AuthenticatedBeskederSystemRoute =
-  AuthenticatedBeskederSystemRouteImport.update({
-    id: '/system',
-    path: '/system',
-    getParentRoute: () => AuthenticatedBeskederRoute,
-  } as any)
-const AuthenticatedCoachingBookRoute =
-  AuthenticatedCoachingBookRouteImport.update({
-    id: '/coaching/book',
-    path: '/coaching/book',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachingMinKalenderRoute =
-  AuthenticatedCoachingMinKalenderRouteImport.update({
-    id: '/coaching/min-kalender',
-    path: '/coaching/min-kalender',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachingMinProfilRoute =
-  AuthenticatedCoachingMinProfilRouteImport.update({
-    id: '/coaching/min-profil',
-    path: '/coaching/min-profil',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedCoachingMineBookingerRoute =
-  AuthenticatedCoachingMineBookingerRouteImport.update({
-    id: '/coaching/mine-bookinger',
-    path: '/coaching/mine-bookinger',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedProfilIndexRoute =
   AuthenticatedProfilIndexRouteImport.update({
     id: '/profil/',
     path: '/profil/',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedProfilUserIdRoute =
-  AuthenticatedProfilUserIdRouteImport.update({
-    id: '/profil/$userId',
-    path: '/profil/$userId',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const ApiPublicLeaderboardUploadRoute =
-  ApiPublicLeaderboardUploadRouteImport.update({
-    id: '/api/public/leaderboard-upload',
-    path: '/api/public/leaderboard-upload',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LigaerLeagueIdIndexRoute = LigaerLeagueIdIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => LigaerLeagueIdRoute,
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const LigaerLeagueIdEntrylisteRoute =
-  LigaerLeagueIdEntrylisteRouteImport.update({
-    id: '/entryliste',
-    path: '/entryliste',
-    getParentRoute: () => LigaerLeagueIdRoute,
-  } as any)
-const LigaerLeagueIdKalenderRoute = LigaerLeagueIdKalenderRouteImport.update({
-  id: '/kalender',
-  path: '/kalender',
-  getParentRoute: () => LigaerLeagueIdRoute,
-} as any)
-const LigaerLeagueIdPraemierRoute = LigaerLeagueIdPraemierRouteImport.update({
-  id: '/praemier',
-  path: '/praemier',
-  getParentRoute: () => LigaerLeagueIdRoute,
-} as any)
-const LigaerLeagueIdReglerRoute = LigaerLeagueIdReglerRouteImport.update({
-  id: '/regler',
-  path: '/regler',
+const LigaerLeagueIdTeamsRoute = LigaerLeagueIdTeamsRouteImport.update({
+  id: '/teams',
+  path: '/teams',
   getParentRoute: () => LigaerLeagueIdRoute,
 } as any)
 const LigaerLeagueIdStillingerRoute =
@@ -334,328 +275,85 @@ const LigaerLeagueIdStillingerRoute =
     path: '/stillinger',
     getParentRoute: () => LigaerLeagueIdRoute,
   } as any)
-const LigaerLeagueIdTeamsRoute = LigaerLeagueIdTeamsRouteImport.update({
-  id: '/teams',
-  path: '/teams',
+const LigaerLeagueIdReglerRoute = LigaerLeagueIdReglerRouteImport.update({
+  id: '/regler',
+  path: '/regler',
   getParentRoute: () => LigaerLeagueIdRoute,
 } as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
-  getParentRoute: () => rootRouteImport,
+const LigaerLeagueIdPraemierRoute = LigaerLeagueIdPraemierRouteImport.update({
+  id: '/praemier',
+  path: '/praemier',
+  getParentRoute: () => LigaerLeagueIdRoute,
 } as any)
+const LigaerLeagueIdKalenderRoute = LigaerLeagueIdKalenderRouteImport.update({
+  id: '/kalender',
+  path: '/kalender',
+  getParentRoute: () => LigaerLeagueIdRoute,
+} as any)
+const LigaerLeagueIdEntrylisteRoute =
+  LigaerLeagueIdEntrylisteRouteImport.update({
+    id: '/entryliste',
+    path: '/entryliste',
+    getParentRoute: () => LigaerLeagueIdRoute,
+  } as any)
+const ApiPublicLeaderboardUploadRoute =
+  ApiPublicLeaderboardUploadRouteImport.update({
+    id: '/api/public/leaderboard-upload',
+    path: '/api/public/leaderboard-upload',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedProfilUserIdRoute =
+  AuthenticatedProfilUserIdRouteImport.update({
+    id: '/profil/$userId',
+    path: '/profil/$userId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachingMineBookingerRoute =
+  AuthenticatedCoachingMineBookingerRouteImport.update({
+    id: '/coaching/mine-bookinger',
+    path: '/coaching/mine-bookinger',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachingMinProfilRoute =
+  AuthenticatedCoachingMinProfilRouteImport.update({
+    id: '/coaching/min-profil',
+    path: '/coaching/min-profil',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachingMinKalenderRoute =
+  AuthenticatedCoachingMinKalenderRouteImport.update({
+    id: '/coaching/min-kalender',
+    path: '/coaching/min-kalender',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCoachingBookRoute =
+  AuthenticatedCoachingBookRouteImport.update({
+    id: '/coaching/book',
+    path: '/coaching/book',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBeskederSystemRoute =
+  AuthenticatedBeskederSystemRouteImport.update({
+    id: '/system',
+    path: '/system',
+    getParentRoute: () => AuthenticatedBeskederRoute,
+  } as any)
+const AuthenticatedBeskederThreadIdRoute =
+  AuthenticatedBeskederThreadIdRouteImport.update({
+    id: '/$threadId',
+    path: '/$threadId',
+    getParentRoute: () => AuthenticatedBeskederRoute,
+  } as any)
 const AuthenticatedAdminAdminIndexRoute =
   AuthenticatedAdminAdminIndexRouteImport.update({
     id: '/admin/',
     path: '/admin/',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminAdminAfventerRoute =
-  AuthenticatedAdminAdminAfventerRouteImport.update({
-    id: '/admin/afventer',
-    path: '/admin/afventer',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminAnalyticsRoute =
-  AuthenticatedAdminAdminAnalyticsRouteImport.update({
-    id: '/admin/analytics',
-    path: '/admin/analytics',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminAuditRoute =
-  AuthenticatedAdminAdminAuditRouteImport.update({
-    id: '/admin/audit',
-    path: '/admin/audit',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminBeskederRoute =
-  AuthenticatedAdminAdminBeskederRouteImport.update({
-    id: '/admin/beskeder',
-    path: '/admin/beskeder',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminBetalingerRoute =
-  AuthenticatedAdminAdminBetalingerRouteImport.update({
-    id: '/admin/betalinger',
-    path: '/admin/betalinger',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminBriefingRoute =
-  AuthenticatedAdminAdminBriefingRouteImport.update({
-    id: '/admin/briefing',
-    path: '/admin/briefing',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminCoachesRoute =
-  AuthenticatedAdminAdminCoachesRouteImport.update({
-    id: '/admin/coaches',
-    path: '/admin/coaches',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminCoachingBookingsRoute =
-  AuthenticatedAdminAdminCoachingBookingsRouteImport.update({
-    id: '/admin/coaching-bookings',
-    path: '/admin/coaching-bookings',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminCronRoute =
-  AuthenticatedAdminAdminCronRouteImport.update({
-    id: '/admin/cron',
-    path: '/admin/cron',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminDonationerRoute =
-  AuthenticatedAdminAdminDonationerRouteImport.update({
-    id: '/admin/donationer',
-    path: '/admin/donationer',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminFeedbackRoute =
-  AuthenticatedAdminAdminFeedbackRouteImport.update({
-    id: '/admin/feedback',
-    path: '/admin/feedback',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminFejlRoute =
-  AuthenticatedAdminAdminFejlRouteImport.update({
-    id: '/admin/fejl',
-    path: '/admin/fejl',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminGaesterRoute =
-  AuthenticatedAdminAdminGaesterRouteImport.update({
-    id: '/admin/gaester',
-    path: '/admin/gaester',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminLigaerRoute =
-  AuthenticatedAdminAdminLigaerRouteImport.update({
-    id: '/admin/ligaer',
-    path: '/admin/ligaer',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminNyhedsbrevRoute =
-  AuthenticatedAdminAdminNyhedsbrevRouteImport.update({
-    id: '/admin/nyhedsbrev',
-    path: '/admin/nyhedsbrev',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminOnlineRoute =
-  AuthenticatedAdminAdminOnlineRouteImport.update({
-    id: '/admin/online',
-    path: '/admin/online',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminOverhalingerRoute =
-  AuthenticatedAdminAdminOverhalingerRouteImport.update({
-    id: '/admin/overhalinger',
-    path: '/admin/overhalinger',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminPaceSammenligningRoute =
-  AuthenticatedAdminAdminPaceSammenligningRouteImport.update({
-    id: '/admin/pace-sammenligning',
-    path: '/admin/pace-sammenligning',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminPartnerfordeleRoute =
-  AuthenticatedAdminAdminPartnerfordeleRouteImport.update({
-    id: '/admin/partnerfordele',
-    path: '/admin/partnerfordele',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminProtestsRoute =
-  AuthenticatedAdminAdminProtestsRouteImport.update({
-    id: '/admin/protests',
-    path: '/admin/protests',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminReplaysRoute =
-  AuthenticatedAdminAdminReplaysRouteImport.update({
-    id: '/admin/replays',
-    path: '/admin/replays',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminRollerRoute =
-  AuthenticatedAdminAdminRollerRouteImport.update({
-    id: '/admin/roller',
-    path: '/admin/roller',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminSponsorerRoute =
-  AuthenticatedAdminAdminSponsorerRouteImport.update({
-    id: '/admin/sponsorer',
-    path: '/admin/sponsorer',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminStorageRoute =
-  AuthenticatedAdminAdminStorageRouteImport.update({
-    id: '/admin/storage',
-    path: '/admin/storage',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminStreamingProfilRoute =
-  AuthenticatedAdminAdminStreamingProfilRouteImport.update({
-    id: '/admin/streaming-profil',
-    path: '/admin/streaming-profil',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminStreamingToolRoute =
-  AuthenticatedAdminAdminStreamingToolRouteImport.update({
-    id: '/admin/streaming-tool',
-    path: '/admin/streaming-tool',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminAdminTeamsRoute =
-  AuthenticatedAdminAdminTeamsRouteImport.update({
-    id: '/admin/teams',
-    path: '/admin/teams',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedBeskederGruppeGroupIdRoute =
-  AuthenticatedBeskederGruppeGroupIdRouteImport.update({
-    id: '/gruppe/$groupId',
-    path: '/gruppe/$groupId',
-    getParentRoute: () => AuthenticatedBeskederRoute,
-  } as any)
-const AuthenticatedCoachingRateBookingIdRoute =
-  AuthenticatedCoachingRateBookingIdRouteImport.update({
-    id: '/coaching/rate/$bookingId',
-    path: '/coaching/rate/$bookingId',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const ApiPublicBroadcastIceCupRoute =
-  ApiPublicBroadcastIceCupRouteImport.update({
-    id: '/api/public/broadcast/ice-cup',
-    path: '/api/public/broadcast/ice-cup',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicBroadcastLeaderboardRoute =
-  ApiPublicBroadcastLeaderboardRouteImport.update({
-    id: '/api/public/broadcast/leaderboard',
-    path: '/api/public/broadcast/leaderboard',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicBroadcastSponsorsRoute =
-  ApiPublicBroadcastSponsorsRouteImport.update({
-    id: '/api/public/broadcast/sponsors',
-    path: '/api/public/broadcast/sponsors',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicBroadcastStreamingProfilesRoute =
-  ApiPublicBroadcastStreamingProfilesRouteImport.update({
-    id: '/api/public/broadcast/streaming-profiles',
-    path: '/api/public/broadcast/streaming-profiles',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicBroadcastTeamLineupsRoute =
-  ApiPublicBroadcastTeamLineupsRouteImport.update({
-    id: '/api/public/broadcast/team-lineups',
-    path: '/api/public/broadcast/team-lineups',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCompanionVerifyTokenRoute =
-  ApiPublicCompanionVerifyTokenRouteImport.update({
-    id: '/api/public/companion/verify-token',
-    path: '/api/public/companion/verify-token',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronCoachingRatingRequestsRoute =
-  ApiPublicCronCoachingRatingRequestsRouteImport.update({
-    id: '/api/public/cron/coaching-rating-requests',
-    path: '/api/public/cron/coaching-rating-requests',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronCoachingRemindersRoute =
-  ApiPublicCronCoachingRemindersRouteImport.update({
-    id: '/api/public/cron/coaching-reminders',
-    path: '/api/public/cron/coaching-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronDeleteExpiredHostSessionsRoute =
-  ApiPublicCronDeleteExpiredHostSessionsRouteImport.update({
-    id: '/api/public/cron/delete-expired-host-sessions',
-    path: '/api/public/cron/delete-expired-host-sessions',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronExpireReserveOffersRoute =
-  ApiPublicCronExpireReserveOffersRouteImport.update({
-    id: '/api/public/cron/expire-reserve-offers',
-    path: '/api/public/cron/expire-reserve-offers',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronLeagueOpenRoute = ApiPublicCronLeagueOpenRouteImport.update({
-  id: '/api/public/cron/league-open',
-  path: '/api/public/cron/league-open',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicCronStripUnverifiedMembersRoute =
-  ApiPublicCronStripUnverifiedMembersRouteImport.update({
-    id: '/api/public/cron/strip-unverified-members',
-    path: '/api/public/cron/strip-unverified-members',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicCronYoutubeLiveRoute =
-  ApiPublicCronYoutubeLiveRouteImport.update({
-    id: '/api/public/cron/youtube-live',
-    path: '/api/public/cron/youtube-live',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicDiscordCallbackRoute =
-  ApiPublicDiscordCallbackRouteImport.update({
-    id: '/api/public/discord/callback',
-    path: '/api/public/discord/callback',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicDiscordInteractionsRoute =
-  ApiPublicDiscordInteractionsRouteImport.update({
-    id: '/api/public/discord/interactions',
-    path: '/api/public/discord/interactions',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicDiscordLoginRoute = ApiPublicDiscordLoginRouteImport.update({
-  id: '/api/public/discord/login',
-  path: '/api/public/discord/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicDownloadCompanionRoute =
-  ApiPublicDownloadCompanionRouteImport.update({
-    id: '/api/public/download/companion',
-    path: '/api/public/download/companion',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksPostOvertakingWinnerRoute =
-  ApiPublicHooksPostOvertakingWinnerRouteImport.update({
-    id: '/api/public/hooks/post-overtaking-winner',
-    path: '/api/public/hooks/post-overtaking-winner',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicPaymentsWebhookRoute =
-  ApiPublicPaymentsWebhookRouteImport.update({
-    id: '/api/public/payments/webhook',
-    path: '/api/public/payments/webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LigaerLeagueIdAfdelingDivisionIdRoute =
-  LigaerLeagueIdAfdelingDivisionIdRouteImport.update({
-    id: '/afdeling/$divisionId',
-    path: '/afdeling/$divisionId',
-    getParentRoute: () => LigaerLeagueIdRoute,
-  } as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
 const LovableEmailTransactionalPreviewRoute =
@@ -664,22 +362,318 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
-const AuthenticatedAdminAdminBrugereIndexRoute =
-  AuthenticatedAdminAdminBrugereIndexRouteImport.update({
-    id: '/admin/brugere/',
-    path: '/admin/brugere/',
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LigaerLeagueIdAfdelingDivisionIdRoute =
+  LigaerLeagueIdAfdelingDivisionIdRouteImport.update({
+    id: '/afdeling/$divisionId',
+    path: '/afdeling/$divisionId',
+    getParentRoute: () => LigaerLeagueIdRoute,
+  } as any)
+const ApiPublicPaymentsWebhookRoute =
+  ApiPublicPaymentsWebhookRouteImport.update({
+    id: '/api/public/payments/webhook',
+    path: '/api/public/payments/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksPostOvertakingWinnerRoute =
+  ApiPublicHooksPostOvertakingWinnerRouteImport.update({
+    id: '/api/public/hooks/post-overtaking-winner',
+    path: '/api/public/hooks/post-overtaking-winner',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDownloadCompanionRoute =
+  ApiPublicDownloadCompanionRouteImport.update({
+    id: '/api/public/download/companion',
+    path: '/api/public/download/companion',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDiscordLoginRoute = ApiPublicDiscordLoginRouteImport.update({
+  id: '/api/public/discord/login',
+  path: '/api/public/discord/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicDiscordInteractionsRoute =
+  ApiPublicDiscordInteractionsRouteImport.update({
+    id: '/api/public/discord/interactions',
+    path: '/api/public/discord/interactions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicDiscordCallbackRoute =
+  ApiPublicDiscordCallbackRouteImport.update({
+    id: '/api/public/discord/callback',
+    path: '/api/public/discord/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronYoutubeLiveRoute =
+  ApiPublicCronYoutubeLiveRouteImport.update({
+    id: '/api/public/cron/youtube-live',
+    path: '/api/public/cron/youtube-live',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronStripUnverifiedMembersRoute =
+  ApiPublicCronStripUnverifiedMembersRouteImport.update({
+    id: '/api/public/cron/strip-unverified-members',
+    path: '/api/public/cron/strip-unverified-members',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronLeagueOpenRoute = ApiPublicCronLeagueOpenRouteImport.update({
+  id: '/api/public/cron/league-open',
+  path: '/api/public/cron/league-open',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicCronExpireReserveOffersRoute =
+  ApiPublicCronExpireReserveOffersRouteImport.update({
+    id: '/api/public/cron/expire-reserve-offers',
+    path: '/api/public/cron/expire-reserve-offers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronDeleteExpiredHostSessionsRoute =
+  ApiPublicCronDeleteExpiredHostSessionsRouteImport.update({
+    id: '/api/public/cron/delete-expired-host-sessions',
+    path: '/api/public/cron/delete-expired-host-sessions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronCoachingRemindersRoute =
+  ApiPublicCronCoachingRemindersRouteImport.update({
+    id: '/api/public/cron/coaching-reminders',
+    path: '/api/public/cron/coaching-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCronCoachingRatingRequestsRoute =
+  ApiPublicCronCoachingRatingRequestsRouteImport.update({
+    id: '/api/public/cron/coaching-rating-requests',
+    path: '/api/public/cron/coaching-rating-requests',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicCompanionVerifyTokenRoute =
+  ApiPublicCompanionVerifyTokenRouteImport.update({
+    id: '/api/public/companion/verify-token',
+    path: '/api/public/companion/verify-token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBroadcastTeamLineupsRoute =
+  ApiPublicBroadcastTeamLineupsRouteImport.update({
+    id: '/api/public/broadcast/team-lineups',
+    path: '/api/public/broadcast/team-lineups',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBroadcastStreamingProfilesRoute =
+  ApiPublicBroadcastStreamingProfilesRouteImport.update({
+    id: '/api/public/broadcast/streaming-profiles',
+    path: '/api/public/broadcast/streaming-profiles',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBroadcastSponsorsRoute =
+  ApiPublicBroadcastSponsorsRouteImport.update({
+    id: '/api/public/broadcast/sponsors',
+    path: '/api/public/broadcast/sponsors',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBroadcastLeaderboardRoute =
+  ApiPublicBroadcastLeaderboardRouteImport.update({
+    id: '/api/public/broadcast/leaderboard',
+    path: '/api/public/broadcast/leaderboard',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicBroadcastIceCupRoute =
+  ApiPublicBroadcastIceCupRouteImport.update({
+    id: '/api/public/broadcast/ice-cup',
+    path: '/api/public/broadcast/ice-cup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedCoachingRateBookingIdRoute =
+  AuthenticatedCoachingRateBookingIdRouteImport.update({
+    id: '/coaching/rate/$bookingId',
+    path: '/coaching/rate/$bookingId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBeskederGruppeGroupIdRoute =
+  AuthenticatedBeskederGruppeGroupIdRouteImport.update({
+    id: '/gruppe/$groupId',
+    path: '/gruppe/$groupId',
+    getParentRoute: () => AuthenticatedBeskederRoute,
+  } as any)
+const AuthenticatedAdminAdminTeamsRoute =
+  AuthenticatedAdminAdminTeamsRouteImport.update({
+    id: '/admin/teams',
+    path: '/admin/teams',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminAdminBrugereUserIdRoute =
-  AuthenticatedAdminAdminBrugereUserIdRouteImport.update({
-    id: '/admin/brugere/$userId',
-    path: '/admin/brugere/$userId',
+const AuthenticatedAdminAdminStreamingToolRoute =
+  AuthenticatedAdminAdminStreamingToolRouteImport.update({
+    id: '/admin/streaming-tool',
+    path: '/admin/streaming-tool',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminStreamingProfilRoute =
+  AuthenticatedAdminAdminStreamingProfilRouteImport.update({
+    id: '/admin/streaming-profil',
+    path: '/admin/streaming-profil',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminStorageRoute =
+  AuthenticatedAdminAdminStorageRouteImport.update({
+    id: '/admin/storage',
+    path: '/admin/storage',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminSponsorerRoute =
+  AuthenticatedAdminAdminSponsorerRouteImport.update({
+    id: '/admin/sponsorer',
+    path: '/admin/sponsorer',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminRollerRoute =
+  AuthenticatedAdminAdminRollerRouteImport.update({
+    id: '/admin/roller',
+    path: '/admin/roller',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminReplaysRoute =
+  AuthenticatedAdminAdminReplaysRouteImport.update({
+    id: '/admin/replays',
+    path: '/admin/replays',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminProtestsRoute =
+  AuthenticatedAdminAdminProtestsRouteImport.update({
+    id: '/admin/protests',
+    path: '/admin/protests',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminPartnerfordeleRoute =
+  AuthenticatedAdminAdminPartnerfordeleRouteImport.update({
+    id: '/admin/partnerfordele',
+    path: '/admin/partnerfordele',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminPaceSammenligningRoute =
+  AuthenticatedAdminAdminPaceSammenligningRouteImport.update({
+    id: '/admin/pace-sammenligning',
+    path: '/admin/pace-sammenligning',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminOverhalingerRoute =
+  AuthenticatedAdminAdminOverhalingerRouteImport.update({
+    id: '/admin/overhalinger',
+    path: '/admin/overhalinger',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminOnlineRoute =
+  AuthenticatedAdminAdminOnlineRouteImport.update({
+    id: '/admin/online',
+    path: '/admin/online',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminNyhedsbrevRoute =
+  AuthenticatedAdminAdminNyhedsbrevRouteImport.update({
+    id: '/admin/nyhedsbrev',
+    path: '/admin/nyhedsbrev',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminLigaerRoute =
+  AuthenticatedAdminAdminLigaerRouteImport.update({
+    id: '/admin/ligaer',
+    path: '/admin/ligaer',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminGaesterRoute =
+  AuthenticatedAdminAdminGaesterRouteImport.update({
+    id: '/admin/gaester',
+    path: '/admin/gaester',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminFejlRoute =
+  AuthenticatedAdminAdminFejlRouteImport.update({
+    id: '/admin/fejl',
+    path: '/admin/fejl',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminFeedbackRoute =
+  AuthenticatedAdminAdminFeedbackRouteImport.update({
+    id: '/admin/feedback',
+    path: '/admin/feedback',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminDonationerRoute =
+  AuthenticatedAdminAdminDonationerRouteImport.update({
+    id: '/admin/donationer',
+    path: '/admin/donationer',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminCronRoute =
+  AuthenticatedAdminAdminCronRouteImport.update({
+    id: '/admin/cron',
+    path: '/admin/cron',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminCoachingBookingsRoute =
+  AuthenticatedAdminAdminCoachingBookingsRouteImport.update({
+    id: '/admin/coaching-bookings',
+    path: '/admin/coaching-bookings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminCoachesRoute =
+  AuthenticatedAdminAdminCoachesRouteImport.update({
+    id: '/admin/coaches',
+    path: '/admin/coaches',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminBriefingRoute =
+  AuthenticatedAdminAdminBriefingRouteImport.update({
+    id: '/admin/briefing',
+    path: '/admin/briefing',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminBetalingerRoute =
+  AuthenticatedAdminAdminBetalingerRouteImport.update({
+    id: '/admin/betalinger',
+    path: '/admin/betalinger',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminBeskederRoute =
+  AuthenticatedAdminAdminBeskederRouteImport.update({
+    id: '/admin/beskeder',
+    path: '/admin/beskeder',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminAuditRoute =
+  AuthenticatedAdminAdminAuditRouteImport.update({
+    id: '/admin/audit',
+    path: '/admin/audit',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminAnalyticsRoute =
+  AuthenticatedAdminAdminAnalyticsRouteImport.update({
+    id: '/admin/analytics',
+    path: '/admin/analytics',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminAfventerRoute =
+  AuthenticatedAdminAdminAfventerRouteImport.update({
+    id: '/admin/afventer',
+    path: '/admin/afventer',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminAdminRegelsaetIndexRoute =
+  AuthenticatedAdminAdminRegelsaetIndexRouteImport.update({
+    id: '/admin/regelsaet/',
+    path: '/admin/regelsaet/',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAdminProtestsIndexRoute =
@@ -688,16 +682,10 @@ const AuthenticatedAdminAdminProtestsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedAdminAdminProtestsRoute,
   } as any)
-const AuthenticatedAdminAdminProtestsProtestIdRoute =
-  AuthenticatedAdminAdminProtestsProtestIdRouteImport.update({
-    id: '/$protestId',
-    path: '/$protestId',
-    getParentRoute: () => AuthenticatedAdminAdminProtestsRoute,
-  } as any)
-const AuthenticatedAdminAdminRegelsaetIndexRoute =
-  AuthenticatedAdminAdminRegelsaetIndexRouteImport.update({
-    id: '/admin/regelsaet/',
-    path: '/admin/regelsaet/',
+const AuthenticatedAdminAdminBrugereIndexRoute =
+  AuthenticatedAdminAdminBrugereIndexRouteImport.update({
+    id: '/admin/brugere/',
+    path: '/admin/brugere/',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminAdminRegelsaetTemplateIdRoute =
@@ -706,16 +694,28 @@ const AuthenticatedAdminAdminRegelsaetTemplateIdRoute =
     path: '/admin/regelsaet/$templateId',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute =
-  AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport.update({
-    id: '/$leagueId/afdelinger',
-    path: '/$leagueId/afdelinger',
-    getParentRoute: () => AuthenticatedAdminAdminLigaerRoute,
+const AuthenticatedAdminAdminProtestsProtestIdRoute =
+  AuthenticatedAdminAdminProtestsProtestIdRouteImport.update({
+    id: '/$protestId',
+    path: '/$protestId',
+    getParentRoute: () => AuthenticatedAdminAdminProtestsRoute,
   } as any)
-const AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute =
-  AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport.update({
-    id: '/$leagueId/entries',
-    path: '/$leagueId/entries',
+const AuthenticatedAdminAdminBrugereUserIdRoute =
+  AuthenticatedAdminAdminBrugereUserIdRouteImport.update({
+    id: '/admin/brugere/$userId',
+    path: '/admin/brugere/$userId',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const ApiPublicBroadcastStorageBucketSplatRoute =
+  ApiPublicBroadcastStorageBucketSplatRouteImport.update({
+    id: '/api/public/broadcast/storage/$bucket/$',
+    path: '/api/public/broadcast/storage/$bucket/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute =
+  AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport.update({
+    id: '/$leagueId/stillinger',
+    path: '/$leagueId/stillinger',
     getParentRoute: () => AuthenticatedAdminAdminLigaerRoute,
   } as any)
 const AuthenticatedAdminAdminLigaerLeagueIdReglerRoute =
@@ -724,17 +724,17 @@ const AuthenticatedAdminAdminLigaerLeagueIdReglerRoute =
     path: '/$leagueId/regler',
     getParentRoute: () => AuthenticatedAdminAdminLigaerRoute,
   } as any)
-const AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute =
-  AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport.update({
-    id: '/$leagueId/stillinger',
-    path: '/$leagueId/stillinger',
+const AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute =
+  AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport.update({
+    id: '/$leagueId/entries',
+    path: '/$leagueId/entries',
     getParentRoute: () => AuthenticatedAdminAdminLigaerRoute,
   } as any)
-const ApiPublicBroadcastStorageBucketSplatRoute =
-  ApiPublicBroadcastStorageBucketSplatRouteImport.update({
-    id: '/api/public/broadcast/storage/$bucket/$',
-    path: '/api/public/broadcast/storage/$bucket/$',
-    getParentRoute: () => rootRouteImport,
+const AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute =
+  AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport.update({
+    id: '/$leagueId/afdelinger',
+    path: '/$leagueId/afdelinger',
+    getParentRoute: () => AuthenticatedAdminAdminLigaerRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -1447,67 +1447,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app-guide': {
-      id: '/app-guide'
-      path: '/app-guide'
-      fullPath: '/app-guide'
-      preLoaderRoute: typeof AppGuideRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/brugere': {
-      id: '/brugere'
-      path: '/brugere'
-      fullPath: '/brugere'
-      preLoaderRoute: typeof BrugereRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/donationer': {
-      id: '/donationer'
-      path: '/donationer'
-      fullPath: '/donationer'
-      preLoaderRoute: typeof DonationerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/leaderboard': {
-      id: '/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/leaderboard'
-      preLoaderRoute: typeof LeaderboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/nyheder': {
-      id: '/nyheder'
-      path: '/nyheder'
-      fullPath: '/nyheder'
-      preLoaderRoute: typeof NyhederRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privatlivspolitik': {
-      id: '/privatlivspolitik'
-      path: '/privatlivspolitik'
-      fullPath: '/privatlivspolitik'
-      preLoaderRoute: typeof PrivatlivspolitikRouteImport
+    '/ugens-overhaling': {
+      id: '/ugens-overhaling'
+      path: '/ugens-overhaling'
+      fullPath: '/ugens-overhaling'
+      preLoaderRoute: typeof UgensOverhalingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -1517,102 +1461,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ugens-overhaling': {
-      id: '/ugens-overhaling'
-      path: '/ugens-overhaling'
-      fullPath: '/ugens-overhaling'
-      preLoaderRoute: typeof UgensOverhalingRouteImport
+    '/privatlivspolitik': {
+      id: '/privatlivspolitik'
+      path: '/privatlivspolitik'
+      fullPath: '/privatlivspolitik'
+      preLoaderRoute: typeof PrivatlivspolitikRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/_admin': {
-      id: '/_authenticated/_admin'
+    '/nyheder': {
+      id: '/nyheder'
+      path: '/nyheder'
+      fullPath: '/nyheder'
+      preLoaderRoute: typeof NyhederRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/leaderboard': {
+      id: '/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/donationer': {
+      id: '/donationer'
+      path: '/donationer'
+      fullPath: '/donationer'
+      preLoaderRoute: typeof DonationerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/brugere': {
+      id: '/brugere'
+      path: '/brugere'
+      fullPath: '/brugere'
+      preLoaderRoute: typeof BrugereRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app-guide': {
+      id: '/app-guide'
+      path: '/app-guide'
+      fullPath: '/app-guide'
+      preLoaderRoute: typeof AppGuideRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/arkiv': {
-      id: '/_authenticated/arkiv'
-      path: '/arkiv'
-      fullPath: '/arkiv'
-      preLoaderRoute: typeof AuthenticatedArkivRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/beskeder': {
-      id: '/_authenticated/beskeder'
-      path: '/beskeder'
-      fullPath: '/beskeder'
-      preLoaderRoute: typeof AuthenticatedBeskederRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/feedback': {
-      id: '/_authenticated/feedback'
-      path: '/feedback'
-      fullPath: '/feedback'
-      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/mine-protests': {
-      id: '/_authenticated/mine-protests'
-      path: '/mine-protests'
-      fullPath: '/mine-protests'
-      preLoaderRoute: typeof AuthenticatedMineProtestsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/onboarding': {
-      id: '/_authenticated/onboarding'
-      path: '/onboarding'
-      fullPath: '/onboarding'
-      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/coaching/': {
-      id: '/coaching/'
-      path: '/coaching'
-      fullPath: '/coaching/'
-      preLoaderRoute: typeof CoachingIndexRouteImport
+      preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ligaer/$leagueId': {
-      id: '/ligaer/$leagueId'
-      path: '/ligaer/$leagueId'
-      fullPath: '/ligaer/$leagueId'
-      preLoaderRoute: typeof LigaerLeagueIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lmu/liga': {
-      id: '/lmu/liga'
-      path: '/lmu/liga'
-      fullPath: '/lmu/liga'
-      preLoaderRoute: typeof LmuLigaRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lmu/teams': {
-      id: '/lmu/teams'
-      path: '/lmu/teams'
-      fullPath: '/lmu/teams'
-      preLoaderRoute: typeof LmuTeamsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/partnerfordele/': {
-      id: '/partnerfordele/'
-      path: '/partnerfordele'
-      fullPath: '/partnerfordele/'
-      preLoaderRoute: typeof PartnerfordeleIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/partnerfordele/$benefitId': {
-      id: '/partnerfordele/$benefitId'
-      path: '/partnerfordele/$benefitId'
-      fullPath: '/partnerfordele/$benefitId'
-      preLoaderRoute: typeof PartnerfordeleBenefitIdRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/teams/': {
@@ -1622,6 +1531,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/partnerfordele/': {
+      id: '/partnerfordele/'
+      path: '/partnerfordele'
+      fullPath: '/partnerfordele/'
+      preLoaderRoute: typeof PartnerfordeleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coaching/': {
+      id: '/coaching/'
+      path: '/coaching'
+      fullPath: '/coaching/'
+      preLoaderRoute: typeof CoachingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/teams/$teamId': {
       id: '/teams/$teamId'
       path: '/teams/$teamId'
@@ -1629,68 +1552,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TeamsTeamIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/beskeder/$threadId': {
-      id: '/_authenticated/beskeder/$threadId'
-      path: '/$threadId'
-      fullPath: '/beskeder/$threadId'
-      preLoaderRoute: typeof AuthenticatedBeskederThreadIdRouteImport
-      parentRoute: typeof AuthenticatedBeskederRoute
-    }
-    '/_authenticated/beskeder/system': {
-      id: '/_authenticated/beskeder/system'
-      path: '/system'
-      fullPath: '/beskeder/system'
-      preLoaderRoute: typeof AuthenticatedBeskederSystemRouteImport
-      parentRoute: typeof AuthenticatedBeskederRoute
-    }
-    '/_authenticated/coaching/book': {
-      id: '/_authenticated/coaching/book'
-      path: '/coaching/book'
-      fullPath: '/coaching/book'
-      preLoaderRoute: typeof AuthenticatedCoachingBookRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coaching/min-kalender': {
-      id: '/_authenticated/coaching/min-kalender'
-      path: '/coaching/min-kalender'
-      fullPath: '/coaching/min-kalender'
-      preLoaderRoute: typeof AuthenticatedCoachingMinKalenderRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coaching/min-profil': {
-      id: '/_authenticated/coaching/min-profil'
-      path: '/coaching/min-profil'
-      fullPath: '/coaching/min-profil'
-      preLoaderRoute: typeof AuthenticatedCoachingMinProfilRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/coaching/mine-bookinger': {
-      id: '/_authenticated/coaching/mine-bookinger'
-      path: '/coaching/mine-bookinger'
-      fullPath: '/coaching/mine-bookinger'
-      preLoaderRoute: typeof AuthenticatedCoachingMineBookingerRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/profil/': {
-      id: '/_authenticated/profil/'
-      path: '/profil'
-      fullPath: '/profil/'
-      preLoaderRoute: typeof AuthenticatedProfilIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/profil/$userId': {
-      id: '/_authenticated/profil/$userId'
-      path: '/profil/$userId'
-      fullPath: '/profil/$userId'
-      preLoaderRoute: typeof AuthenticatedProfilUserIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/api/public/leaderboard-upload': {
-      id: '/api/public/leaderboard-upload'
-      path: '/api/public/leaderboard-upload'
-      fullPath: '/api/public/leaderboard-upload'
-      preLoaderRoute: typeof ApiPublicLeaderboardUploadRouteImport
+    '/partnerfordele/$benefitId': {
+      id: '/partnerfordele/$benefitId'
+      path: '/partnerfordele/$benefitId'
+      fullPath: '/partnerfordele/$benefitId'
+      preLoaderRoute: typeof PartnerfordeleBenefitIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/lmu/teams': {
+      id: '/lmu/teams'
+      path: '/lmu/teams'
+      fullPath: '/lmu/teams'
+      preLoaderRoute: typeof LmuTeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lmu/liga': {
+      id: '/lmu/liga'
+      path: '/lmu/liga'
+      fullPath: '/lmu/liga'
+      preLoaderRoute: typeof LmuLigaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ligaer/$leagueId': {
+      id: '/ligaer/$leagueId'
+      path: '/ligaer/$leagueId'
+      fullPath: '/ligaer/$leagueId'
+      preLoaderRoute: typeof LigaerLeagueIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/mine-protests': {
+      id: '/_authenticated/mine-protests'
+      path: '/mine-protests'
+      fullPath: '/mine-protests'
+      preLoaderRoute: typeof AuthenticatedMineProtestsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/feedback': {
+      id: '/_authenticated/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/beskeder': {
+      id: '/_authenticated/beskeder'
+      path: '/beskeder'
+      fullPath: '/beskeder'
+      preLoaderRoute: typeof AuthenticatedBeskederRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/arkiv': {
+      id: '/_authenticated/arkiv'
+      path: '/arkiv'
+      fullPath: '/arkiv'
+      preLoaderRoute: typeof AuthenticatedArkivRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_admin': {
+      id: '/_authenticated/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/ligaer/$leagueId/': {
       id: '/ligaer/$leagueId/'
@@ -1699,32 +1636,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LigaerLeagueIdIndexRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
     }
-    '/ligaer/$leagueId/entryliste': {
-      id: '/ligaer/$leagueId/entryliste'
-      path: '/entryliste'
-      fullPath: '/ligaer/$leagueId/entryliste'
-      preLoaderRoute: typeof LigaerLeagueIdEntrylisteRouteImport
-      parentRoute: typeof LigaerLeagueIdRoute
+    '/_authenticated/profil/': {
+      id: '/_authenticated/profil/'
+      path: '/profil'
+      fullPath: '/profil/'
+      preLoaderRoute: typeof AuthenticatedProfilIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
-    '/ligaer/$leagueId/kalender': {
-      id: '/ligaer/$leagueId/kalender'
-      path: '/kalender'
-      fullPath: '/ligaer/$leagueId/kalender'
-      preLoaderRoute: typeof LigaerLeagueIdKalenderRouteImport
-      parentRoute: typeof LigaerLeagueIdRoute
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/ligaer/$leagueId/praemier': {
-      id: '/ligaer/$leagueId/praemier'
-      path: '/praemier'
-      fullPath: '/ligaer/$leagueId/praemier'
-      preLoaderRoute: typeof LigaerLeagueIdPraemierRouteImport
-      parentRoute: typeof LigaerLeagueIdRoute
-    }
-    '/ligaer/$leagueId/regler': {
-      id: '/ligaer/$leagueId/regler'
-      path: '/regler'
-      fullPath: '/ligaer/$leagueId/regler'
-      preLoaderRoute: typeof LigaerLeagueIdReglerRouteImport
+    '/ligaer/$leagueId/teams': {
+      id: '/ligaer/$leagueId/teams'
+      path: '/teams'
+      fullPath: '/ligaer/$leagueId/teams'
+      preLoaderRoute: typeof LigaerLeagueIdTeamsRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
     }
     '/ligaer/$leagueId/stillinger': {
@@ -1734,19 +1664,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LigaerLeagueIdStillingerRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
     }
-    '/ligaer/$leagueId/teams': {
-      id: '/ligaer/$leagueId/teams'
-      path: '/teams'
-      fullPath: '/ligaer/$leagueId/teams'
-      preLoaderRoute: typeof LigaerLeagueIdTeamsRouteImport
+    '/ligaer/$leagueId/regler': {
+      id: '/ligaer/$leagueId/regler'
+      path: '/regler'
+      fullPath: '/ligaer/$leagueId/regler'
+      preLoaderRoute: typeof LigaerLeagueIdReglerRouteImport
       parentRoute: typeof LigaerLeagueIdRoute
     }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+    '/ligaer/$leagueId/praemier': {
+      id: '/ligaer/$leagueId/praemier'
+      path: '/praemier'
+      fullPath: '/ligaer/$leagueId/praemier'
+      preLoaderRoute: typeof LigaerLeagueIdPraemierRouteImport
+      parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/ligaer/$leagueId/kalender': {
+      id: '/ligaer/$leagueId/kalender'
+      path: '/kalender'
+      fullPath: '/ligaer/$leagueId/kalender'
+      preLoaderRoute: typeof LigaerLeagueIdKalenderRouteImport
+      parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/ligaer/$leagueId/entryliste': {
+      id: '/ligaer/$leagueId/entryliste'
+      path: '/entryliste'
+      fullPath: '/ligaer/$leagueId/entryliste'
+      preLoaderRoute: typeof LigaerLeagueIdEntrylisteRouteImport
+      parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/api/public/leaderboard-upload': {
+      id: '/api/public/leaderboard-upload'
+      path: '/api/public/leaderboard-upload'
+      fullPath: '/api/public/leaderboard-upload'
+      preLoaderRoute: typeof ApiPublicLeaderboardUploadRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/profil/$userId': {
+      id: '/_authenticated/profil/$userId'
+      path: '/profil/$userId'
+      fullPath: '/profil/$userId'
+      preLoaderRoute: typeof AuthenticatedProfilUserIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coaching/mine-bookinger': {
+      id: '/_authenticated/coaching/mine-bookinger'
+      path: '/coaching/mine-bookinger'
+      fullPath: '/coaching/mine-bookinger'
+      preLoaderRoute: typeof AuthenticatedCoachingMineBookingerRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coaching/min-profil': {
+      id: '/_authenticated/coaching/min-profil'
+      path: '/coaching/min-profil'
+      fullPath: '/coaching/min-profil'
+      preLoaderRoute: typeof AuthenticatedCoachingMinProfilRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coaching/min-kalender': {
+      id: '/_authenticated/coaching/min-kalender'
+      path: '/coaching/min-kalender'
+      fullPath: '/coaching/min-kalender'
+      preLoaderRoute: typeof AuthenticatedCoachingMinKalenderRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/coaching/book': {
+      id: '/_authenticated/coaching/book'
+      path: '/coaching/book'
+      fullPath: '/coaching/book'
+      preLoaderRoute: typeof AuthenticatedCoachingBookRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/beskeder/system': {
+      id: '/_authenticated/beskeder/system'
+      path: '/system'
+      fullPath: '/beskeder/system'
+      preLoaderRoute: typeof AuthenticatedBeskederSystemRouteImport
+      parentRoute: typeof AuthenticatedBeskederRoute
+    }
+    '/_authenticated/beskeder/$threadId': {
+      id: '/_authenticated/beskeder/$threadId'
+      path: '/$threadId'
+      fullPath: '/beskeder/$threadId'
+      preLoaderRoute: typeof AuthenticatedBeskederThreadIdRouteImport
+      parentRoute: typeof AuthenticatedBeskederRoute
     }
     '/_authenticated/_admin/admin/': {
       id: '/_authenticated/_admin/admin/'
@@ -1755,368 +1755,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/_admin/admin/afventer': {
-      id: '/_authenticated/_admin/admin/afventer'
-      path: '/admin/afventer'
-      fullPath: '/admin/afventer'
-      preLoaderRoute: typeof AuthenticatedAdminAdminAfventerRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/analytics': {
-      id: '/_authenticated/_admin/admin/analytics'
-      path: '/admin/analytics'
-      fullPath: '/admin/analytics'
-      preLoaderRoute: typeof AuthenticatedAdminAdminAnalyticsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/audit': {
-      id: '/_authenticated/_admin/admin/audit'
-      path: '/admin/audit'
-      fullPath: '/admin/audit'
-      preLoaderRoute: typeof AuthenticatedAdminAdminAuditRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/beskeder': {
-      id: '/_authenticated/_admin/admin/beskeder'
-      path: '/admin/beskeder'
-      fullPath: '/admin/beskeder'
-      preLoaderRoute: typeof AuthenticatedAdminAdminBeskederRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/betalinger': {
-      id: '/_authenticated/_admin/admin/betalinger'
-      path: '/admin/betalinger'
-      fullPath: '/admin/betalinger'
-      preLoaderRoute: typeof AuthenticatedAdminAdminBetalingerRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/briefing': {
-      id: '/_authenticated/_admin/admin/briefing'
-      path: '/admin/briefing'
-      fullPath: '/admin/briefing'
-      preLoaderRoute: typeof AuthenticatedAdminAdminBriefingRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/coaches': {
-      id: '/_authenticated/_admin/admin/coaches'
-      path: '/admin/coaches'
-      fullPath: '/admin/coaches'
-      preLoaderRoute: typeof AuthenticatedAdminAdminCoachesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/coaching-bookings': {
-      id: '/_authenticated/_admin/admin/coaching-bookings'
-      path: '/admin/coaching-bookings'
-      fullPath: '/admin/coaching-bookings'
-      preLoaderRoute: typeof AuthenticatedAdminAdminCoachingBookingsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/cron': {
-      id: '/_authenticated/_admin/admin/cron'
-      path: '/admin/cron'
-      fullPath: '/admin/cron'
-      preLoaderRoute: typeof AuthenticatedAdminAdminCronRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/donationer': {
-      id: '/_authenticated/_admin/admin/donationer'
-      path: '/admin/donationer'
-      fullPath: '/admin/donationer'
-      preLoaderRoute: typeof AuthenticatedAdminAdminDonationerRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/feedback': {
-      id: '/_authenticated/_admin/admin/feedback'
-      path: '/admin/feedback'
-      fullPath: '/admin/feedback'
-      preLoaderRoute: typeof AuthenticatedAdminAdminFeedbackRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/fejl': {
-      id: '/_authenticated/_admin/admin/fejl'
-      path: '/admin/fejl'
-      fullPath: '/admin/fejl'
-      preLoaderRoute: typeof AuthenticatedAdminAdminFejlRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/gaester': {
-      id: '/_authenticated/_admin/admin/gaester'
-      path: '/admin/gaester'
-      fullPath: '/admin/gaester'
-      preLoaderRoute: typeof AuthenticatedAdminAdminGaesterRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/ligaer': {
-      id: '/_authenticated/_admin/admin/ligaer'
-      path: '/admin/ligaer'
-      fullPath: '/admin/ligaer'
-      preLoaderRoute: typeof AuthenticatedAdminAdminLigaerRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/nyhedsbrev': {
-      id: '/_authenticated/_admin/admin/nyhedsbrev'
-      path: '/admin/nyhedsbrev'
-      fullPath: '/admin/nyhedsbrev'
-      preLoaderRoute: typeof AuthenticatedAdminAdminNyhedsbrevRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/online': {
-      id: '/_authenticated/_admin/admin/online'
-      path: '/admin/online'
-      fullPath: '/admin/online'
-      preLoaderRoute: typeof AuthenticatedAdminAdminOnlineRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/overhalinger': {
-      id: '/_authenticated/_admin/admin/overhalinger'
-      path: '/admin/overhalinger'
-      fullPath: '/admin/overhalinger'
-      preLoaderRoute: typeof AuthenticatedAdminAdminOverhalingerRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/pace-sammenligning': {
-      id: '/_authenticated/_admin/admin/pace-sammenligning'
-      path: '/admin/pace-sammenligning'
-      fullPath: '/admin/pace-sammenligning'
-      preLoaderRoute: typeof AuthenticatedAdminAdminPaceSammenligningRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/partnerfordele': {
-      id: '/_authenticated/_admin/admin/partnerfordele'
-      path: '/admin/partnerfordele'
-      fullPath: '/admin/partnerfordele'
-      preLoaderRoute: typeof AuthenticatedAdminAdminPartnerfordeleRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/protests': {
-      id: '/_authenticated/_admin/admin/protests'
-      path: '/admin/protests'
-      fullPath: '/admin/protests'
-      preLoaderRoute: typeof AuthenticatedAdminAdminProtestsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/replays': {
-      id: '/_authenticated/_admin/admin/replays'
-      path: '/admin/replays'
-      fullPath: '/admin/replays'
-      preLoaderRoute: typeof AuthenticatedAdminAdminReplaysRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/roller': {
-      id: '/_authenticated/_admin/admin/roller'
-      path: '/admin/roller'
-      fullPath: '/admin/roller'
-      preLoaderRoute: typeof AuthenticatedAdminAdminRollerRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/sponsorer': {
-      id: '/_authenticated/_admin/admin/sponsorer'
-      path: '/admin/sponsorer'
-      fullPath: '/admin/sponsorer'
-      preLoaderRoute: typeof AuthenticatedAdminAdminSponsorerRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/storage': {
-      id: '/_authenticated/_admin/admin/storage'
-      path: '/admin/storage'
-      fullPath: '/admin/storage'
-      preLoaderRoute: typeof AuthenticatedAdminAdminStorageRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/streaming-profil': {
-      id: '/_authenticated/_admin/admin/streaming-profil'
-      path: '/admin/streaming-profil'
-      fullPath: '/admin/streaming-profil'
-      preLoaderRoute: typeof AuthenticatedAdminAdminStreamingProfilRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/streaming-tool': {
-      id: '/_authenticated/_admin/admin/streaming-tool'
-      path: '/admin/streaming-tool'
-      fullPath: '/admin/streaming-tool'
-      preLoaderRoute: typeof AuthenticatedAdminAdminStreamingToolRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/_admin/admin/teams': {
-      id: '/_authenticated/_admin/admin/teams'
-      path: '/admin/teams'
-      fullPath: '/admin/teams'
-      preLoaderRoute: typeof AuthenticatedAdminAdminTeamsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/beskeder/gruppe/$groupId': {
-      id: '/_authenticated/beskeder/gruppe/$groupId'
-      path: '/gruppe/$groupId'
-      fullPath: '/beskeder/gruppe/$groupId'
-      preLoaderRoute: typeof AuthenticatedBeskederGruppeGroupIdRouteImport
-      parentRoute: typeof AuthenticatedBeskederRoute
-    }
-    '/_authenticated/coaching/rate/$bookingId': {
-      id: '/_authenticated/coaching/rate/$bookingId'
-      path: '/coaching/rate/$bookingId'
-      fullPath: '/coaching/rate/$bookingId'
-      preLoaderRoute: typeof AuthenticatedCoachingRateBookingIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/api/public/broadcast/ice-cup': {
-      id: '/api/public/broadcast/ice-cup'
-      path: '/api/public/broadcast/ice-cup'
-      fullPath: '/api/public/broadcast/ice-cup'
-      preLoaderRoute: typeof ApiPublicBroadcastIceCupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/broadcast/leaderboard': {
-      id: '/api/public/broadcast/leaderboard'
-      path: '/api/public/broadcast/leaderboard'
-      fullPath: '/api/public/broadcast/leaderboard'
-      preLoaderRoute: typeof ApiPublicBroadcastLeaderboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/broadcast/sponsors': {
-      id: '/api/public/broadcast/sponsors'
-      path: '/api/public/broadcast/sponsors'
-      fullPath: '/api/public/broadcast/sponsors'
-      preLoaderRoute: typeof ApiPublicBroadcastSponsorsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/broadcast/streaming-profiles': {
-      id: '/api/public/broadcast/streaming-profiles'
-      path: '/api/public/broadcast/streaming-profiles'
-      fullPath: '/api/public/broadcast/streaming-profiles'
-      preLoaderRoute: typeof ApiPublicBroadcastStreamingProfilesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/broadcast/team-lineups': {
-      id: '/api/public/broadcast/team-lineups'
-      path: '/api/public/broadcast/team-lineups'
-      fullPath: '/api/public/broadcast/team-lineups'
-      preLoaderRoute: typeof ApiPublicBroadcastTeamLineupsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/companion/verify-token': {
-      id: '/api/public/companion/verify-token'
-      path: '/api/public/companion/verify-token'
-      fullPath: '/api/public/companion/verify-token'
-      preLoaderRoute: typeof ApiPublicCompanionVerifyTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/coaching-rating-requests': {
-      id: '/api/public/cron/coaching-rating-requests'
-      path: '/api/public/cron/coaching-rating-requests'
-      fullPath: '/api/public/cron/coaching-rating-requests'
-      preLoaderRoute: typeof ApiPublicCronCoachingRatingRequestsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/coaching-reminders': {
-      id: '/api/public/cron/coaching-reminders'
-      path: '/api/public/cron/coaching-reminders'
-      fullPath: '/api/public/cron/coaching-reminders'
-      preLoaderRoute: typeof ApiPublicCronCoachingRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/delete-expired-host-sessions': {
-      id: '/api/public/cron/delete-expired-host-sessions'
-      path: '/api/public/cron/delete-expired-host-sessions'
-      fullPath: '/api/public/cron/delete-expired-host-sessions'
-      preLoaderRoute: typeof ApiPublicCronDeleteExpiredHostSessionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/expire-reserve-offers': {
-      id: '/api/public/cron/expire-reserve-offers'
-      path: '/api/public/cron/expire-reserve-offers'
-      fullPath: '/api/public/cron/expire-reserve-offers'
-      preLoaderRoute: typeof ApiPublicCronExpireReserveOffersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/league-open': {
-      id: '/api/public/cron/league-open'
-      path: '/api/public/cron/league-open'
-      fullPath: '/api/public/cron/league-open'
-      preLoaderRoute: typeof ApiPublicCronLeagueOpenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/strip-unverified-members': {
-      id: '/api/public/cron/strip-unverified-members'
-      path: '/api/public/cron/strip-unverified-members'
-      fullPath: '/api/public/cron/strip-unverified-members'
-      preLoaderRoute: typeof ApiPublicCronStripUnverifiedMembersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/cron/youtube-live': {
-      id: '/api/public/cron/youtube-live'
-      path: '/api/public/cron/youtube-live'
-      fullPath: '/api/public/cron/youtube-live'
-      preLoaderRoute: typeof ApiPublicCronYoutubeLiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/discord/callback': {
-      id: '/api/public/discord/callback'
-      path: '/api/public/discord/callback'
-      fullPath: '/api/public/discord/callback'
-      preLoaderRoute: typeof ApiPublicDiscordCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/discord/interactions': {
-      id: '/api/public/discord/interactions'
-      path: '/api/public/discord/interactions'
-      fullPath: '/api/public/discord/interactions'
-      preLoaderRoute: typeof ApiPublicDiscordInteractionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/discord/login': {
-      id: '/api/public/discord/login'
-      path: '/api/public/discord/login'
-      fullPath: '/api/public/discord/login'
-      preLoaderRoute: typeof ApiPublicDiscordLoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/download/companion': {
-      id: '/api/public/download/companion'
-      path: '/api/public/download/companion'
-      fullPath: '/api/public/download/companion'
-      preLoaderRoute: typeof ApiPublicDownloadCompanionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/post-overtaking-winner': {
-      id: '/api/public/hooks/post-overtaking-winner'
-      path: '/api/public/hooks/post-overtaking-winner'
-      fullPath: '/api/public/hooks/post-overtaking-winner'
-      preLoaderRoute: typeof ApiPublicHooksPostOvertakingWinnerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/payments/webhook': {
-      id: '/api/public/payments/webhook'
-      path: '/api/public/payments/webhook'
-      fullPath: '/api/public/payments/webhook'
-      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ligaer/$leagueId/afdeling/$divisionId': {
-      id: '/ligaer/$leagueId/afdeling/$divisionId'
-      path: '/afdeling/$divisionId'
-      fullPath: '/ligaer/$leagueId/afdeling/$divisionId'
-      preLoaderRoute: typeof LigaerLeagueIdAfdelingDivisionIdRouteImport
-      parentRoute: typeof LigaerLeagueIdRoute
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/transactional/preview': {
@@ -2126,25 +1769,375 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/_admin/admin/brugere/': {
-      id: '/_authenticated/_admin/admin/brugere/'
-      path: '/admin/brugere'
-      fullPath: '/admin/brugere/'
-      preLoaderRoute: typeof AuthenticatedAdminAdminBrugereIndexRouteImport
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ligaer/$leagueId/afdeling/$divisionId': {
+      id: '/ligaer/$leagueId/afdeling/$divisionId'
+      path: '/afdeling/$divisionId'
+      fullPath: '/ligaer/$leagueId/afdeling/$divisionId'
+      preLoaderRoute: typeof LigaerLeagueIdAfdelingDivisionIdRouteImport
+      parentRoute: typeof LigaerLeagueIdRoute
+    }
+    '/api/public/payments/webhook': {
+      id: '/api/public/payments/webhook'
+      path: '/api/public/payments/webhook'
+      fullPath: '/api/public/payments/webhook'
+      preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/post-overtaking-winner': {
+      id: '/api/public/hooks/post-overtaking-winner'
+      path: '/api/public/hooks/post-overtaking-winner'
+      fullPath: '/api/public/hooks/post-overtaking-winner'
+      preLoaderRoute: typeof ApiPublicHooksPostOvertakingWinnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/download/companion': {
+      id: '/api/public/download/companion'
+      path: '/api/public/download/companion'
+      fullPath: '/api/public/download/companion'
+      preLoaderRoute: typeof ApiPublicDownloadCompanionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/discord/login': {
+      id: '/api/public/discord/login'
+      path: '/api/public/discord/login'
+      fullPath: '/api/public/discord/login'
+      preLoaderRoute: typeof ApiPublicDiscordLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/discord/interactions': {
+      id: '/api/public/discord/interactions'
+      path: '/api/public/discord/interactions'
+      fullPath: '/api/public/discord/interactions'
+      preLoaderRoute: typeof ApiPublicDiscordInteractionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/discord/callback': {
+      id: '/api/public/discord/callback'
+      path: '/api/public/discord/callback'
+      fullPath: '/api/public/discord/callback'
+      preLoaderRoute: typeof ApiPublicDiscordCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/youtube-live': {
+      id: '/api/public/cron/youtube-live'
+      path: '/api/public/cron/youtube-live'
+      fullPath: '/api/public/cron/youtube-live'
+      preLoaderRoute: typeof ApiPublicCronYoutubeLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/strip-unverified-members': {
+      id: '/api/public/cron/strip-unverified-members'
+      path: '/api/public/cron/strip-unverified-members'
+      fullPath: '/api/public/cron/strip-unverified-members'
+      preLoaderRoute: typeof ApiPublicCronStripUnverifiedMembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/league-open': {
+      id: '/api/public/cron/league-open'
+      path: '/api/public/cron/league-open'
+      fullPath: '/api/public/cron/league-open'
+      preLoaderRoute: typeof ApiPublicCronLeagueOpenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/expire-reserve-offers': {
+      id: '/api/public/cron/expire-reserve-offers'
+      path: '/api/public/cron/expire-reserve-offers'
+      fullPath: '/api/public/cron/expire-reserve-offers'
+      preLoaderRoute: typeof ApiPublicCronExpireReserveOffersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/delete-expired-host-sessions': {
+      id: '/api/public/cron/delete-expired-host-sessions'
+      path: '/api/public/cron/delete-expired-host-sessions'
+      fullPath: '/api/public/cron/delete-expired-host-sessions'
+      preLoaderRoute: typeof ApiPublicCronDeleteExpiredHostSessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/coaching-reminders': {
+      id: '/api/public/cron/coaching-reminders'
+      path: '/api/public/cron/coaching-reminders'
+      fullPath: '/api/public/cron/coaching-reminders'
+      preLoaderRoute: typeof ApiPublicCronCoachingRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/cron/coaching-rating-requests': {
+      id: '/api/public/cron/coaching-rating-requests'
+      path: '/api/public/cron/coaching-rating-requests'
+      fullPath: '/api/public/cron/coaching-rating-requests'
+      preLoaderRoute: typeof ApiPublicCronCoachingRatingRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/companion/verify-token': {
+      id: '/api/public/companion/verify-token'
+      path: '/api/public/companion/verify-token'
+      fullPath: '/api/public/companion/verify-token'
+      preLoaderRoute: typeof ApiPublicCompanionVerifyTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/broadcast/team-lineups': {
+      id: '/api/public/broadcast/team-lineups'
+      path: '/api/public/broadcast/team-lineups'
+      fullPath: '/api/public/broadcast/team-lineups'
+      preLoaderRoute: typeof ApiPublicBroadcastTeamLineupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/broadcast/streaming-profiles': {
+      id: '/api/public/broadcast/streaming-profiles'
+      path: '/api/public/broadcast/streaming-profiles'
+      fullPath: '/api/public/broadcast/streaming-profiles'
+      preLoaderRoute: typeof ApiPublicBroadcastStreamingProfilesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/broadcast/sponsors': {
+      id: '/api/public/broadcast/sponsors'
+      path: '/api/public/broadcast/sponsors'
+      fullPath: '/api/public/broadcast/sponsors'
+      preLoaderRoute: typeof ApiPublicBroadcastSponsorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/broadcast/leaderboard': {
+      id: '/api/public/broadcast/leaderboard'
+      path: '/api/public/broadcast/leaderboard'
+      fullPath: '/api/public/broadcast/leaderboard'
+      preLoaderRoute: typeof ApiPublicBroadcastLeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/broadcast/ice-cup': {
+      id: '/api/public/broadcast/ice-cup'
+      path: '/api/public/broadcast/ice-cup'
+      fullPath: '/api/public/broadcast/ice-cup'
+      preLoaderRoute: typeof ApiPublicBroadcastIceCupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/coaching/rate/$bookingId': {
+      id: '/_authenticated/coaching/rate/$bookingId'
+      path: '/coaching/rate/$bookingId'
+      fullPath: '/coaching/rate/$bookingId'
+      preLoaderRoute: typeof AuthenticatedCoachingRateBookingIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/beskeder/gruppe/$groupId': {
+      id: '/_authenticated/beskeder/gruppe/$groupId'
+      path: '/gruppe/$groupId'
+      fullPath: '/beskeder/gruppe/$groupId'
+      preLoaderRoute: typeof AuthenticatedBeskederGruppeGroupIdRouteImport
+      parentRoute: typeof AuthenticatedBeskederRoute
+    }
+    '/_authenticated/_admin/admin/teams': {
+      id: '/_authenticated/_admin/admin/teams'
+      path: '/admin/teams'
+      fullPath: '/admin/teams'
+      preLoaderRoute: typeof AuthenticatedAdminAdminTeamsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/_admin/admin/brugere/$userId': {
-      id: '/_authenticated/_admin/admin/brugere/$userId'
-      path: '/admin/brugere/$userId'
-      fullPath: '/admin/brugere/$userId'
-      preLoaderRoute: typeof AuthenticatedAdminAdminBrugereUserIdRouteImport
+    '/_authenticated/_admin/admin/streaming-tool': {
+      id: '/_authenticated/_admin/admin/streaming-tool'
+      path: '/admin/streaming-tool'
+      fullPath: '/admin/streaming-tool'
+      preLoaderRoute: typeof AuthenticatedAdminAdminStreamingToolRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/streaming-profil': {
+      id: '/_authenticated/_admin/admin/streaming-profil'
+      path: '/admin/streaming-profil'
+      fullPath: '/admin/streaming-profil'
+      preLoaderRoute: typeof AuthenticatedAdminAdminStreamingProfilRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/storage': {
+      id: '/_authenticated/_admin/admin/storage'
+      path: '/admin/storage'
+      fullPath: '/admin/storage'
+      preLoaderRoute: typeof AuthenticatedAdminAdminStorageRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/sponsorer': {
+      id: '/_authenticated/_admin/admin/sponsorer'
+      path: '/admin/sponsorer'
+      fullPath: '/admin/sponsorer'
+      preLoaderRoute: typeof AuthenticatedAdminAdminSponsorerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/roller': {
+      id: '/_authenticated/_admin/admin/roller'
+      path: '/admin/roller'
+      fullPath: '/admin/roller'
+      preLoaderRoute: typeof AuthenticatedAdminAdminRollerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/replays': {
+      id: '/_authenticated/_admin/admin/replays'
+      path: '/admin/replays'
+      fullPath: '/admin/replays'
+      preLoaderRoute: typeof AuthenticatedAdminAdminReplaysRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/protests': {
+      id: '/_authenticated/_admin/admin/protests'
+      path: '/admin/protests'
+      fullPath: '/admin/protests'
+      preLoaderRoute: typeof AuthenticatedAdminAdminProtestsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/partnerfordele': {
+      id: '/_authenticated/_admin/admin/partnerfordele'
+      path: '/admin/partnerfordele'
+      fullPath: '/admin/partnerfordele'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPartnerfordeleRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/pace-sammenligning': {
+      id: '/_authenticated/_admin/admin/pace-sammenligning'
+      path: '/admin/pace-sammenligning'
+      fullPath: '/admin/pace-sammenligning'
+      preLoaderRoute: typeof AuthenticatedAdminAdminPaceSammenligningRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/overhalinger': {
+      id: '/_authenticated/_admin/admin/overhalinger'
+      path: '/admin/overhalinger'
+      fullPath: '/admin/overhalinger'
+      preLoaderRoute: typeof AuthenticatedAdminAdminOverhalingerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/online': {
+      id: '/_authenticated/_admin/admin/online'
+      path: '/admin/online'
+      fullPath: '/admin/online'
+      preLoaderRoute: typeof AuthenticatedAdminAdminOnlineRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/nyhedsbrev': {
+      id: '/_authenticated/_admin/admin/nyhedsbrev'
+      path: '/admin/nyhedsbrev'
+      fullPath: '/admin/nyhedsbrev'
+      preLoaderRoute: typeof AuthenticatedAdminAdminNyhedsbrevRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/ligaer': {
+      id: '/_authenticated/_admin/admin/ligaer'
+      path: '/admin/ligaer'
+      fullPath: '/admin/ligaer'
+      preLoaderRoute: typeof AuthenticatedAdminAdminLigaerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/gaester': {
+      id: '/_authenticated/_admin/admin/gaester'
+      path: '/admin/gaester'
+      fullPath: '/admin/gaester'
+      preLoaderRoute: typeof AuthenticatedAdminAdminGaesterRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/fejl': {
+      id: '/_authenticated/_admin/admin/fejl'
+      path: '/admin/fejl'
+      fullPath: '/admin/fejl'
+      preLoaderRoute: typeof AuthenticatedAdminAdminFejlRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/feedback': {
+      id: '/_authenticated/_admin/admin/feedback'
+      path: '/admin/feedback'
+      fullPath: '/admin/feedback'
+      preLoaderRoute: typeof AuthenticatedAdminAdminFeedbackRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/donationer': {
+      id: '/_authenticated/_admin/admin/donationer'
+      path: '/admin/donationer'
+      fullPath: '/admin/donationer'
+      preLoaderRoute: typeof AuthenticatedAdminAdminDonationerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/cron': {
+      id: '/_authenticated/_admin/admin/cron'
+      path: '/admin/cron'
+      fullPath: '/admin/cron'
+      preLoaderRoute: typeof AuthenticatedAdminAdminCronRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/coaching-bookings': {
+      id: '/_authenticated/_admin/admin/coaching-bookings'
+      path: '/admin/coaching-bookings'
+      fullPath: '/admin/coaching-bookings'
+      preLoaderRoute: typeof AuthenticatedAdminAdminCoachingBookingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/coaches': {
+      id: '/_authenticated/_admin/admin/coaches'
+      path: '/admin/coaches'
+      fullPath: '/admin/coaches'
+      preLoaderRoute: typeof AuthenticatedAdminAdminCoachesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/briefing': {
+      id: '/_authenticated/_admin/admin/briefing'
+      path: '/admin/briefing'
+      fullPath: '/admin/briefing'
+      preLoaderRoute: typeof AuthenticatedAdminAdminBriefingRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/betalinger': {
+      id: '/_authenticated/_admin/admin/betalinger'
+      path: '/admin/betalinger'
+      fullPath: '/admin/betalinger'
+      preLoaderRoute: typeof AuthenticatedAdminAdminBetalingerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/beskeder': {
+      id: '/_authenticated/_admin/admin/beskeder'
+      path: '/admin/beskeder'
+      fullPath: '/admin/beskeder'
+      preLoaderRoute: typeof AuthenticatedAdminAdminBeskederRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/audit': {
+      id: '/_authenticated/_admin/admin/audit'
+      path: '/admin/audit'
+      fullPath: '/admin/audit'
+      preLoaderRoute: typeof AuthenticatedAdminAdminAuditRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/analytics': {
+      id: '/_authenticated/_admin/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AuthenticatedAdminAdminAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/afventer': {
+      id: '/_authenticated/_admin/admin/afventer'
+      path: '/admin/afventer'
+      fullPath: '/admin/afventer'
+      preLoaderRoute: typeof AuthenticatedAdminAdminAfventerRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/_admin/admin/regelsaet/': {
+      id: '/_authenticated/_admin/admin/regelsaet/'
+      path: '/admin/regelsaet'
+      fullPath: '/admin/regelsaet/'
+      preLoaderRoute: typeof AuthenticatedAdminAdminRegelsaetIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/_admin/admin/protests/': {
@@ -2154,18 +2147,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminProtestsIndexRouteImport
       parentRoute: typeof AuthenticatedAdminAdminProtestsRoute
     }
-    '/_authenticated/_admin/admin/protests/$protestId': {
-      id: '/_authenticated/_admin/admin/protests/$protestId'
-      path: '/$protestId'
-      fullPath: '/admin/protests/$protestId'
-      preLoaderRoute: typeof AuthenticatedAdminAdminProtestsProtestIdRouteImport
-      parentRoute: typeof AuthenticatedAdminAdminProtestsRoute
-    }
-    '/_authenticated/_admin/admin/regelsaet/': {
-      id: '/_authenticated/_admin/admin/regelsaet/'
-      path: '/admin/regelsaet'
-      fullPath: '/admin/regelsaet/'
-      preLoaderRoute: typeof AuthenticatedAdminAdminRegelsaetIndexRouteImport
+    '/_authenticated/_admin/admin/brugere/': {
+      id: '/_authenticated/_admin/admin/brugere/'
+      path: '/admin/brugere'
+      fullPath: '/admin/brugere/'
+      preLoaderRoute: typeof AuthenticatedAdminAdminBrugereIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/_admin/admin/regelsaet/$templateId': {
@@ -2175,18 +2161,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminRegelsaetTemplateIdRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger': {
-      id: '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger'
-      path: '/$leagueId/afdelinger'
-      fullPath: '/admin/ligaer/$leagueId/afdelinger'
-      preLoaderRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport
-      parentRoute: typeof AuthenticatedAdminAdminLigaerRoute
+    '/_authenticated/_admin/admin/protests/$protestId': {
+      id: '/_authenticated/_admin/admin/protests/$protestId'
+      path: '/$protestId'
+      fullPath: '/admin/protests/$protestId'
+      preLoaderRoute: typeof AuthenticatedAdminAdminProtestsProtestIdRouteImport
+      parentRoute: typeof AuthenticatedAdminAdminProtestsRoute
     }
-    '/_authenticated/_admin/admin/ligaer/$leagueId/entries': {
-      id: '/_authenticated/_admin/admin/ligaer/$leagueId/entries'
-      path: '/$leagueId/entries'
-      fullPath: '/admin/ligaer/$leagueId/entries'
-      preLoaderRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport
+    '/_authenticated/_admin/admin/brugere/$userId': {
+      id: '/_authenticated/_admin/admin/brugere/$userId'
+      path: '/admin/brugere/$userId'
+      fullPath: '/admin/brugere/$userId'
+      preLoaderRoute: typeof AuthenticatedAdminAdminBrugereUserIdRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/api/public/broadcast/storage/$bucket/$': {
+      id: '/api/public/broadcast/storage/$bucket/$'
+      path: '/api/public/broadcast/storage/$bucket/$'
+      fullPath: '/api/public/broadcast/storage/$bucket/$'
+      preLoaderRoute: typeof ApiPublicBroadcastStorageBucketSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger': {
+      id: '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger'
+      path: '/$leagueId/stillinger'
+      fullPath: '/admin/ligaer/$leagueId/stillinger'
+      preLoaderRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport
       parentRoute: typeof AuthenticatedAdminAdminLigaerRoute
     }
     '/_authenticated/_admin/admin/ligaer/$leagueId/regler': {
@@ -2196,19 +2196,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRouteImport
       parentRoute: typeof AuthenticatedAdminAdminLigaerRoute
     }
-    '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger': {
-      id: '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger'
-      path: '/$leagueId/stillinger'
-      fullPath: '/admin/ligaer/$leagueId/stillinger'
-      preLoaderRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport
+    '/_authenticated/_admin/admin/ligaer/$leagueId/entries': {
+      id: '/_authenticated/_admin/admin/ligaer/$leagueId/entries'
+      path: '/$leagueId/entries'
+      fullPath: '/admin/ligaer/$leagueId/entries'
+      preLoaderRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport
       parentRoute: typeof AuthenticatedAdminAdminLigaerRoute
     }
-    '/api/public/broadcast/storage/$bucket/$': {
-      id: '/api/public/broadcast/storage/$bucket/$'
-      path: '/api/public/broadcast/storage/$bucket/$'
-      fullPath: '/api/public/broadcast/storage/$bucket/$'
-      preLoaderRoute: typeof ApiPublicBroadcastStorageBucketSplatRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger': {
+      id: '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger'
+      path: '/$leagueId/afdelinger'
+      fullPath: '/admin/ligaer/$leagueId/afdelinger'
+      preLoaderRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport
+      parentRoute: typeof AuthenticatedAdminAdminLigaerRoute
     }
   }
 }
