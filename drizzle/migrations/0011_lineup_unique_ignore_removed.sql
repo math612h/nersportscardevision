@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS public.league_team_lineup_active_user_per_league_uniq;
+CREATE UNIQUE INDEX league_team_lineup_active_user_per_league_uniq ON public.league_team_lineup USING btree (league_id, user_id) WHERE (status = ANY (ARRAY['invited'::league_team_lineup_status, 'accepted'::league_team_lineup_status]) AND effective_until IS NULL);
