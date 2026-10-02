@@ -104,7 +104,7 @@ export async function enforceDnsLimit(admin: any, leagueId: string): Promise<Dns
     const split = isSplitClass(configs as any, cls);
     const cap = seatCap(configs as any, cls, cat);
     const onGrid = remaining.filter((e) => !e.waitlist && e.car_class === cls && (!split || e.driver_category === cat)).length;
-    let room = cap == null ? 0 : Math.max(0, cap - onGrid);
+    let room = cap == null ? Infinity : Math.max(0, cap - onGrid);
     if (room === 0) continue;
     const waiters = remaining
       .filter((e) => e.waitlist && e.car_class === cls && e.driver_category === cat)
