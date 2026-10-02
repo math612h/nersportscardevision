@@ -27,3 +27,23 @@ Den, der svarer sidst, overskriver den anden. Lige efter et klik vinder kortet, 
 
 - `src/components/TeamLeagueSignupDialog.tsx`: query-nøglen `["team-league-entries", teamId]` skifter til `["team-league-entries-dialog", teamId]`. `select` får `effective_from, effective_until`. Invalidering efter submit dækker både dialogens og kortets nøgle.
 - `LeagueTeamSignupCard.tsx` bevarer nøglen `["team-league-entries", teamId]` og sin nuværende select, der allerede filtrerer korrekt på `effective_until`.
+
+# Administration af alle teams i kontrolpanelet
+
+## Hvad du får
+
+- **Ny side i kontrolpanelet: "Teams".** Den viser alle teams med søgning, ejer, antal medlemmer og aktive liga-tilmeldinger.
+- Et klik på et team åbner en administrationsvisning med samme muligheder som teamejeren har:
+  - Tilføje og fjerne kørere på lineups. Fjernede kørere bevarer deres tidligere team-point.
+  - Tilmelde teamet til en liga, redigere lineup og trække en tilmelding tilbage.
+  - Fjerne medlemmer fra teamet og ændre et medlems klasse (LMGT3/LMP2).
+  - Overdrage ejerskabet til et andet medlem.
+- Som administrator ser du også disse knapper direkte på den offentlige teamside, med en lille mærkat: "Administrator-redigering".
+- Administratorer må allerede omgå låsene på lineups og teamskift, fx under en aktiv liga. Det bevares.
+- Kun administratorer får adgangen, ikke stewards.
+
+## Teknisk
+
+- Ny route `src/routes/_authenticated._admin.admin.teams.tsx` (liste) med link i `AdminSidebar` og kommandopaletten. Detaljevisningen genbruger `LeagueTeamSignupCard` og medlemsadministration.
+- `teams.$teamId.tsx`: `canManage = isOwner || isAdmin`, som bruges i stedet for `isOwner` til lineup-kort, ejer-indbakke og medlemshandlinger.
+- Server-funktionerne til lineup, tilmelding og tilbagetrækning accepterer allerede admin. Fjern medlem, skift klasse og overdrag ejerskab skal tjekke RLS for admin. Mangler der en regel, tilføjes en admin-politik via `has_role` (kun tilføjelse, ingen eksisterende regler fjernes).
