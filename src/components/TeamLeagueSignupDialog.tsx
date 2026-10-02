@@ -246,11 +246,11 @@ export function TeamLeagueSignupDialog({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="flex max-h-[85dvh] flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>{isAdd ? "Tilføj kørere til lineupet" : "Tilmeld team i liga"}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
           {isAdd && (
             <p className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
               Nye kørere tæller først med i teamets resultater fra de afdelinger, der køres efter tilføjelsen. Allerede kørte afdelinger påvirkes ikke.
