@@ -269,6 +269,14 @@ function AdminLeagues() {
                           Entries
                         </Link>
                       </Button>
+                      <Button asChild variant="ghost" size="sm">
+                        <Link
+                          to="/admin/ligaer/$leagueId/aktivitet"
+                          params={{ leagueId: l.id }}
+                        >
+                          Aktivitetslog
+                        </Link>
+                      </Button>
                       {l.discord_role_id && <SyncDiscordRolesButton leagueId={l.id} />}
                     </div>
                     <div className="flex gap-0.5">
