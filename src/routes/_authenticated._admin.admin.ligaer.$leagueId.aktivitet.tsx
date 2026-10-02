@@ -146,6 +146,19 @@ function ActivityPage() {
     },
   });
 
+  // Mark the log as seen for this league so the badge on the league list resets.
+  useEffect(() => {
+    if (data) {
+      try {
+        localStorage.setItem(activitySeenKey(leagueId), new Date().toISOString());
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [data, leagueId]);
+
+
+
   const filtered = useMemo(() => {
     const now = Date.now();
     const days = range === "7" ? 7 : range === "30" ? 30 : null;
