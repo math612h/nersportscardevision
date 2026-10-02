@@ -351,7 +351,7 @@ function ActivityBadge({ leagueId }: { leagueId: string }) {
     queryKey: ["league-activity-count", leagueId, seen ?? null],
     enabled: seen !== undefined,
     refetchInterval: 60_000,
-    queryFn: () => countLeagueActivityEvents(supabase, leagueId, seen),
+    queryFn: () => countLeagueActivityEvents(supabase, leagueId, seen ?? null),
   });
 
   const c = count ?? 0;
