@@ -17,6 +17,7 @@ const NAV: NavItem[] = [
   { label: "Afventer godkendelse", to: "/admin/afventer", icon: UserCheck },
   { label: "Alle brugere", to: "/admin/brugere", icon: Users },
   { label: "Ligaer & afdelinger", to: "/admin/ligaer", icon: Flag },
+  { label: "Teams", to: "/admin/teams", icon: Flag },
   { label: "Protester", to: "/admin/protests", icon: MessageSquareWarning },
   { label: "Teams", to: "/teams", icon: Shield },
   { label: "Nyhedsbrev", to: "/admin/nyhedsbrev", icon: Newspaper },

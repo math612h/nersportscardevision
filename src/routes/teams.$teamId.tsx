@@ -158,6 +158,7 @@ function TeamDetailPage() {
 
   const isMember = !!user && (members ?? []).some((m) => m.user_id === user.id);
   const isOwner = !!user && team?.owner_id === user.id;
+  const canManage = isOwner || !!isAdmin;
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Indlæser…</p>;
   // Teamsiden er offentlig; ansøg-knap er gated på login.
@@ -225,7 +226,8 @@ function TeamDetailPage() {
             )}
             {user && !isMember && <ApplyButton teamId={teamId} userId={user.id} />}
             {user && isMember && !isOwner && <LeaveButton teamId={teamId} userId={user.id} onLeft={() => navigate({ to: "/teams" })} />}
-            {isOwner && <EditTeamButton team={team} />}
+            {canManage && <EditTeamButton team={team} />}
+            {isAdmin && !isOwner && <Badge variant="outline" className="text-[10px]">Administrator-redigering</Badge>}
             {(isOwner || isAdmin) && (
               <Button
                 variant="outline"
@@ -280,7 +282,28 @@ function TeamDetailPage() {
                       <Crown className="h-3 w-3" /> Ejer
                     </Badge>
                   )}
-                  {isOwner && m.role !== "owner" && (
+                  {canManage && m.role !== "owner" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-primary"
+                      title={`Gør ${name} til ejer`}
+                      onClick={async () => {
+                        if (!confirm(`Overdrag ejerskabet af teamet til ${name}?`)) return;
+                        const oldOwner = team.owner_id;
+                        const { error: e1 } = await (supabase as any).from("team_members").update({ role: "owner" }).eq("id", m.id);
+                        if (e1) return toastError(e1.message);
+                        await (supabase as any).from("team_members").update({ role: "member" }).eq("team_id", teamId).eq("user_id", oldOwner);
+                        const { error: e2 } = await (supabase as any).from("teams").update({ owner_id: m.user_id }).eq("id", teamId);
+                        if (e2) return toastError(e2.message);
+                        toast.success(`${name} er nu ejer af teamet`);
+                        qc.invalidateQueries();
+                      }}
+                    >
+                      <Crown className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {canManage && m.role !== "owner" && (
                     <Button
                       variant="ghost"
                       size="icon"
@@ -310,7 +333,7 @@ function TeamDetailPage() {
       <RecentResultsCard members={members ?? []} profiles={profiles ?? {}} />
 
       {isMember && <MyLineupInvitations teamId={teamId} />}
-      {isOwner && (
+      {canManage && (
         <LeagueTeamSignupCard
           teamId={teamId}
           members={(members ?? []).map((m) => ({
@@ -321,8 +344,8 @@ function TeamDetailPage() {
         />
       )}
 
-      {isOwner && <OwnerInbox teamId={teamId} />}
-      {isOwner && <InviteCard teamId={teamId} userId={user!.id} existingMemberIds={memberIds} />}
+      {canManage && <OwnerInbox teamId={teamId} />}
+      {canManage && <InviteCard teamId={teamId} userId={user!.id} existingMemberIds={memberIds} />}
 
     </div>
   );
