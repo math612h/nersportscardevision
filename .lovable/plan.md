@@ -27,8 +27,10 @@ De gemte resultater har stort set alle en korrekt status (DNS, DNF, RET). "–" 
    - Tjekket køres automatisk, når resultater gemmes/offentliggøres og ved "Genberegn point" — så det virker uanset hvem der uploader.
    - Kun DNS tæller (ikke DNF/RET), og tiltrædelsespoint tæller ikke som DNS.
 
-## Spørgsmål til dig undervejs
-Ingen — men bemærk: når ændringen udgives, vil kørere der **allerede** har 3 DNS blive meldt ud og få DM ved næste gemning/genberegning (fx Uffe Frederiksen, Daniel Als, Lasse Jensen ser ud til at have DNS i alle 3 afdelinger). Sig til, hvis det ikke skal gælde bagudrettet.
+4. **Gennemgang med det samme**
+   - Når det er bygget, kører jeg tjekket én gang for ICE Cup med det samme: alle tilmeldte på griddet med 3 eller flere DNS meldes ud og får DM'en (fx ser Uffe Frederiksen, Daniel Als og Lasse Jensen ud til at have DNS i alle 3 afdelinger).
+   - Jeg sender dig bagefter en liste over, hvem der blev meldt ud, og hvem der rykkede op fra ventelisten.
+   - Det er DNS (udeblivelser) der tæller — ikke DNF.
 
 ## Teknisk
 - `src/routes/ligaer.$leagueId.index.tsx` (~L1147-1172): manglende celle → DNS hvis entry var aktiv (ikke waitlist, oprettet før `race_date`, ikke udmeldt før); joiner-celle → `ResultStatusBadge status="tp"`. Ny `StatusLegend`-komponent over kører-tabellerne; samme på afdelingssiden.
