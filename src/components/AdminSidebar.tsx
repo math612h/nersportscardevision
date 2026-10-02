@@ -116,6 +116,7 @@ export function AdminSidebar() {
       label: "Racing",
       items: [
         { title: "Ligaer & afdelinger", url: "/admin/ligaer", icon: Flag },
+        { title: "Teams", url: "/admin/teams", icon: Shield },
         { title: "Regelsæt-arkiv", url: "/admin/regelsaet", icon: BookOpen },
         { title: "Pro/Am tempo", url: "/admin/pace-sammenligning", icon: Gauge },
         { title: "Protester", url: "/admin/protests", icon: MessageSquareWarning, badge: openProtestsCount },
