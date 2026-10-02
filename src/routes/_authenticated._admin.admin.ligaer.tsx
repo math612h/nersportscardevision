@@ -270,14 +270,17 @@ function AdminLeagues() {
                           Entries
                         </Link>
                       </Button>
-                      <Button asChild variant="ghost" size="sm">
-                        <Link
-                          to="/admin/ligaer/$leagueId/aktivitet"
-                          params={{ leagueId: l.id }}
-                        >
-                          Aktivitetslog
-                        </Link>
-                      </Button>
+                      <span className="relative inline-flex">
+                        <Button asChild variant="ghost" size="sm">
+                          <Link
+                            to="/admin/ligaer/$leagueId/aktivitet"
+                            params={{ leagueId: l.id }}
+                          >
+                            Aktivitetslog
+                          </Link>
+                        </Button>
+                        <ActivityBadge leagueId={l.id} />
+                      </span>
                       {l.discord_role_id && <SyncDiscordRolesButton leagueId={l.id} />}
                     </div>
                     <div className="flex gap-0.5">
@@ -330,6 +333,35 @@ function AdminLeagues() {
         })}
       </div>
     </div>
+  );
+}
+
+function ActivityBadge({ leagueId }: { leagueId: string }) {
+  // undefined = localStorage not read yet (SSR-safe); null = never viewed
+  const [seen, setSeen] = useState<string | null | undefined>(undefined);
+  useEffect(() => {
+    try {
+      setSeen(localStorage.getItem(activitySeenKey(leagueId)));
+    } catch {
+      setSeen(null);
+    }
+  }, [leagueId]);
+
+  const { data: count } = useQuery({
+    queryKey: ["league-activity-count", leagueId, seen ?? null],
+    enabled: seen !== undefined,
+    refetchInterval: 60_000,
+    queryFn: () => countLeagueActivityEvents(supabase, leagueId, seen),
+  });
+
+  const c = count ?? 0;
+  if (c <= 0) return null;
+  return (
+    <span className="absolute -right-2 -top-1.5 z-10">
+      <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[10px] leading-none tabular-nums">
+        {c > 99 ? "99+" : c}
+      </Badge>
+    </span>
   );
 }
 
