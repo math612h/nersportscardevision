@@ -78,6 +78,13 @@
       "when": 1790806103679,
       "tag": "0010_merge_lmp2_elms_signup_count",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790929412473,
+      "tag": "0011_lineup_unique_ignore_removed",
+      "breakpoints": true
     }
   ]
 }

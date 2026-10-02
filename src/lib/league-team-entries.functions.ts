@@ -132,7 +132,7 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
         })
         .select("id")
         .single();
-      if (insErr) throw new Error(insErr.message);
+      if (insErr) throw new Error(insErr.message.includes("active_user_per_league") ? "Køreren står allerede på et andet lineup i ligaen" : insErr.message);
       entryId = (ins as any).id;
     }
 
@@ -213,7 +213,7 @@ export const submitTeamForLeague = createServerFn({ method: "POST" })
       .from("league_team_lineup")
       .upsert(lineupRows, { onConflict: "league_team_entry_id,user_id", ignoreDuplicates: false })
       .select("id, user_id, status");
-    if (upErr) throw new Error(upErr.message);
+    if (upErr) throw new Error(upErr.message.includes("active_user_per_league") ? "Køreren står allerede på et andet lineup i ligaen" : upErr.message);
 
     // With all lineup rows accepted, confirm the entry immediately when >= 2 drivers.
     try {
