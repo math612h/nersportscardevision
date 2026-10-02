@@ -80,12 +80,12 @@ export function TeamLeagueSignupDialog({
   });
 
   const { data: entries, refetch } = useQuery({
-    queryKey: ["team-league-entries", teamId],
+    queryKey: ["team-league-entries-dialog", teamId],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from("league_team_entries")
         .select(
-          "id, league_id, car_class, status, leagues:league_id(name), league_team_lineup(id, user_id, status)",
+          "id, league_id, car_class, status, leagues:league_id(name), league_team_lineup(id, user_id, status, effective_from, effective_until)",
         )
         .eq("team_id", teamId)
         .neq("status", "withdrawn");
@@ -96,7 +96,7 @@ export function TeamLeagueSignupDialog({
         car_class: string;
         status: string;
         leagues: { name: string } | null;
-        league_team_lineup: Array<{ id: string; user_id: string; status: string }>;
+        league_team_lineup: Array<{ id: string; user_id: string; status: string; effective_from?: string | null; effective_until?: string | null }>;
       }>;
     },
   });
@@ -206,6 +206,7 @@ export function TeamLeagueSignupDialog({
         setSelected(new Set());
       }
       qc.invalidateQueries({ queryKey: ["team-league-entries", teamId] });
+      qc.invalidateQueries({ queryKey: ["team-league-entries-dialog", teamId] });
       qc.invalidateQueries({ queryKey: ["league-team-entries-mine"] });
       refetch();
     },
