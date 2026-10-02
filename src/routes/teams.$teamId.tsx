@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { toastError } from "@/lib/toast";
 import {
   ArrowLeft, Camera, Loader2, MessageSquare, Send, Shield, Star, Trash2, UserPlus,
-  Users, Check, X, LogOut, Crown, Pencil, Trophy,
+  Users, Check, X, LogOut, Crown, Pencil,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -330,7 +330,6 @@ function TeamDetailPage() {
         </CardContent>
       </Card>
 
-      <RecentResultsCard members={members ?? []} profiles={profiles ?? {}} />
 
       {isMember && <MyLineupInvitations teamId={teamId} />}
       {canManage && (
@@ -351,87 +350,6 @@ function TeamDetailPage() {
   );
 }
 
-
-
-// --- Recent results per member ---
-function RecentResultsCard({
-  members,
-  profiles,
-}: {
-  members: Member[];
-  profiles: Record<string, Profile>;
-}) {
-  const userIds = members.map((m) => m.user_id);
-  const { data: results } = useQuery({
-    queryKey: ["team-recent-results", userIds.sort().join(",")],
-    enabled: userIds.length > 0,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("league_results")
-        .select("id, user_id, division_id, league_id, position, car_class, session_type, created_at, divisions(name, track, race_date), leagues(name)")
-        .in("user_id", userIds)
-        .eq("session_type", "race")
-        .not("division_id", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(300);
-      if (error) throw error;
-      return (data ?? []) as any[];
-    },
-  });
-
-  const byUser = useMemo(() => {
-    const map: Record<string, any[]> = {};
-    for (const r of results ?? []) {
-      (map[r.user_id] ??= []).push(r);
-    }
-    for (const uid of Object.keys(map)) {
-      map[uid] = map[uid].slice(0, 3);
-    }
-    return map;
-  }, [results]);
-
-  if (userIds.length === 0) return null;
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base flex items-center gap-2"><Trophy className="h-4 w-4" /> Seneste løb pr. medlem</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {members.map((m) => {
-          const name = profiles[m.user_id]?.display_name ?? "Uden navn";
-          const list = byUser[m.user_id] ?? [];
-          return (
-            <div key={m.id} className="rounded border border-border p-3">
-              <p className="text-sm font-medium">{name}</p>
-              {list.length === 0 ? (
-                <p className="mt-1 text-xs text-muted-foreground">Ingen afsluttede løb endnu.</p>
-              ) : (
-                <ul className="mt-2 space-y-1 text-xs">
-                  {list.map((e) => (
-                    <li key={e.id} className="flex items-center justify-between gap-2 text-muted-foreground">
-                      <span className="truncate">
-                        <span className="text-foreground">{e.leagues?.name ?? "Liga"}</span>
-                        {" · "}{e.divisions?.name ?? "Afdeling"}
-                        {e.car_class ? ` · ${e.car_class}` : ""}
-                        {e.position ? ` · P${e.position}` : ""}
-                      </span>
-                      {e.divisions?.race_date && (
-                        <span className="shrink-0 tabular-nums">
-                          {new Date(e.divisions.race_date).toLocaleDateString("da-DK")}
-                        </span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
-  );
-}
 
 
 // --- Apply ---
