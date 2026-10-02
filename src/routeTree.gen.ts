@@ -117,6 +117,7 @@ import { Route as ApiPublicBroadcastStorageBucketSplatRouteImport } from './rout
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdStillingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.stillinger'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdReglerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.regler'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.entries'
+import { Route as AuthenticatedAdminAdminLigaerLeagueIdAktivitetRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.aktivitet'
 import { Route as AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport } from './routes/_authenticated._admin.admin.ligaer.$leagueId.afdelinger'
 
 const UgensOverhalingRoute = UgensOverhalingRouteImport.update({
@@ -730,6 +731,12 @@ const AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute =
     path: '/$leagueId/entries',
     getParentRoute: () => AuthenticatedAdminAdminLigaerRoute,
   } as any)
+const AuthenticatedAdminAdminLigaerLeagueIdAktivitetRoute =
+  AuthenticatedAdminAdminLigaerLeagueIdAktivitetRouteImport.update({
+    id: '/$leagueId/aktivitet',
+    path: '/$leagueId/aktivitet',
+    getParentRoute: () => AuthenticatedAdminAdminLigaerRoute,
+  } as any)
 const AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute =
   AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRouteImport.update({
     id: '/$leagueId/afdelinger',
@@ -841,6 +848,7 @@ export interface FileRoutesByFullPath {
   '/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
   '/admin/regelsaet/': typeof AuthenticatedAdminAdminRegelsaetIndexRoute
   '/admin/ligaer/$leagueId/afdelinger': typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
+  '/admin/ligaer/$leagueId/aktivitet': typeof AuthenticatedAdminAdminLigaerLeagueIdAktivitetRoute
   '/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
   '/admin/ligaer/$leagueId/stillinger': typeof AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute
@@ -948,6 +956,7 @@ export interface FileRoutesByTo {
   '/admin/protests': typeof AuthenticatedAdminAdminProtestsIndexRoute
   '/admin/regelsaet': typeof AuthenticatedAdminAdminRegelsaetIndexRoute
   '/admin/ligaer/$leagueId/afdelinger': typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
+  '/admin/ligaer/$leagueId/aktivitet': typeof AuthenticatedAdminAdminLigaerLeagueIdAktivitetRoute
   '/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
   '/admin/ligaer/$leagueId/stillinger': typeof AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute
@@ -1060,6 +1069,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/protests/': typeof AuthenticatedAdminAdminProtestsIndexRoute
   '/_authenticated/_admin/admin/regelsaet/': typeof AuthenticatedAdminAdminRegelsaetIndexRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger': typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
+  '/_authenticated/_admin/admin/ligaer/$leagueId/aktivitet': typeof AuthenticatedAdminAdminLigaerLeagueIdAktivitetRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/entries': typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/regler': typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
   '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger': typeof AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute
@@ -1171,6 +1181,7 @@ export interface FileRouteTypes {
     | '/admin/protests/'
     | '/admin/regelsaet/'
     | '/admin/ligaer/$leagueId/afdelinger'
+    | '/admin/ligaer/$leagueId/aktivitet'
     | '/admin/ligaer/$leagueId/entries'
     | '/admin/ligaer/$leagueId/regler'
     | '/admin/ligaer/$leagueId/stillinger'
@@ -1278,6 +1289,7 @@ export interface FileRouteTypes {
     | '/admin/protests'
     | '/admin/regelsaet'
     | '/admin/ligaer/$leagueId/afdelinger'
+    | '/admin/ligaer/$leagueId/aktivitet'
     | '/admin/ligaer/$leagueId/entries'
     | '/admin/ligaer/$leagueId/regler'
     | '/admin/ligaer/$leagueId/stillinger'
@@ -1389,6 +1401,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/protests/'
     | '/_authenticated/_admin/admin/regelsaet/'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger'
+    | '/_authenticated/_admin/admin/ligaer/$leagueId/aktivitet'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/entries'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/regler'
     | '/_authenticated/_admin/admin/ligaer/$leagueId/stillinger'
@@ -2203,6 +2216,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRouteImport
       parentRoute: typeof AuthenticatedAdminAdminLigaerRoute
     }
+    '/_authenticated/_admin/admin/ligaer/$leagueId/aktivitet': {
+      id: '/_authenticated/_admin/admin/ligaer/$leagueId/aktivitet'
+      path: '/$leagueId/aktivitet'
+      fullPath: '/admin/ligaer/$leagueId/aktivitet'
+      preLoaderRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdAktivitetRouteImport
+      parentRoute: typeof AuthenticatedAdminAdminLigaerRoute
+    }
     '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger': {
       id: '/_authenticated/_admin/admin/ligaer/$leagueId/afdelinger'
       path: '/$leagueId/afdelinger'
@@ -2215,6 +2235,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedAdminAdminLigaerRouteChildren {
   AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute
+  AuthenticatedAdminAdminLigaerLeagueIdAktivitetRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdAktivitetRoute
   AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute
   AuthenticatedAdminAdminLigaerLeagueIdReglerRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdReglerRoute
   AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute: typeof AuthenticatedAdminAdminLigaerLeagueIdStillingerRoute
@@ -2224,6 +2245,8 @@ const AuthenticatedAdminAdminLigaerRouteChildren: AuthenticatedAdminAdminLigaerR
   {
     AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute:
       AuthenticatedAdminAdminLigaerLeagueIdAfdelingerRoute,
+    AuthenticatedAdminAdminLigaerLeagueIdAktivitetRoute:
+      AuthenticatedAdminAdminLigaerLeagueIdAktivitetRoute,
     AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute:
       AuthenticatedAdminAdminLigaerLeagueIdEntriesRoute,
     AuthenticatedAdminAdminLigaerLeagueIdReglerRoute:
