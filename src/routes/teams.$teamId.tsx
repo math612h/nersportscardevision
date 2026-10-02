@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { toastError } from "@/lib/toast";
 import {
   ArrowLeft, Camera, Loader2, MessageSquare, Send, Shield, Star, Trash2, UserPlus,
-  Users, Check, X, LogOut, Crown, Pencil, Trophy,
+  Users, Check, X, LogOut, Crown, Pencil,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
