@@ -110,9 +110,15 @@ export const Route = createFileRoute("/api/public/broadcast/team-lineups")({
                 .select("user_id, league_id, car_number, car_class, driver_category, driver_name, waitlist")
                 .in("league_id", leagueIds)
                 .in("user_id", userIds)
+                .is("withdrawn_at", null)
+                .is("division_id", null)
             : { data: [] as any[] };
+          // Opslag pr. klasse først (kører kan have skiftet klasse), ellers pr. kører.
           const entryByKey = new Map<string, any>();
-          for (const e of (entriesRows ?? []) as any[]) entryByKey.set(`${e.league_id}:${e.user_id}`, e);
+          for (const e of (entriesRows ?? []) as any[]) {
+            entryByKey.set(`${e.league_id}:${e.user_id}:${e.car_class}`, e);
+            if (!entryByKey.has(`${e.league_id}:${e.user_id}`)) entryByKey.set(`${e.league_id}:${e.user_id}`, e);
+          }
 
           const lineups = rows.map((r) => {
             const nowTs = Date.now();
@@ -128,7 +134,9 @@ export const Route = createFileRoute("/api/public/broadcast/team-lineups")({
               })
               .map((l) => {
                 const p = profileById.get(l.user_id);
-                const ent = entryByKey.get(`${r.league_id}:${l.user_id}`);
+                const ent =
+                  entryByKey.get(`${r.league_id}:${l.user_id}:${r.car_class}`) ??
+                  entryByKey.get(`${r.league_id}:${l.user_id}`);
                 return {
                   lineupMemberId: l.id,
                   driverId: l.user_id,
