@@ -713,26 +713,6 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             let track = "";
             try { track = decodeURIComponent(trackEncoded); } catch { track = trackEncoded; }
 
-            // Resolve sponsor team name if applicable
-            let sponsorTeamName: string | null = null;
-            if (sponsorRaw.startsWith("t_")) {
-              const hex = sponsorRaw.slice(2);
-              if (hex.length === 32) {
-                const teamId = `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}`;
-                try {
-                  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-                  const { data: team } = await (supabaseAdmin as any)
-                    .from("teams")
-                    .select("name")
-                    .eq("id", teamId)
-                    .maybeSingle();
-                  sponsorTeamName = (team as any)?.name ?? null;
-                } catch (e) {
-                  console.error("host_session lookup sponsor team failed", e);
-                }
-              }
-            }
-
             const rows = (payload?.data?.components ?? []) as Array<{
               components: Array<{ custom_id: string; value: string }>;
             }>;
@@ -742,7 +722,6 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
                 values[c.custom_id] = (c.value ?? "").trim();
               }
             }
-            const { HOST_SESSION_CHANNEL_ID } = await import("@/lib/discord-host-session.functions");
             const { parseCphHHMMToUnix } = await import("@/lib/discord-time.server");
             const tw = (values.time_window ?? "").replace(/\s+/g, "");
             const m = tw.match(/^(\d{1,2}:\d{2})[-–—to]+(\d{1,2}:\d{2})$/i);
@@ -755,53 +734,93 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               });
             }
             if (endUnix <= startUnix) endUnix += 86400;
+            const finalEnd = endUnix;
 
-            const hosterMention = discordUserId ? `<@${discordUserId}>` : "Et medlem";
-            const serverName = (values.server_name ?? "").slice(0, 80);
-            const serverCode = (values.server_code ?? "").slice(0, 40);
-            const lobbyCode = (values.lobby_code ?? "").slice(0, 40);
-
-            const content = [
-              `🎮 **Hosted session af ${hosterMention}**`,
-              sponsorTeamName ? `🏷️ Sponsoreret af team **${sponsorTeamName}**` : null,
-              "",
-              track ? `🏁 Bane: **${track}**` : null,
-              `🖥️ Server: **${serverName}**`,
-              `🔑 Server-kode: \`${serverCode}\``,
-              lobbyCode ? `🎯 Lobby-kode: \`${lobbyCode}\`` : null,
-              `🕒 Starter: <t:${startUnix}:t> (<t:${startUnix}:R>)`,
-              `⏱️ Slutter: <t:${endUnix}:t> (<t:${endUnix}:R>)`,
-            ].filter(Boolean).join("\n");
-
-
-            const { sendDiscordChannelMessage } = await import("@/lib/discord.server");
-            const res = await sendDiscordChannelMessage(HOST_SESSION_CHANNEL_ID, content);
-            if (!res.ok) {
-              return Response.json({
-                type: CHANNEL_MESSAGE_WITH_SOURCE,
-                data: { flags: FLAG_EPHEMERAL, content: `Kunne ikke poste session (${res.status}).` },
-              });
-            }
-            // Planlæg automatisk sletning 1 time efter sessionen er slut.
-            if (res.messageId) {
+            const appId = payload?.application_id as string | undefined;
+            const token = payload?.token as string | undefined;
+            const editReply = async (text: string) => {
+              if (!appId || !token) return;
               try {
-                const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-                const deleteAt = new Date((endUnix + 3600) * 1000).toISOString();
-                await (supabaseAdmin as any)
-                  .from("discord_hosted_sessions")
-                  .insert({
-                    channel_id: HOST_SESSION_CHANNEL_ID,
-                    message_id: res.messageId,
-                    delete_at: deleteAt,
-                  });
+                await fetch(`https://discord.com/api/v10/webhooks/${appId}/${token}/messages/@original`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ content: text }),
+                });
               } catch (e) {
-                console.error("schedule host session delete failed", e);
+                console.error("host_session edit reply failed", e);
               }
+            };
+
+            const work = async () => {
+              try {
+                let sponsorTeamName: string | null = null;
+                if (sponsorRaw.startsWith("t_")) {
+                  const hex = sponsorRaw.slice(2);
+                  if (hex.length === 32) {
+                    const teamId = `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}`;
+                    try {
+                      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+                      const { data: team } = await (supabaseAdmin as any)
+                        .from("teams").select("name").eq("id", teamId).maybeSingle();
+                      sponsorTeamName = (team as any)?.name ?? null;
+                    } catch (e) {
+                      console.error("host_session lookup sponsor team failed", e);
+                    }
+                  }
+                }
+
+                const { HOST_SESSION_CHANNEL_ID } = await import("@/lib/discord-host-session.functions");
+                const hosterMention = discordUserId ? `<@${discordUserId}>` : "Et medlem";
+                const serverName = (values.server_name ?? "").slice(0, 80);
+                const serverCode = (values.server_code ?? "").slice(0, 40);
+                const lobbyCode = (values.lobby_code ?? "").slice(0, 40);
+
+                const content = [
+                  `🎮 **Hosted session af ${hosterMention}**`,
+                  sponsorTeamName ? `🏷️ Sponsoreret af team **${sponsorTeamName}**` : null,
+                  "",
+                  track ? `🏁 Bane: **${track}**` : null,
+                  `🖥️ Server: **${serverName}**`,
+                  `🔑 Server-kode: \`${serverCode}\``,
+                  lobbyCode ? `🎯 Lobby-kode: \`${lobbyCode}\`` : null,
+                  `🕒 Starter: <t:${startUnix}:t> (<t:${startUnix}:R>)`,
+                  `⏱️ Slutter: <t:${finalEnd}:t> (<t:${finalEnd}:R>)`,
+                ].filter(Boolean).join("\n");
+
+                const { sendDiscordChannelMessage } = await import("@/lib/discord.server");
+                const res = await sendDiscordChannelMessage(HOST_SESSION_CHANNEL_ID, content);
+                if (!res.ok) {
+                  await editReply(`Kunne ikke poste session (${res.status}).`);
+                  return;
+                }
+                if (res.messageId) {
+                  try {
+                    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+                    await (supabaseAdmin as any).from("discord_hosted_sessions").insert({
+                      channel_id: HOST_SESSION_CHANNEL_ID,
+                      message_id: res.messageId,
+                      delete_at: new Date((finalEnd + 3600) * 1000).toISOString(),
+                    });
+                  } catch (e) {
+                    console.error("schedule host session delete failed", e);
+                  }
+                }
+                await editReply("✅ Din session er delt i kanalen. Beskeden slettes automatisk 1 time efter sluttid.");
+              } catch (e) {
+                console.error("host_session share failed", e);
+                await editReply("Noget gik galt — prøv igen.");
+              }
+            };
+
+            // Svar Discord straks (3-sekunders-grænse) og gør arbejdet bagefter.
+            const p = work();
+            try {
+              const cf: any = await import(/* @vite-ignore */ "cloudflare:workers" as string);
+              if (typeof cf?.waitUntil === "function") cf.waitUntil(p);
+            } catch {
+              // Ikke på Workers (fx dev) — promise kører videre af sig selv.
             }
-            return Response.json({
-              type: CHANNEL_MESSAGE_WITH_SOURCE,
-              data: { flags: FLAG_EPHEMERAL, content: "✅ Din session er delt i kanalen. Beskeden slettes automatisk 1 time efter sluttid." },
-            });
+            return Response.json({ type: 5, data: { flags: FLAG_EPHEMERAL } });
           }
 
 
