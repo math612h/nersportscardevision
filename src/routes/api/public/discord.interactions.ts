@@ -815,7 +815,7 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             // Svar Discord straks (3-sekunders-grænse) og gør arbejdet bagefter.
             const p = work();
             try {
-              const cf: any = await import(/* @vite-ignore */ "cloudflare:workers" as string);
+              const cf: any = await import(/* @vite-ignore */ ["cloudflare", "workers"].join(":"));
               if (typeof cf?.waitUntil === "function") cf.waitUntil(p);
             } catch {
               // Ikke på Workers (fx dev) — promise kører videre af sig selv.
