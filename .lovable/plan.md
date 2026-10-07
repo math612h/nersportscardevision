@@ -4,6 +4,8 @@
 Kenneth har to tilmeldinger i ICE Cup: en gammel, udmeldt LMGT3 Pro (#134) og den aktive LMP2 (#6).
 Overlayets team-lineup-feed henter kørernes bilnummer og klasse fra tilmeldingerne, men tager også de udmeldte med. Når der er to, vælges en tilfældig af dem. Derfor kunne Kenneth få LMGT3 Pro / #134 påført, selvom han kørte LMP2 — og overlayet viste ham i begge klasser med samme placering.
 
+At han havde samme point i begge tabeller passer med dette: overlayet regner point pr. kører, og fordi han dukkede op med to klasser, blev den samme sum vist i begge. Hjemmesidens stillinger og Discord-beskeden holder klasserne adskilt korrekt (LMGT3: 43 point fra Silverstone og Interlagos, LMP2: Imola plus tiltrædelsespoint) — fejlen ligger kun i det feed, overlayet henter.
+
 Det samme kan ramme alle, der har skiftet klasse i løbet af sæsonen.
 
 ## Rettelse
