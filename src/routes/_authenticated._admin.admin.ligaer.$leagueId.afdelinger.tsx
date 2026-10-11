@@ -304,6 +304,17 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     (division.settings?.event_settings && typeof division.settings.event_settings === "object" ? division.settings.event_settings : {}) as EventSettings,
   );
 
+  const [trackLayout, setTrackLayout] = useState<string>(() => {
+    const idx = LMU_TRACKS.findIndex((t) => t.name.toLowerCase() === String(division.track ?? "").toLowerCase());
+    if (idx >= 0) {
+      const layout = division.layout && LMU_TRACKS[idx].layouts.includes(division.layout) ? division.layout : LMU_TRACKS[idx].layouts[0];
+      return `${idx}::${layout}`;
+    }
+    return `0::${LMU_TRACKS[0].layouts[0]}`;
+  });
+  const [editTrackIdxStr, editLayout] = trackLayout.split("::");
+  const editTrack = LMU_TRACKS[Number(editTrackIdxStr)];
+
   useQuery({
     queryKey: ["admin-division-lobby", division.id, open],
     enabled: open,
@@ -335,7 +346,7 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
     // Ensure stale lobby fields aren't kept in settings
     delete (newSettings as any).lobby_code;
     delete (newSettings as any).lobby_password;
-    const updatePayload: any = { settings: newSettings };
+    const updatePayload: any = { settings: newSettings, track: editTrack.name, layout: editLayout };
     if (raceDate) updatePayload.race_date = new Date(raceDate).toISOString();
     else updatePayload.race_date = null;
     const { error } = await supabase.from("divisions").update(updatePayload).eq("id", division.id);
