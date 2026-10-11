@@ -374,6 +374,23 @@ function EditDivisionDialog({ division, onDone }: { division: any; onDone: () =>
         <DialogHeader><DialogTitle>Rediger {division.name}</DialogTitle></DialogHeader>
         <form onSubmit={submit} className="space-y-3">
           <div>
+            <Label>Bane & layout</Label>
+            <Select value={trackLayout} onValueChange={setTrackLayout}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent className="max-h-80">
+                {LMU_TRACKS.map((t, i) => (
+                  <SelectGroup key={t.name}>
+                    <SelectLabel>{t.name}</SelectLabel>
+                    {t.layouts.map((l) => (
+                      <SelectItem key={`${i}::${l}`} value={`${i}::${l}`}>{l}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="mt-1 text-xs text-muted-foreground">Ændrer kun visning fremadrettet — uploadede resultater og point påvirkes ikke.</p>
+          </div>
+          <div>
             <Label>Dato & tid</Label>
             <Input type="datetime-local" value={raceDate} onChange={(e) => setRaceDate(e.target.value)} />
           </div>
