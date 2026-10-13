@@ -44,7 +44,7 @@ const KIND_META: Record<Kind, { label: string; group: string; cls: string }> = {
   reserve: { label: "Reserve-tilbud", group: "absence", cls: "bg-yellow-500/15 text-yellow-600 border-yellow-500/30" },
 };
 
-type Ev = { at: string; kind: Kind; userId: string | null; name: string; carClass: string | null; detail: string; actor?: string | null };
+type Ev = { at: string; kind: Kind; userId: string | null; name: string; carClass: string | null; detail: string; actor?: string | null; divId?: string | null };
 
 const fmt = (iso: string) =>
   new Date(iso).toLocaleString("da-DK", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -56,6 +56,7 @@ function ActivityPage() {
   const [group, setGroup] = useState("all");
   const [klass, setKlass] = useState("all");
   const [range, setRange] = useState("all");
+  const [div, setDiv] = useState("all");
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["league-activity", leagueId],
