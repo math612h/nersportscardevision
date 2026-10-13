@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2, Monitor, User as UserIcon, ChevronRight, Check } from "lucide-react";
+import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2, Monitor, User as UserIcon, ChevronRight, Check, Users } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,10 +105,41 @@ function LeaderboardPage() {
     },
   });
 
+  // Liga-filter: offentliggjorte ligaer og deres aktive tilmeldinger.
+  // Begge tabeller er offentligt læsbare, så klienten kan hente dem direkte.
+  const { data: leagues } = useQuery({
+    queryKey: ["leaderboard-leagues"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("id,name,class_configs")
+        .eq("published", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; name: string; class_configs: unknown }>;
+    },
+  });
+  const { data: leagueEntries } = useQuery({
+    queryKey: ["leaderboard-league-entries"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("user_id,league_id,car_class,driver_category,waitlist")
+        .is("withdrawn_at", null);
+      if (error) throw error;
+      return ((data ?? []) as Array<{ user_id: string | null; league_id: string; car_class: string; driver_category: string | null; waitlist: boolean | null }>)
+        .filter((e) => !e.waitlist);
+    },
+  });
 
   const [carClass, setCarClass] = useState<string>(ALL);
   const [track, setTrack] = useState<string>(ALL);
   const [layout, setLayout] = useState<string>(ALL);
+  const [leagueId, setLeagueId] = useState<string>(ALL);
+  // Klasse i valgt liga, kodet som "car_class|driver_category" (fx "LMGT3|Pro").
+  const [leagueClass, setLeagueClass] = useState<string>(ALL);
 
   const trackLayoutMap = useMemo(() => {
     const m = new Map<string, Set<string>>();
@@ -129,6 +160,57 @@ function LeaderboardPage() {
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerTrack, setPickerTrack] = useState<string | null>(null);
+
+  const leagueOptions = useMemo(() => leagues ?? [], [leagues]);
+  const selectedLeague = useMemo(
+    () => leagueOptions.find((l) => l.id === leagueId) ?? null,
+    [leagueOptions, leagueId],
+  );
+  // Klasserne i den valgte liga (fra ligaens opsætning), fx "LMGT3 Pro".
+  const leagueClassOptions = useMemo(() => {
+    if (!selectedLeague) return [] as Array<{ key: string; label: string; carClass: string; category: string }>;
+    const configs = (selectedLeague.class_configs as Array<{ car_class?: string; driver_category?: string }> | null) ?? [];
+    return configs
+      .filter((c) => c.car_class)
+      .map((c) => {
+        const cc = c.car_class as string;
+        const cat = c.driver_category ?? "Open";
+        return {
+          key: `${cc}|${cat}`,
+          label: cat && cat !== "Open" ? `${cc} ${cat}` : cc,
+          carClass: cc,
+          category: cat,
+        };
+      });
+  }, [selectedLeague]);
+
+  // Bruger-id'er tilmeldt den valgte liga (null = intet liga-filter).
+  const leagueUserIds = useMemo(() => {
+    if (leagueId === ALL) return null;
+    const set = new Set<string>();
+    for (const e of leagueEntries ?? []) {
+      if (e.league_id === leagueId && e.user_id) set.add(e.user_id);
+    }
+    return set;
+  }, [leagueId, leagueEntries]);
+
+  // Bruger-id'er tilmeldt den valgte klasse/kategori i ligaen.
+  const leagueClassFilter = useMemo(() => {
+    if (leagueId === ALL || leagueClass === ALL) return null;
+    const [cc, cat] = leagueClass.split("|");
+    const set = new Set<string>();
+    for (const e of leagueEntries ?? []) {
+      if (
+        e.league_id === leagueId &&
+        e.car_class === cc &&
+        (e.driver_category ?? "Open") === cat &&
+        e.user_id
+      ) {
+        set.add(e.user_id);
+      }
+    }
+    return { carClass: cc, userIds: set };
+  }, [leagueId, leagueClass, leagueEntries]);
   const classes = useMemo(
     () => Array.from(new Set((rows ?? []).map((r) => r.car_class))).sort(),
     [rows],
@@ -155,6 +237,13 @@ function LeaderboardPage() {
       if (track !== ALL && r.track !== track) return false;
       if (layout !== ALL && (r.layout ?? "") !== layout) return false;
       if (currentVersion && normalizePatch(r.game_version) !== currentVersion) return false;
+      // Liga-filter: kun tider fra kørere tilmeldt den valgte liga.
+      if (leagueUserIds && (!r.user_id || !leagueUserIds.has(r.user_id))) return false;
+      // Klasse i ligaen: kun tider fra kørere tilmeldt netop den klasse/kategori.
+      if (leagueClassFilter) {
+        if (r.car_class !== leagueClassFilter.carClass) return false;
+        if (!r.user_id || !leagueClassFilter.userIds.has(r.user_id)) return false;
+      }
       return true;
     });
     // Best lap per driver pr. bilklasse + bane + layout (uanset bil-model)
@@ -166,7 +255,7 @@ function LeaderboardPage() {
     }
     // Vis alle kørere (én bedste tid pr. kører pr. bilklasse + bane + layout)
     return Array.from(bestByDriver.values()).sort((a, b) => a.best_lap_ms - b.best_lap_ms);
-  }, [rows, carClass, track, layout, currentVersion]);
+  }, [rows, carClass, track, layout, currentVersion, leagueUserIds, leagueClassFilter]);
 
   const handleFiles = async (files: FileList) => {
     if (!user) { toast.error("Log ind for at uploade din egen tid."); return; }
@@ -550,6 +639,51 @@ function LeaderboardPage() {
             </Popover>
           </div>
         </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Users className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Liga filter</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label className="text-xs">Liga</Label>
+            <Select
+              value={leagueId}
+              onValueChange={(v) => {
+                setLeagueId(v);
+                setLeagueClass(ALL);
+              }}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Alle ligaer</SelectItem>
+                {leagueOptions.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Klasse i ligaen</Label>
+            <Select value={leagueClass} onValueChange={setLeagueClass} disabled={leagueId === ALL}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Alle klasser i ligaen</SelectItem>
+                {leagueClassOptions.map((c) => (
+                  <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {leagueId !== ALL && (
+          <p className="text-[11px] text-muted-foreground">
+            Viser kun tider fra kørere, der er tilmeldt {selectedLeague?.name ?? "den valgte liga"}
+            {leagueClassFilter ? ` i ${leagueClassOptions.find((c) => c.key === leagueClass)?.label ?? leagueClassFilter.carClass}` : ""}.
+          </p>
+        )}
       </section>
 
 
