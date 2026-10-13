@@ -237,6 +237,13 @@ function LeaderboardPage() {
       if (track !== ALL && r.track !== track) return false;
       if (layout !== ALL && (r.layout ?? "") !== layout) return false;
       if (currentVersion && normalizePatch(r.game_version) !== currentVersion) return false;
+      // Liga-filter: kun tider fra kørere tilmeldt den valgte liga.
+      if (leagueUserIds && (!r.user_id || !leagueUserIds.has(r.user_id))) return false;
+      // Klasse i ligaen: kun tider fra kørere tilmeldt netop den klasse/kategori.
+      if (leagueClassFilter) {
+        if (r.car_class !== leagueClassFilter.carClass) return false;
+        if (!r.user_id || !leagueClassFilter.userIds.has(r.user_id)) return false;
+      }
       return true;
     });
     // Best lap per driver pr. bilklasse + bane + layout (uanset bil-model)
