@@ -502,8 +502,6 @@ function LeaderboardPage() {
         </CardContent>
       </Card>
 
-      {isAdmin && <ResultFileRepairCard />}
-
 
 
       <section className="space-y-4">
