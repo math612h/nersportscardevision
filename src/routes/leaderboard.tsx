@@ -641,6 +641,51 @@ function LeaderboardPage() {
         </div>
       </section>
 
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Users className="h-4 w-4" />
+          <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Liga filter</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label className="text-xs">Liga</Label>
+            <Select
+              value={leagueId}
+              onValueChange={(v) => {
+                setLeagueId(v);
+                setLeagueClass(ALL);
+              }}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Alle ligaer</SelectItem>
+                {leagueOptions.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label className="text-xs">Klasse i ligaen</Label>
+            <Select value={leagueClass} onValueChange={setLeagueClass} disabled={leagueId === ALL}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value={ALL}>Alle klasser i ligaen</SelectItem>
+                {leagueClassOptions.map((c) => (
+                  <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {leagueId !== ALL && (
+          <p className="text-[11px] text-muted-foreground">
+            Viser kun tider fra kørere, der er tilmeldt {selectedLeague?.name ?? "den valgte liga"}
+            {leagueClassFilter ? ` i ${leagueClassOptions.find((c) => c.key === leagueClass)?.label ?? leagueClassFilter.carClass}` : ""}.
+          </p>
+        )}
+      </section>
+
 
       <section className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
