@@ -255,7 +255,7 @@ function LeaderboardPage() {
     }
     // Vis alle kørere (én bedste tid pr. kører pr. bilklasse + bane + layout)
     return Array.from(bestByDriver.values()).sort((a, b) => a.best_lap_ms - b.best_lap_ms);
-  }, [rows, carClass, track, layout, currentVersion]);
+  }, [rows, carClass, track, layout, currentVersion, leagueUserIds, leagueClassFilter]);
 
   const handleFiles = async (files: FileList) => {
     if (!user) { toast.error("Log ind for at uploade din egen tid."); return; }
