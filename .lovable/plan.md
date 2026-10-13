@@ -1,15 +1,29 @@
-# Frontline Motorsport er ikke P1 — beregningen er korrekt
+# Aktivitetslog: afdelingsfilter + klasse på afbud
 
-## Konklusion efter gennemgang af databasen
+## Problemer
 
-Der er **ingen fejl** i team-stillingen. Frontline Motorsport har 60 point (–, 30, 30), fordi:
+1. **Intet afdelingsfilter** — siden har kun søgning, hændelsestype, klasse og datointerval.
+2. **LMGT3 + "Afbud & reserver" giver tomt resultat** — afbud-hændelser oprettes med `carClass: null`, så klassefilteret (LMGT3/LMP2) frasorterer dem alle. Kun reserve-tilbud har klasse.
 
-- **Afdeling 1 (Silverstone):** Kun Marius Pedersen stillede op for Frontline (og vandt LMGT3). Mathias Friis Virklund deltog ikke. Den aftalte team-regel kræver mindst 2 startende lineup-medlemmer, før teamet kan score point — derfor "–" (0 point) i den runde.
-- **Afdeling 2 (Interlagos):** Begge kørte (P1 + P4) → median 2,5 → bedste team → 30 point.
-- **Afdeling 3 (Imola):** Begge kørte (P1 + P2) → median 1,5 → bedste team → 30 point.
+## Ændringer (kun `src/routes/_authenticated._admin.admin.ligaer.$leagueId.aktivitet.tsx`)
 
-Hexline Motorsport (Mads Christensen + Johnny Bertelsen) stillede med begge kørere i alle tre afdelinger og scorede 25 + 28 + 23 = 76 point. Alle regler er kontrolleret mod databasen: median-beregning, min. 2 startende, P1 = 30 point, og lineup-datoer (begge Frontline-kørere var registreret før Silverstone, så fraværet skyldes udeblivelse, ikke en systemfejl).
+### Fix: klasse på afbud
+- Hent ligaens `entries` (`user_id, car_class, driver_category`) i den eksisterende query.
+- Byg et opslag `userId → klasse`; brug det til at sætte `carClass` på afbud-hændelser (og som fallback på hændelser, der mangler klasse).
+- Resultat: filter "LMGT3" + "Afbud & reserver" viser nu LMGT3-kørernes afbud og reserve-tilbud.
 
-## Beslutning
+### Nyt: afdelingsfilter
+- Hændelser, der hører til en afdeling (afbud og reserve-tilbud), får `divId` sat fra `division_id`.
+- Ny dropdown "Afdeling" med valgene: Alle afdelinger + én pr. afdeling (navn fra `divisions`, sorteret efter dato).
+- Når en specifik afdeling vælges, vises kun hændelser knyttet til den afdeling (afbud/reserver). Liga-dækkende hændelser (tilmeldinger, klasseskift, team-rokader) er ikke bundet til én afdeling og vises derfor kun under "Alle afdelinger".
+- Filtergitteret udvides fra 4 til 5 kolonner på desktop; på mobil stables filtrene som nu.
 
-Reglen om mindst 2 startende kørere **beholdes** (valgt af bruger). Der laves derfor **ingen ændringer** — hverken i kode eller data.
+## Hvad der ikke ændres
+
+- Ingen database- eller rettighedsændringer; kun læsning af eksisterende data.
+- Badge-tælleren på liga-knappen og øvrige filtre fungerer som før.
+
+## Verifikation
+
+- Typecheck/build.
+- Hurtig gennemgang af filtrene: LMGT3 + Afbud & reserver viser nu hændelser; afdelingsfilter indsnævrer korrekt.
