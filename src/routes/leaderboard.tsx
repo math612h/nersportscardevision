@@ -19,7 +19,6 @@ import { ensureTrackImages } from "@/lib/track-images.functions";
 import { parseLmuRaceFile, normalizeCarClass, msToLapStr, CAR_CLASS_OPTIONS, nameSimilarity, expandDriverStints } from "@/lib/lmu-parser";
 import { DriverLink } from "@/components/DriverLink";
 import { PersonalBestPanel } from "@/components/PersonalBestPanel";
-import { ResultFileRepairCard } from "@/components/ResultFileRepairCard";
 import { getLeaderboardRows } from "@/lib/leaderboard.functions";
 import { classColor } from "@/lib/lmu-cars";
 import { normalizeTrackName, LMU_TRACKS } from "@/lib/tracks";
@@ -502,11 +501,6 @@ function LeaderboardPage() {
           </div>
         </CardContent>
       </Card>
-
-      {isAdmin && <ResultFileRepairCard />}
-
-
-
       <section className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
           <Filter className="h-4 w-4" />
