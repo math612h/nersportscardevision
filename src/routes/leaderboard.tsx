@@ -160,6 +160,57 @@ function LeaderboardPage() {
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerTrack, setPickerTrack] = useState<string | null>(null);
+
+  const leagueOptions = useMemo(() => leagues ?? [], [leagues]);
+  const selectedLeague = useMemo(
+    () => leagueOptions.find((l) => l.id === leagueId) ?? null,
+    [leagueOptions, leagueId],
+  );
+  // Klasserne i den valgte liga (fra ligaens opsætning), fx "LMGT3 Pro".
+  const leagueClassOptions = useMemo(() => {
+    if (!selectedLeague) return [] as Array<{ key: string; label: string; carClass: string; category: string }>;
+    const configs = (selectedLeague.class_configs as Array<{ car_class?: string; driver_category?: string }> | null) ?? [];
+    return configs
+      .filter((c) => c.car_class)
+      .map((c) => {
+        const cc = c.car_class as string;
+        const cat = c.driver_category ?? "Open";
+        return {
+          key: `${cc}|${cat}`,
+          label: cat && cat !== "Open" ? `${cc} ${cat}` : cc,
+          carClass: cc,
+          category: cat,
+        };
+      });
+  }, [selectedLeague]);
+
+  // Bruger-id'er tilmeldt den valgte liga (null = intet liga-filter).
+  const leagueUserIds = useMemo(() => {
+    if (leagueId === ALL) return null;
+    const set = new Set<string>();
+    for (const e of leagueEntries ?? []) {
+      if (e.league_id === leagueId && e.user_id) set.add(e.user_id);
+    }
+    return set;
+  }, [leagueId, leagueEntries]);
+
+  // Bruger-id'er tilmeldt den valgte klasse/kategori i ligaen.
+  const leagueClassFilter = useMemo(() => {
+    if (leagueId === ALL || leagueClass === ALL) return null;
+    const [cc, cat] = leagueClass.split("|");
+    const set = new Set<string>();
+    for (const e of leagueEntries ?? []) {
+      if (
+        e.league_id === leagueId &&
+        e.car_class === cc &&
+        (e.driver_category ?? "Open") === cat &&
+        e.user_id
+      ) {
+        set.add(e.user_id);
+      }
+    }
+    return { carClass: cc, userIds: set };
+  }, [leagueId, leagueClass, leagueEntries]);
   const classes = useMemo(
     () => Array.from(new Set((rows ?? []).map((r) => r.car_class))).sort(),
     [rows],
