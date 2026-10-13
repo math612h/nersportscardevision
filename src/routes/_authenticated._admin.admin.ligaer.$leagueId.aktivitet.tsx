@@ -61,9 +61,10 @@ function ActivityPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["league-activity", leagueId],
     queryFn: async () => {
-      const [{ data: league }, { data: divs }, { data: audit }, { data: lineup }] = await Promise.all([
+      const [{ data: league }, { data: divs }, { data: audit }, { data: lineup }, { data: leagueEntries }] = await Promise.all([
         supabase.from("leagues").select("name").eq("id", leagueId).maybeSingle(),
-        supabase.from("divisions").select("id,name,race_date").eq("league_id", leagueId),
+        supabase.from("divisions").select("id,name,race_date").eq("league_id", leagueId).order("race_date", { ascending: true }),
+        supabase.from("entries").select("user_id,car_class,driver_category").eq("league_id", leagueId),
         supabase
           .from("audit_log")
           .select("action,old_data,new_data,actor_id,actor_label,created_at")
