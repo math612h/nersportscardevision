@@ -211,6 +211,15 @@ function ActivityPage() {
             <SelectItem value="LMGT3">LMGT3</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={div} onValueChange={setDiv}>
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Alle afdelinger</SelectItem>
+            {(data?.divs ?? []).map((d) => (
+              <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Select value={range} onValueChange={setRange}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
