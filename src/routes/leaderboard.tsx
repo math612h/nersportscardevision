@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2, Monitor, User as UserIcon, ChevronRight, Check } from "lucide-react";
+import { ArrowLeft, Trophy, Upload, Timer, MapPin, Filter, Trash2, Monitor, User as UserIcon, ChevronRight, Check, Users } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -105,10 +105,41 @@ function LeaderboardPage() {
     },
   });
 
+  // Liga-filter: offentliggjorte ligaer og deres aktive tilmeldinger.
+  // Begge tabeller er offentligt læsbare, så klienten kan hente dem direkte.
+  const { data: leagues } = useQuery({
+    queryKey: ["leaderboard-leagues"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("leagues")
+        .select("id,name,class_configs")
+        .eq("published", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as Array<{ id: string; name: string; class_configs: unknown }>;
+    },
+  });
+  const { data: leagueEntries } = useQuery({
+    queryKey: ["leaderboard-league-entries"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("entries")
+        .select("user_id,league_id,car_class,driver_category,waitlist")
+        .is("withdrawn_at", null);
+      if (error) throw error;
+      return ((data ?? []) as Array<{ user_id: string | null; league_id: string; car_class: string; driver_category: string | null; waitlist: boolean | null }>)
+        .filter((e) => !e.waitlist);
+    },
+  });
 
   const [carClass, setCarClass] = useState<string>(ALL);
   const [track, setTrack] = useState<string>(ALL);
   const [layout, setLayout] = useState<string>(ALL);
+  const [leagueId, setLeagueId] = useState<string>(ALL);
+  // Klasse i valgt liga, kodet som "car_class|driver_category" (fx "LMGT3|Pro").
+  const [leagueClass, setLeagueClass] = useState<string>(ALL);
 
   const trackLayoutMap = useMemo(() => {
     const m = new Map<string, Set<string>>();
