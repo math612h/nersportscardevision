@@ -146,7 +146,7 @@ function ActivityPage() {
         evs.push({ at: o.created_at, kind: "reserve", userId: o.offered_user_id, name: nm(o.offered_user_id), carClass: o.car_class ?? classOf(o.offered_user_id), divId: o.division_id, detail: `Erstatning for ${nm(o.absentee_user_id)} · ${divName.get(o.division_id) ?? "Afdeling"} · ${o.status}` });
       }
       evs.sort((x, y) => y.at.localeCompare(x.at));
-      return { name: league?.name ?? "Liga", evs };
+      return { name: league?.name ?? "Liga", evs, divs: (divs ?? []).map((d: any) => ({ id: d.id as string, name: d.name as string })) };
     },
   });
 
@@ -170,6 +170,7 @@ function ActivityPage() {
     return (data?.evs ?? []).filter((e) => {
       if (group !== "all" && KIND_META[e.kind].group !== group) return false;
       if (klass !== "all" && !(e.carClass ?? "").toUpperCase().startsWith(klass)) return false;
+      if (div !== "all" && e.divId !== div) return false;
       if (days && now - new Date(e.at).getTime() > days * 864e5) return false;
       if (s && !e.name.toLowerCase().includes(s) && !e.detail.toLowerCase().includes(s)) return false;
       return true;
