@@ -175,7 +175,7 @@ function ActivityPage() {
       if (s && !e.name.toLowerCase().includes(s) && !e.detail.toLowerCase().includes(s)) return false;
       return true;
     });
-  }, [data, q, group, klass, range]);
+  }, [data, q, group, klass, range, div]);
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 p-4 md:p-6">
@@ -187,7 +187,7 @@ function ActivityPage() {
         <p className="text-sm text-muted-foreground">{data?.name ?? ""} — tilmeldinger, udmeldinger, klasseskift, afbud og team-rokader.</p>
       </div>
 
-      <div className="grid gap-2 sm:grid-cols-4">
+      <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
         <div className="relative sm:col-span-1">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input className="pl-8" placeholder="Søg kører/hold…" value={q} onChange={(e) => setQ(e.target.value)} />
