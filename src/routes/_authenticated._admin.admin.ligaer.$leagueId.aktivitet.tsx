@@ -100,6 +100,8 @@ function ActivityPage() {
         : { data: [] as any[] };
       const pn = new Map((profs ?? []).map((p: any) => [p.id, p.display_name as string]));
       const nm = (id?: string | null, fb?: string) => (id && pn.get(id)) || fb || "Ukendt";
+      const userClass = new Map((leagueEntries ?? []).map((e: any) => [e.user_id as string, e.car_class as string]));
+      const classOf = (id?: string | null) => (id ? (userClass.get(id) ?? null) : null);
 
       const evs: Ev[] = [];
       for (const a of (audit ?? []) as any[]) {
@@ -138,10 +140,10 @@ function ActivityPage() {
         if (l.status === "declined") evs.push({ at: l.responded_at ?? l.created_at, kind: "team_decline", userId: l.user_id, name: nmU, carClass: cc, detail: `${team} · ${cls(cc)}` });
       }
       for (const a of (abs ?? []) as any[]) {
-        evs.push({ at: a.created_at, kind: "absence", userId: a.user_id, name: nm(a.user_id), carClass: null, detail: `${divName.get(a.division_id) ?? "Afdeling"}${a.reason ? ` · "${a.reason}"` : ""}` });
+        evs.push({ at: a.created_at, kind: "absence", userId: a.user_id, name: nm(a.user_id), carClass: classOf(a.user_id), divId: a.division_id, detail: `${divName.get(a.division_id) ?? "Afdeling"}${a.reason ? ` · "${a.reason}"` : ""}` });
       }
       for (const o of (offers ?? []) as any[]) {
-        evs.push({ at: o.created_at, kind: "reserve", userId: o.offered_user_id, name: nm(o.offered_user_id), carClass: o.car_class, detail: `Erstatning for ${nm(o.absentee_user_id)} · ${divName.get(o.division_id) ?? "Afdeling"} · ${o.status}` });
+        evs.push({ at: o.created_at, kind: "reserve", userId: o.offered_user_id, name: nm(o.offered_user_id), carClass: o.car_class ?? classOf(o.offered_user_id), divId: o.division_id, detail: `Erstatning for ${nm(o.absentee_user_id)} · ${divName.get(o.division_id) ?? "Afdeling"} · ${o.status}` });
       }
       evs.sort((x, y) => y.at.localeCompare(x.at));
       return { name: league?.name ?? "Liga", evs };
