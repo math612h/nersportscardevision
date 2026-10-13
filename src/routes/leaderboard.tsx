@@ -501,9 +501,6 @@ function LeaderboardPage() {
           </div>
         </CardContent>
       </Card>
-
-
-
       <section className="space-y-4">
         <div className="flex items-center gap-2 text-primary">
           <Filter className="h-4 w-4" />
