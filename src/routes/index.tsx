@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, ClientOnly } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { ArrowUpRight, Calendar, CalendarClock, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquare, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { ArrowUpRight, Calendar, CalendarClock, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, KeyRound, MapPin, MessageCircle, MessageSquare, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -28,6 +28,8 @@ import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { LivestreamSection, useLiveStatus } from "@/components/LivestreamSection";
 import { useActiveLeague } from "@/hooks/use-active-league";
+
+const DriversBriefing = lazy(() => import("@/components/DriversBriefing").then(m => ({ default: m.DriversBriefing })));
 
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
@@ -738,10 +740,10 @@ function NextEventCard() {
     queryKey: ["home-next-event"],
     refetchInterval: 5 * 60_000,
     queryFn: async () => {
-      const nowIso = new Date().toISOString();
+      const nowIso = new Date(Date.now() - 6 * 60 * 60_000).toISOString();
       const { data, error } = await supabase
         .from("divisions")
-        .select("id,league_id,name,track,layout,race_date,settings,leagues(name)")
+        .select("id,league_id,name,track,layout,race_date,settings,leagues(name,briefing_required)")
         .gte("race_date", nowIso)
         .order("race_date", { ascending: true })
         .limit(10);
@@ -760,6 +762,11 @@ function NextEventCard() {
   }, []);
 
   if (!next?.race_date) return null;
+
+  const raceMs = new Date(next.race_date).getTime();
+  if (raceMs - nowTick <= 12 * 60 * 60_000) {
+    return <RaceDaySection next={next} />;
+  }
 
   const eventDate = new Date(next.race_date);
   const diffMs = eventDate.getTime() - nowTick;
