@@ -123,6 +123,62 @@ export const sendAdminTemplateMessage = createServerFn({ method: "POST" })
     return { ok: true, discord: discordResult };
   });
 
+// Fri tekst-besked fra admin til én bruger: site-notifikation + push + Discord-DM.
+// Bruges fx til at forklare tekniske fejl (som fejlagtige automatisk udmeldelser).
+const directSchema = z.object({
+  targetUserId: z.string().uuid(),
+  title: z.string().trim().min(1).max(200),
+  body: z.string().trim().min(1).max(2000),
+  link: z.string().trim().max(200).default("/"),
+});
+
+export const sendAdminDirectMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => directSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+    if (!isAdmin) throw new Error("Kun admins kan sende beskeder til brugere.");
+
+    const { error: notifErr } = await supabaseAdmin.from("notifications").insert({
+      user_id: data.targetUserId,
+      title: data.title,
+      body: data.body,
+      link: data.link,
+    });
+    if (notifErr) throw new Error(notifErr.message);
+    try {
+      const { sendPushToUser } = await import("./push.server");
+      void sendPushToUser(data.targetUserId, { title: data.title, body: data.body.slice(0, 140), url: data.link }).catch(() => {});
+    } catch (_) {}
+
+    let discordResult: { ok: boolean; reason?: string; status?: number } = { ok: false, reason: "not_linked" };
+    const { data: priv } = await supabaseAdmin
+      .from("profiles_private")
+      .select("discord_user_id")
+      .eq("user_id", data.targetUserId)
+      .maybeSingle();
+    const discordUserId = (priv as { discord_user_id?: string | null } | null)?.discord_user_id ?? null;
+    if (discordUserId) {
+      const { sendDiscordDM } = await import("./discord.server");
+      const res = await sendDiscordDM(discordUserId, `**${data.title}**\n\n${data.body}\n\nhttps://lmudanmark.dk${data.link}`);
+      discordResult = res.ok ? { ok: true, status: res.status } : { ok: false, reason: "api_error", status: res.status };
+      if (!res.ok) console.error("Admin direct DM failed", res);
+    }
+
+    await (supabaseAdmin as any).from("admin_message_log").insert({
+      user_id: data.targetUserId,
+      template: "custom",
+      sent_by: context.userId,
+    });
+
+    return { ok: true, discord: discordResult };
+  });
+
 const statusSchema = z.object({
   userIds: z.array(z.string().uuid()).max(500),
   template: z.enum(["wrong_name", "missing_lmu_name", "profile_approved"]),
