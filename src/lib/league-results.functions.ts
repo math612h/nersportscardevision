@@ -283,8 +283,15 @@ export async function ensureJoinerPoints(
 
     // Behold kun de eksisterende joiner-rækker der stadig er gyldige,
     // og opdatér deres point til ligaens aktuelle værdi.
+    // Ved bruger-scoped kald (fx lige efter en tilmelding) røres andre
+    // brugeres joiner-rækker aldrig — ellers ville enhver tilmelding
+    // slette alle andres tiltrædelsespoint.
     const keptJoiners = results
-      .filter((r) => r.joiner && wanted.has(`${r.user_id}|${r.car_class}`))
+      .filter((r) => {
+        if (!r.joiner) return false;
+        if (opts?.userId && r.user_id !== opts.userId) return true;
+        return wanted.has(`${r.user_id}|${r.car_class}`);
+      })
       .map((r) => ({ ...r, points: joinerPoints, status: "joiner" }));
     const keptKeys = new Set(keptJoiners.map((r) => `${r.user_id}|${r.car_class}`));
     const newJoiners = Array.from(wanted.values()).filter((r) => !keptKeys.has(`${r.user_id}|${r.car_class}`));
