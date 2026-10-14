@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, ClientOnly } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { ArrowUpRight, Calendar, CalendarClock, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, MapPin, MessageCircle, MessageSquare, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
+import { lazy, Suspense, useEffect, useState } from "react";
+import { ArrowUpRight, Calendar, CalendarClock, ChevronDown, ChevronUp, EyeOff, ExternalLink, Flag, KeyRound, MapPin, MessageCircle, MessageSquare, MessageSquareWarning, MoreHorizontal, Smartphone, Trophy, Users, Video } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -28,6 +28,8 @@ import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { LivestreamSection, useLiveStatus } from "@/components/LivestreamSection";
 import { useActiveLeague } from "@/hooks/use-active-league";
+
+const DriversBriefing = lazy(() => import("@/components/DriversBriefing").then(m => ({ default: m.DriversBriefing })));
 
 
 const PAGE_TITLE = "Nyheder — LMU Danmark";
@@ -738,10 +740,10 @@ function NextEventCard() {
     queryKey: ["home-next-event"],
     refetchInterval: 5 * 60_000,
     queryFn: async () => {
-      const nowIso = new Date().toISOString();
+      const nowIso = new Date(Date.now() - 6 * 60 * 60_000).toISOString();
       const { data, error } = await supabase
         .from("divisions")
-        .select("id,league_id,name,track,layout,race_date,settings,leagues(name)")
+        .select("id,league_id,name,track,layout,race_date,settings,leagues(name,briefing_required)")
         .gte("race_date", nowIso)
         .order("race_date", { ascending: true })
         .limit(10);
@@ -760,6 +762,11 @@ function NextEventCard() {
   }, []);
 
   if (!next?.race_date) return null;
+
+  const raceMs = new Date(next.race_date).getTime();
+  if (raceMs - nowTick <= 12 * 60 * 60_000) {
+    return <RaceDaySection next={next} />;
+  }
 
   const eventDate = new Date(next.race_date);
   const diffMs = eventDate.getTime() - nowTick;
@@ -838,6 +845,193 @@ function NextEventCard() {
           </div>
         </div>
       </Link>
+    </section>
+  );
+}
+
+function RaceDaySection({ next }: { next: any }) {
+  const { user, isAdmin, isSteward } = useAuth();
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const { data: myApproved } = useQuery({
+    queryKey: ["home-raceday-approved", user?.id ?? "anon"],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("approved")
+        .eq("id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return !!data?.approved;
+    },
+  });
+
+  const canSeeLobby = !!user && (myApproved || isAdmin || isSteward);
+  const { data: lobby } = useQuery({
+    queryKey: ["home-raceday-lobby", next.id, user?.id ?? "anon"],
+    enabled: canSeeLobby,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("get_division_lobby", { _division_id: next.id });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] ?? null : null;
+      return (row ?? null) as {
+        lobby_code: string | null;
+        lobby_password: string | null;
+        server_name: string | null;
+        am_lobby_code: string | null;
+        am_lobby_password: string | null;
+        am_server_name: string | null;
+      } | null;
+    },
+  });
+
+  const eventDate = new Date(next.race_date);
+  const diffMs = eventDate.getTime() - nowTick;
+  const started = diffMs <= 0;
+  const totalSec = Math.max(0, Math.floor(diffMs / 1000));
+  const hrs = Math.floor(totalSec / 3600);
+  const mins = Math.floor((totalSec % 3600) / 60);
+  const secs = totalSec % 60;
+  const timeStr = eventDate.toLocaleTimeString("da-DK", { hour: "2-digit", minute: "2-digit" });
+
+  const briefingOpenMin =
+    ((next.settings as any)?.event_settings?.briefing_open_minutes_before as number | undefined) ?? 30;
+  const showBriefing = !!user && (next.leagues as any)?.briefing_required !== false;
+
+  const hasPro = !!(lobby?.lobby_code || lobby?.lobby_password || lobby?.server_name);
+  const hasAm = !!(lobby?.am_lobby_code || lobby?.am_lobby_password || lobby?.am_server_name);
+  const lobbyRow = (label: string, value: string) => (
+    <div className="flex items-center justify-between gap-3 rounded border border-border bg-background/60 px-3 py-1.5">
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="font-mono text-xs font-semibold sm:text-sm">{value}</span>
+    </div>
+  );
+
+  const CdUnit = ({ v, label }: { v: number; label: string }) => (
+    <div className="flex flex-col items-center">
+      <span className="font-mono text-2xl font-bold tabular-nums leading-none text-primary sm:text-3xl">
+        {String(v).padStart(2, "0")}
+      </span>
+      <span className="mt-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground">{label}</span>
+    </div>
+  );
+
+  return (
+    <section>
+      <div className="relative overflow-hidden rounded-xl border-2 border-primary bg-card p-3 shadow-[0_0_30px_-10px_hsl(var(--primary)/0.5)] sm:p-4">
+        {/* checker stripe */}
+        <div
+          className="absolute inset-y-0 left-0 w-1.5 opacity-90"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg, hsl(var(--foreground)) 0 6px, transparent 6px 12px), repeating-linear-gradient(90deg, hsl(var(--foreground)) 0 6px, transparent 6px 12px)",
+            backgroundSize: "6px 12px, 12px 6px",
+          }}
+          aria-hidden
+        />
+        {/* speed glow */}
+        <div
+          className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-primary/25 blur-3xl"
+          aria-hidden
+        />
+
+        <div className="relative pl-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+              <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+              Løbsdag
+            </p>
+            <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+              Start kl. {timeStr}
+            </p>
+          </div>
+
+          <h2 className="mt-1.5 text-base font-black tracking-tight sm:text-lg">
+            {next.leagues?.name ? `${next.leagues.name} — ` : ""}{next.name}
+          </h2>
+
+          {next.track && (
+            <p className="mt-0.5 flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              {next.track}{next.layout ? ` · ${next.layout}` : ""}
+            </p>
+          )}
+
+          <div className="mt-3 flex items-center justify-center gap-3 rounded-lg border border-primary/20 bg-background/40 px-3 py-2.5 sm:gap-4">
+            {started ? (
+              <span className="flex items-center gap-2 py-1 text-sm font-bold text-primary">
+                <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+                Løbet er i gang — held og lykke!
+              </span>
+            ) : (
+              <>
+                <CdUnit v={hrs} label="tm" />
+                <span className="font-mono text-xl font-bold text-primary/40">:</span>
+                <CdUnit v={mins} label="min" />
+                <span className="font-mono text-xl font-bold text-primary/40">:</span>
+                <CdUnit v={secs} label="sek" />
+              </>
+            )}
+          </div>
+
+          {showBriefing && (
+            <div className="mt-3">
+              <ClientOnly fallback={null}>
+                <Suspense fallback={null}>
+                  <DriversBriefing
+                    divisionId={next.id}
+                    raceDate={next.race_date}
+                    briefingOpenMinutesBefore={briefingOpenMin}
+                  />
+                </Suspense>
+              </ClientOnly>
+            </div>
+          )}
+
+          {canSeeLobby && (hasPro || hasAm) && (
+            <div className="mt-3 space-y-2 rounded-lg border border-border bg-background/40 p-3">
+              <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
+                <KeyRound className="h-3 w-3" /> Lobby info
+              </p>
+              {hasPro && (
+                <div className="space-y-1.5">
+                  {hasAm && (
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Pro Server</p>
+                  )}
+                  {lobby?.server_name && lobbyRow("Server navn", lobby.server_name)}
+                  {lobby?.lobby_code && lobbyRow("Lobby code", lobby.lobby_code)}
+                  {lobby?.lobby_password && lobbyRow("Password", lobby.lobby_password)}
+                </div>
+              )}
+              {hasAm && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-primary">Am Server</p>
+                  {lobby?.am_server_name && lobbyRow("Server navn", lobby.am_server_name)}
+                  {lobby?.am_lobby_code && lobbyRow("Lobby code", lobby.am_lobby_code)}
+                  {lobby?.am_lobby_password && lobbyRow("Password", lobby.am_lobby_password)}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="mt-3">
+            <Button asChild variant="outline" size="sm" className="w-full gap-1.5">
+              <Link
+                to="/ligaer/$leagueId/afdeling/$divisionId"
+                params={{ leagueId: next.league_id, divisionId: next.id }}
+              >
+                Se afdeling — deltagere, afbud & protester <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
