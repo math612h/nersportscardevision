@@ -74,6 +74,25 @@ export async function verifyDiscordState(token: string): Promise<{ mode: Discord
   return { mode: mode as DiscordStateMode, userId: userId || null };
 }
 
+// Produktion peger altid på hoveddomænet (også ved www.), mens preview- og
+// lokal-hosts bruger deres egen origin, så Discord-login kan testes der.
+// Kræver at previewets callback-URL er registreret i Discord-appen.
+export function resolveDiscordOrigin(requestUrl: string): string {
+  try {
+    const u = new URL(requestUrl);
+    const h = u.hostname;
+    if (
+      h === "localhost" ||
+      h.endsWith(".lovable.app") ||
+      h.endsWith(".lovableproject.com") ||
+      h.endsWith(".lovableproject-dev.com")
+    ) {
+      return u.origin;
+    }
+  } catch {}
+  return "https://lmudanmark.dk";
+}
+
 export function getDiscordRedirectUri(origin: string): string {
   return `${origin}/api/public/discord/callback`;
 }
