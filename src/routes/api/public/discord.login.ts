@@ -4,9 +4,9 @@ import { createFileRoute } from "@tanstack/react-router";
 export const Route = createFileRoute("/api/public/discord/login")({
   server: {
     handlers: {
-      GET: async () => {
-        const { signDiscordState, buildDiscordAuthUrl } = await import("@/lib/discord.server");
-        const origin = "https://lmudanmark.dk";
+      GET: async ({ request }) => {
+        const { signDiscordState, buildDiscordAuthUrl, resolveDiscordOrigin } = await import("@/lib/discord.server");
+        const origin = resolveDiscordOrigin(request.url);
         const state = await signDiscordState("login", null);
         const url = buildDiscordAuthUrl(state, origin);
         return Response.redirect(url, 302);
