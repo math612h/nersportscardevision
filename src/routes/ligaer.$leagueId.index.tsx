@@ -1189,34 +1189,37 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                             new Date(ent.created_at).getTime() < raceAt &&
                             (!ent.withdrawn_at || new Date(ent.withdrawn_at).getTime() > raceAt);
                           if (wasOnGrid) return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status="dns" /></td>;
-                          return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                          return <td key={d.id} className="py-1.5 px-1 text-center" />;
                         }
                         if (cell.joiner) {
                           return (
                             <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={[`Tiltrædelsespoint (+${cell.points})`, dropTitle].filter(Boolean).join(" · ")}>
                               <ResultStatusBadge status="tp" />
+                              {dropLine}
                             </td>
                           );
                         }
                         const st = cell.status;
                         if (st === "dns" || (cell.dns && !st)) {
-                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status="dns" /></td>;
+                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status="dns" />{dropLine}</td>;
                         }
                         if (st === "dnf" || st === "dsq") {
-                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status={st} /></td>;
+                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status={st} />{dropLine}</td>;
                         }
                         return (
-                          <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums text-muted-foreground${dropCls}`} title={dropTitle ?? undefined}>
-                            <span className="inline-flex items-center gap-1">
-                               {cell.position || "–"}
+                          <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums${dropCls}`} title={dropTitle ?? undefined}>
+                            <span className="inline-flex items-baseline justify-center gap-1">
+                              {cell.position ? <span>{cell.position}</span> : null}
+                              <span className="text-xs text-muted-foreground">{cell.position ? "· " : ""}{cell.points}p</span>
                               {st === "ret" && <ResultStatusBadge status="ret" />}
-                             </span>
+                            </span>
+                            {dropLine}
                           </td>
                         );
 
                       })}
-                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
-                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : "–"}</td>
+                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : ""}</td>
+                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : ""}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
                     </tr>
                     );
