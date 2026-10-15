@@ -1121,6 +1121,9 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
           Hver kørers og hvert teams {dropRounds === 1 ? "værste afdeling" : `${dropRounds} værste afdelinger`} streges (drop-runde) og tæller ikke i totalen.
         </p>
       )}
+      {allRows.some((r) => withdrawnSet.has(`${r.user_id ?? ""}|${r.car_class}`)) && (
+        <p className="text-xs text-muted-foreground">Gråtonede kørere er meldt ud af ligaen.</p>
+      )}
       <div className="space-y-4">
       {groupKeys.map((k) => {
         const [cls, cat] = k.split(" · ");
