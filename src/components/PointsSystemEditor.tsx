@@ -29,6 +29,7 @@ export type PointsSystem = {
   fastest_lap_points?: number;
   min_finish_percent?: number; // % af vinderens omgange — under denne tærskel = DNF (0 point). 0 = deaktiveret.
   joiner_points?: number; // tiltrædelsespoint pr. allerede afholdt afdeling ved sen tilmelding/klasseskift. Standard 8.
+  drop_rounds?: number; // antal af hver kørers værste afdelinger der streges i stillingen. 0/udeladt = deaktiveret.
 };
 
 export const DEFAULT_POINTS: number[] = [25, 18, 15, 12, 10, 8, 6, 4, 2, 1];
@@ -223,6 +224,27 @@ export function PointsSystemEditor({
         <p className="text-xs text-muted-foreground">
           Point en kører får for hver allerede afholdte afdeling i klassen, når vedkommende
           tilmelder sig efter sæsonstart eller skifter klasse. 8 anbefales. 0 = deaktiveret.
+        </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label className="text-xs">Antal drop-runder</Label>
+        <Input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          className="max-w-40"
+          value={value.drop_rounds == null || value.drop_rounds === 0 ? "" : String(value.drop_rounds)}
+          placeholder="0 = deaktiveret"
+          onChange={(e) => {
+            const raw = e.target.value.replace(/[^0-9]/g, "");
+            const num = raw === "" ? 0 : Math.min(10, Number(raw));
+            onChange({ ...value, drop_rounds: num });
+          }}
+        />
+        <p className="text-xs text-muted-foreground">
+          Hver kørers (og teams) værste afdelinger streges i stillingen og tæller ikke i
+          totalen. DNS og tiltrædelsespoint tæller med som mulige drop-runder.
         </p>
       </div>
 

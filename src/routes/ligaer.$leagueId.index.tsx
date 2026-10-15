@@ -1021,6 +1021,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     dnsCount: number;
     dnfCount: number;
     rounds: Record<string, { points: number; position: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null; joiner: boolean }>;
+    dropped?: Set<string>;
   };
   // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
   // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
@@ -1075,6 +1076,27 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     }
   }
 
+  // Drop-runder: hver kørers værste afdelinger (laveste point minus pointstraf)
+  // streges og tæller ikke i totalen. DNS (0 point) og tiltrædelsespoint tæller
+  // med som mulige drop-runder. Kun når der er kørt flere afdelinger end antallet.
+  const dropRounds = Math.max(0, Number((league?.points_system as any)?.drop_rounds ?? 0)) || 0;
+  const canDrop = dropRounds > 0 && completed.length > dropRounds;
+  if (canDrop) {
+    for (const agg of map.values()) {
+      const nets = Object.entries(agg.rounds)
+        .map(([divId, c]) => ({ divId, net: Math.max(0, c.points - c.pointPenalty) }))
+        .sort((a, b) => a.net - b.net);
+      const dropped = new Set(nets.slice(0, dropRounds).map((n) => n.divId));
+      if (dropped.size === 0) continue;
+      agg.dropped = dropped;
+      for (const divId of dropped) {
+        const c = agg.rounds[divId];
+        agg.total -= Math.max(0, c.points - c.pointPenalty);
+        agg.pointPenalty -= c.pointPenalty;
+      }
+    }
+  }
+
   const allRows = Array.from(map.values());
   const groupKeys = configs.length
     ? configs.map((c) => `${c.car_class} · ${c.driver_category}`)
@@ -1087,6 +1109,11 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger</h2>
       </div>
       <StatusLegend />
+      {canDrop && (
+        <p className="text-xs text-muted-foreground">
+          Hver kørers og hvert teams {dropRounds === 1 ? "værste afdeling" : `${dropRounds} værste afdelinger`} streges (drop-runde) og tæller ikke i totalen.
+        </p>
+      )}
       <div className="space-y-4">
       {groupKeys.map((k) => {
         const [cls, cat] = k.split(" · ");
@@ -1147,6 +1174,9 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
+                        const isDropped = !!cell && !!r.dropped?.has(d.id);
+                        const dropCls = isDropped ? " opacity-50 line-through" : "";
+                        const dropTitle = isDropped ? "Drop-runde — tæller ikke i totalen" : null;
                         if (!cell) {
                           const ent = r.user_id
                             ? (leagueEntries ?? []).find((e) => e.user_id === r.user_id && e.car_class === r.car_class && !e.division_id)
@@ -1160,24 +1190,24 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                         }
                         if (cell.joiner) {
                           return (
-                            <td key={d.id} className="py-1.5 px-1 text-center" title={`Tiltrædelsespoint (+${cell.points})`}>
+                            <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={[`Tiltrædelsespoint (+${cell.points})`, dropTitle].filter(Boolean).join(" · ")}>
                               <ResultStatusBadge status="tp" />
                             </td>
                           );
                         }
                         const st = cell.status;
                         if (st === "dns" || (cell.dns && !st)) {
-                          return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status="dns" /></td>;
+                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status="dns" /></td>;
                         }
                         if (st === "dnf" || st === "dsq") {
-                          return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status={st} /></td>;
+                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status={st} /></td>;
                         }
                         return (
-                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
+                          <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums text-muted-foreground${dropCls}`} title={dropTitle ?? undefined}>
                             <span className="inline-flex items-center gap-1">
                                {cell.position || "–"}
                               {st === "ret" && <ResultStatusBadge status="ret" />}
-                            </span>
+                             </span>
                           </td>
                         );
 
@@ -1235,6 +1265,7 @@ function TeamStandings({
         pointsPerPosition: Array.isArray((leagueRow?.points_system as any)?.points_per_position)
           ? (leagueRow!.points_system as any).points_per_position.map((n: any) => Number(n) || 0)
           : [],
+        dropRounds: Math.max(0, Number((leagueRow?.points_system as any)?.drop_rounds ?? 0)) || 0,
       };
     },
   });
@@ -1264,7 +1295,7 @@ function TeamStandings({
 
   // Beregn pr. løb pr. klasse via shared helper.
   const carClasses = Array.from(new Set(teamInfos.map((t) => t.carClass)));
-  type TeamAgg = { teamId: string; teamName: string; rounds: Record<string, { points: number; participants: number; rank: number }>; total: number };
+  type TeamAgg = { teamId: string; teamName: string; rounds: Record<string, { points: number; participants: number; rank: number }>; total: number; dropped?: Set<string> };
   const aggByClass = new Map<string, TeamAgg[]>();
   for (const cls of carClasses) {
     aggByClass.set(cls, teamInfos.filter((t) => t.carClass === cls).map((t) => ({
@@ -1290,6 +1321,24 @@ function TeamStandings({
         if (!agg) continue;
         agg.rounds[d.id] = { points: t.points, participants: t.participants, rank: t.rank };
         agg.total += t.points;
+      }
+    }
+  }
+
+  // Drop-runder for teams: teamets værste afdelinger (laveste team-point) streges
+  // og tæller ikke i totalen. Kun afdelinger hvor teamet faktisk scorede kan streges.
+  const teamDropRounds = teamData?.dropRounds ?? 0;
+  const teamCanDrop = teamDropRounds > 0 && completed.length > teamDropRounds;
+  if (teamCanDrop) {
+    for (const aggs of aggByClass.values()) {
+      for (const agg of aggs) {
+        const scored = Object.entries(agg.rounds)
+          .filter(([, s]) => s.rank > 0)
+          .sort((a, b) => a[1].points - b[1].points);
+        const dropped = new Set(scored.slice(0, teamDropRounds).map(([divId]) => divId));
+        if (dropped.size === 0) continue;
+        agg.dropped = dropped;
+        for (const divId of dropped) agg.total -= agg.rounds[divId].points;
       }
     }
   }
@@ -1351,11 +1400,13 @@ function TeamStandings({
                       </td>
                       {completed.map((d: any) => {
                         const slot = t.rounds[d.id];
+                        const isDropped = !!slot && slot.rank > 0 && !!t.dropped?.has(d.id);
+                        const dropCls = isDropped ? " opacity-50 line-through" : "";
                         if (!slot || slot.rank === 0) {
                           return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground" title={slot ? `Kun ${slot.participants} lineup-kører — ingen point` : undefined}>–</td>;
                         }
                         return (
-                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`Placering ${slot.rank} · ${slot.participants} lineup-kørere`}>
+                          <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums text-muted-foreground${dropCls}`} title={[`Placering ${slot.rank} · ${slot.participants} lineup-kørere`, isDropped ? "Drop-runde — tæller ikke i totalen" : null].filter(Boolean).join(" · ")}>
                             {slot.points}
                           </td>
                         );
