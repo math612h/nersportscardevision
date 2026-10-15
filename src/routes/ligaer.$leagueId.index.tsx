@@ -1150,7 +1150,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       const m = /Afdeling\s+(\d+)/i.exec(String(d.name ?? ""));
                       const roundNo = m ? m[1] : String(di + 1);
                       return (
-                        <th key={d.id} className="py-1 px-1 w-12 text-center" title={d.name}>
+                        <th key={d.id} className="py-1 px-1 w-14 text-center" title={d.name}>
                           <span className="sm:hidden">Afd. {roundNo}</span>
                           <span className="hidden sm:inline">{d.name.slice(0, 4)}</span>
                         </th>
@@ -1175,8 +1175,11 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
                         const isDropped = !!cell && !!r.dropped?.has(d.id);
-                        const dropCls = isDropped ? " opacity-50 line-through" : "";
+                        const dropCls = isDropped ? " opacity-50 relative" : "";
                         const dropTitle = isDropped ? "Drop-runde — tæller ikke i totalen" : null;
+                        const dropLine = isDropped ? (
+                          <span aria-hidden className="pointer-events-none absolute inset-x-0.5 top-1/2 h-px -translate-y-1/2 bg-foreground/60" />
+                        ) : null;
                         if (!cell) {
                           const ent = r.user_id
                             ? (leagueEntries ?? []).find((e) => e.user_id === r.user_id && e.car_class === r.car_class && !e.division_id)
