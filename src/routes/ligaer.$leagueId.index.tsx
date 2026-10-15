@@ -1265,6 +1265,7 @@ function TeamStandings({
         pointsPerPosition: Array.isArray((leagueRow?.points_system as any)?.points_per_position)
           ? (leagueRow!.points_system as any).points_per_position.map((n: any) => Number(n) || 0)
           : [],
+        dropRounds: Math.max(0, Number((leagueRow?.points_system as any)?.drop_rounds ?? 0)) || 0,
       };
     },
   });
@@ -1294,7 +1295,7 @@ function TeamStandings({
 
   // Beregn pr. løb pr. klasse via shared helper.
   const carClasses = Array.from(new Set(teamInfos.map((t) => t.carClass)));
-  type TeamAgg = { teamId: string; teamName: string; rounds: Record<string, { points: number; participants: number; rank: number }>; total: number };
+  type TeamAgg = { teamId: string; teamName: string; rounds: Record<string, { points: number; participants: number; rank: number }>; total: number; dropped?: Set<string> };
   const aggByClass = new Map<string, TeamAgg[]>();
   for (const cls of carClasses) {
     aggByClass.set(cls, teamInfos.filter((t) => t.carClass === cls).map((t) => ({
@@ -1320,6 +1321,24 @@ function TeamStandings({
         if (!agg) continue;
         agg.rounds[d.id] = { points: t.points, participants: t.participants, rank: t.rank };
         agg.total += t.points;
+      }
+    }
+  }
+
+  // Drop-runder for teams: teamets værste afdelinger (laveste team-point) streges
+  // og tæller ikke i totalen. Kun afdelinger hvor teamet faktisk scorede kan streges.
+  const teamDropRounds = teamData?.dropRounds ?? 0;
+  const teamCanDrop = teamDropRounds > 0 && completed.length > teamDropRounds;
+  if (teamCanDrop) {
+    for (const aggs of aggByClass.values()) {
+      for (const agg of aggs) {
+        const scored = Object.entries(agg.rounds)
+          .filter(([, s]) => s.rank > 0)
+          .sort((a, b) => a[1].points - b[1].points);
+        const dropped = new Set(scored.slice(0, teamDropRounds).map(([divId]) => divId));
+        if (dropped.size === 0) continue;
+        agg.dropped = dropped;
+        for (const divId of dropped) agg.total -= agg.rounds[divId].points;
       }
     }
   }
