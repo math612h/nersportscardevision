@@ -23,6 +23,12 @@ Den automatiske "seneste stream"-detektion, der ikke virker efter hensigten, bli
 - Ny knap ved siden af liga-knappen øverst på forsiden: **Stillinger**, der linker direkte til den aktive ligas stillingsside (`/ligaer/<id>/stillinger`).
 - Den følger automatisk samme aktive liga som liga-knappen — når en ny liga bliver aktiv, peger begge knapper på den nye liga. Ingen aktiv liga → begge knapper skjules.
 
+## 4. Udmeldte kørere gråtones i stillingerne
+
+- Kørere, der er meldt ud af ligaen (`withdrawn_at` sat på tilmeldingen), bliver stående i stillingerne med deres point som i dag — men hele rækken vises gråtonet (svagere tekst, ca. samme styrke som drop-rundecellerne), så man tydeligt kan se, at de ikke længere deltager aktivt.
+- Gælder både kører- og team-stillingen (team med kun udmeldte kørere tonede) — nej, kun kører-stillingen: rækken gråtones pr. udmeldt kører. Team røres ikke.
+- Der tilføjes en linje i forklaringen under stillingerne: "Gråtonede kørere er meldt ud af ligaen."
+
 ## Teknisk
 
 - **Migration**: tre nye kolonner på `broadcast_live_state`: `manual_video_id` (text, nullable), `manual_title` (text, nullable), `manual_enabled` (boolean, default false). Eksisterende RLS/grants dækker (offentlig læsning, skrivning kun server-side).
