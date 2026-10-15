@@ -23,6 +23,12 @@ Den automatiske "seneste stream"-detektion, der ikke virker efter hensigten, bli
 - Ny knap ved siden af liga-knappen øverst på forsiden: **Stillinger**, der linker direkte til den aktive ligas stillingsside (`/ligaer/<id>/stillinger`).
 - Den følger automatisk samme aktive liga som liga-knappen — når en ny liga bliver aktiv, peger begge knapper på den nye liga. Ingen aktiv liga → begge knapper skjules.
 
+## 4. Udmeldte kørere gråtones i stillingerne
+
+- Kørere, der er meldt ud af ligaen (`withdrawn_at` sat på tilmeldingen), bliver stående i stillingerne med deres point som i dag — men hele rækken vises gråtonet (svagere tekst, ca. samme styrke som drop-rundecellerne), så man tydeligt kan se, at de ikke længere deltager aktivt.
+- Gælder kører-stillingen pr. udmeldt kører. Team-stillingen ændres ikke.
+- Der tilføjes en linje i forklaringen under stillingerne: "Gråtonede kørere er meldt ud af ligaen."
+
 ## Teknisk
 
 - **Migration**: tre nye kolonner på `broadcast_live_state`: `manual_video_id` (text, nullable), `manual_title` (text, nullable), `manual_enabled` (boolean, default false). Eksisterende RLS/grants dækker (offentlig læsning, skrivning kun server-side).
@@ -30,4 +36,5 @@ Den automatiske "seneste stream"-detektion, der ikke virker efter hensigten, bli
 - `src/components/LivestreamSection.tsx`: mode "last" bruger det manuelle link når `manualEnabled` og `manualVideoId` er sat (ellers som i dag); manuel visning bruger indlejret iframe (som live, men uden autoplay og uden LIVE-mærke) med overskriften "Livestream" og et eksternt link til YouTube.
 - Ny route `src/routes/_authenticated._admin.admin.stream-link.tsx` med head-metadata, bygget med eksisterende Card/Input/Button/Switch-komponenter; menupunkt "Stream link" (Link2-ikon) tilføjes under "Broadcast" i `src/components/AdminSidebar.tsx`.
 - `src/routes/index.tsx`: "Stillinger"-knap (variant outline, Trophy-ikon) ved siden af liga-knappen, kun når `activeLeague` findes.
+- `src/routes/ligaer.$leagueId.index.tsx` (Standings): nyt map `withdrawnSet` over `user_id|car_class` med `withdrawn_at` sat (data hentes allerede i `leagueEntries`); rækker i stillingen for udmeldte kørere får `opacity-60 text-muted-foreground`; linje tilføjes i forklaringen under stillingerne.
 - Typer regenereres via migrationen, så de nye kolonner er typesikre.
