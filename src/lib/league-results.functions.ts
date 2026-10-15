@@ -47,13 +47,38 @@ type StoredRaceRow = Record<string, unknown> & {
   joiner?: boolean;
 };
 
+// Fjern dobbeltrækker pr. kører+klasse: et rigtigt resultat erstatter en
+// forældet DNS-række, og en DNS-række erstatter en forældet tiltrædelsesrække.
+// Opstår fx når en kører genindmeldes efter en udmeldelse.
+function dedupeStoredRaceRows(source: StoredRaceRow[]): StoredRaceRow[] {
+  const rank = (r: StoredRaceRow) => (r.joiner ? 2 : r.dns || r.status === "dns" ? 1 : 0);
+  const best = new Map<string, { row: StoredRaceRow; rank: number }>();
+  const out: StoredRaceRow[] = [];
+  for (const row of source) {
+    const key = row.user_id && row.car_class ? `${row.user_id}|${row.car_class}` : null;
+    if (!key) { out.push(row); continue; }
+    const rk = rank(row);
+    const cur = best.get(key);
+    if (!cur) {
+      best.set(key, { row, rank: rk });
+      out.push(row);
+    } else if (rk < cur.rank) {
+      // Erstat den tidligere (dårligere) række på dens plads i outputtet.
+      const i = out.indexOf(cur.row);
+      if (i >= 0) out[i] = row;
+      best.set(key, { row, rank: rk });
+    }
+  }
+  return out;
+}
+
 function recalculateStoredRaceRows(
   source: StoredRaceRow[],
   pointsTable: number[],
   minFinishPercent: number,
   currentCategoryByUserClass: Map<string, string>,
 ) {
-  const rows: StoredRaceRow[] = source.map((row): StoredRaceRow => {
+  const rows: StoredRaceRow[] = dedupeStoredRaceRows(source).map((row): StoredRaceRow => {
     // Tiltrædelsesrækker (joiner) røres aldrig af genberegning.
     if (row.joiner) return { ...row };
     const category = row.user_id && row.car_class
@@ -560,10 +585,8 @@ export const publishLeagueRaceResult = createServerFn({ method: "POST" })
 
     // Tildel tiltrædelsespoint for sene tilmeldinger i denne afdeling m.fl.
     await ensureJoinerPoints(supabaseAdmin, data.leagueId);
-    try {
-      const { enforceDnsLimit } = await import("./dns-limit.server");
-      await enforceDnsLimit(supabaseAdmin, data.leagueId);
-    } catch (e) { console.error("enforceDnsLimit failed", e); }
+    // DNS-grænsen håndhæves først når en admin bekræfter resultaterne
+    // (setResultsConfirmed) — aldrig på en frisk, ukontrolleret upload.
 
     return { ok: true };
   });
@@ -685,10 +708,7 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
     await ensureJoinerPoints(supabaseAdmin, data.leagueId);
-    try {
-      const { enforceDnsLimit } = await import("./dns-limit.server");
-      await enforceDnsLimit(supabaseAdmin, data.leagueId);
-    } catch (e) { console.error("enforceDnsLimit failed", e); }
+    // DNS-grænsen håndhæves først ved bekræftelse af resultaterne.
     return { inserted: resultRows.length, leaderboard_inserted: 0, unmatched, track, layout };
   });
 
@@ -791,10 +811,7 @@ export const recalcLeaguePoints = createServerFn({ method: "POST" })
 
     // Tildel/ret tiltrædelsespoint for sene tilmeldinger på tværs af afdelinger.
     await ensureJoinerPoints(supabaseAdmin, data.leagueId);
-    try {
-      const { enforceDnsLimit } = await import("./dns-limit.server");
-      await enforceDnsLimit(supabaseAdmin, data.leagueId);
-    } catch (e) { console.error("enforceDnsLimit failed", e); }
+    // DNS-grænsen håndhæves først ved bekræftelse af resultaterne.
 
     return { updatedRows };
   });
@@ -973,6 +990,15 @@ export const setResultsConfirmed = createServerFn({ method: "POST" })
     const { error: uErr } = await supabaseAdmin
       .from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     if (uErr) throw new Error(uErr.message);
+
+    // Bekræftede resultater er endelige — først nu må DNS-grænsen håndhæves,
+    // så en fejlagtig upload aldrig kan udløse en udmeldelse.
+    if (data.confirmed) {
+      try {
+        const { enforceDnsLimit } = await import("./dns-limit.server");
+        await enforceDnsLimit(supabaseAdmin, data.leagueId);
+      } catch (e) { console.error("enforceDnsLimit failed", e); }
+    }
     return { confirmed: data.confirmed };
   });
 

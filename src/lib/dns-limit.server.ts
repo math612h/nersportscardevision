@@ -46,6 +46,9 @@ export async function enforceDnsLimit(admin: any, leagueId: string): Promise<Dns
   const { data: divisions } = await admin.from("divisions").select("id,settings").eq("league_id", leagueId);
   const dnsCount = new Map<string, number>();
   for (const d of divisions ?? []) {
+    // Kun bekræftede resultater tæller — en frisk upload må aldrig
+    // udløse en udmeldelse, før en admin har kontrolleret filen.
+    if ((d.settings as any)?.results_confirmed !== true) continue;
     const rows: any[] = Array.isArray(d.settings?.results) ? d.settings.results : [];
     for (const r of rows) {
       if (!r?.user_id || r.joiner || r.status === "joiner") continue;
