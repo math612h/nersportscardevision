@@ -16,6 +16,7 @@ export function useLiveStatus() {
 }
 
 export function LivestreamSection({ status, mode }: { status: LiveStatus | undefined; mode: "live" | "last" }) {
+  const [playing, setPlaying] = useState(false);
   const useManual = mode === "last" && status?.manualEnabled && !!status?.manualVideoId;
   const videoId = mode === "live" ? status?.videoId : useManual ? status?.manualVideoId : status?.lastVideoId;
   const title = mode === "live" ? status?.title : useManual ? status?.manualTitle : status?.lastTitle;
