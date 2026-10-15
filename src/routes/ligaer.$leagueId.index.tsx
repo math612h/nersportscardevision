@@ -1021,6 +1021,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     dnsCount: number;
     dnfCount: number;
     rounds: Record<string, { points: number; position: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null; joiner: boolean }>;
+    dropped?: Set<string>;
   };
   // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
   // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
@@ -1072,6 +1073,27 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
       if (rowStatus === "dnf") cur.dnfCount += 1;
       cur.rounds[d.id] = { points: r.points, position: r.class_position, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus, joiner: !!(r as any).joiner };
       map.set(key, cur);
+    }
+  }
+
+  // Drop-runder: hver kørers værste afdelinger (laveste point minus pointstraf)
+  // streges og tæller ikke i totalen. DNS (0 point) og tiltrædelsespoint tæller
+  // med som mulige drop-runder. Kun når der er kørt flere afdelinger end antallet.
+  const dropRounds = Math.max(0, Number((league?.points_system as any)?.drop_rounds ?? 0)) || 0;
+  const canDrop = dropRounds > 0 && completed.length > dropRounds;
+  if (canDrop) {
+    for (const agg of map.values()) {
+      const nets = Object.entries(agg.rounds)
+        .map(([divId, c]) => ({ divId, net: Math.max(0, c.points - c.pointPenalty) }))
+        .sort((a, b) => a.net - b.net);
+      const dropped = new Set(nets.slice(0, dropRounds).map((n) => n.divId));
+      if (dropped.size === 0) continue;
+      agg.dropped = dropped;
+      for (const divId of dropped) {
+        const c = agg.rounds[divId];
+        agg.total -= Math.max(0, c.points - c.pointPenalty);
+        agg.pointPenalty -= c.pointPenalty;
+      }
     }
   }
 
