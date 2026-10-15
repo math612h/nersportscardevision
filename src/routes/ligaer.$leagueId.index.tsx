@@ -1171,7 +1171,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
                       <td className="py-1.5 pr-2 truncate"><UserAvatar userId={entryUserMap[identityKey] ?? null} name={r.driver_name} size="sm" /></td>
                       <td className="hidden py-1.5 pr-2 truncate text-xs text-muted-foreground sm:table-cell">{teamName}</td>
-                      <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
+                      <td className="py-1.5 pr-2 text-center"><span className="inline-block min-w-8 rounded-md border border-border bg-muted px-1.5 py-0.5 text-center font-mono text-xs font-semibold text-foreground">{r.car_number}</span></td>
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
                         const isDropped = !!cell && !!r.dropped?.has(d.id);
