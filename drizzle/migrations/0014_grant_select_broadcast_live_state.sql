@@ -1,0 +1,1 @@
+GRANT SELECT ON public.broadcast_live_state TO anon, authenticated;
