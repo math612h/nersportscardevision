@@ -1407,13 +1407,14 @@ function TeamStandings({
                       {completed.map((d: any) => {
                         const slot = t.rounds[d.id];
                         const isDropped = !!slot && slot.rank > 0 && !!t.dropped?.has(d.id);
-                        const dropCls = isDropped ? " opacity-50 line-through" : "";
+                        const dropCls = isDropped ? " opacity-50 relative" : "";
                         if (!slot || slot.rank === 0) {
-                          return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground" title={slot ? `Kun ${slot.participants} lineup-kører — ingen point` : undefined}>–</td>;
+                          return <td key={d.id} className="py-1.5 px-1 text-center" title={slot ? `Kun ${slot.participants} lineup-kører — ingen point` : undefined} />;
                         }
                         return (
                           <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums text-muted-foreground${dropCls}`} title={[`Placering ${slot.rank} · ${slot.participants} lineup-kørere`, isDropped ? "Drop-runde — tæller ikke i totalen" : null].filter(Boolean).join(" · ")}>
                             {slot.points}
+                            {isDropped && <span aria-hidden className="pointer-events-none absolute inset-x-0.5 top-1/2 h-px -translate-y-1/2 bg-foreground/60" />}
                           </td>
                         );
                       })}
