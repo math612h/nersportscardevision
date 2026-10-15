@@ -585,10 +585,8 @@ export const publishLeagueRaceResult = createServerFn({ method: "POST" })
 
     // Tildel tiltrædelsespoint for sene tilmeldinger i denne afdeling m.fl.
     await ensureJoinerPoints(supabaseAdmin, data.leagueId);
-    try {
-      const { enforceDnsLimit } = await import("./dns-limit.server");
-      await enforceDnsLimit(supabaseAdmin, data.leagueId);
-    } catch (e) { console.error("enforceDnsLimit failed", e); }
+    // DNS-grænsen håndhæves først når en admin bekræfter resultaterne
+    // (setResultsConfirmed) — aldrig på en frisk, ukontrolleret upload.
 
     return { ok: true };
   });
@@ -710,10 +708,7 @@ export const uploadLeagueRaceResult = createServerFn({ method: "POST" })
       await supabaseAdmin.from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     }
     await ensureJoinerPoints(supabaseAdmin, data.leagueId);
-    try {
-      const { enforceDnsLimit } = await import("./dns-limit.server");
-      await enforceDnsLimit(supabaseAdmin, data.leagueId);
-    } catch (e) { console.error("enforceDnsLimit failed", e); }
+    // DNS-grænsen håndhæves først ved bekræftelse af resultaterne.
     return { inserted: resultRows.length, leaderboard_inserted: 0, unmatched, track, layout };
   });
 
@@ -816,10 +811,7 @@ export const recalcLeaguePoints = createServerFn({ method: "POST" })
 
     // Tildel/ret tiltrædelsespoint for sene tilmeldinger på tværs af afdelinger.
     await ensureJoinerPoints(supabaseAdmin, data.leagueId);
-    try {
-      const { enforceDnsLimit } = await import("./dns-limit.server");
-      await enforceDnsLimit(supabaseAdmin, data.leagueId);
-    } catch (e) { console.error("enforceDnsLimit failed", e); }
+    // DNS-grænsen håndhæves først ved bekræftelse af resultaterne.
 
     return { updatedRows };
   });
@@ -998,6 +990,15 @@ export const setResultsConfirmed = createServerFn({ method: "POST" })
     const { error: uErr } = await supabaseAdmin
       .from("divisions").update({ settings: newSettings }).eq("id", data.divisionId);
     if (uErr) throw new Error(uErr.message);
+
+    // Bekræftede resultater er endelige — først nu må DNS-grænsen håndhæves,
+    // så en fejlagtig upload aldrig kan udløse en udmeldelse.
+    if (data.confirmed) {
+      try {
+        const { enforceDnsLimit } = await import("./dns-limit.server");
+        await enforceDnsLimit(supabaseAdmin, data.leagueId);
+      } catch (e) { console.error("enforceDnsLimit failed", e); }
+    }
     return { confirmed: data.confirmed };
   });
 
