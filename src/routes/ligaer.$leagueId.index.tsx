@@ -1150,7 +1150,7 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       const m = /Afdeling\s+(\d+)/i.exec(String(d.name ?? ""));
                       const roundNo = m ? m[1] : String(di + 1);
                       return (
-                        <th key={d.id} className="py-1 px-1 w-12 text-center" title={d.name}>
+                        <th key={d.id} className="py-1 px-1 w-14 text-center" title={d.name}>
                           <span className="sm:hidden">Afd. {roundNo}</span>
                           <span className="hidden sm:inline">{d.name.slice(0, 4)}</span>
                         </th>
@@ -1170,13 +1170,16 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                     <tr key={r.car_number} className="border-t border-border">
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
                       <td className="py-1.5 pr-2 truncate"><UserAvatar userId={entryUserMap[identityKey] ?? null} name={r.driver_name} size="sm" /></td>
-                      <td className="hidden py-1.5 pr-2 truncate text-xs text-muted-foreground sm:table-cell">{teamName || "–"}</td>
+                      <td className="hidden py-1.5 pr-2 truncate text-xs text-muted-foreground sm:table-cell">{teamName}</td>
                       <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
                         const isDropped = !!cell && !!r.dropped?.has(d.id);
-                        const dropCls = isDropped ? " opacity-50 line-through" : "";
+                        const dropCls = isDropped ? " opacity-50 relative" : "";
                         const dropTitle = isDropped ? "Drop-runde — tæller ikke i totalen" : null;
+                        const dropLine = isDropped ? (
+                          <span aria-hidden className="pointer-events-none absolute inset-x-0.5 top-1/2 h-px -translate-y-1/2 bg-foreground/60" />
+                        ) : null;
                         if (!cell) {
                           const ent = r.user_id
                             ? (leagueEntries ?? []).find((e) => e.user_id === r.user_id && e.car_class === r.car_class && !e.division_id)
@@ -1186,34 +1189,37 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                             new Date(ent.created_at).getTime() < raceAt &&
                             (!ent.withdrawn_at || new Date(ent.withdrawn_at).getTime() > raceAt);
                           if (wasOnGrid) return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status="dns" /></td>;
-                          return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground">–</td>;
+                          return <td key={d.id} className="py-1.5 px-1 text-center" />;
                         }
                         if (cell.joiner) {
                           return (
                             <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={[`Tiltrædelsespoint (+${cell.points})`, dropTitle].filter(Boolean).join(" · ")}>
                               <ResultStatusBadge status="tp" />
+                              {dropLine}
                             </td>
                           );
                         }
                         const st = cell.status;
                         if (st === "dns" || (cell.dns && !st)) {
-                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status="dns" /></td>;
+                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status="dns" />{dropLine}</td>;
                         }
                         if (st === "dnf" || st === "dsq") {
-                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status={st} /></td>;
+                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status={st} />{dropLine}</td>;
                         }
                         return (
-                          <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums text-muted-foreground${dropCls}`} title={dropTitle ?? undefined}>
-                            <span className="inline-flex items-center gap-1">
-                               {cell.position || "–"}
-                              {st === "ret" && <ResultStatusBadge status="ret" />}
-                             </span>
+                          <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums${dropCls}`} title={dropTitle ?? undefined}>
+                            <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
+                              {cell.position ? <span>{cell.position}</span> : null}
+                              <span className="text-xs text-muted-foreground">{cell.position ? "· " : ""}{cell.points}p</span>
+                              {st === "ret" && <span className="shrink-0"><ResultStatusBadge status="ret" /></span>}
+                            </span>
+                            {dropLine}
                           </td>
                         );
 
                       })}
-                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : "–"}</td>
-                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : "–"}</td>
+                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.penalty > 0 ? `+${r.penalty}s` : ""}</td>
+                      <td className="py-1.5 px-1 text-center tabular-nums text-destructive">{r.pointPenalty > 0 ? `-${r.pointPenalty}` : ""}</td>
                       <td className="py-1.5 pl-2 text-right font-semibold tabular-nums">{r.total}</td>
                     </tr>
                     );
@@ -1401,13 +1407,14 @@ function TeamStandings({
                       {completed.map((d: any) => {
                         const slot = t.rounds[d.id];
                         const isDropped = !!slot && slot.rank > 0 && !!t.dropped?.has(d.id);
-                        const dropCls = isDropped ? " opacity-50 line-through" : "";
+                        const dropCls = isDropped ? " opacity-50 relative" : "";
                         if (!slot || slot.rank === 0) {
-                          return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground" title={slot ? `Kun ${slot.participants} lineup-kører — ingen point` : undefined}>–</td>;
+                          return <td key={d.id} className="py-1.5 px-1 text-center" title={slot ? `Kun ${slot.participants} lineup-kører — ingen point` : undefined} />;
                         }
                         return (
                           <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums text-muted-foreground${dropCls}`} title={[`Placering ${slot.rank} · ${slot.participants} lineup-kørere`, isDropped ? "Drop-runde — tæller ikke i totalen" : null].filter(Boolean).join(" · ")}>
                             {slot.points}
+                            {isDropped && <span aria-hidden className="pointer-events-none absolute inset-x-0.5 top-1/2 h-px -translate-y-1/2 bg-foreground/60" />}
                           </td>
                         );
                       })}
