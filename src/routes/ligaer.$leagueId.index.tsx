@@ -1109,6 +1109,11 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
         <h2 className="text-xs font-semibold uppercase tracking-[0.18em]">Stillinger</h2>
       </div>
       <StatusLegend />
+      {canDrop && (
+        <p className="text-xs text-muted-foreground">
+          Hver kørers og hvert teams {dropRounds === 1 ? "værste afdeling" : `${dropRounds} værste afdelinger`} streges (drop-runde) og tæller ikke i totalen.
+        </p>
+      )}
       <div className="space-y-4">
       {groupKeys.map((k) => {
         const [cls, cat] = k.split(" · ");
