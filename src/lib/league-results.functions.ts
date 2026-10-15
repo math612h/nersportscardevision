@@ -47,13 +47,38 @@ type StoredRaceRow = Record<string, unknown> & {
   joiner?: boolean;
 };
 
+// Fjern dobbeltrækker pr. kører+klasse: et rigtigt resultat erstatter en
+// forældet DNS-række, og en DNS-række erstatter en forældet tiltrædelsesrække.
+// Opstår fx når en kører genindmeldes efter en udmeldelse.
+function dedupeStoredRaceRows(source: StoredRaceRow[]): StoredRaceRow[] {
+  const rank = (r: StoredRaceRow) => (r.joiner ? 2 : r.dns || r.status === "dns" ? 1 : 0);
+  const best = new Map<string, { row: StoredRaceRow; rank: number }>();
+  const out: StoredRaceRow[] = [];
+  for (const row of source) {
+    const key = row.user_id && row.car_class ? `${row.user_id}|${row.car_class}` : null;
+    if (!key) { out.push(row); continue; }
+    const rk = rank(row);
+    const cur = best.get(key);
+    if (!cur) {
+      best.set(key, { row, rank: rk });
+      out.push(row);
+    } else if (rk < cur.rank) {
+      // Erstat den tidligere (dårligere) række på dens plads i outputtet.
+      const i = out.indexOf(cur.row);
+      if (i >= 0) out[i] = row;
+      best.set(key, { row, rank: rk });
+    }
+  }
+  return out;
+}
+
 function recalculateStoredRaceRows(
   source: StoredRaceRow[],
   pointsTable: number[],
   minFinishPercent: number,
   currentCategoryByUserClass: Map<string, string>,
 ) {
-  const rows: StoredRaceRow[] = source.map((row): StoredRaceRow => {
+  const rows: StoredRaceRow[] = dedupeStoredRaceRows(source).map((row): StoredRaceRow => {
     // Tiltrædelsesrækker (joiner) røres aldrig af genberegning.
     if (row.joiner) return { ...row };
     const category = row.user_id && row.car_class
