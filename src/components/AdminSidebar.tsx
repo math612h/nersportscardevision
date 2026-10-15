@@ -30,6 +30,7 @@ import {
   Radio,
   MonitorPlay,
   Wifi,
+  Link2,
 
 
   CalendarDays,
@@ -143,6 +144,7 @@ export function AdminSidebar() {
       items: [
         { title: "Streaming profil", url: "/admin/streaming-profil", icon: Radio },
         { title: "Streaming tool", url: "/admin/streaming-tool", icon: MonitorPlay },
+        { title: "Stream link", url: "/admin/stream-link", icon: Link2 },
       ],
     },
     {
