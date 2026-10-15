@@ -275,8 +275,15 @@ function DivisionEditor({
   const findQuali = buildLookup(existingQuali);
 
   // Udmeldte kørere vises kun i de afdelinger, hvor de allerede har et gemt resultat.
+  // Har samme kører en aktiv tilmelding i samme klasse (fx efter genindmeldelse),
+  // skjules den udmeldtes række — ellers ender køreren med to rækker i resultaterne.
+  const activeUserClass = new Set(
+    entries.filter((e) => !e.withdrawn_at && !e.waitlist).map((e) => `${e.user_id}|${e.car_class}`),
+  );
   const gridEntries = entries.filter((e) =>
-    e.withdrawn_at ? !!findRace(e) || !!findQuali(e) : !e.waitlist,
+    e.withdrawn_at
+      ? (!!findRace(e) || !!findQuali(e)) && !activeUserClass.has(`${e.user_id}|${e.car_class}`)
+      : !e.waitlist,
   );
 
 
@@ -710,6 +717,23 @@ function DivisionEditor({
           status: "classified",
         });
       }
+
+      // Én række pr. kører+klasse: et rigtigt resultat erstatter en forældet
+      // DNS-række (kan opstå efter en genindmeldelse). Sikkerhedsnet — editoren
+      // viser normalt slet ikke den gamle række.
+      const dedupeByUserClass = (arr: any[], isDns: (r: any) => boolean) => {
+        const best = new Map<string, any>();
+        for (const r of arr) {
+          const k = `${r.user_id}|${r.car_class}`;
+          const cur = best.get(k);
+          if (!cur || (isDns(cur) && !isDns(r))) best.set(k, r);
+        }
+        return arr.filter((r) => best.get(`${r.user_id}|${r.car_class}`) === r);
+      };
+      const dedupedRace = dedupeByUserClass(raceResults, (r) => !!r.dns);
+      raceResults.length = 0; raceResults.push(...dedupedRace);
+      const dedupedQuali = dedupeByUserClass(qualiResults, (r) => !!r.dns);
+      qualiResults.length = 0; qualiResults.push(...dedupedQuali);
 
       // Rank race per class
       for (const k of groupKeys) {
