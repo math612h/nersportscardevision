@@ -1208,10 +1208,10 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                         }
                         return (
                           <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums${dropCls}`} title={dropTitle ?? undefined}>
-                            <span className="inline-flex items-baseline justify-center gap-1">
+                            <span className="inline-flex items-center justify-center gap-1 whitespace-nowrap">
                               {cell.position ? <span>{cell.position}</span> : null}
                               <span className="text-xs text-muted-foreground">{cell.position ? "· " : ""}{cell.points}p</span>
-                              {st === "ret" && <ResultStatusBadge status="ret" />}
+                              {st === "ret" && <span className="shrink-0"><ResultStatusBadge status="ret" /></span>}
                             </span>
                             {dropLine}
                           </td>
