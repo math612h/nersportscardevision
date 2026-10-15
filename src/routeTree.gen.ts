@@ -77,6 +77,7 @@ import { Route as AuthenticatedAdminAdminReplaysRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminAdminRollerRouteImport } from './routes/_authenticated._admin.admin.roller'
 import { Route as AuthenticatedAdminAdminSponsorerRouteImport } from './routes/_authenticated._admin.admin.sponsorer'
 import { Route as AuthenticatedAdminAdminStorageRouteImport } from './routes/_authenticated._admin.admin.storage'
+import { Route as AuthenticatedAdminAdminStreamLinkRouteImport } from './routes/_authenticated._admin.admin.stream-link'
 import { Route as AuthenticatedAdminAdminStreamingProfilRouteImport } from './routes/_authenticated._admin.admin.streaming-profil'
 import { Route as AuthenticatedAdminAdminStreamingToolRouteImport } from './routes/_authenticated._admin.admin.streaming-tool'
 import { Route as AuthenticatedAdminAdminTeamsRouteImport } from './routes/_authenticated._admin.admin.teams'
@@ -495,6 +496,12 @@ const AuthenticatedAdminAdminStorageRoute =
     path: '/admin/storage',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminAdminStreamLinkRoute =
+  AuthenticatedAdminAdminStreamLinkRouteImport.update({
+    id: '/admin/stream-link',
+    path: '/admin/stream-link',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminAdminStreamingProfilRoute =
   AuthenticatedAdminAdminStreamingProfilRouteImport.update({
     id: '/admin/streaming-profil',
@@ -810,6 +817,7 @@ export interface FileRoutesByFullPath {
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
+  '/admin/stream-link': typeof AuthenticatedAdminAdminStreamLinkRoute
   '/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
   '/admin/streaming-tool': typeof AuthenticatedAdminAdminStreamingToolRoute
   '/admin/teams': typeof AuthenticatedAdminAdminTeamsRoute
@@ -918,6 +926,7 @@ export interface FileRoutesByTo {
   '/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
+  '/admin/stream-link': typeof AuthenticatedAdminAdminStreamLinkRoute
   '/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
   '/admin/streaming-tool': typeof AuthenticatedAdminAdminStreamingToolRoute
   '/admin/teams': typeof AuthenticatedAdminAdminTeamsRoute
@@ -1031,6 +1040,7 @@ export interface FileRoutesById {
   '/_authenticated/_admin/admin/roller': typeof AuthenticatedAdminAdminRollerRoute
   '/_authenticated/_admin/admin/sponsorer': typeof AuthenticatedAdminAdminSponsorerRoute
   '/_authenticated/_admin/admin/storage': typeof AuthenticatedAdminAdminStorageRoute
+  '/_authenticated/_admin/admin/stream-link': typeof AuthenticatedAdminAdminStreamLinkRoute
   '/_authenticated/_admin/admin/streaming-profil': typeof AuthenticatedAdminAdminStreamingProfilRoute
   '/_authenticated/_admin/admin/streaming-tool': typeof AuthenticatedAdminAdminStreamingToolRoute
   '/_authenticated/_admin/admin/teams': typeof AuthenticatedAdminAdminTeamsRoute
@@ -1143,6 +1153,7 @@ export interface FileRouteTypes {
     | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
+    | '/admin/stream-link'
     | '/admin/streaming-profil'
     | '/admin/streaming-tool'
     | '/admin/teams'
@@ -1251,6 +1262,7 @@ export interface FileRouteTypes {
     | '/admin/roller'
     | '/admin/sponsorer'
     | '/admin/storage'
+    | '/admin/stream-link'
     | '/admin/streaming-profil'
     | '/admin/streaming-tool'
     | '/admin/teams'
@@ -1363,6 +1375,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_admin/admin/roller'
     | '/_authenticated/_admin/admin/sponsorer'
     | '/_authenticated/_admin/admin/storage'
+    | '/_authenticated/_admin/admin/stream-link'
     | '/_authenticated/_admin/admin/streaming-profil'
     | '/_authenticated/_admin/admin/streaming-tool'
     | '/_authenticated/_admin/admin/teams'
@@ -1936,6 +1949,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAdminStorageRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/_admin/admin/stream-link': {
+      id: '/_authenticated/_admin/admin/stream-link'
+      path: '/admin/stream-link'
+      fullPath: '/admin/stream-link'
+      preLoaderRoute: typeof AuthenticatedAdminAdminStreamLinkRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/_admin/admin/streaming-profil': {
       id: '/_authenticated/_admin/admin/streaming-profil'
       path: '/admin/streaming-profil'
@@ -2303,6 +2323,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAdminRollerRoute: typeof AuthenticatedAdminAdminRollerRoute
   AuthenticatedAdminAdminSponsorerRoute: typeof AuthenticatedAdminAdminSponsorerRoute
   AuthenticatedAdminAdminStorageRoute: typeof AuthenticatedAdminAdminStorageRoute
+  AuthenticatedAdminAdminStreamLinkRoute: typeof AuthenticatedAdminAdminStreamLinkRoute
   AuthenticatedAdminAdminStreamingProfilRoute: typeof AuthenticatedAdminAdminStreamingProfilRoute
   AuthenticatedAdminAdminStreamingToolRoute: typeof AuthenticatedAdminAdminStreamingToolRoute
   AuthenticatedAdminAdminTeamsRoute: typeof AuthenticatedAdminAdminTeamsRoute
@@ -2347,6 +2368,8 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminAdminRollerRoute: AuthenticatedAdminAdminRollerRoute,
   AuthenticatedAdminAdminSponsorerRoute: AuthenticatedAdminAdminSponsorerRoute,
   AuthenticatedAdminAdminStorageRoute: AuthenticatedAdminAdminStorageRoute,
+  AuthenticatedAdminAdminStreamLinkRoute:
+    AuthenticatedAdminAdminStreamLinkRoute,
   AuthenticatedAdminAdminStreamingProfilRoute:
     AuthenticatedAdminAdminStreamingProfilRoute,
   AuthenticatedAdminAdminStreamingToolRoute:

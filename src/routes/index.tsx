@@ -255,6 +255,13 @@ function NewsHome() {
               </Link>
             </Button>
           )}
+          {activeLeague && (
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/ligaer/$leagueId/stillinger" params={{ leagueId: activeLeague.id }}>
+                <Trophy className="h-4 w-4" /> Stillinger
+              </Link>
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="gap-2">

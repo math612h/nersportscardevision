@@ -976,6 +976,18 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     }
     return m;
   }, [leagueEntries]);
+  const withdrawnSet = useMemo(() => {
+    const active = new Set<string>();
+    const withdrawn = new Set<string>();
+    for (const e of leagueEntries ?? []) {
+      const key = `${e.user_id}|${e.car_class}`;
+      if (e.withdrawn_at) withdrawn.add(key);
+      else active.add(key);
+    }
+    // En kører der har meldt sig ind igen, skal ikke gråtones.
+    for (const key of active) withdrawn.delete(key);
+    return withdrawn;
+  }, [leagueEntries]);
   const teamIds = useMemo(() => Object.values(entryTeamMap).filter(Boolean) as string[], [entryTeamMap]);
   const { data: teamMap } = useTeamLookup(teamIds);
 
@@ -1114,6 +1126,9 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
           Hver kørers og hvert teams {dropRounds === 1 ? "værste afdeling" : `${dropRounds} værste afdelinger`} streges (drop-runde) og tæller ikke i totalen.
         </p>
       )}
+      {allRows.some((r) => withdrawnSet.has(`${r.user_id ?? ""}|${r.car_class}`)) && (
+        <p className="text-xs text-muted-foreground">Gråtonede kørere er meldt ud af ligaen.</p>
+      )}
       <div className="space-y-4">
       {groupKeys.map((k) => {
         const [cls, cat] = k.split(" · ");
@@ -1165,8 +1180,9 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                     const identityKey = `${r.user_id ?? ""}|${r.car_class}`;
                     const tId = entryTeamMap[identityKey];
                     const teamName = tId ? (teamMap?.[tId] ?? "") : "";
+                    const isWithdrawn = withdrawnSet.has(identityKey);
                     return (
-                    <tr key={r.car_number} className="border-t border-border">
+                    <tr key={r.car_number} className={`border-t border-border${isWithdrawn ? " opacity-60" : ""}`} title={isWithdrawn ? "Udmeldt af ligaen" : undefined}>
                       <td className="py-1.5 pr-2 font-semibold tabular-nums">{i + 1}</td>
                       <td className="py-1.5 pr-2 truncate"><UserAvatar userId={entryUserMap[identityKey] ?? null} name={r.driver_name} size="sm" /></td>
                       <td className="hidden py-1.5 pr-2 truncate text-xs text-muted-foreground sm:table-cell">{teamName}</td>
