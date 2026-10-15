@@ -29,5 +29,6 @@ De tre andre udmeldte er verificeret: Ronni Simonsen, Lukas Weiss og Martin Sør
 
 - Datafix: fjern rækken med `status='dns'` for `user_id=ffd17363-e47b-471d-a22a-bb0520dcf036` fra `divisions.settings.results` på afdeling `1389adee-e321-4ceb-ab22-2c79e67f1972` (Fuji). `league_results` er allerede korrekt (én klassificeret række, P11, 18 point) og røres ikke.
 - Kodefix i `src/lib/league-results.functions.ts`: ved genopbygning af spejlet deduplikeres pr. `user_id`+`car_class`, så en klassificeret række altid erstatter en tidligere DNS-række (og en kører uden resultat kun får én DNS-række).
+- DNS-grænsen i `src/lib/dns-limit.server.ts` tæller kun rækker fra afdelinger med `settings.results_confirmed = true` (flaget findes allerede og sættes i dag ved "Bekræft resultater"). De automatiske kald efter upload/genberegning i `league-results.functions.ts` fjernes; til gengæld kaldes `enforceDnsLimit` fra `setResultsConfirmed`, når en admin bekræfter en afdeling. Den manuelle "kør DNS-kontrol"-funktion (`enforceLeagueDnsLimit`) består og rammer ligeledes kun bekræftede afdelinger.
 - Besked til Jens sendes via den eksisterende `sendAdminDirectMessage`-funktion (notifikation + Discord-DM).
 - Ingen databasemigrering nødvendig. Ændringsloggen røres ikke.
