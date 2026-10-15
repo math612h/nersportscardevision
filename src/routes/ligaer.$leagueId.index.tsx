@@ -1400,11 +1400,13 @@ function TeamStandings({
                       </td>
                       {completed.map((d: any) => {
                         const slot = t.rounds[d.id];
+                        const isDropped = !!slot && slot.rank > 0 && !!t.dropped?.has(d.id);
+                        const dropCls = isDropped ? " opacity-50 line-through" : "";
                         if (!slot || slot.rank === 0) {
                           return <td key={d.id} className="py-1.5 px-1 text-center text-muted-foreground" title={slot ? `Kun ${slot.participants} lineup-kører — ingen point` : undefined}>–</td>;
                         }
                         return (
-                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground" title={`Placering ${slot.rank} · ${slot.participants} lineup-kørere`}>
+                          <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums text-muted-foreground${dropCls}`} title={[`Placering ${slot.rank} · ${slot.participants} lineup-kørere`, isDropped ? "Drop-runde — tæller ikke i totalen" : null].filter(Boolean).join(" · ")}>
                             {slot.points}
                           </td>
                         );
