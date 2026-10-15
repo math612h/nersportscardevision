@@ -22,7 +22,8 @@ De tre andre udmeldte er verificeret: Ronni Simonsen, Lukas Weiss og Martin Sør
 1. **Fjern den forældede DNS-række** for Jens fra Fuji-afdelingens gemte resultater. P11-rækken med 18 point bevares — point og placeringer ændres ikke.
 2. **Lad Jens' nuværende tilmelding stå** (han er allerede aktiv igen), og send ham en kort besked på siden og Discord: fejlen er rettet, han er med i ligaen, og han har 2 udeblivelser.
 3. **Ret kodefejlen**, så det ikke kan ske igen: når resultater genberegnes eller uploades, skal en kørers gamle DNS-række fjernes, hvis vedkommende nu har et rigtigt resultat — der må højst være én række pr. kører pr. klasse pr. afdeling.
-4. **Kontrol bagefter**: Jens vises kun som P11 på Fuji-siden, hans udeblivelser tæller 2, og stillingerne er i øvrigt uændrede.
+4. **Automatisk udmeldelse først efter bekræftede resultater** (jeres nye ønske): i dag kører DNS-grænsen med det samme ved upload — inden I har nået at kontrollere filen. Det ændres, så udeblivelser kun tælles fra afdelinger, hvor I har trykket "Bekræft resultater" i kontrolpanelet. Når I bekræfter en afdeling, kører kontrollen automatisk på de bekræftede data. Ubekræftede uploads kan altså aldrig udløse en udmeldelse.
+5. **Kontrol bagefter**: Jens vises kun som P11 på Fuji-siden, hans udeblivelser tæller 2, og stillingerne er i øvrigt uændrede.
 
 ## Teknisk
 
