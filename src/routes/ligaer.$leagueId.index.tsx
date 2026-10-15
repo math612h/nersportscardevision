@@ -977,11 +977,16 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     return m;
   }, [leagueEntries]);
   const withdrawnSet = useMemo(() => {
-    const s = new Set<string>();
+    const active = new Set<string>();
+    const withdrawn = new Set<string>();
     for (const e of leagueEntries ?? []) {
-      if (e.withdrawn_at) s.add(`${e.user_id}|${e.car_class}`);
+      const key = `${e.user_id}|${e.car_class}`;
+      if (e.withdrawn_at) withdrawn.add(key);
+      else active.add(key);
     }
-    return s;
+    // En kører der har meldt sig ind igen, skal ikke gråtones.
+    for (const key of active) withdrawn.delete(key);
+    return withdrawn;
   }, [leagueEntries]);
   const teamIds = useMemo(() => Object.values(entryTeamMap).filter(Boolean) as string[], [entryTeamMap]);
   const { data: teamMap } = useTeamLookup(teamIds);
