@@ -149,6 +149,9 @@ export type Database = {
           last_ended_at: string | null
           last_title: string | null
           last_video_id: string | null
+          manual_enabled: boolean
+          manual_title: string | null
+          manual_video_id: string | null
           platform: string
           scheduled_start_at: string | null
           started_at: string | null
@@ -170,6 +173,9 @@ export type Database = {
           last_ended_at?: string | null
           last_title?: string | null
           last_video_id?: string | null
+          manual_enabled?: boolean
+          manual_title?: string | null
+          manual_video_id?: string | null
           platform: string
           scheduled_start_at?: string | null
           started_at?: string | null
@@ -191,6 +197,9 @@ export type Database = {
           last_ended_at?: string | null
           last_title?: string | null
           last_video_id?: string | null
+          manual_enabled?: boolean
+          manual_title?: string | null
+          manual_video_id?: string | null
           platform?: string
           scheduled_start_at?: string | null
           started_at?: string | null
