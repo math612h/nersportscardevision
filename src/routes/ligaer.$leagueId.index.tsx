@@ -1169,6 +1169,9 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                       <td className="py-1.5 pr-2 text-center font-mono text-xs">{r.car_number}</td>
                       {completed.map((d: any) => {
                         const cell = r.rounds[d.id];
+                        const isDropped = !!cell && !!r.dropped?.has(d.id);
+                        const dropCls = isDropped ? " opacity-50 line-through" : "";
+                        const dropTitle = isDropped ? "Drop-runde — tæller ikke i totalen" : null;
                         if (!cell) {
                           const ent = r.user_id
                             ? (leagueEntries ?? []).find((e) => e.user_id === r.user_id && e.car_class === r.car_class && !e.division_id)
@@ -1182,24 +1185,24 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                         }
                         if (cell.joiner) {
                           return (
-                            <td key={d.id} className="py-1.5 px-1 text-center" title={`Tiltrædelsespoint (+${cell.points})`}>
+                            <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={[`Tiltrædelsespoint (+${cell.points})`, dropTitle].filter(Boolean).join(" · ")}>
                               <ResultStatusBadge status="tp" />
                             </td>
                           );
                         }
                         const st = cell.status;
                         if (st === "dns" || (cell.dns && !st)) {
-                          return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status="dns" /></td>;
+                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status="dns" /></td>;
                         }
                         if (st === "dnf" || st === "dsq") {
-                          return <td key={d.id} className="py-1.5 px-1 text-center"><ResultStatusBadge status={st} /></td>;
+                          return <td key={d.id} className={`py-1.5 px-1 text-center${dropCls}`} title={dropTitle ?? undefined}><ResultStatusBadge status={st} /></td>;
                         }
                         return (
-                          <td key={d.id} className="py-1.5 px-1 text-center tabular-nums text-muted-foreground">
+                          <td key={d.id} className={`py-1.5 px-1 text-center tabular-nums text-muted-foreground${dropCls}`} title={dropTitle ?? undefined}>
                             <span className="inline-flex items-center gap-1">
                                {cell.position || "–"}
                               {st === "ret" && <ResultStatusBadge status="ret" />}
-                            </span>
+                             </span>
                           </td>
                         );
 
