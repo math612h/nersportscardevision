@@ -1932,29 +1932,46 @@ function MyChampionshipPosition({ leagueId, userId }: { leagueId: string; userId
   const { data } = useQuery({
     queryKey: ["my-championship-position", leagueId, userId],
     queryFn: async () => {
-      const [{ data: entry }, { data: divisions }] = await Promise.all([
-        supabase.from("entries").select("car_class,driver_category").eq("league_id", leagueId).eq("user_id", userId).is("withdrawn_at", null).maybeSingle(),
-        supabase.from("divisions").select("settings").eq("league_id", leagueId),
+      const [{ data: myEntries }, { data: divisions }, { data: league }, { data: leagueEntries }] = await Promise.all([
+        supabase.from("entries").select("car_class,driver_category").eq("league_id", leagueId).eq("user_id", userId).is("withdrawn_at", null),
+        supabase.from("divisions").select("id,settings,race_date").eq("league_id", leagueId).order("race_date", { ascending: true, nullsFirst: false }),
+        supabase.from("leagues").select("points_system").eq("id", leagueId).maybeSingle(),
+        supabase.from("entries").select("user_id,car_class,driver_category,car_number").eq("league_id", leagueId),
       ]);
-      if (!entry) return null;
-      const totals = new Map<string, { userId: string; total: number }>();
-      for (const division of divisions ?? []) {
-        const settings = division.settings as any;
-        if (!settings?.completed || !isResultsPublished(settings) || !Array.isArray(settings.results)) continue;
-        for (const row of settings.results as ResultRow[]) {
-          if (row.car_class !== entry.car_class || row.driver_category !== entry.driver_category || !row.user_id) continue;
-          const current = totals.get(row.user_id) ?? { userId: row.user_id, total: 0 };
-          current.total += Math.max(0, Number(row.points ?? 0) - Math.max(0, Number(row.penalty_points ?? 0)));
-          totals.set(row.user_id, current);
-        }
-      }
-      const ranked = Array.from(totals.values()).sort((a, b) => b.total - a.total);
-      const index = ranked.findIndex((row) => row.userId === userId);
-      return index < 0 ? { position: null, total: 0, label: `${entry.car_class} ${entry.driver_category}` } : { position: index + 1, total: ranked[index].total, label: `${entry.car_class} ${entry.driver_category}` };
+      const activeEntries = (myEntries ?? []).filter((e) => e.car_class);
+      if (activeEntries.length === 0) return null;
+      // Samme datakilde og regler som stillingstabellen (inkl. drop-runder),
+      // så placering og point altid matcher Stillinger-siden.
+      const completed = (divisions ?? []).filter((d: any) => d.settings?.completed && isResultsPublished(d.settings) && Array.isArray(d.settings?.results));
+      const dropRounds = Math.max(0, Number((league?.points_system as any)?.drop_rounds ?? 0)) || 0;
+      const allRows = aggregateStandings(completed, (leagueEntries ?? []) as { user_id: string; car_class: string; driver_category: string | null; car_number: number | null }[], dropRounds);
+      return activeEntries.map((entry) => {
+        const rows = allRows
+          .filter((r) => r.car_class === entry.car_class && r.driver_category === (entry.driver_category ?? ""))
+          .sort(compareStandings);
+        const index = rows.findIndex((r) => r.user_id === userId);
+        return {
+          label: `${entry.car_class} ${entry.driver_category ?? ""}`.trim(),
+          position: index < 0 ? null : index + 1,
+          total: index < 0 ? 0 : rows[index].total,
+        };
+      });
     },
   });
-  if (!data) return null;
-  return <section className="flex items-center gap-4 rounded-md border border-primary/30 bg-primary/5 p-4"><Trophy className="h-6 w-6 text-primary" /><div><p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Din mesterskabsplacering · {data.label}</p><p className="mt-1 text-xl font-bold">{data.position ? `#${data.position} · ${data.total} point` : "Ingen offentliggjorte resultater endnu"}</p></div></section>;
+  if (!data || data.length === 0) return null;
+  return (
+    <section className="flex items-center gap-4 rounded-md border border-primary/30 bg-primary/5 p-4">
+      <Trophy className="h-6 w-6 text-primary" />
+      <div className="space-y-2">
+        {data.map((row) => (
+          <div key={row.label}>
+            <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">Din mesterskabsplacering · {row.label}</p>
+            <p className="mt-1 text-xl font-bold">{row.position ? `#${row.position} · ${row.total} point` : "Ingen offentliggjorte resultater endnu"}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 function DriverAidsView({ settings }: { settings: EventSettings }) {
