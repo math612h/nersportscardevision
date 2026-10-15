@@ -1145,14 +1145,13 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
                     <th className="py-1 pr-2">Kører</th>
                     {/* Team-kolonnen vises kun på pc — giver plads til afdelingskolonnerne på mobil */}
                     <th className="hidden py-1 pr-2 sm:table-cell">Team</th>
-                    <th className="py-1 pr-2 w-12 text-center">Nr.</th>
+                    <th className="py-1 pr-2 text-center w-16">Bil Nr.</th>
                     {completed.map((d: any, di: number) => {
                       const m = /Afdeling\s+(\d+)/i.exec(String(d.name ?? ""));
                       const roundNo = m ? m[1] : String(di + 1);
                       return (
                         <th key={d.id} className="py-1 px-1 w-14 text-center" title={d.name}>
-                          <span className="sm:hidden">Afd. {roundNo}</span>
-                          <span className="hidden sm:inline">{d.name.slice(0, 4)}</span>
+                          Afd. {roundNo}
                         </th>
                       );
                     })}
