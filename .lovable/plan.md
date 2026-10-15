@@ -26,7 +26,7 @@ Den automatiske "seneste stream"-detektion, der ikke virker efter hensigten, bli
 ## 4. Udmeldte kørere gråtones i stillingerne
 
 - Kørere, der er meldt ud af ligaen (`withdrawn_at` sat på tilmeldingen), bliver stående i stillingerne med deres point som i dag — men hele rækken vises gråtonet (svagere tekst, ca. samme styrke som drop-rundecellerne), så man tydeligt kan se, at de ikke længere deltager aktivt.
-- Gælder både kører- og team-stillingen (team med kun udmeldte kørere tonede) — nej, kun kører-stillingen: rækken gråtones pr. udmeldt kører. Team røres ikke.
+- Gælder kører-stillingen pr. udmeldt kører. Team-stillingen ændres ikke.
 - Der tilføjes en linje i forklaringen under stillingerne: "Gråtonede kørere er meldt ud af ligaen."
 
 ## Teknisk
