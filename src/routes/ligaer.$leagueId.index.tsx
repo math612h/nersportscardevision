@@ -1128,96 +1128,9 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
     );
   }
 
-  type Agg = {
-    user_id?: string;
-    car_number: number;
-    driver_name: string;
-    car_class: string;
-    driver_category: string;
-    race: number;
-    total: number;
-    penalty: number;
-    pointPenalty: number;
-    dnsCount: number;
-    dnfCount: number;
-    rounds: Record<string, { points: number; position: number; penalty: number; pointPenalty: number; dns: boolean; status: ResultStatus | null; joiner: boolean }>;
-    dropped?: Set<string>;
-  };
-  // Kategori (Pro/Am) følger kørerens aktuelle tilmelding, så flyttede kørere
-  // ikke bliver stående i deres tidligere klasse i tidligere afdelinger.
-  const currentCatByUser = new Map<string, string>();
-  const currentCatByNumber = new Map<string, string>();
-  for (const e of leagueEntries ?? []) {
-    if (!e.driver_category) continue;
-    currentCatByUser.set(`${e.user_id}|${e.car_class}`, e.driver_category);
-    if (e.car_number != null) currentCatByNumber.set(`${e.car_class}|${e.car_number}`, e.driver_category);
-  }
-  const resolveCat = (r: ResultRow) =>
-    (r.user_id ? currentCatByUser.get(`${r.user_id}|${r.car_class}`) : undefined) ??
-    currentCatByNumber.get(`${r.car_class}|${r.car_number}`) ??
-    r.driver_category;
-
-  const map = new Map<string, Agg>();
-  for (const d of completed as any[]) {
-    for (const r of d.settings.results as ResultRow[]) {
-      const cat = resolveCat(r as any);
-      const key = r.user_id
-        ? `${r.user_id}|${r.car_class}`
-        : `legacy|${r.car_class}|${cat}|${r.car_number}`;
-      const cur = map.get(key) ?? {
-        user_id: r.user_id,
-        car_number: r.car_number,
-        driver_name: r.driver_name,
-        car_class: r.car_class,
-        driver_category: cat,
-        race: 0,
-        total: 0,
-        penalty: 0,
-        pointPenalty: 0,
-        dnsCount: 0,
-        dnfCount: 0,
-        rounds: {},
-      };
-      const pen = Number(r.penalty_seconds ?? 0);
-      const ptsPen = Math.max(0, Number(r.penalty_points ?? 0));
-      cur.race += r.points;
-      cur.total += Math.max(0, r.points - ptsPen);
-      cur.penalty += pen;
-      cur.pointPenalty += ptsPen;
-      const rowStatus = isResultStatus((r as any).status)
-        ? ((r as any).status as ResultStatus)
-        : (r as any).dns
-          ? "dns"
-          : null;
-      if (rowStatus === "dns") cur.dnsCount += 1;
-      if (rowStatus === "dnf") cur.dnfCount += 1;
-      cur.rounds[d.id] = { points: r.points, position: r.class_position, penalty: pen, pointPenalty: ptsPen, dns: !!r.dns, status: rowStatus, joiner: !!(r as any).joiner };
-      map.set(key, cur);
-    }
-  }
-
-  // Drop-runder: hver kørers værste afdelinger (laveste point minus pointstraf)
-  // streges og tæller ikke i totalen. DNS (0 point) og tiltrædelsespoint tæller
-  // med som mulige drop-runder. Kun når der er kørt flere afdelinger end antallet.
   const dropRounds = Math.max(0, Number((league?.points_system as any)?.drop_rounds ?? 0)) || 0;
   const canDrop = dropRounds > 0 && completed.length > dropRounds;
-  if (canDrop) {
-    for (const agg of map.values()) {
-      const nets = Object.entries(agg.rounds)
-        .map(([divId, c]) => ({ divId, net: Math.max(0, c.points - c.pointPenalty) }))
-        .sort((a, b) => a.net - b.net);
-      const dropped = new Set(nets.slice(0, dropRounds).map((n) => n.divId));
-      if (dropped.size === 0) continue;
-      agg.dropped = dropped;
-      for (const divId of dropped) {
-        const c = agg.rounds[divId];
-        agg.total -= Math.max(0, c.points - c.pointPenalty);
-        agg.pointPenalty -= c.pointPenalty;
-      }
-    }
-  }
-
-  const allRows = Array.from(map.values());
+  const allRows = aggregateStandings(completed, leagueEntries ?? [], dropRounds);
   const groupKeys = configs.length
     ? configs.map((c) => `${c.car_class} · ${c.driver_category}`)
     : Array.from(new Set(allRows.map((r) => `${r.car_class} · ${r.driver_category}`)));
