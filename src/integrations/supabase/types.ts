@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_activity_seen: {
+        Row: {
+          league_id: string
+          seen_at: string
+          user_id: string
+        }
+        Insert: {
+          league_id: string
+          seen_at?: string
+          user_id: string
+        }
+        Update: {
+          league_id?: string
+          seen_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_message_log: {
         Row: {
           id: string

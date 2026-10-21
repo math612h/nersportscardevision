@@ -113,6 +113,13 @@
       "when": 1792607542198,
       "tag": "0015_sync_entry_team_from_lineup",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792607957249,
+      "tag": "0016_admin_activity_seen",
+      "breakpoints": true
     }
   ]
 }
