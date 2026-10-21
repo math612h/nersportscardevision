@@ -264,10 +264,16 @@ function DivisionEditor({
         map.set(e.id, hit);
       }
     };
-    for (const e of entries)
+    // Aktive tilmeldinger får altid resultatet først — ellers kan en gammel,
+    // udmeldt tilmelding "stjæle" det, og den aktive gemmes som DNS.
+    const ordered = [
+      ...entries.filter((e) => !e.withdrawn_at),
+      ...entries.filter((e) => !!e.withdrawn_at),
+    ];
+    for (const e of ordered)
       claim(e, (r) => r.user_id === e.user_id && r.car_class === e.car_class);
-    for (const e of entries) claim(e, (r) => r.user_id === e.user_id);
-    for (const e of entries)
+    for (const e of ordered) claim(e, (r) => r.user_id === e.user_id);
+    for (const e of ordered)
       claim(e, (r) => e.car_number != null && r.car_number === e.car_number);
     return (e: EntryRec) => map.get(e.id);
   };
