@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { activitySeenKey } from "@/lib/league-activity-counts";
+import { markActivitySeen } from "@/lib/league-activity-counts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +57,7 @@ function ActivityPage() {
   const [klass, setKlass] = useState("all");
   const [range, setRange] = useState("all");
   const [div, setDiv] = useState("all");
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["league-activity", leagueId],
