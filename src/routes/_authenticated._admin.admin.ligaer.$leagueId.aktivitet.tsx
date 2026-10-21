@@ -153,13 +153,11 @@ function ActivityPage() {
   // Mark the log as seen for this league so the badge on the league list resets.
   useEffect(() => {
     if (data) {
-      try {
-        localStorage.setItem(activitySeenKey(leagueId), new Date().toISOString());
-      } catch {
-        /* ignore */
-      }
+      void markActivitySeen(supabase, leagueId)
+        .then(() => queryClient.invalidateQueries({ queryKey: ["league-activity-count", leagueId] }))
+        .catch(() => {});
     }
-  }, [data, leagueId]);
+  }, [data, leagueId, queryClient]);
 
 
 

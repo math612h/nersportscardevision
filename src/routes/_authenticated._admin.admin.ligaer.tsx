@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useLocation } from "@tanstack/react-rout
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
-import { activitySeenKey, countLeagueActivityEvents } from "@/lib/league-activity-counts";
+import { getActivitySeen, countLeagueActivityEvents } from "@/lib/league-activity-counts";
 import {
   ArrowLeft,
   Plus,
@@ -337,21 +337,16 @@ function AdminLeagues() {
 }
 
 function ActivityBadge({ leagueId }: { leagueId: string }) {
-  // undefined = localStorage not read yet (SSR-safe); null = never viewed
-  const [seen, setSeen] = useState<string | null | undefined>(undefined);
-  useEffect(() => {
-    try {
-      setSeen(localStorage.getItem(activitySeenKey(leagueId)));
-    } catch {
-      setSeen(null);
-    }
-  }, [leagueId]);
-
+  // Læst-tidspunktet hentes fra databasen ved hver opdatering, så det følger
+  // admin'en på tværs af enheder og faneblade.
   const { data: count } = useQuery({
-    queryKey: ["league-activity-count", leagueId, seen ?? null],
-    enabled: seen !== undefined,
+    queryKey: ["league-activity-count", leagueId],
     refetchInterval: 60_000,
-    queryFn: () => countLeagueActivityEvents(supabase, leagueId, seen ?? null),
+    refetchOnWindowFocus: true,
+    queryFn: async () => {
+      const seen = await getActivitySeen(supabase, leagueId);
+      return countLeagueActivityEvents(supabase, leagueId, seen);
+    },
   });
 
   const c = count ?? 0;

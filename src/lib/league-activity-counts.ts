@@ -1,19 +1,40 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-/** localStorage key that stores the ISO timestamp of the last time an admin viewed the activity log for a league. */
-export const activitySeenKey = (leagueId: string) => `lmu_activity_seen_${leagueId}`;
+/** Fallback window when an admin has never opened a league's log: only the last 7 days count as new. */
+export const ACTIVITY_DEFAULT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Reads the admin's "last seen" marker for a league (stored per user in the database, so it follows them across devices). */
+export async function getActivitySeen(supabase: SupabaseClient, leagueId: string): Promise<string | null> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return null;
+  const { data } = await (supabase as any)
+    .from("admin_activity_seen")
+    .select("seen_at")
+    .eq("user_id", u.user.id)
+    .eq("league_id", leagueId)
+    .maybeSingle();
+  return (data as { seen_at?: string } | null)?.seen_at ?? null;
+}
+
+export async function markActivitySeen(supabase: SupabaseClient, leagueId: string): Promise<void> {
+  const { data: u } = await supabase.auth.getUser();
+  if (!u.user) return;
+  await (supabase as any)
+    .from("admin_activity_seen")
+    .upsert({ user_id: u.user.id, league_id: leagueId, seen_at: new Date().toISOString() });
+}
 
 /**
  * Lightweight count of activity events for a league (badge use).
  * Counts: entry audit_log rows, lineup additions/removals, absences and reserve offers since `sinceIso`.
- * When `sinceIso` is null, counts everything.
+ * When `sinceIso` is null, counts only the last 7 days.
  */
 export async function countLeagueActivityEvents(
   supabase: SupabaseClient,
   leagueId: string,
   sinceIso: string | null,
 ): Promise<number> {
-  const since = sinceIso ?? "1970-01-01T00:00:00.000Z";
+  const since = sinceIso ?? new Date(Date.now() - ACTIVITY_DEFAULT_WINDOW_MS).toISOString();
   const [audit, divsRes] = await Promise.all([
     supabase
       .from("audit_log")
