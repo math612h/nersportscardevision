@@ -3032,6 +3032,7 @@ export type Database = {
         Args: { _version: string }
         Returns: number[]
       }
+      lmu_name_similarity: { Args: { _a: string; _b: string }; Returns: number }
       log_audit: {
         Args: {
           _action: string

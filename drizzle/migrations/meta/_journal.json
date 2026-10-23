@@ -120,6 +120,13 @@
       "when": 1792607957249,
       "tag": "0016_admin_activity_seen",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1792752115909,
+      "tag": "0017_device_token_upload_fuzzy_name",
+      "breakpoints": true
     }
   ]
 }
