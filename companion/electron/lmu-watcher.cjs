@@ -197,6 +197,8 @@ class LmuWatcher {
       let errors = 0;
       let lastNote = null;
       let notInFileCount = 0;
+      let noLapCount = 0;
+      const otherNames = new Set();
       for (const f of files) {
         try {
           const parsed = parseFile(f.path);
@@ -207,7 +209,11 @@ class LmuWatcher {
           if (res && res.skipped) skipped += res.skipped;
           if (res && res.duplicates) duplicates += res.duplicates;
           if (res && (res.note || res.reason)) lastNote = res.note || res.reason;
-          if (res && res.note === "Du var ikke i filen — sprunget over") notInFileCount += 1;
+          if (res && (res.reason === "not_in_file" || res.note === "Du var ikke i filen — sprunget over")) {
+            notInFileCount += 1;
+            if (res.closestName && otherNames.size < 3) otherNames.add(res.closestName);
+          }
+          if (res && res.reason === "no_best_lap") noLapCount += 1;
           if (res && !res.error) { this.seen.add(f.name); if (this.onSeenChanged) this.onSeenChanged(this.seen); }
         } catch (err) {
           console.warn(`[lmu-watcher] failed to parse ${f.name}:`, err.message);
@@ -220,7 +226,13 @@ class LmuWatcher {
       if ((uploaded > 0 || duplicates > 0) && lastNote === "Du var ikke i filen — sprunget over") {
         lastNote = null;
       }
-      const result = { uploaded, total: files.length, processed, skipped, duplicates, errors, note: lastNote };
+      if (notInFileCount || noLapCount) {
+        const parts = [];
+        if (notInFileCount) parts.push(`${notInFileCount} fil${notInFileCount === 1 ? "" : "er"}: du var ikke i filen${otherNames.size ? ` (nærmeste navn: ${[...otherNames].join(", ")})` : ""}`);
+        if (noLapCount) parts.push(`${noLapCount} fil${noLapCount === 1 ? "" : "er"}: ingen gyldig omgang`);
+        lastNote = parts.join(" · ");
+      }
+      const result = { uploaded, total: files.length, processed, skipped, duplicates, errors, notInFile: notInFileCount, noLap: noLapCount, note: lastNote };
       if (this.onScanComplete) this.onScanComplete(result, { markFullScan });
       return result;
     } finally {
