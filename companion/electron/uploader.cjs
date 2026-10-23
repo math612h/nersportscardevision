@@ -165,8 +165,12 @@ async function uploadParsedResultsViaToken({ token, parsed, lmuName }) {
       if (s > best) { best = s; if (s >= 0.85) me = d; }
     }
   }
-  if (!me) return { uploaded: 0, skipped: parsed.drivers.length, note: "Du var ikke i filen — sprunget over" };
-  if (me.bestLapMs == null) return { uploaded: 0, skipped: parsed.drivers.length, note: "Ingen gyldig bedste omgangstid for dig i filen" };
+  if (!me) {
+    let closest = null, cs = 0;
+    for (const d of parsed.drivers) { const s = nameSimilarity(d.name, wantedName); if (s > cs) { cs = s; closest = d.name; } }
+    return { uploaded: 0, skipped: parsed.drivers.length, reason: "not_in_file", closestName: closest, note: "Du var ikke i filen — sprunget over" };
+  }
+  if (me.bestLapMs == null) return { uploaded: 0, skipped: parsed.drivers.length, reason: "no_best_lap", note: "Ingen gyldig bedste omgangstid for dig i filen" };
 
   const client = makeClient(null);
   const { data, error } = await client.rpc("upload_leaderboard_time_with_device_token", {
@@ -186,6 +190,8 @@ async function uploadParsedResultsViaToken({ token, parsed, lmuName }) {
     uploaded: data?.inserted ?? 0,
     skipped: (parsed.drivers.length - 1) + (data?.skipped ?? 0),
     duplicates: data?.duplicates ?? 0,
+    reason: data?.skipped ? "not_in_file" : undefined,
+    closestName: data?.file_name,
     note: data?.note,
   };
 }
