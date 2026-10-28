@@ -315,9 +315,13 @@ function NewsHome() {
 
 
 
-      {liveStatus?.isLive && <LivestreamSection status={liveStatus} mode="live" />}
-
-      {!liveStatus?.isLive && <LivestreamSection status={liveStatus} mode="last" />}
+      {(() => {
+        const hasLink = !!(liveStatus?.manualEnabled && liveStatus?.manualVideoId);
+        const linkedLive = !!liveStatus?.isLive && (!hasLink || liveStatus?.videoId === liveStatus?.manualVideoId);
+        return linkedLive
+          ? <LivestreamSection status={liveStatus} mode="live" />
+          : <LivestreamSection status={liveStatus} mode="last" />;
+      })()}
 
       {!liveStatus?.isLive && isLoading && (
         <div className="h-96 animate-pulse rounded-xl border border-border bg-card/50" />
