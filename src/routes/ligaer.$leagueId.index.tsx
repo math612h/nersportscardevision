@@ -1131,6 +1131,15 @@ function Standings({ leagueId, configs, separateDivisionStandings }: { leagueId:
   const dropRounds = Math.max(0, Number((league?.points_system as any)?.drop_rounds ?? 0)) || 0;
   const canDrop = dropRounds > 0 && completed.length > dropRounds;
   const allRows = aggregateStandings(completed, leagueEntries ?? [], dropRounds);
+  // Kørere med resultater men uden nogen tilmelding (slettet før soft-withdraw) vises også som udmeldte.
+  if (leagueEntries) {
+    const known = new Set(leagueEntries.map((e) => `${e.user_id}|${e.car_class}`));
+    for (const r of allRows) {
+      if (!r.user_id) continue;
+      const key = `${r.user_id}|${r.car_class}`;
+      if (!known.has(key)) withdrawnSet.add(key);
+    }
+  }
   const groupKeys = configs.length
     ? configs.map((c) => `${c.car_class} · ${c.driver_category}`)
     : Array.from(new Set(allRows.map((r) => `${r.car_class} · ${r.driver_category}`)));
