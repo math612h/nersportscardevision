@@ -1,5 +1,6 @@
 // Bygger tekst-embeds med liga-stillinger (kørere + teams) til Discord.
 import { isResultsPublished } from "@/lib/results-visibility";
+import { droppedRoundIds, totalAfterDrop } from "@/lib/standings-drop";
 import { computeTeamRacePoints, type LineupTeamInfo } from "@/lib/team-points";
 
 type ResultRow = {
@@ -111,6 +112,7 @@ export async function buildLeagueStandingsEmbeds(
     dnsCount: number;
     dnfCount: number;
     otherNonFinish: number;
+    rounds: Record<string, number>;
   };
   const map = new Map<string, Agg>();
   for (const d of completed) {
@@ -129,15 +131,22 @@ export async function buildLeagueStandingsEmbeds(
           dnsCount: 0,
           dnfCount: 0,
           otherNonFinish: 0,
+          rounds: {},
         } as Agg);
       const ptsPen = Math.max(0, Number(r.penalty_points ?? 0));
-      cur.total += Math.max(0, Number(r.points ?? 0) - ptsPen);
+      const net = Math.max(0, Number(r.points ?? 0) - ptsPen);
+      cur.total += net;
+      cur.rounds[d.id] = (cur.rounds[d.id] ?? 0) + net;
       const st = typeof r.status === "string" ? r.status : r.dns ? "dns" : null;
       if (st === "dns") cur.dnsCount += 1;
       else if (st === "dnf") cur.dnfCount += 1;
       else if (st === "nt" || st === "dsq") cur.otherNonFinish += 1;
       map.set(key, cur);
     }
+  }
+  const dropRounds = Math.max(0, Number((league.points_system as any)?.drop_rounds ?? 0)) || 0;
+  for (const agg of map.values()) {
+    agg.total = totalAfterDrop(agg.rounds, dropRounds, completed.length);
   }
   const allRows = Array.from(map.values());
 
@@ -195,9 +204,9 @@ export async function buildLeagueStandingsEmbeds(
   const teamClasses = Array.from(new Set(teamInfos.map((t) => t.carClass)));
   // NB: samme team kan have tilmeldinger i flere klasser — nøglen skal derfor
   // indeholde både team-id og klasse, ellers overskriver den ene den anden.
-  const totals = new Map<string, { name: string; cls: string; total: number; scored: boolean }>();
+  const totals = new Map<string, { name: string; cls: string; total: number; scored: boolean; rounds: Record<string, number> }>();
   for (const t of teamInfos) {
-    totals.set(`${t.teamId}|${t.carClass}`, { name: t.teamName, cls: t.carClass, total: 0, scored: false });
+    totals.set(`${t.teamId}|${t.carClass}`, { name: t.teamName, cls: t.carClass, total: 0, scored: false, rounds: {} });
   }
   for (const d of completed) {
     const ranked = computeTeamRacePoints({
@@ -212,8 +221,13 @@ export async function buildLeagueStandingsEmbeds(
         if (!agg) continue;
         agg.total += t.points;
         agg.scored = true;
+        if ((t as any).rank > 0) agg.rounds[d.id] = t.points;
       }
     }
+  }
+  for (const agg of totals.values()) {
+    const dropped = droppedRoundIds(agg.rounds, dropRounds, completed.length);
+    for (const id of dropped) agg.total -= agg.rounds[id];
   }
   for (const cls of teamClasses) {
     const list = Array.from(totals.values())
