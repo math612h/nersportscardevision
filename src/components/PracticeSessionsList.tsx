@@ -15,7 +15,7 @@ function useNow(active: boolean) {
   return now;
 }
 
-function Countdown({ target }: { target: number }) {
+export function Countdown({ target }: { target: number }) {
   const now = useNow(true);
   const diff = target - now;
   if (diff <= 0) {

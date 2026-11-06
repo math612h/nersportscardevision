@@ -28,6 +28,7 @@ import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { LivestreamSection, useLiveStatus } from "@/components/LivestreamSection";
 import { useActiveLeague } from "@/hooks/use-active-league";
+import { PracticeDaySection } from "@/components/PracticeDaySection";
 
 const DriversBriefing = lazy(() => import("@/components/DriversBriefing").then(m => ({ default: m.DriversBriefing })));
 
@@ -310,6 +311,7 @@ function NewsHome() {
 
 
       <NextEventCard />
+      <PracticeDaySection />
 
       <NewsPostsSection />
 
