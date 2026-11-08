@@ -129,7 +129,13 @@ const directSchema = z.object({
   targetUserId: z.string().uuid(),
   title: z.string().trim().min(1).max(200),
   body: z.string().trim().min(1).max(2000),
-  link: z.string().trim().max(200).default("/"),
+  // Only internal, relative links (e.g. "/profil") — never external URLs.
+  link: z
+    .string()
+    .trim()
+    .max(200)
+    .regex(/^\/(?!\/)[A-Za-z0-9\-._~/?#=&%]*$/, "Linket skal være en intern sti, fx /profil")
+    .default("/"),
 });
 
 export const sendAdminDirectMessage = createServerFn({ method: "POST" })
@@ -144,6 +150,13 @@ export const sendAdminDirectMessage = createServerFn({ method: "POST" })
     const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
     if (!isAdmin) throw new Error("Kun admins kan sende beskeder til brugere.");
 
+    const { data: target } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("id", data.targetUserId)
+      .maybeSingle();
+    if (!target) throw new Error("Brugeren findes ikke.");
+
     const { error: notifErr } = await supabaseAdmin.from("notifications").insert({
       user_id: data.targetUserId,
       title: data.title,
@@ -152,8 +165,13 @@ export const sendAdminDirectMessage = createServerFn({ method: "POST" })
     });
     if (notifErr) throw new Error(notifErr.message);
     try {
+      // Push carries fixed, server-chosen text; the full message is read on the site.
       const { sendPushToUser } = await import("./push.server");
-      void sendPushToUser(data.targetUserId, { title: data.title, body: data.body.slice(0, 140), url: data.link }).catch(() => {});
+      void sendPushToUser(data.targetUserId, {
+        title: "Ny besked fra LMU Danmark",
+        body: "Åbn for at læse beskeden.",
+        url: data.link,
+      }).catch(() => {});
     } catch (_) {}
 
     let discordResult: { ok: boolean; reason?: string; status?: number } = { ok: false, reason: "not_linked" };

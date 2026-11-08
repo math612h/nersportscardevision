@@ -259,12 +259,13 @@ function CoachDetailDialog({
   isAdmin?: boolean;
 }) {
   const qc = useQueryClient();
+  const { user } = useAuth();
   const listFn = useServerFn(listCoachRatings);
   const deleteFn = useServerFn(adminDeleteCoachingRating);
   const { data: ratings = [], isLoading } = useQuery({
-    queryKey: ["coach-ratings", coach?.user_id],
+    queryKey: ["coach-ratings", coach?.user_id, !!user],
     queryFn: () => listFn({ data: { coach_user_id: coach!.user_id } }),
-    enabled: !!coach,
+    enabled: !!coach && !!user,
   });
   async function onDelete(id: string) {
     if (!confirm("Slet denne bedømmelse?")) return;
@@ -330,7 +331,11 @@ function CoachDetailDialog({
 
               <div>
                 <h4 className="mb-2 text-sm font-semibold">Bedømmelser</h4>
-                {isLoading ? (
+                {!user ? (
+                  <p className="text-xs text-muted-foreground">
+                    <Link to="/login" className="text-primary underline-offset-2 hover:underline">Log ind</Link> for at læse bedømmelserne.
+                  </p>
+                ) : isLoading ? (
                   <p className="text-xs text-muted-foreground">Indlæser…</p>
                 ) : ratings.length === 0 ? (
                   <p className="text-xs text-muted-foreground">Der er endnu ikke afgivet bedømmelser for denne coach.</p>

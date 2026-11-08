@@ -58,6 +58,8 @@ export const runCronJob = createServerFn({ method: "POST" })
 
     const apiKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
     if (!apiKey) throw new Error("Mangler nøgle");
+    const { getCronToken } = await import("@/lib/cron-auth.server");
+    const cronToken = await getCronToken();
     const base =
       process.env.SITE_URL ||
       process.env.VITE_SITE_URL ||
@@ -65,7 +67,7 @@ export const runCronJob = createServerFn({ method: "POST" })
     const url = `${base.replace(/\/$/, "")}/api/public/cron/${allowed.key}`;
     const res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", apikey: apiKey },
+      headers: { "Content-Type": "application/json", apikey: apiKey, "x-cron-secret": cronToken },
       body: "{}",
     });
     const text = await res.text();

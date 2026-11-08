@@ -223,6 +223,13 @@ export const sendMessage = createServerFn({ method: "POST" })
     if (data.recipientId === context.userId) throw new Error("Du kan ikke sende beskeder til dig selv.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    const { data: recipient } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("id", data.recipientId)
+      .maybeSingle();
+    if (!recipient) throw new Error("Modtageren findes ikke.");
+
     const { data: row, error } = await (supabaseAdmin as any)
       .from("direct_messages")
       .insert({
@@ -239,12 +246,13 @@ export const sendMessage = createServerFn({ method: "POST" })
       .select("display_name")
       .eq("id", context.userId)
       .maybeSingle();
-    const senderName = (me as any)?.display_name ?? "Ny besked";
+    const senderName = String((me as any)?.display_name ?? "").slice(0, 60);
 
+    // Push carries fixed, server-chosen text; the message itself is read on the site.
     const { sendPushToUser } = await import("./push.server");
     void sendPushToUser(data.recipientId, {
-      title: senderName,
-      body: data.body.slice(0, 140),
+      title: "Ny besked",
+      body: senderName ? `Fra ${senderName}` : "Du har fået en ny besked.",
       url: `/beskeder/${context.userId}`,
       tag: `dm:${context.userId}`,
     }).catch(() => {});
@@ -292,7 +300,8 @@ export const searchUsers = createServerFn({ method: "POST" })
   .inputValidator((input) => searchSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const q = data.q;
+    const { sanitizeSearchTerm } = await import("@/lib/search-sanitize");
+    const q = sanitizeSearchTerm(data.q, 80);
     let query = supabaseAdmin
       .from("profiles")
       .select("id,display_name,avatar_url,lmu_name")
@@ -447,13 +456,14 @@ export const sendGroupMessage = createServerFn({ method: "POST" })
       supabaseAdmin.from("profiles").select("display_name").eq("id", me).maybeSingle(),
       (supabaseAdmin as any).from("chat_groups").select("name").eq("id", data.groupId).single(),
     ]);
-    const senderName = (prof as any)?.display_name ?? "Ny besked";
-    const title = `${(g as any)?.name ?? "Gruppe"}`;
+    const senderName = String((prof as any)?.display_name ?? "Et medlem").slice(0, 60);
+    const title = String((g as any)?.name ?? "Gruppe").slice(0, 80);
+    // Push carries fixed, server-chosen text; the message itself is read on the site.
     const { sendPushToUser } = await import("./push.server");
     for (const m of (members ?? []) as any[]) {
       void sendPushToUser(m.user_id, {
         title,
-        body: `${senderName}: ${data.body.slice(0, 120)}`,
+        body: `Ny besked fra ${senderName}`,
         url: `/beskeder/gruppe/${data.groupId}`,
         tag: `grp:${data.groupId}`,
       }).catch(() => {});
@@ -489,12 +499,27 @@ export const removeGroupMember = createServerFn({ method: "POST" })
   .inputValidator((i) => memberMutSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: isMember } = await (supabaseAdmin as any).rpc("is_chat_group_member", {
-      _group_id: data.groupId,
-      _user_id: context.userId,
-    });
-    if (!isMember && data.userId !== context.userId) {
-      throw new Error("Du er ikke medlem af denne gruppe.");
+    // Only the member themselves, the group's creator or an admin may remove a member.
+    if (data.userId !== context.userId) {
+      const { data: group } = await (supabaseAdmin as any)
+        .from("chat_groups")
+        .select("created_by")
+        .eq("id", data.groupId)
+        .maybeSingle();
+      if (!group) throw new Error("Gruppen findes ikke.");
+      let allowed = group.created_by === context.userId;
+      if (!allowed) {
+        const { data: adminRole } = await context.supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", context.userId)
+          .eq("role", "admin")
+          .maybeSingle();
+        allowed = !!adminRole;
+      }
+      if (!allowed) {
+        throw new Error("Kun gruppens opretter kan fjerne andre medlemmer.");
+      }
     }
     const { error } = await (supabaseAdmin as any)
       .from("chat_group_members")

@@ -5,6 +5,40 @@ import { createStripeClient, getStripeErrorMessage, type StripeEnv } from "./str
 
 const environmentSchema = z.enum(["sandbox", "live"]);
 
+const PROJECT_ID = "2054928e-8e3d-43f6-95a7-df5aedf97bab";
+const ALLOWED_RETURN_HOSTS = new Set(["lmudanmark.dk", "www.lmudanmark.dk", "lmudanmark-dk.lovable.app"]);
+
+/** Only allow Stripe to send users back to this site, on one of our own paths. */
+function isAllowedReturnUrl(raw: string, allowedPaths: string[]): boolean {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return false;
+  }
+  const host = u.hostname.toLowerCase();
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+  const isProjectHost =
+    (host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com")) && host.includes(PROJECT_ID);
+  const hostOk = ALLOWED_RETURN_HOSTS.has(host) || isProjectHost || isLocal;
+  if (!hostOk) return false;
+  if (!isLocal && u.protocol !== "https:") return false;
+  if (u.username || u.password) return false;
+  return allowedPaths.includes(u.pathname);
+}
+
+const donationReturnUrl = z
+  .string()
+  .url()
+  .max(500)
+  .refine((u) => isAllowedReturnUrl(u, ["/donationer"]), "Ugyldig returadresse");
+
+const coachingReturnUrl = z
+  .string()
+  .url()
+  .max(500)
+  .refine((u) => isAllowedReturnUrl(u, ["/coaching/mine-bookinger"]), "Ugyldig returadresse");
+
 type SessionResult = { clientSecret: string } | { error: string };
 
 /**
@@ -18,7 +52,7 @@ export const createDonationCheckout = createServerFn({ method: "POST" })
     z
       .object({
         amountDkk: z.number().int().min(5).max(50000),
-        returnUrl: z.string().url(),
+        returnUrl: donationReturnUrl,
         environment: environmentSchema,
       })
       .parse(i),
@@ -89,7 +123,7 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
         layout: z.string().max(100).nullable(),
         starts_at: z.string(),
         extra_info: z.string().max(2000).nullable(),
-        returnUrl: z.string().url(),
+        returnUrl: coachingReturnUrl,
         environment: environmentSchema,
       })
       .parse(i),
@@ -102,9 +136,23 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
     if (!data.starts_at || isNaN(new Date(data.starts_at).getTime())) {
       return { error: "Ugyldigt starttidspunkt" };
     }
+    if (new Date(data.starts_at).getTime() <= Date.now()) {
+      return { error: "Starttidspunktet skal ligge i fremtiden" };
+    }
+    if (data.coach_user_id === context.userId) {
+      return { error: "Du kan ikke booke dig selv" };
+    }
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: coachRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.coach_user_id)
+      .eq("role", "coach")
+      .maybeSingle();
+    if (!coachRole) return { error: "Coachen findes ikke" };
 
     // Create booking row up front so we have a stable id to attach to Stripe session.
-    const { data: booking, error: bookingErr } = await context.supabase
+    const { data: booking, error: bookingErr } = await supabaseAdmin
       .from("coaching_bookings")
       .insert({
         user_id: context.userId,
@@ -166,7 +214,7 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
       } as any);
 
       // Persist the session id so we can resume the same checkout on refresh.
-      await context.supabase
+      await supabaseAdmin
         .from("coaching_bookings")
         .update({ stripe_session_id: session.id })
         .eq("id", booking.id);
@@ -175,7 +223,7 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
     } catch (error) {
       console.error("createCoachingCheckout error", error);
       // Roll back the booking so the user can retry.
-      await context.supabase.from("coaching_bookings").delete().eq("id", booking.id);
+      await supabaseAdmin.from("coaching_bookings").delete().eq("id", booking.id);
       return { error: getStripeErrorMessage(error) };
     }
   });

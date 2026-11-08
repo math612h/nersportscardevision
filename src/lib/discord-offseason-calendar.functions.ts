@@ -5,7 +5,14 @@ import { getTrackImageFile } from "@/lib/tracks";
 export const postOffseasonCalendar = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { leagueId: string; channelId: string }) => {
-    if (!data?.leagueId || typeof data.leagueId !== "string") throw new Error("leagueId mangler.");
+    if (
+      !data?.leagueId ||
+      typeof data.leagueId !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.leagueId)
+    ) {
+      throw new Error("leagueId mangler.");
+    }
+    if (typeof data.channelId !== "string") throw new Error("channelId mangler.");
     if (!data?.channelId || !/^\d{5,25}$/.test(data.channelId.trim())) {
       throw new Error("channelId skal være et Discord-kanal-ID (kun tal).");
     }
@@ -23,6 +30,18 @@ export const postOffseasonCalendar = createServerFn({ method: "POST" })
 
     const botToken = process.env.DISCORD_BOT_TOKEN;
     if (!botToken) throw new Error("DISCORD_BOT_TOKEN mangler.");
+    const guildId = process.env.DISCORD_GUILD_ID;
+    if (!guildId) throw new Error("DISCORD_GUILD_ID mangler.");
+
+    // Only allow text/announcement channels that belong to our own Discord server.
+    const chRes = await fetch(`https://discord.com/api/v10/channels/${data.channelId}`, {
+      headers: { Authorization: `Bot ${botToken}` },
+    });
+    if (!chRes.ok) throw new Error("Kanalen blev ikke fundet på LMU Danmark-serveren.");
+    const channel = (await chRes.json().catch(() => null)) as { guild_id?: string; type?: number } | null;
+    if (!channel || channel.guild_id !== guildId || (channel.type !== 0 && channel.type !== 5)) {
+      throw new Error("Kanalen skal være en tekstkanal på LMU Danmark-serveren.");
+    }
 
     const { data: league, error: lerr } = await supabaseAdmin
       .from("leagues")
