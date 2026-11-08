@@ -45,8 +45,8 @@ async function run() {
 export const Route = createFileRoute("/api/public/cron/coaching-rating-requests")({
   server: {
     handlers: {
-      POST: async () => run(),
-      GET: async () => run(),
+      POST: async ({ request }) => (await authorizeCron(request)) ?? (await run()),
+      GET: async ({ request }) => (await authorizeCron(request)) ?? (await run()),
     },
   },
 });
