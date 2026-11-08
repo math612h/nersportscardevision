@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { COACHING_FOCUS_POINTS, COACHING_DURATIONS } from "./coaching-focus-points";
 

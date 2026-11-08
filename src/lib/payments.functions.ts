@@ -136,6 +136,19 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
     if (!data.starts_at || isNaN(new Date(data.starts_at).getTime())) {
       return { error: "Ugyldigt starttidspunkt" };
     }
+    if (new Date(data.starts_at).getTime() <= Date.now()) {
+      return { error: "Starttidspunktet skal ligge i fremtiden" };
+    }
+    if (data.coach_user_id === context.userId) {
+      return { error: "Du kan ikke booke dig selv" };
+    }
+    const { data: coachRole } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.coach_user_id)
+      .eq("role", "coach")
+      .maybeSingle();
+    if (!coachRole) return { error: "Coachen findes ikke" };
 
     // Create booking row up front so we have a stable id to attach to Stripe session.
     const { data: booking, error: bookingErr } = await context.supabase
