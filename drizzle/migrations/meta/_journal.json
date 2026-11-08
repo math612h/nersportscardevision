@@ -141,6 +141,13 @@
       "when": 1794155786693,
       "tag": "0019_coaching_bookings_paid_only",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794155815479,
+      "tag": "0020_coaching_ratings_require_confirmed_booking",
+      "breakpoints": true
     }
   ]
 }
