@@ -52,7 +52,7 @@ export const createDonationCheckout = createServerFn({ method: "POST" })
     z
       .object({
         amountDkk: z.number().int().min(5).max(50000),
-        returnUrl: z.string().url(),
+        returnUrl: donationReturnUrl,
         environment: environmentSchema,
       })
       .parse(i),
@@ -123,7 +123,7 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
         layout: z.string().max(100).nullable(),
         starts_at: z.string(),
         extra_info: z.string().max(2000).nullable(),
-        returnUrl: z.string().url(),
+        returnUrl: coachingReturnUrl,
         environment: environmentSchema,
       })
       .parse(i),
