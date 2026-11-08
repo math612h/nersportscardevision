@@ -116,9 +116,12 @@ export const getCoachRatingsSummaries = createServerFn({ method: "GET" })
     return out;
   });
 
-// Public: list ratings with commenter display name for a coach
+// Signed-in members only: list ratings with commenter display name for a coach
 export const listCoachRatings = createServerFn({ method: "GET" })
-  .inputValidator((d: { coach_user_id: string }) => ({ coach_user_id: String(d.coach_user_id) }))
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { coach_user_id: string }) => ({
+    coach_user_id: z.string().uuid().parse(d?.coach_user_id),
+  }))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows } = await supabaseAdmin
@@ -158,6 +161,9 @@ export const getBookingForRating = createServerFn({ method: "GET" })
       .maybeSingle();
     if (!booking) throw new Error("Booking blev ikke fundet");
     if (booking.user_id !== context.userId) throw new Error("Du kan kun rate dine egne sessions");
+    if (booking.status !== "confirmed" && booking.status !== "completed") {
+      throw new Error("Du kan kun rate sessions, som coachen har bekræftet");
+    }
     const endsAt = new Date(booking.starts_at).getTime() + (booking.duration_minutes ?? 0) * 60_000;
     if (Date.now() < endsAt) throw new Error("Du kan først rate når sessionen er slut");
     const { data: coach } = await context.supabase
@@ -181,11 +187,14 @@ export const submitCoachingRating = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: booking } = await context.supabase
       .from("coaching_bookings")
-      .select("id, coach_user_id, user_id, starts_at, duration_minutes")
+      .select("id, coach_user_id, user_id, starts_at, duration_minutes, status")
       .eq("id", data.booking_id)
       .maybeSingle();
     if (!booking) throw new Error("Booking blev ikke fundet");
     if (booking.user_id !== context.userId) throw new Error("Du kan kun rate dine egne sessions");
+    if (booking.status !== "confirmed" && booking.status !== "completed") {
+      throw new Error("Du kan kun rate sessions, som coachen har bekræftet");
+    }
     const endsAt = new Date(booking.starts_at).getTime() + (booking.duration_minutes ?? 0) * 60_000;
     if (Date.now() < endsAt) throw new Error("Du kan først rate når sessionen er slut");
 
@@ -537,51 +546,8 @@ export const getAllCoachesSlots = createServerFn({ method: "POST" })
     return out;
   });
 
-// Bookings
-export const createCoachingBooking = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
-    coach_user_id: string;
-    focus_points: string[];
-    duration_minutes: number;
-    track: string;
-    layout: string | null;
-    starts_at: string;
-    extra_info: string | null;
-  }) => {
-    const focus = (d.focus_points ?? []).filter((f) => (COACHING_FOCUS_POINTS as readonly string[]).includes(f));
-    if (focus.length === 0) throw new Error("Vælg mindst ét fokuspunkt");
-    if (!(COACHING_DURATIONS as readonly number[]).includes(Number(d.duration_minutes))) throw new Error("Ugyldig varighed");
-    if (!d.track) throw new Error("Vælg en bane");
-    if (!d.starts_at || isNaN(new Date(d.starts_at).getTime())) throw new Error("Ugyldigt starttidspunkt");
-    return {
-      coach_user_id: String(d.coach_user_id),
-      focus_points: focus,
-      duration_minutes: Number(d.duration_minutes),
-      track: String(d.track).slice(0, 100),
-      layout: d.layout ? String(d.layout).slice(0, 100) : null,
-      starts_at: new Date(d.starts_at).toISOString(),
-      extra_info: d.extra_info ? String(d.extra_info).slice(0, 2000) : null,
-    };
-  })
-  .handler(async ({ data, context }) => {
-    const { data: row, error } = await context.supabase
-      .from("coaching_bookings")
-      .insert({ ...data, user_id: context.userId, status: "pending" })
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-
-    // Notify coach via Discord
-    try {
-      const { notifyCoachOfNewBooking } = await import("./coaching-discord.server");
-      await notifyCoachOfNewBooking(row.id);
-    } catch (e) {
-      console.error("notifyCoachOfNewBooking failed", e);
-    }
-    return { id: row.id };
-  });
-
+// Bookings are created only through createCoachingCheckout (payments.functions.ts),
+// so a booking always starts with a Stripe payment.
 export const listMyBookingsAsUser = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
