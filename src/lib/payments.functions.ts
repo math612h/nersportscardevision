@@ -142,7 +142,8 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
     if (data.coach_user_id === context.userId) {
       return { error: "Du kan ikke booke dig selv" };
     }
-    const { data: coachRole } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: coachRole } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", data.coach_user_id)
