@@ -152,7 +152,7 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
     if (!coachRole) return { error: "Coachen findes ikke" };
 
     // Create booking row up front so we have a stable id to attach to Stripe session.
-    const { data: booking, error: bookingErr } = await context.supabase
+    const { data: booking, error: bookingErr } = await supabaseAdmin
       .from("coaching_bookings")
       .insert({
         user_id: context.userId,
@@ -214,7 +214,7 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
       } as any);
 
       // Persist the session id so we can resume the same checkout on refresh.
-      await context.supabase
+      await supabaseAdmin
         .from("coaching_bookings")
         .update({ stripe_session_id: session.id })
         .eq("id", booking.id);
@@ -223,7 +223,7 @@ export const createCoachingCheckout = createServerFn({ method: "POST" })
     } catch (error) {
       console.error("createCoachingCheckout error", error);
       // Roll back the booking so the user can retry.
-      await context.supabase.from("coaching_bookings").delete().eq("id", booking.id);
+      await supabaseAdmin.from("coaching_bookings").delete().eq("id", booking.id);
       return { error: getStripeErrorMessage(error) };
     }
   });
