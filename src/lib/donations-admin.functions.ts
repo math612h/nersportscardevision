@@ -33,7 +33,10 @@ export const searchUsersForDonation = createServerFn({ method: "GET" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const needle = `%${data.q}%`;
+    const { sanitizeSearchTerm } = await import("@/lib/search-sanitize");
+    const safe = sanitizeSearchTerm(data.q, 100);
+    if (!safe) return { rows: [] as any[] };
+    const needle = `%${safe}%`;
     const { data: rows, error } = await (supabaseAdmin as any)
       .from("profiles")
       .select("id, display_name, lmu_name, donation_total_dkk, donation_tier")

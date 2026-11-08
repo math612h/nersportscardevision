@@ -63,9 +63,14 @@ export type DriverBestSourceRow = {
 
 export const searchLeaderboardDrivers = createServerFn({ method: "POST" })
   .inputValidator((input: { q: string }) => {
-    const q = (input?.q ?? "").trim();
+    const raw = typeof input?.q === "string" ? input.q : "";
+    const q = raw
+      .replace(/[,()"'\\%*:;{}[\]]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 80);
     if (q.length < 2) return { q: "" };
-    return { q: q.slice(0, 80) };
+    return { q };
   })
   .handler(async ({ data }): Promise<DriverSearchHit[]> => {
     if (!data.q) return [];

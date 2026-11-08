@@ -292,7 +292,8 @@ export const searchUsers = createServerFn({ method: "POST" })
   .inputValidator((input) => searchSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const q = data.q;
+    const { sanitizeSearchTerm } = await import("@/lib/search-sanitize");
+    const q = sanitizeSearchTerm(data.q, 80);
     let query = supabaseAdmin
       .from("profiles")
       .select("id,display_name,avatar_url,lmu_name")

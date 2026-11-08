@@ -28,7 +28,9 @@ export const searchUsersForAdmin = createServerFn({ method: "POST" })
   .handler(async ({ data, context }): Promise<UserSearchHit[]> => {
     await assertAdmin(context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const q = data.q.trim();
+    const { sanitizeSearchTerm } = await import("@/lib/search-sanitize");
+    const q = sanitizeSearchTerm(data.q, 80);
+    if (!q) return [];
     const like = `%${q}%`;
     const { data: rows, error } = await supabaseAdmin
       .from("profiles")
