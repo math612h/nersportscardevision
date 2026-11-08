@@ -2988,6 +2988,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      get_cron_token: { Args: never; Returns: string }
       get_division_lobby: {
         Args: { _division_id: string }
         Returns: {
@@ -3116,6 +3117,7 @@ export type Database = {
         Returns: Json
       }
       user_locked_team: { Args: { _user_id: string }; Returns: string }
+      verify_cron_token: { Args: { _token: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "racer" | "guest" | "coach" | "steward"
