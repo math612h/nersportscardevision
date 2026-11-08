@@ -5,6 +5,40 @@ import { createStripeClient, getStripeErrorMessage, type StripeEnv } from "./str
 
 const environmentSchema = z.enum(["sandbox", "live"]);
 
+const PROJECT_ID = "2054928e-8e3d-43f6-95a7-df5aedf97bab";
+const ALLOWED_RETURN_HOSTS = new Set(["lmudanmark.dk", "www.lmudanmark.dk", "lmudanmark-dk.lovable.app"]);
+
+/** Only allow Stripe to send users back to this site, on one of our own paths. */
+function isAllowedReturnUrl(raw: string, allowedPaths: string[]): boolean {
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return false;
+  }
+  const host = u.hostname.toLowerCase();
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+  const isProjectHost =
+    (host.endsWith(".lovable.app") || host.endsWith(".lovableproject.com")) && host.includes(PROJECT_ID);
+  const hostOk = ALLOWED_RETURN_HOSTS.has(host) || isProjectHost || isLocal;
+  if (!hostOk) return false;
+  if (!isLocal && u.protocol !== "https:") return false;
+  if (u.username || u.password) return false;
+  return allowedPaths.includes(u.pathname);
+}
+
+const donationReturnUrl = z
+  .string()
+  .url()
+  .max(500)
+  .refine((u) => isAllowedReturnUrl(u, ["/donationer"]), "Ugyldig returadresse");
+
+const coachingReturnUrl = z
+  .string()
+  .url()
+  .max(500)
+  .refine((u) => isAllowedReturnUrl(u, ["/coaching/mine-bookinger"]), "Ugyldig returadresse");
+
 type SessionResult = { clientSecret: string } | { error: string };
 
 /**
