@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizeCron } from "@/lib/cron-auth.server";
 import { fetchYoutubeLiveState, fetchLatestYoutubeStream } from "@/lib/youtube-live.server";
 import { sendDiscordChannelMessage } from "@/lib/discord.server";
 

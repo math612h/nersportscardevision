@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { authorizeCron } from "@/lib/cron-auth.server";
 
 async function run() {
   try {
