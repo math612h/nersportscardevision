@@ -490,12 +490,27 @@ export const removeGroupMember = createServerFn({ method: "POST" })
   .inputValidator((i) => memberMutSchema.parse(i))
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: isMember } = await (supabaseAdmin as any).rpc("is_chat_group_member", {
-      _group_id: data.groupId,
-      _user_id: context.userId,
-    });
-    if (!isMember && data.userId !== context.userId) {
-      throw new Error("Du er ikke medlem af denne gruppe.");
+    // Only the member themselves, the group's creator or an admin may remove a member.
+    if (data.userId !== context.userId) {
+      const { data: group } = await (supabaseAdmin as any)
+        .from("chat_groups")
+        .select("created_by")
+        .eq("id", data.groupId)
+        .maybeSingle();
+      if (!group) throw new Error("Gruppen findes ikke.");
+      let allowed = group.created_by === context.userId;
+      if (!allowed) {
+        const { data: adminRole } = await context.supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", context.userId)
+          .eq("role", "admin")
+          .maybeSingle();
+        allowed = !!adminRole;
+      }
+      if (!allowed) {
+        throw new Error("Kun gruppens opretter kan fjerne andre medlemmer.");
+      }
     }
     const { error } = await (supabaseAdmin as any)
       .from("chat_group_members")
