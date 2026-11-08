@@ -179,19 +179,27 @@ function AdminPaymentsPage() {
   };
 
   const exportCsv = () => {
+    // Neutralise spreadsheet formulas and CSV separators in free-text cells.
+    const cell = (v: unknown): string => {
+      let s = v == null ? "" : String(v);
+      s = s.replace(/[\r\n]+/g, " ").replace(/;/g, ",");
+      if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
+      if (/[",]/.test(s)) s = `"${s.replace(/"/g, '""')}"`;
+      return s;
+    };
     const header = ["Dato", "Navn", "LMU-navn", "Type", "Beløb (kr.)", "Refunderet (kr.)", "Note", "Stripe PI", "Miljø"];
     const lines = [header.join(";")];
     for (const r of rows) {
       lines.push([
-        new Date(r.donated_at).toLocaleString("da-DK"),
-        r.profiles?.display_name ?? "",
-        r.profiles?.lmu_name ?? "",
-        r.source ?? "",
-        r.amount_dkk,
-        r.refunded_amount_dkk ?? 0,
-        (r.note ?? "").replace(/;/g, ","),
-        r.stripe_payment_intent_id ?? "",
-        r.environment ?? "",
+        cell(new Date(r.donated_at).toLocaleString("da-DK")),
+        cell(r.profiles?.display_name ?? ""),
+        cell(r.profiles?.lmu_name ?? ""),
+        cell(r.source ?? ""),
+        String(Number(r.amount_dkk) || 0),
+        String(Number(r.refunded_amount_dkk ?? 0) || 0),
+        cell(r.note ?? ""),
+        cell(r.stripe_payment_intent_id ?? ""),
+        cell(r.environment ?? ""),
       ].join(";"));
     }
     const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
