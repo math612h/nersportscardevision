@@ -134,6 +134,13 @@
       "when": 1794155664472,
       "tag": "0018_security_hardening_cron_audit_entries_push",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794155786693,
+      "tag": "0019_coaching_bookings_paid_only",
+      "breakpoints": true
     }
   ]
 }
