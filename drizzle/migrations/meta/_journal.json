@@ -169,6 +169,13 @@
       "when": 1794387870692,
       "tag": "0023_finance_approval_freshness",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1794388548973,
+      "tag": "0024_finance_opening_claimant_guard",
+      "breakpoints": true
     }
   ]
 }

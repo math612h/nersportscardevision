@@ -108,6 +108,7 @@ export function AdminSidebar() {
         { title: "Alle brugere", url: "/admin/brugere", icon: Users },
         { title: "Donationer", url: "/admin/donationer", icon: Coffee },
         { title: "Betalinger", url: "/admin/betalinger", icon: Receipt },
+        { title: "Regnskab", url: "/admin/regnskab", icon: Receipt },
         { title: "Gæstekoder", url: "/admin/gaester", icon: KeyRound },
         { title: "Roller", url: "/admin/roller", icon: ShieldCheck },
       ],

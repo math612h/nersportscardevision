@@ -253,6 +253,8 @@ export const saveOpeningProposal = createServerFn({ method: "POST" })
     location_note: z.string().max(2000).optional(),
     documentation_note: z.string().max(2000).min(5),
     document_ids: z.array(z.string().uuid()).max(100).default([]),
+    claimant_user_id: z.string().uuid().nullable().optional(),
+    required_approvals: z.number().int().min(1).max(20).default(1),
   }).parse(i))
   .handler(async ({ data, context }) => {
     const ctx = context as Ctx;
@@ -264,14 +266,18 @@ export const saveOpeningProposal = createServerFn({ method: "POST" })
     const total = data.lines.reduce((s, l) => s + l.debit, 0);
     if (total !== data.amount_minor) throw new Error("Linjernes sum skal svare til beløbet");
     if (p.type === "opening_reimbursement") {
+      if (!data.claimant_user_id && !p.claimant_user_id) throw new Error("Vælg udlægshaverens bruger");
       const debt = data.lines.filter((l) => l.account === ACC.reimbursementDebt).reduce((s, l) => s + l.credit - l.debit, 0);
       if (debt !== data.amount_minor) throw new Error("Hele beløbet skal krediteres Gæld til udlægshavere");
       if (data.lines.some((l) => l.account.startsWith("6") && l.debit > 0)) throw new Error("Udlægsopgørelsen må ikke bogføres som nye driftsudgifter");
     }
-    // Any change invalidates earlier approvals
-    await ctx.supabase.from("fin_approvals").delete().eq("subject_type", "opening_entry").eq("subject_id", data.id);
+    // Any change makes earlier approvals stale (enforced by the database: approvals must be newer than the last edit)
     check(await ctx.supabase.from("fin_journal_entries").update({
-      proposal: { ...p, amount_minor: data.amount_minor, location_note: data.location_note ?? null, documentation_note: data.documentation_note, preliminary: false },
+      proposal: {
+        ...p, amount_minor: data.amount_minor, location_note: data.location_note ?? null, documentation_note: data.documentation_note, preliminary: false,
+        required_approvals: data.required_approvals,
+        ...(p.type === "opening_reimbursement" ? { claimant_user_id: data.claimant_user_id ?? p.claimant_user_id ?? null } : {}),
+      },
       document_ids: data.document_ids,
     }).eq("id", data.id));
     check(await ctx.supabase.from("fin_journal_lines").delete().eq("entry_id", data.id));
