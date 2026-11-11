@@ -169,3 +169,16 @@ SQL-tests i en transaktion, der rulles tilbage:
 - Uploade bank-CSV og udlægsopgørelsen med kvitteringer.
 - Godkende regler, skæringspunkt og åbningskladder.
 - Afklare moms og skat.
+
+## 9. Automatisk ekstern backup
+- Månedlig og ugentlig automatisk eksport af økonomidata og bilagsfiler til en ekstern lagringsplads. Eksporten indeholder data, bilag og en liste med kontrolsum pr. fil.
+- Som standard bruges en forbindelse til **Google Drive** eller **Dropbox**. Efter godkendelse viser jeg dig præcis, hvilken forbindelse du skal tilslutte.
+- Indtil forbindelsen er sat op, viser modulet et tydeligt rødt banner med teksten "Ekstern backup mangler" og en knap til samlet download.
+- Hver backupkørsel logges med dato, størrelse og resultat. Fejl vises i opgavelisten.
+
+## Aflevering
+- Testresultater for alle punkter under Test.
+- En kort trinvis opsætningsguide.
+- En tydelig liste over, hvad der ikke er implementeret eller ikke er afprøvet.
+- Automatisk bogføring forbliver slået fra, indtil du godkender den.
+- Modulet er meget stort. Det bygges i flere omgange i denne og de følgende beskeder, og jeg melder status efter hver fase.
