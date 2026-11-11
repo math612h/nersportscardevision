@@ -2,7 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Save, Check, Upload, Trash2, Eye, EyeOff, Calculator, Send } from "lucide-react";
+import { ArrowLeft, Save, Check, Upload, Trash2, Eye, EyeOff, Calculator, Send, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { ResultStatusBadge } from "@/components/ResultStatusBadge";
 import { raceStatusFor, qualiStatusFor, type ResultStatus } from "@/lib/result-status";
@@ -15,6 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
 import { deleteLeagueRaceResults, setResultsConfirmed, setResultsPublished, recalcLeaguePoints, enforceLeagueDnsLimit } from "@/lib/league-results.functions";
@@ -81,6 +83,8 @@ type DraftRow = {
   q_nt: boolean;             // kørte omgange, men ingen godkendt tid
   q_laps: number | null;
   withdrawn: boolean;
+  waitlist: boolean;
+  reserve: boolean;
 };
 
 type EntryRec = {
@@ -93,7 +97,7 @@ type EntryRec = {
   waitlist: boolean;
   created_at: string;
   withdrawn_at?: string | null;
-
+  division_id?: string | null;
 };
 
 function parseTimeToMs(s: string): number | null {
@@ -151,9 +155,8 @@ function AdminStandings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("entries")
-        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,withdrawn_at")
+        .select("id,user_id,driver_name,car_class,driver_category,car_number,waitlist,created_at,withdrawn_at,division_id")
         .eq("league_id", leagueId)
-        .is("division_id", null)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as EntryRec[];
@@ -212,7 +215,8 @@ function AdminStandings() {
           key={division.id}
           division={division}
           allDivisions={divisions}
-          entries={entries.filter((e) => e.car_number != null)}
+          entries={entries.filter((e) => e.car_number != null && !e.division_id)}
+          reserveEntries={entries.filter((e) => e.car_number != null && e.division_id === division.id && !e.withdrawn_at)}
           configs={configs}
           pointsTable={leaguePoints}
           minFinishPercent={minFinishPercent}
@@ -232,6 +236,7 @@ function DivisionEditor({
   division,
   allDivisions,
   entries,
+  reserveEntries,
   configs,
   pointsTable,
   minFinishPercent,
@@ -240,6 +245,7 @@ function DivisionEditor({
   division: any;
   allDivisions: any[];
   entries: EntryRec[];
+  reserveEntries: EntryRec[];
   configs: ClassConfig[];
   pointsTable: number[];
   minFinishPercent: number;
@@ -247,6 +253,15 @@ function DivisionEditor({
 }) {
   const existingRace: any[] = Array.isArray(division.settings?.results) ? division.settings.results : [];
   const existingQuali: any[] = Array.isArray(division.settings?.quali_results) ? division.settings.quali_results : [];
+  // Reserver til netop denne afdeling (accepteret reserveplads). Har køreren
+  // allerede en aktiv grid-plads i samme klasse, bruges den i stedet.
+  const activeGridUserClass = new Set(
+    entries.filter((e) => !e.withdrawn_at && !e.waitlist).map((e) => `${e.user_id}|${e.car_class}`),
+  );
+  const reserves = reserveEntries.filter((e) => !activeGridUserClass.has(`${e.user_id}|${e.car_class}`));
+  const editorEntries: EntryRec[] = [...reserves, ...entries];
+  // Kørere fra ventelisten, som admin har matchet til et resultat i denne afdeling.
+  const [addedEntryIds, setAddedEntryIds] = useState<string[]>([]);
   // Nøgl gemte resultater på bruger-id (bilnummer som reserve). Klasse/kategori
   // duer ikke som nøgle: flyttes en kører mellem Pro og Am mister vi hans data.
   // Et gemt resultat må kun bruges af én tilmelding. Har en kører både en
@@ -266,10 +281,9 @@ function DivisionEditor({
     };
     // Aktive tilmeldinger får altid resultatet først — ellers kan en gammel,
     // udmeldt tilmelding "stjæle" det, og den aktive gemmes som DNS.
-    const ordered = [
-      ...entries.filter((e) => !e.withdrawn_at),
-      ...entries.filter((e) => !!e.withdrawn_at),
-    ];
+    // Rækkefølge: reserve til afdelingen → grid → venteliste → udmeldt.
+    const rank = (e: EntryRec) => (e.division_id ? 0 : e.withdrawn_at ? 3 : e.waitlist ? 2 : 1);
+    const ordered = [...editorEntries].sort((a, b) => rank(a) - rank(b));
     for (const e of ordered)
       claim(e, (r) => r.user_id === e.user_id && r.car_class === e.car_class);
     for (const e of ordered) claim(e, (r) => r.user_id === e.user_id);
@@ -283,17 +297,21 @@ function DivisionEditor({
   // Udmeldte kørere vises kun i de afdelinger, hvor de allerede har et gemt resultat.
   // Har samme kører en aktiv tilmelding i samme klasse (fx efter genindmeldelse),
   // skjules den udmeldtes række — ellers ender køreren med to rækker i resultaterne.
-  const activeUserClass = new Set(
-    entries.filter((e) => !e.withdrawn_at && !e.waitlist).map((e) => `${e.user_id}|${e.car_class}`),
-  );
-  const gridEntries = entries.filter((e) =>
-    e.withdrawn_at
-      ? (!!findRace(e) || !!findQuali(e)) && !activeUserClass.has(`${e.user_id}|${e.car_class}`)
-      : !e.waitlist,
-  );
+  const activeUserClass = new Set([
+    ...activeGridUserClass,
+    ...reserves.map((e) => `${e.user_id}|${e.car_class}`),
+  ]);
+  // Ventelistekørere vises kun, når de har et resultat i afdelingen (eller
+  // lige er blevet matchet til et).
+  const gridEntries = editorEntries.filter((e) => {
+    if (e.division_id) return true;
+    const key = `${e.user_id}|${e.car_class}`;
+    if (e.withdrawn_at) return (!!findRace(e) || !!findQuali(e)) && !activeUserClass.has(key);
+    if (e.waitlist) return (addedEntryIds.includes(e.id) || !!findRace(e) || !!findQuali(e)) && !activeUserClass.has(key);
+    return true;
+  });
 
-
-  const buildInitial = (): DraftRow[] => gridEntries.map((e) => {
+  const rowFromEntry = (e: EntryRec): DraftRow => {
     const race = findRace(e) as any;
     const quali = findQuali(e) as any;
     return {
@@ -317,8 +335,36 @@ function DivisionEditor({
       q_nt: !!quali?.nt,
       q_laps: typeof quali?.laps === "number" ? quali.laps : null,
       withdrawn: !!e.withdrawn_at,
+      waitlist: !!e.waitlist && !e.division_id,
+      reserve: !!e.division_id,
     };
-  });
+  };
+  const buildInitial = (): DraftRow[] => gridEntries.map(rowFromEntry);
+
+  // Alle der kan vælges ved manuel matchning: grid, reserver og venteliste.
+  const matchCandidates = useMemo(() => {
+    const out: { user_id: string; entry: EntryRec; tag: "grid" | "reserve" | "waitlist" | "withdrawn" }[] = [];
+    const seen = new Set<string>();
+    const rank = (e: EntryRec) => (e.division_id ? 0 : e.withdrawn_at ? 3 : e.waitlist ? 2 : 1);
+    const gridIds = new Set(gridEntries.map((e) => e.id));
+    const sorted = [...editorEntries].sort((a, b) => {
+      const ga = gridIds.has(a.id) ? 0 : 1;
+      const gb = gridIds.has(b.id) ? 0 : 1;
+      return ga - gb || rank(a) - rank(b);
+    });
+    for (const e of sorted) {
+      if (seen.has(e.user_id)) continue;
+      if (e.withdrawn_at && !gridIds.has(e.id)) continue;
+      seen.add(e.user_id);
+      out.push({
+        user_id: e.user_id,
+        entry: e,
+        tag: e.division_id ? "reserve" : e.withdrawn_at ? "withdrawn" : e.waitlist ? "waitlist" : "grid",
+      });
+    }
+    return out.sort((a, b) => a.entry.driver_name.localeCompare(b.entry.driver_name, "da"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editorEntries.map((e) => `${e.id}|${e.waitlist}|${e.withdrawn_at ?? ""}`).join(","), gridEntries.length]);
 
 
   const [rows, setRows] = useState<DraftRow[]>(buildInitial);
@@ -366,7 +412,7 @@ function DivisionEditor({
   // Hold kørerlisten synkron med tilmeldingerne (fx flytning mellem Pro/Am),
   // uden at smide allerede indtastede/importerede tider væk.
   const entriesSignature = useMemo(
-    () => gridEntries.map((e) => `${e.id}|${e.car_class}|${e.driver_category}|${e.car_number}|${e.driver_name}`).join(";"),
+    () => gridEntries.map((e) => `${e.id}|${e.car_class}|${e.driver_category}|${e.car_number}|${e.driver_name}|${e.waitlist}`).join(";"),
     [gridEntries],
   );
   useEffect(() => {
@@ -374,7 +420,7 @@ function DivisionEditor({
       const byEntry = new Map(prev.map((r) => [r.entry_id, r]));
       return gridEntries.map((e) => {
         const existing = byEntry.get(e.id);
-        if (!existing) return buildInitial().find((r) => r.entry_id === e.id)!;
+        if (!existing) return rowFromEntry(e);
         return {
           ...existing,
           user_id: e.user_id,
@@ -383,6 +429,8 @@ function DivisionEditor({
           car_class: e.car_class,
           driver_category: e.driver_category,
           withdrawn: !!e.withdrawn_at,
+          waitlist: !!e.waitlist && !e.division_id,
+          reserve: !!e.division_id,
         };
       });
     });
@@ -394,7 +442,7 @@ function DivisionEditor({
     setImportedFiles({});
   }, [session]);
 
-  const userIds = useMemo(() => Array.from(new Set(entries.map((e) => e.user_id))), [entries]);
+  const userIds = useMemo(() => Array.from(new Set(editorEntries.map((e) => e.user_id))), [editorEntries]);
   const { data: profiles } = useQuery({
     queryKey: ["profiles-lmu", userIds.sort().join(",")],
     enabled: userIds.length > 0,
@@ -485,11 +533,27 @@ function DivisionEditor({
     const noLmu: string[] = [];
 
     const updates = new Map<string, Partial<DraftRow>>();
+    // Kørere fra ventelisten (eller reserver) får en række, når de matches.
+    const extraRows: DraftRow[] = [];
+    const rowForUser = (userId: string, allowCreate: boolean): DraftRow | undefined => {
+      const existing = rows.find((r) => r.user_id === userId) ?? extraRows.find((r) => r.user_id === userId);
+      if (existing || !allowCreate) return existing;
+      const cand = matchCandidates.find((c) => c.user_id === userId && c.tag !== "withdrawn");
+      if (!cand) return undefined;
+      const row = rowFromEntry(cand.entry);
+      extraRows.push(row);
+      return row;
+    };
     for (const p of parsed) {
       const userId = resolveUser(p.name, overrides);
       if (!userId) { missing.push(p.name); continue; }
-      const row = rows.find((r) => r.user_id === userId);
-      if (!row) { missing.push(p.name); continue; }
+      // Ventelistekørere, der ikke kørte (fx kun tilskuer på serveren), får ingen række.
+      const drove = (p.laps ?? 0) > 0 || p.bestLapMs != null;
+      const row = rowForUser(userId, drove);
+      if (!row) {
+        if (drove || !matchCandidates.some((c) => c.user_id === userId)) missing.push(p.name);
+        continue;
+      }
       if (kind === "race") {
         const racePosition = p.classPosition ?? p.position ?? null;
         const common = { best_lap_ms: p.bestLapMs ?? null, source_server: server };
@@ -515,7 +579,17 @@ function DivisionEditor({
       if (!prof?.lmu_name) noLmu.push(r.driver_name);
     }
 
-    setRows((prev) => prev.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r)));
+    if (extraRows.length > 0) {
+      setAddedEntryIds((prev) => Array.from(new Set([...prev, ...extraRows.map((r) => r.entry_id)])));
+    }
+    setRows((prev) => {
+      const known = new Set(prev.map((r) => r.entry_id));
+      const all = [...prev, ...extraRows.filter((r) => !known.has(r.entry_id))];
+      return all.map((r) => (updates.has(r.entry_id) ? { ...r, ...updates.get(r.entry_id)! } : r));
+    });
+    if (extraRows.length > 0) {
+      toast.message(`${extraRows.length} kører(e) fra ventelisten/reserver tilføjet: ${extraRows.map((r) => r.driver_name).join(", ")}`);
+    }
 
     // Push best-laps to global leaderboard (race file only)
     let lbInserted = 0;
@@ -1178,6 +1252,16 @@ function DivisionEditor({
                                   Udmeldt
                                 </span>
                               ) : null}
+                              {r.waitlist ? (
+                                <span className="ml-2 rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground align-middle">
+                                  Venteliste
+                                </span>
+                              ) : null}
+                              {r.reserve ? (
+                                <span className="ml-2 rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground align-middle">
+                                  Reserve
+                                </span>
+                              ) : null}
                               {r.source_server ? (
                                 <span className="ml-2 rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground align-middle">
                                   {r.source_server}
@@ -1287,6 +1371,16 @@ function DivisionEditor({
                                   Udmeldt
                                 </span>
                               ) : null}
+                              {r.waitlist ? (
+                                <span className="ml-2 rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground align-middle">
+                                  Venteliste
+                                </span>
+                              ) : null}
+                              {r.reserve ? (
+                                <span className="ml-2 rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground align-middle">
+                                  Reserve
+                                </span>
+                              ) : null}
                             </td>
                             <td className="px-2 py-1.5">
                               <Input
@@ -1328,7 +1422,7 @@ function DivisionEditor({
           <DialogTitle>Match kørere manuelt</DialogTitle>
           <DialogDescription>
             {pendingMatch
-              ? `${pendingMatch.names.length} kører(e) i ${pendingMatch.fileName} kunne ikke matches automatisk. Vælg den rigtige deltager fra entrylisten, eller lad feltet stå tomt for at springe over.`
+              ? `${pendingMatch.names.length} kører(e) i ${pendingMatch.fileName} kunne ikke matches automatisk. Søg efter navn og vælg den rigtige kører — også fra ventelisten — eller lad feltet stå tomt for at springe over.`
               : ""}
           </DialogDescription>
         </DialogHeader>
@@ -1339,29 +1433,18 @@ function DivisionEditor({
             return (
               <div key={key} className="grid gap-2 sm:grid-cols-2 sm:items-center">
                 <div className="font-mono text-sm">{name}</div>
-                <Select
-                  value={matchChoices[key] ?? "__skip"}
-                  onValueChange={(v) =>
+                <MatchPicker
+                  value={matchChoices[key] ?? null}
+                  options={matchCandidates.filter((c) => !taken.has(c.user_id))}
+                  onChange={(v) =>
                     setMatchChoices((prev) => {
                       const next = { ...prev };
-                      if (v === "__skip") delete next[key];
+                      if (!v) delete next[key];
                       else next[key] = v;
                       return next;
                     })
                   }
-                >
-                  <SelectTrigger><SelectValue placeholder="Vælg deltager" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__skip">— Spring over —</SelectItem>
-                    {rows
-                      .filter((r) => !taken.has(r.user_id))
-                      .map((r) => (
-                        <SelectItem key={r.entry_id} value={r.user_id}>
-                          #{r.car_number} {r.driver_name} · {r.car_class} {r.driver_category}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
             );
           })}
@@ -1385,6 +1468,74 @@ function DivisionEditor({
   );
 }
 
+
+const MATCH_TAG_LABEL: Record<string, string | null> = {
+  grid: null,
+  reserve: "Reserve",
+  waitlist: "Venteliste",
+  withdrawn: "Udmeldt",
+};
+
+function MatchPicker({
+  value,
+  options,
+  onChange,
+}: {
+  value: string | null;
+  options: { user_id: string; entry: EntryRec; tag: string }[];
+  onChange: (v: string | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o.user_id === value);
+  const label = (o: { entry: EntryRec }) =>
+    `#${o.entry.car_number} ${o.entry.driver_name} · ${o.entry.car_class} ${o.entry.driver_category}`;
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between font-normal">
+          <span className="truncate">
+            {selected ? label(selected) : <span className="text-muted-foreground">— Spring over —</span>}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[280px] p-0" align="start">
+        <Command
+          filter={(itemValue, search) =>
+            itemValue.toLowerCase().includes(search.trim().toLowerCase()) ? 1 : 0
+          }
+        >
+          <CommandInput placeholder="Søg efter navn eller nummer…" />
+          <CommandList>
+            <CommandEmpty>Ingen kørere fundet.</CommandEmpty>
+            <CommandGroup>
+              <CommandItem value="__skip spring over" onSelect={() => { onChange(null); setOpen(false); }}>
+                — Spring over —
+              </CommandItem>
+              {options.map((o) => {
+                const tag = MATCH_TAG_LABEL[o.tag];
+                return (
+                  <CommandItem
+                    key={o.user_id}
+                    value={`${o.entry.driver_name} #${o.entry.car_number} ${o.entry.car_class} ${o.entry.driver_category} ${tag ?? ""} ${o.user_id}`}
+                    onSelect={() => { onChange(o.user_id); setOpen(false); }}
+                  >
+                    <span className="truncate">{label(o)}</span>
+                    {tag ? (
+                      <span className="ml-auto rounded border border-border px-1 py-0.5 text-[10px] uppercase text-muted-foreground">
+                        {tag}
+                      </span>
+                    ) : null}
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 async function reconcileWaitlist({
   currentDivisionId,
