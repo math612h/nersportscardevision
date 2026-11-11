@@ -21,7 +21,7 @@ const csvCell = (v: unknown) => {
 const toCsv = (rows: unknown[][]) => "\uFEFF" + rows.map((r) => r.map(csvCell).join(";")).join("\n");
 const kr = (m: number) => (m / 100).toFixed(2).replace(".", ",");
 async function sha256(bytes: Uint8Array) {
-  return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes as BufferSource))).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function postedLines(ctx: Ctx, from?: string, to?: string) {

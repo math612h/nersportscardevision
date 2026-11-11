@@ -94,7 +94,6 @@ export function SetupTab({ isFinAdmin }: { isFinAdmin: boolean }) {
         </CardContent>
       </Card>
 
-      <RolesCard />
     </div>
   );
 }

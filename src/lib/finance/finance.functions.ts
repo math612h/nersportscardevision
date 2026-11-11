@@ -227,7 +227,7 @@ export const reverseEntry = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const ctx = context as Ctx;
     await requireFin(ctx, true);
-    return { id: check(await ctx.supabase.rpc("fin_reverse_entry", { _entry_id: data.id, _reason: data.reason })) };
+    return { id: String(check(await ctx.supabase.rpc("fin_reverse_entry", { _entry_id: data.id, _reason: data.reason }))) };
   });
 
 export const deleteDraftEntry = createServerFn({ method: "POST" })

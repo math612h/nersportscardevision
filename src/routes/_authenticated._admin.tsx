@@ -6,6 +6,9 @@ import { AdminSidebar } from "@/components/AdminSidebar";
 import { AdminCommandPalette } from "@/components/AdminCommandPalette";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getFinanceMe } from "@/lib/finance/finance.functions";
 
 export const Route = createFileRoute("/_authenticated/_admin")({
   component: AdminGate,
@@ -16,15 +19,20 @@ function AdminGate() {
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const stewardAllowed = pathname.startsWith("/admin/protests") || pathname.startsWith("/admin/replays");
-  const allowed = isAdmin || (isSteward && stewardAllowed);
+  const financePath = pathname.startsWith("/admin/regnskab");
+  const finMe = useServerFn(getFinanceMe);
+  const fin = useQuery({ queryKey: ["fin", "me"], queryFn: () => finMe(), enabled: !!user && financePath && !isAdmin });
+  const hasFinance = (fin.data?.roles?.length ?? 0) > 0;
+  const allowed = isAdmin || (isSteward && stewardAllowed) || (financePath && hasFinance);
 
   useEffect(() => {
     if (loading || !user) return;
+    if (!isAdmin && financePath && (fin.isLoading || hasFinance)) return;
     if (!isAdmin && isSteward && !stewardAllowed) navigate({ to: "/admin/protests" });
     else if (!isAdmin && !isSteward) navigate({ to: "/" });
-  }, [loading, user, isAdmin, isSteward, stewardAllowed, navigate]);
+  }, [loading, user, isAdmin, isSteward, stewardAllowed, navigate, financePath, fin.isLoading, hasFinance]);
 
-  if (loading) return <p className="text-muted-foreground">Indlæser…</p>;
+  if (loading || (financePath && !isAdmin && fin.isLoading)) return <p className="text-muted-foreground">Indlæser…</p>;
   if (!user) return null;
   if (!allowed) return <p>Ingen adgang.</p>;
 

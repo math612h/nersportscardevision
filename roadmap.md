@@ -1,10 +1,12 @@
 # Roadmap – Bogføringsmodul
-- [ ] Database: kontoplan, journal, triggers, roller, Stripe-, bank-, bilags-, udlægs- og backuptabeller
-- [ ] Ren bogføringslogik + tests
-- [ ] Stripe-synk (import, webhook-indbakke, daglig kontrol) med dubletsikring
-- [ ] Bank-CSV-import, udgifter/bilag, matching
-- [ ] Udlæg med godkendelse og rater
-- [ ] Åbningskladder A og B (forhåndsvisning)
-- [ ] Rapporter, afstemning, perioder, eksport (CSV/PDF/ZIP)
-- [ ] Backup: fuld eksport, gendannelsestest, ekstern backup (afventer forbindelse)
-- [ ] Opsætningsguide + liste over ikke-afprøvet
+- [x] Database: kontoplan, journal, triggers, roller, Stripe-, bank-, bilags-, udlægs- og backuptabeller
+- [x] Ren bogføringslogik + tests
+- [x] Stripe-synk (import, webhook-indbakke, daglig kontrol) med dubletsikring
+- [x] Bank-CSV-import, udgifter/bilag, matching
+- [x] Udlæg med godkendelse og rater
+- [x] Åbningskladder A og B (forhåndsvisning)
+- [x] Rapporter, afstemning, perioder, eksport (CSV/PDF/ZIP)
+- [x] Backup: fuld eksport, gendannelsestest, ekstern backup (afventer forbindelse)
+- [x] Opsætningsguide + liste over ikke-afprøvet
+- [ ] Automatic external backup — blocked: needs a Google Drive/Dropbox connection chosen by the user
+- [ ] Live Stripe/bank/AI flows tested with real data — needs the treasurer's access and real files
