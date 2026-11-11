@@ -93,6 +93,7 @@ import { Route as ApiPublicCronCoachingRatingRequestsRouteImport } from './route
 import { Route as ApiPublicCronCoachingRemindersRouteImport } from './routes/api/public/cron/coaching-reminders'
 import { Route as ApiPublicCronDeleteExpiredHostSessionsRouteImport } from './routes/api/public/cron/delete-expired-host-sessions'
 import { Route as ApiPublicCronExpireReserveOffersRouteImport } from './routes/api/public/cron/expire-reserve-offers'
+import { Route as ApiPublicCronFinanceSyncRouteImport } from './routes/api/public/cron/finance-sync'
 import { Route as ApiPublicCronLeagueOpenRouteImport } from './routes/api/public/cron/league-open'
 import { Route as ApiPublicCronStripUnverifiedMembersRouteImport } from './routes/api/public/cron/strip-unverified-members'
 import { Route as ApiPublicCronYoutubeLiveRouteImport } from './routes/api/public/cron/youtube-live'
@@ -592,6 +593,12 @@ const ApiPublicCronExpireReserveOffersRoute =
     path: '/api/public/cron/expire-reserve-offers',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronFinanceSyncRoute =
+  ApiPublicCronFinanceSyncRouteImport.update({
+    id: '/api/public/cron/finance-sync',
+    path: '/api/public/cron/finance-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicCronLeagueOpenRoute = ApiPublicCronLeagueOpenRouteImport.update({
   id: '/api/public/cron/league-open',
   path: '/api/public/cron/league-open',
@@ -833,6 +840,7 @@ export interface FileRoutesByFullPath {
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
+  '/api/public/cron/finance-sync': typeof ApiPublicCronFinanceSyncRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
   '/api/public/cron/youtube-live': typeof ApiPublicCronYoutubeLiveRoute
@@ -942,6 +950,7 @@ export interface FileRoutesByTo {
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
+  '/api/public/cron/finance-sync': typeof ApiPublicCronFinanceSyncRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
   '/api/public/cron/youtube-live': typeof ApiPublicCronYoutubeLiveRoute
@@ -1056,6 +1065,7 @@ export interface FileRoutesById {
   '/api/public/cron/coaching-reminders': typeof ApiPublicCronCoachingRemindersRoute
   '/api/public/cron/delete-expired-host-sessions': typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   '/api/public/cron/expire-reserve-offers': typeof ApiPublicCronExpireReserveOffersRoute
+  '/api/public/cron/finance-sync': typeof ApiPublicCronFinanceSyncRoute
   '/api/public/cron/league-open': typeof ApiPublicCronLeagueOpenRoute
   '/api/public/cron/strip-unverified-members': typeof ApiPublicCronStripUnverifiedMembersRoute
   '/api/public/cron/youtube-live': typeof ApiPublicCronYoutubeLiveRoute
@@ -1169,6 +1179,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/coaching-reminders'
     | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
+    | '/api/public/cron/finance-sync'
     | '/api/public/cron/league-open'
     | '/api/public/cron/strip-unverified-members'
     | '/api/public/cron/youtube-live'
@@ -1278,6 +1289,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/coaching-reminders'
     | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
+    | '/api/public/cron/finance-sync'
     | '/api/public/cron/league-open'
     | '/api/public/cron/strip-unverified-members'
     | '/api/public/cron/youtube-live'
@@ -1391,6 +1403,7 @@ export interface FileRouteTypes {
     | '/api/public/cron/coaching-reminders'
     | '/api/public/cron/delete-expired-host-sessions'
     | '/api/public/cron/expire-reserve-offers'
+    | '/api/public/cron/finance-sync'
     | '/api/public/cron/league-open'
     | '/api/public/cron/strip-unverified-members'
     | '/api/public/cron/youtube-live'
@@ -1454,6 +1467,7 @@ export interface RootRouteChildren {
   ApiPublicCronCoachingRemindersRoute: typeof ApiPublicCronCoachingRemindersRoute
   ApiPublicCronDeleteExpiredHostSessionsRoute: typeof ApiPublicCronDeleteExpiredHostSessionsRoute
   ApiPublicCronExpireReserveOffersRoute: typeof ApiPublicCronExpireReserveOffersRoute
+  ApiPublicCronFinanceSyncRoute: typeof ApiPublicCronFinanceSyncRoute
   ApiPublicCronLeagueOpenRoute: typeof ApiPublicCronLeagueOpenRoute
   ApiPublicCronStripUnverifiedMembersRoute: typeof ApiPublicCronStripUnverifiedMembersRoute
   ApiPublicCronYoutubeLiveRoute: typeof ApiPublicCronYoutubeLiveRoute
@@ -2061,6 +2075,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronExpireReserveOffersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/finance-sync': {
+      id: '/api/public/cron/finance-sync'
+      path: '/api/public/cron/finance-sync'
+      fullPath: '/api/public/cron/finance-sync'
+      preLoaderRoute: typeof ApiPublicCronFinanceSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cron/league-open': {
       id: '/api/public/cron/league-open'
       path: '/api/public/cron/league-open'
@@ -2507,6 +2528,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCronDeleteExpiredHostSessionsRoute:
     ApiPublicCronDeleteExpiredHostSessionsRoute,
   ApiPublicCronExpireReserveOffersRoute: ApiPublicCronExpireReserveOffersRoute,
+  ApiPublicCronFinanceSyncRoute: ApiPublicCronFinanceSyncRoute,
   ApiPublicCronLeagueOpenRoute: ApiPublicCronLeagueOpenRoute,
   ApiPublicCronStripUnverifiedMembersRoute:
     ApiPublicCronStripUnverifiedMembersRoute,

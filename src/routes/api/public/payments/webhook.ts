@@ -182,6 +182,14 @@ async function handleCheckoutCompleted(session: any, env: StripeEnv) {
 async function handleWebhook(req: Request, env: StripeEnv) {
   const event = await verifyWebhook(req, env);
 
+  // Accounting inbox (isolated: never affects the existing payment handling)
+  try {
+    const { enqueueFinanceEvent } = await import("@/lib/finance/stripe-sync.server");
+    await enqueueFinanceEvent(event, env);
+  } catch (e) {
+    console.error("[payments-webhook] finance inbox failed", e);
+  }
+
   switch (event.type) {
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded":

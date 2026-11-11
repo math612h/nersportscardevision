@@ -1091,6 +1091,1160 @@ export type Database = {
         }
         Relationships: []
       }
+      fin_accounts: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          is_system: boolean
+          name: string
+          type: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          is_system?: boolean
+          name: string
+          type: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          is_system?: boolean
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      fin_approvals: {
+        Row: {
+          approver_id: string
+          approver_name: string
+          created_at: string
+          decision: string
+          document_id: string | null
+          id: string
+          meeting_date: string | null
+          note: string | null
+          subject_id: string
+          subject_type: string
+        }
+        Insert: {
+          approver_id: string
+          approver_name: string
+          created_at?: string
+          decision: string
+          document_id?: string | null
+          id?: string
+          meeting_date?: string | null
+          note?: string | null
+          subject_id: string
+          subject_type: string
+        }
+        Update: {
+          approver_id?: string
+          approver_name?: string
+          created_at?: string
+          decision?: string
+          document_id?: string | null
+          id?: string
+          meeting_date?: string | null
+          note?: string | null
+          subject_id?: string
+          subject_type?: string
+        }
+        Relationships: []
+      }
+      fin_audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_label: string | null
+          created_at: string
+          details: Json | null
+          id: number
+          subject_id: string | null
+          subject_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: number
+          subject_id?: string | null
+          subject_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_label?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: number
+          subject_id?: string | null
+          subject_type?: string | null
+        }
+        Relationships: []
+      }
+      fin_backup_runs: {
+        Row: {
+          checks: Json | null
+          destination: string | null
+          error: string | null
+          file_count: number | null
+          finished_at: string | null
+          id: string
+          kind: string
+          row_counts: Json | null
+          size_bytes: number | null
+          started_at: string
+          started_by: string | null
+          status: string
+        }
+        Insert: {
+          checks?: Json | null
+          destination?: string | null
+          error?: string | null
+          file_count?: number | null
+          finished_at?: string | null
+          id?: string
+          kind: string
+          row_counts?: Json | null
+          size_bytes?: number | null
+          started_at?: string
+          started_by?: string | null
+          status?: string
+        }
+        Update: {
+          checks?: Json | null
+          destination?: string | null
+          error?: string | null
+          file_count?: number | null
+          finished_at?: string | null
+          id?: string
+          kind?: string
+          row_counts?: Json | null
+          size_bytes?: number | null
+          started_at?: string
+          started_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      fin_bank_accounts: {
+        Row: {
+          account_code: string
+          account_number: string | null
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          account_code?: string
+          account_number?: string | null
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          account_code?: string
+          account_number?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_bank_accounts_account_code_fkey"
+            columns: ["account_code"]
+            isOneToOne: false
+            referencedRelation: "fin_accounts"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      fin_bank_imports: {
+        Row: {
+          bank_account_id: string
+          created_at: string
+          document_id: string | null
+          filename: string
+          id: string
+          imported_by: string | null
+          row_count: number
+          statement_balance_minor: number | null
+          statement_date: string | null
+        }
+        Insert: {
+          bank_account_id: string
+          created_at?: string
+          document_id?: string | null
+          filename: string
+          id?: string
+          imported_by?: string | null
+          row_count?: number
+          statement_balance_minor?: number | null
+          statement_date?: string | null
+        }
+        Update: {
+          bank_account_id?: string
+          created_at?: string
+          document_id?: string | null
+          filename?: string
+          id?: string
+          imported_by?: string | null
+          row_count?: number
+          statement_balance_minor?: number | null
+          statement_date?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_bank_imports_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "fin_bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_bank_imports_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "fin_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_bank_statements: {
+        Row: {
+          balance_minor: number
+          bank_account_id: string
+          created_at: string
+          created_by: string | null
+          document_id: string | null
+          id: string
+          statement_date: string
+        }
+        Insert: {
+          balance_minor: number
+          bank_account_id: string
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          id?: string
+          statement_date: string
+        }
+        Update: {
+          balance_minor?: number
+          bank_account_id?: string
+          created_at?: string
+          created_by?: string | null
+          document_id?: string | null
+          id?: string
+          statement_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_bank_statements_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "fin_bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_bank_statements_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "fin_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_bank_transactions: {
+        Row: {
+          amount_minor: number
+          balance_after_minor: number | null
+          bank_account_id: string
+          bank_tx_id: string | null
+          booked_on: string
+          created_at: string
+          dedupe_key: string
+          id: string
+          import_id: string | null
+          journal_entry_id: string | null
+          note: string | null
+          status: string
+          suspected_duplicate_of: string | null
+          text: string
+        }
+        Insert: {
+          amount_minor: number
+          balance_after_minor?: number | null
+          bank_account_id: string
+          bank_tx_id?: string | null
+          booked_on: string
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          import_id?: string | null
+          journal_entry_id?: string | null
+          note?: string | null
+          status?: string
+          suspected_duplicate_of?: string | null
+          text?: string
+        }
+        Update: {
+          amount_minor?: number
+          balance_after_minor?: number | null
+          bank_account_id?: string
+          bank_tx_id?: string | null
+          booked_on?: string
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          import_id?: string | null
+          journal_entry_id?: string | null
+          note?: string | null
+          status?: string
+          suspected_duplicate_of?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_bank_transactions_bank_account_id_fkey"
+            columns: ["bank_account_id"]
+            isOneToOne: false
+            referencedRelation: "fin_bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_bank_transactions_import_id_fkey"
+            columns: ["import_id"]
+            isOneToOne: false
+            referencedRelation: "fin_bank_imports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_bank_transactions_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "fin_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_bill_payments: {
+        Row: {
+          amount_minor: number
+          bank_transaction_id: string | null
+          bill_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          journal_entry_id: string | null
+          paid_on: string
+        }
+        Insert: {
+          amount_minor: number
+          bank_transaction_id?: string | null
+          bill_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          paid_on: string
+        }
+        Update: {
+          amount_minor?: number
+          bank_transaction_id?: string | null
+          bill_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          paid_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_bill_payments_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "fin_bank_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_bill_payments_bill_id_fkey"
+            columns: ["bill_id"]
+            isOneToOne: false
+            referencedRelation: "fin_bills"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_bill_payments_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "fin_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_bills: {
+        Row: {
+          amount_dkk_minor: number
+          amount_minor: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          document_ids: string[]
+          due_date: string | null
+          expense_account_code: string
+          fx_rate: number | null
+          fx_source: string | null
+          id: string
+          invoice_date: string
+          journal_entry_id: string | null
+          paid_by: string
+          private_person_name: string | null
+          supplier: string
+        }
+        Insert: {
+          amount_dkk_minor: number
+          amount_minor: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          document_ids?: string[]
+          due_date?: string | null
+          expense_account_code: string
+          fx_rate?: number | null
+          fx_source?: string | null
+          id?: string
+          invoice_date: string
+          journal_entry_id?: string | null
+          paid_by?: string
+          private_person_name?: string | null
+          supplier: string
+        }
+        Update: {
+          amount_dkk_minor?: number
+          amount_minor?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          document_ids?: string[]
+          due_date?: string | null
+          expense_account_code?: string
+          fx_rate?: number | null
+          fx_source?: string | null
+          id?: string
+          invoice_date?: string
+          journal_entry_id?: string | null
+          paid_by?: string
+          private_person_name?: string | null
+          supplier?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_bills_expense_account_code_fkey"
+            columns: ["expense_account_code"]
+            isOneToOne: false
+            referencedRelation: "fin_accounts"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "fin_bills_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "fin_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_category_rules: {
+        Row: {
+          account_code: string
+          active: boolean
+          approved_at: string | null
+          approved_by: string | null
+          category: string
+          created_at: string
+          created_by: string | null
+          environment: string | null
+          id: string
+          match_key: string | null
+          match_type: string
+          match_value: string
+          name: string
+          note: string | null
+          priority: number
+        }
+        Insert: {
+          account_code: string
+          active?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          category: string
+          created_at?: string
+          created_by?: string | null
+          environment?: string | null
+          id?: string
+          match_key?: string | null
+          match_type: string
+          match_value: string
+          name: string
+          note?: string | null
+          priority?: number
+        }
+        Update: {
+          account_code?: string
+          active?: boolean
+          approved_at?: string | null
+          approved_by?: string | null
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          environment?: string | null
+          id?: string
+          match_key?: string | null
+          match_type?: string
+          match_value?: string
+          name?: string
+          note?: string | null
+          priority?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_category_rules_account_code_fkey"
+            columns: ["account_code"]
+            isOneToOne: false
+            referencedRelation: "fin_accounts"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
+      fin_documents: {
+        Row: {
+          ai_extraction: Json | null
+          created_at: string
+          description: string | null
+          filename: string
+          id: string
+          kind: string
+          mime_type: string
+          sha256: string | null
+          size_bytes: number
+          storage_path: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          ai_extraction?: Json | null
+          created_at?: string
+          description?: string | null
+          filename: string
+          id?: string
+          kind?: string
+          mime_type: string
+          sha256?: string | null
+          size_bytes: number
+          storage_path: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          ai_extraction?: Json | null
+          created_at?: string
+          description?: string | null
+          filename?: string
+          id?: string
+          kind?: string
+          mime_type?: string
+          sha256?: string | null
+          size_bytes?: number
+          storage_path?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      fin_journal_entries: {
+        Row: {
+          category_rule_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string
+          document_ids: string[]
+          entry_date: string
+          entry_no: number | null
+          environment: string | null
+          id: string
+          kind: string
+          needs_review: boolean
+          posted_at: string | null
+          posted_automatically: boolean
+          posted_by: string | null
+          proposal: Json | null
+          reverses_entry_id: string | null
+          review_reason: string | null
+          rule_explanation: string | null
+          source_key: string | null
+          source_type: string | null
+          status: string
+          stripe_account_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          category_rule_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description: string
+          document_ids?: string[]
+          entry_date: string
+          entry_no?: number | null
+          environment?: string | null
+          id?: string
+          kind?: string
+          needs_review?: boolean
+          posted_at?: string | null
+          posted_automatically?: boolean
+          posted_by?: string | null
+          proposal?: Json | null
+          reverses_entry_id?: string | null
+          review_reason?: string | null
+          rule_explanation?: string | null
+          source_key?: string | null
+          source_type?: string | null
+          status?: string
+          stripe_account_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category_rule_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          document_ids?: string[]
+          entry_date?: string
+          entry_no?: number | null
+          environment?: string | null
+          id?: string
+          kind?: string
+          needs_review?: boolean
+          posted_at?: string | null
+          posted_automatically?: boolean
+          posted_by?: string | null
+          proposal?: Json | null
+          reverses_entry_id?: string | null
+          review_reason?: string | null
+          rule_explanation?: string | null
+          source_key?: string | null
+          source_type?: string | null
+          status?: string
+          stripe_account_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_journal_entries_reverses_entry_id_fkey"
+            columns: ["reverses_entry_id"]
+            isOneToOne: false
+            referencedRelation: "fin_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_journal_lines: {
+        Row: {
+          account_code: string
+          credit_minor: number
+          debit_minor: number
+          entry_id: string
+          fx_rate: number | null
+          fx_source: string | null
+          id: string
+          line_no: number
+          memo: string | null
+          original_amount_minor: number | null
+          original_currency: string
+        }
+        Insert: {
+          account_code: string
+          credit_minor?: number
+          debit_minor?: number
+          entry_id: string
+          fx_rate?: number | null
+          fx_source?: string | null
+          id?: string
+          line_no?: number
+          memo?: string | null
+          original_amount_minor?: number | null
+          original_currency?: string
+        }
+        Update: {
+          account_code?: string
+          credit_minor?: number
+          debit_minor?: number
+          entry_id?: string
+          fx_rate?: number | null
+          fx_source?: string | null
+          id?: string
+          line_no?: number
+          memo?: string | null
+          original_amount_minor?: number | null
+          original_currency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_journal_lines_account_code_fkey"
+            columns: ["account_code"]
+            isOneToOne: false
+            referencedRelation: "fin_accounts"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "fin_journal_lines_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "fin_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_membership_rates: {
+        Row: {
+          amount_minor: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          effective_from: string
+          id: string
+          note: string | null
+          period_months: number
+        }
+        Insert: {
+          amount_minor: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          effective_from: string
+          id?: string
+          note?: string | null
+          period_months: number
+        }
+        Update: {
+          amount_minor?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          effective_from?: string
+          id?: string
+          note?: string | null
+          period_months?: number
+        }
+        Relationships: []
+      }
+      fin_periods: {
+        Row: {
+          approval_stage: string
+          id: string
+          kind: string
+          locked_at: string | null
+          locked_by: string | null
+          period_end: string
+          period_start: string
+          reopen_reason: string | null
+          reopened_at: string | null
+          reopened_by: string | null
+          status: string
+        }
+        Insert: {
+          approval_stage?: string
+          id?: string
+          kind: string
+          locked_at?: string | null
+          locked_by?: string | null
+          period_end: string
+          period_start: string
+          reopen_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          status?: string
+        }
+        Update: {
+          approval_stage?: string
+          id?: string
+          kind?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          period_end?: string
+          period_start?: string
+          reopen_reason?: string | null
+          reopened_at?: string | null
+          reopened_by?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      fin_reimbursement_claims: {
+        Row: {
+          amount_minor: number
+          claimant_id: string
+          claimant_name: string
+          created_at: string
+          document_ids: string[]
+          expense_account_code: string | null
+          expense_date: string | null
+          id: string
+          is_opening: boolean
+          journal_entry_id: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          amount_minor: number
+          claimant_id: string
+          claimant_name: string
+          created_at?: string
+          document_ids?: string[]
+          expense_account_code?: string | null
+          expense_date?: string | null
+          id?: string
+          is_opening?: boolean
+          journal_entry_id?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          amount_minor?: number
+          claimant_id?: string
+          claimant_name?: string
+          created_at?: string
+          document_ids?: string[]
+          expense_account_code?: string | null
+          expense_date?: string | null
+          id?: string
+          is_opening?: boolean
+          journal_entry_id?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_reimbursement_claims_expense_account_code_fkey"
+            columns: ["expense_account_code"]
+            isOneToOne: false
+            referencedRelation: "fin_accounts"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "fin_reimbursement_claims_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "fin_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_repayments: {
+        Row: {
+          amount_minor: number
+          bank_transaction_id: string | null
+          claimant_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          journal_entry_id: string | null
+          note: string | null
+          paid_on: string
+        }
+        Insert: {
+          amount_minor: number
+          bank_transaction_id?: string | null
+          claimant_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          note?: string | null
+          paid_on: string
+        }
+        Update: {
+          amount_minor?: number
+          bank_transaction_id?: string | null
+          claimant_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          journal_entry_id?: string | null
+          note?: string | null
+          paid_on?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fin_repayments_bank_transaction_id_fkey"
+            columns: ["bank_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "fin_bank_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fin_repayments_journal_entry_id_fkey"
+            columns: ["journal_entry_id"]
+            isOneToOne: false
+            referencedRelation: "fin_journal_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fin_settings: {
+        Row: {
+          auto_posting_enabled: boolean
+          auto_posting_enabled_at: string | null
+          auto_posting_enabled_by: string | null
+          cutoff_approved_at: string | null
+          cutoff_approved_by: string | null
+          cutoff_at: string | null
+          external_backup_destination: string | null
+          fiscal_year: string
+          founded_on: string
+          id: number
+          org_name: string
+          rules_approved_at: string | null
+          rules_approved_by: string | null
+          treasurer_name: string
+          updated_at: string
+          vat_confirmed_at: string | null
+          vat_note: string | null
+        }
+        Insert: {
+          auto_posting_enabled?: boolean
+          auto_posting_enabled_at?: string | null
+          auto_posting_enabled_by?: string | null
+          cutoff_approved_at?: string | null
+          cutoff_approved_by?: string | null
+          cutoff_at?: string | null
+          external_backup_destination?: string | null
+          fiscal_year?: string
+          founded_on?: string
+          id?: number
+          org_name?: string
+          rules_approved_at?: string | null
+          rules_approved_by?: string | null
+          treasurer_name?: string
+          updated_at?: string
+          vat_confirmed_at?: string | null
+          vat_note?: string | null
+        }
+        Update: {
+          auto_posting_enabled?: boolean
+          auto_posting_enabled_at?: string | null
+          auto_posting_enabled_by?: string | null
+          cutoff_approved_at?: string | null
+          cutoff_approved_by?: string | null
+          cutoff_at?: string | null
+          external_backup_destination?: string | null
+          fiscal_year?: string
+          founded_on?: string
+          id?: number
+          org_name?: string
+          rules_approved_at?: string | null
+          rules_approved_by?: string | null
+          treasurer_name?: string
+          updated_at?: string
+          vat_confirmed_at?: string | null
+          vat_note?: string | null
+        }
+        Relationships: []
+      }
+      fin_stripe_access_checks: {
+        Row: {
+          checked_at: string
+          environment: string
+          id: string
+          results: Json
+        }
+        Insert: {
+          checked_at?: string
+          environment: string
+          id?: string
+          results: Json
+        }
+        Update: {
+          checked_at?: string
+          environment?: string
+          id?: string
+          results?: Json
+        }
+        Relationships: []
+      }
+      fin_stripe_events: {
+        Row: {
+          attempts: number
+          environment: string
+          event_id: string
+          last_error: string | null
+          object_id: string | null
+          processed_at: string | null
+          received_at: string
+          type: string
+        }
+        Insert: {
+          attempts?: number
+          environment: string
+          event_id: string
+          last_error?: string | null
+          object_id?: string | null
+          processed_at?: string | null
+          received_at?: string
+          type: string
+        }
+        Update: {
+          attempts?: number
+          environment?: string
+          event_id?: string
+          last_error?: string | null
+          object_id?: string | null
+          processed_at?: string | null
+          received_at?: string
+          type?: string
+        }
+        Relationships: []
+      }
+      fin_stripe_objects: {
+        Row: {
+          amount_minor: number | null
+          currency: string | null
+          data: Json
+          environment: string
+          fetched_at: string
+          id: string
+          is_historical: boolean
+          object_type: string
+          source_id: string | null
+          status: string | null
+          stripe_account_id: string
+          stripe_created_at: string | null
+          stripe_id: string
+          unresolved: boolean
+        }
+        Insert: {
+          amount_minor?: number | null
+          currency?: string | null
+          data: Json
+          environment: string
+          fetched_at?: string
+          id?: string
+          is_historical?: boolean
+          object_type: string
+          source_id?: string | null
+          status?: string | null
+          stripe_account_id?: string
+          stripe_created_at?: string | null
+          stripe_id: string
+          unresolved?: boolean
+        }
+        Update: {
+          amount_minor?: number | null
+          currency?: string | null
+          data?: Json
+          environment?: string
+          fetched_at?: string
+          id?: string
+          is_historical?: boolean
+          object_type?: string
+          source_id?: string | null
+          status?: string | null
+          stripe_account_id?: string
+          stripe_created_at?: string | null
+          stripe_id?: string
+          unresolved?: boolean
+        }
+        Relationships: []
+      }
+      fin_stripe_sync_state: {
+        Row: {
+          completed: boolean
+          cursor: string | null
+          environment: string
+          last_error: string | null
+          last_run_at: string | null
+          last_success_at: string | null
+          object_type: string
+        }
+        Insert: {
+          completed?: boolean
+          cursor?: string | null
+          environment: string
+          last_error?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          object_type: string
+        }
+        Update: {
+          completed?: boolean
+          cursor?: string | null
+          environment?: string
+          last_error?: string | null
+          last_run_at?: string | null
+          last_success_at?: string | null
+          object_type?: string
+        }
+        Relationships: []
+      }
+      fin_sync_errors: {
+        Row: {
+          context: string
+          created_at: string
+          environment: string | null
+          id: string
+          message: string
+          resolved_at: string | null
+        }
+        Insert: {
+          context: string
+          created_at?: string
+          environment?: string | null
+          id?: string
+          message: string
+          resolved_at?: string | null
+        }
+        Update: {
+          context?: string
+          created_at?: string
+          environment?: string | null
+          id?: string
+          message?: string
+          resolved_at?: string | null
+        }
+        Relationships: []
+      }
+      fin_user_roles: {
+        Row: {
+          created_at: string
+          granted_by: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          role: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          granted_by?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       group_messages: {
         Row: {
           body: string
@@ -2987,6 +4141,27 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      fin_my_roles: { Args: never; Returns: string[] }
+      fin_post_entry: { Args: { _entry_id: string }; Returns: undefined }
+      fin_record_stripe_posting: {
+        Args: {
+          _account: string
+          _bt_id: string
+          _date: string
+          _decision: string
+          _description: string
+          _env: string
+          _explanation: string
+          _lines: Json
+          _reason: string
+          _rule_id: string
+        }
+        Returns: Json
+      }
+      fin_reverse_entry: {
+        Args: { _entry_id: string; _reason: string }
+        Returns: string
       }
       get_cron_token: { Args: never; Returns: string }
       get_division_lobby: {
