@@ -19,7 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import type { ClassConfig } from "@/lib/tracks";
 import { parseLmuRaceFile, normalizeCarClass, findBestNameMatch } from "@/lib/lmu-parser";
-import { deleteLeagueRaceResults, setResultsConfirmed, setResultsPublished, recalcLeaguePoints, enforceLeagueDnsLimit } from "@/lib/league-results.functions";
+import { deleteLeagueRaceResults, setResultsConfirmed, setResultsPublished, recalcLeaguePoints, enforceLeagueDnsLimit, ensureLeagueJoinerPoints } from "@/lib/league-results.functions";
 import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { seatCap, isSplitClass } from "@/lib/class-capacity";
@@ -979,6 +979,14 @@ function DivisionEditor({
       if (validQualiRows.length > 0) {
         const { error: qErr } = await supabase.from("league_results").insert(validQualiRows);
         if (qErr) throw qErr;
+      }
+
+      // Tiltrædelsespoint (også for reserver der kørte denne afdeling).
+      try {
+        await ensureLeagueJoinerPoints({ data: { leagueId: (division as any).league_id } });
+      } catch (err) {
+        console.error(err);
+        toast.error("Tiltrædelsespoint kunne ikke opdateres");
       }
 
       try {

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { parseLmuRaceFileServer } from "@/lib/lmu-parser-server";
 import { normalizeCarClass, nameSimilarity } from "@/lib/lmu-parser";
+import { joinerEligibilityByKey } from "@/lib/joiner-eligibility";
 
 const inputSchema = z.object({
   leagueId: z.string().uuid(),
@@ -252,7 +253,7 @@ export async function ensureJoinerPoints(
 
   let entriesQuery = supabaseAdmin
     .from("entries")
-    .select("user_id,driver_name,car_class,driver_category,car_number,created_at")
+    .select("user_id,driver_name,car_class,driver_category,car_number,created_at,division_id,waitlist")
     .eq("league_id", leagueId)
     .is("withdrawn_at", null)
     .eq("waitlist", false);
@@ -267,23 +268,40 @@ export async function ensureJoinerPoints(
   if (eErr) throw new Error(eErr.message);
   if (dErr) throw new Error(dErr.message);
 
-  let added = 0;
-  for (const div of divisions ?? []) {
+  const divInfo: { div: any; settings: any; results: StoredRaceRow[]; raceTs: number | null }[] = (divisions ?? []).map((div: any) => {
     const settings = ((div.settings as any) ?? {});
     const results: StoredRaceRow[] = Array.isArray(settings.results) ? settings.results : [];
-    if (results.length === 0) continue; // afdelingen er ikke afholdt endnu
     const raceTsRaw = div.race_date ?? settings.completed_at ?? div.created_at ?? null;
-    const raceTs = raceTsRaw ? new Date(raceTsRaw).getTime() : null;
-    if (raceTs == null || !Number.isFinite(raceTs)) continue;
+    const t = raceTsRaw ? new Date(raceTsRaw).getTime() : NaN;
+    return { div, settings, results, raceTs: Number.isFinite(t) ? t : null };
+  });
+  // Reserver (tilmelding knyttet til én afdeling) får tiltrædelsespoint for
+  // alle tidligere afdelinger, når de faktisk har kørt deres afdeling.
+  const eligibleFrom = joinerEligibilityByKey(
+    (entries ?? []) as any[],
+    divInfo.map((d) => ({ id: d.div.id, raceTs: d.raceTs, results: d.results as any })),
+  );
+  // Detaljer (navn, kategori, nummer) — foretræk ligatilmeldingen frem for reservepladsen.
+  const entryByKey = new Map<string, any>();
+  for (const e of (entries ?? []) as any[]) {
+    const key = `${e.user_id}|${e.car_class}`;
+    const cur = entryByKey.get(key);
+    if (!cur || (cur.division_id && !e.division_id)) entryByKey.set(key, e);
+  }
+
+  let added = 0;
+  for (const { div, settings, results, raceTs } of divInfo) {
+    if (results.length === 0) continue; // afdelingen er ikke afholdt endnu
+    if (raceTs == null) continue;
 
     const realRows = results.filter((r) => !r.joiner);
     const realKeys = new Set(realRows.map((r) => `${r.user_id}|${r.car_class}`));
     const wanted = new Map<string, StoredRaceRow>();
-    for (const e of (entries ?? []) as any[]) {
-      const entryTs = e.created_at ? new Date(e.created_at).getTime() : null;
-      if (entryTs == null || !Number.isFinite(entryTs) || entryTs <= raceTs) continue;
-      const key = `${e.user_id}|${e.car_class}`;
+    for (const [key, fromTs] of eligibleFrom) {
+      if (fromTs <= raceTs) continue;
       if (realKeys.has(key)) continue;
+      const e = entryByKey.get(key);
+      if (!e) continue;
       wanted.set(key, {
         joiner: true,
         user_id: e.user_id,
@@ -345,6 +363,17 @@ export const ensureMyJoinerPoints = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     return await ensureJoinerPoints(supabaseAdmin, data.leagueId, { userId: context.userId });
+  });
+
+// Admin: tildel/ret tiltrædelsespoint for hele ligaen (fx efter at
+// stillingseditoren har gemt en afdeling, så reserver der kørte får point).
+export const ensureLeagueJoinerPoints = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ leagueId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    return await ensureJoinerPoints(supabaseAdmin, data.leagueId);
   });
 
 async function matchDriversFromXml(
