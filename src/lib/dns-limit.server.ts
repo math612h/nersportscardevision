@@ -1,6 +1,7 @@
 // Automatisk udmelding af kørere, der har nået ligaens DNS-grænse.
 // Udmelding er "blød" (withdrawn_at), så resultater og holdpoint bevares.
 import { seatCap, isSplitClass } from "@/lib/class-capacity";
+import { countDnsSinceSignup, divisionTimestamp, type DnsDivision } from "@/lib/dns-count";
 
 const SITE = "https://lmudanmark.dk";
 
@@ -43,21 +44,15 @@ export async function enforceDnsLimit(admin: any, leagueId: string): Promise<Dns
   };
   if (!configs.some((c) => Number(c?.dns_limit ?? 0) > 0)) return result;
 
-  const { data: divisions } = await admin.from("divisions").select("id,settings").eq("league_id", leagueId);
-  const dnsCount = new Map<string, number>();
-  for (const d of divisions ?? []) {
-    // Kun bekræftede resultater tæller — en frisk upload må aldrig
-    // udløse en udmeldelse, før en admin har kontrolleret filen.
-    if ((d.settings as any)?.results_confirmed !== true) continue;
-    const rows: any[] = Array.isArray(d.settings?.results) ? d.settings.results : [];
-    for (const r of rows) {
-      if (!r?.user_id || r.joiner || r.status === "joiner") continue;
-      const isDns = r.status === "dns" || (!r.status && r.dns);
-      if (!isDns) continue;
-      const k = `${r.user_id}|${r.car_class}`;
-      dnsCount.set(k, (dnsCount.get(k) ?? 0) + 1);
-    }
-  }
+  const { data: divisions } = await admin
+    .from("divisions").select("id,race_date,created_at,settings").eq("league_id", leagueId);
+  // Kun bekræftede resultater tæller — en frisk upload må aldrig
+  // udløse en udmeldelse, før en admin har kontrolleret filen.
+  const dnsDivisions: DnsDivision[] = (divisions ?? []).map((d: any) => ({
+    confirmed: (d.settings as any)?.results_confirmed === true,
+    raceTs: divisionTimestamp(d),
+    results: Array.isArray(d.settings?.results) ? d.settings.results : [],
+  }));
 
   const { data: entries } = await admin
     .from("entries")
@@ -71,7 +66,8 @@ export async function enforceDnsLimit(admin: any, leagueId: string): Promise<Dns
     if (e.waitlist) continue;
     const limit = limitFor(e.car_class, e.driver_category);
     if (!limit) continue;
-    const n = dnsCount.get(`${e.user_id}|${e.car_class}`) ?? 0;
+    // Kun DNS efter denne tilmelding tæller, så genindmeldte starter forfra.
+    const n = countDnsSinceSignup(e.user_id, e.car_class, e.created_at, dnsDivisions);
     if (n < limit) continue;
 
     const { error } = await admin.from("entries")
@@ -90,9 +86,9 @@ export async function enforceDnsLimit(admin: any, leagueId: string): Promise<Dns
     await notify(
       admin, e.user_id,
       `Du er blevet meldt ud af ${league.name}`,
-      `Du er blevet meldt ud af ${league.name}, fordi du har ${n} DNS (udeblivelser) i denne sæson, og ligaens grænse er ${limit}. ` +
+      `Du er blevet meldt ud af ${league.name}, fordi du har ${n} DNS (udeblivelser) siden din tilmelding, og ligaens grænse er ${limit}. ` +
         `Det gør vi for at holde griddet fyldt for dem, der kører. Dine resultater står stadig i stillingerne.\n\n` +
-        `Vi håber at se dig på griddet igen i en kommende liga! 🏁`,
+        `Du er velkommen til at tilmelde dig igen — så starter du forfra med 0 DNS. 🏁`,
       `/ligaer/${leagueId}`,
     );
   }
