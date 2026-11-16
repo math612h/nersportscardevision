@@ -8,3 +8,4 @@
 - Finance: automatic posting stays off unless cutoff and rules are approved after their last change (DB guard), and any rule edit turns it off again.
 - Finance access uses `fin_user_roles` (finance_admin/finance_approver) checked server-side via `fin_my_roles`; the admin layout only admits finance users to `/admin/regnskab`.
 - Tiltrædelsespoint (joiner points) eligibility lives in `src/lib/joiner-eligibility.ts`: league entries count from signup time; single-division reserve entries count from that round's start only if the reserve actually drove it (non-DNS), so reserves get points for earlier rounds without waitlisters earning free points.
+- Driver standings (points, drop rounds, tie-break sorting) are computed only via `src/lib/league-standings.ts`, so the standings table, personal position cards and the front-page Driver Box always agree.

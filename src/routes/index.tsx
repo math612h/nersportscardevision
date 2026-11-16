@@ -29,6 +29,7 @@ import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { LivestreamSection, useLiveStatus } from "@/components/LivestreamSection";
 import { useActiveLeague } from "@/hooks/use-active-league";
 import { PracticeDaySection } from "@/components/PracticeDaySection";
+import { DriverBox } from "@/components/DriverBox";
 
 const DriversBriefing = lazy(() => import("@/components/DriversBriefing").then(m => ({ default: m.DriversBriefing })));
 
@@ -778,7 +779,12 @@ function NextEventCard() {
 
   const raceMs = new Date(next.race_date).getTime();
   if (raceMs - nowTick <= 12 * 60 * 60_000) {
-    return <RaceDaySection next={next} />;
+    return (
+      <div className="space-y-3">
+        <RaceDaySection next={next} />
+        <DriverBox leagueId={next.league_id} />
+      </div>
+    );
   }
 
   const eventDate = new Date(next.race_date);
@@ -800,6 +806,7 @@ function NextEventCard() {
   );
 
   return (
+    <div className="space-y-3">
     <section>
       <Link
         to="/ligaer/$leagueId"
@@ -859,6 +866,8 @@ function NextEventCard() {
         </div>
       </Link>
     </section>
+    <DriverBox leagueId={next.league_id} />
+    </div>
   );
 }
 
