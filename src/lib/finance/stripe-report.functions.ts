@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { approvedCutoffUnix, endingBalanceFromCsv } from "./stripe-report";
+import { approvedCutoffUnix } from "./stripe-report";
 
 const NO_ACCESS = "Stripe Live-nøglen har ikke adgang til rapporter. Giv nøglen læseadgang til Reporting / Report runs.";
 
@@ -46,7 +46,7 @@ export const getCutoffBalanceReport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((i) => z.object({ id: z.string().regex(/^frr_[A-Za-z0-9]+$/) }).parse(i))
   .handler(async ({ data, context }) => {
-    const { createStripeClient, getStripeErrorMessage, getConnectionApiKey } = await import("@/lib/stripe.server");
+    const { createStripeClient, getStripeErrorMessage } = await import("@/lib/stripe.server");
     try {
       await requireFin(context.supabase);
       const stripe = createStripeClient("live");
@@ -55,20 +55,12 @@ export const getCutoffBalanceReport = createServerFn({ method: "POST" })
       if (run.status === "failed") return { error: `Stripe-rapporten fejlede: ${run.error ?? "ukendt fejl"}` };
       const url = run.result?.url;
       if (!url) return { error: "Stripe-rapporten har ingen fil" };
-      const gw = url.replace(/^https:\/\/files\.stripe\.com/, "https://connector-gateway.lovable.dev/stripe");
-      const res = await fetch(gw, {
-        headers: { "X-Connection-Api-Key": getConnectionApiKey("live"), "Lovable-API-Key": process.env["LOVABLE_API_KEY"] ?? "" },
-      });
-      const body = await res.text();
-      if (!res.ok) {
-        const msg = `Kunne ikke hente Stripe-CSV [${res.status}]: ${body.slice(0, 300)}`;
-        return { error: res.status === 401 || res.status === 403 ? `${NO_ACCESS} ${msg}` : msg };
-      }
-      let endingMinor: number;
-      try { endingMinor = endingBalanceFromCsv(body); }
-      catch (e) { return { error: (e as Error).message, csv: body, runId: run.id }; }
-      return { status: "succeeded" as const, runId: run.id, createdAt: new Date(run.created * 1000).toISOString(), endingMinor, csv: body };
-    } catch (e) {
+      let host = "";
+      try { host = new URL(url).hostname; } catch { /* invalid */ }
+      if (host !== "files.stripe.com") return { error: `Uventet filvært for Stripe-rapporten (${host || "ugyldig URL"}). Forventede files.stripe.com.` };
+      // The Stripe Live gateway connection only reaches api.stripe.com; rewriting files.stripe.com there returns 404.
+      return { error: "Rapporten er klar hos Stripe, men der er ingen serverforbindelse til files.stripe.com, så den originale CSV kan ikke hentes. Den historiske saldo vises først, når CSV'en er læst.", runId: run.id };
+          } catch (e) {
       return { error: errMsg(e, getStripeErrorMessage) };
     }
   });
