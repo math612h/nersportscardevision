@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { deleteRule, listApprovals, listFinanceAudit, listPeriods, listRules, recordApproval, runStripeAction, saveRule, setPeriodLock, upsertPeriod } from "@/lib/finance/finance.functions";
 import { listBankAccounts } from "@/lib/finance/bank.functions";
 import { annualReportPdf, createFullBackup, exportCsv, getReportData, runRestoreTest } from "@/lib/finance/export.functions";
+import { getCutoffBalanceReport, startCutoffBalanceReport } from "@/lib/finance/stripe-report.functions";
 import { reconcileStripe } from "@/lib/finance/reconcile";
 import { CATEGORY_LABEL } from "@/lib/finance/accounts";
 import { dkk, downloadBase64, downloadText, StatusBadge, useAction } from "./shared";
@@ -78,10 +79,46 @@ function ReconCard({ closing }: { closing: Record<string, number> }) {
             setRecon(reconcileStripe(r.result, { dkk: closing["1010"] ?? 0 }));
           }}>Afstem Stripe (live)</Button>
         </div>
+        <CutoffBalance />
         {recon?.map((r) => <div key={r.currency}>{r.currency.toUpperCase()}: bogført {dkk(r.book)} · Stripe {dkk(r.stripeTotal)} (tilgængelig {dkk(r.available)}, afventer {dkk(r.pending)}, reserveret {dkk(r.reserved)}) <StatusBadge ok={r.difference === 0}>Difference {dkk(r.difference)}</StatusBadge></div>)}
         <div>Bank: {last ? <>kontoudtog {last.statement_date}: {dkk(last.balance_minor)} · bogført (perioden) {dkk(closing["1000"] ?? 0)} <StatusBadge ok={(closing["1000"] ?? 0) === Number(last.balance_minor)}>Difference {dkk((closing["1000"] ?? 0) - Number(last.balance_minor))}</StatusBadge><span className="block text-xs text-muted-foreground">Vælg “Til”-datoen lig kontoudtogets dato for en præcis sammenligning.</span></> : "Intet kontoudtog importeret."}</div>
       </CardContent>
     </Card>
+  );
+}
+
+function CutoffBalance() {
+  const start = useServerFn(startCutoffBalanceReport);
+  const get = useServerFn(getCutoffBalanceReport);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [res, setRes] = useState<{ endingMinor: number; runId: string; createdAt: string; cutoff: string } | null>(null);
+  const [csv, setCsv] = useState<{ text: string; cutoff: string } | null>(null);
+  async function go() {
+    setBusy(true); setErr(null); setRes(null); setCsv(null);
+    try {
+      const s: any = await start();
+      if (s.error) throw new Error(s.error);
+      for (let i = 0; i < 100; i++) {
+        await new Promise((r) => setTimeout(r, 3000));
+        const r: any = await get({ data: { id: s.id } });
+        if (r.csv) setCsv({ text: r.csv, cutoff: s.cutoff.slice(0, 10) });
+        if (r.error) throw new Error(r.error);
+        if (r.status === "succeeded") { setRes({ endingMinor: r.endingMinor, runId: r.runId, createdAt: r.createdAt, cutoff: s.cutoff }); return; }
+      }
+      throw new Error("Stripe-rapporten blev ikke færdig i tide. Prøv igen.");
+    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  }
+  return (
+    <div className="space-y-2 rounded-md border p-3">
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" disabled={busy} onClick={go}>{busy ? "Henter rapport…" : "Hent Stripe-saldo ved skæringspunkt"}</Button>
+        {csv && <Button variant="secondary" onClick={() => downloadText(`stripe-balance-summary-${csv.cutoff}.csv`, csv.text)}>Download original CSV</Button>}
+      </div>
+      {err && <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Kunne ikke hente Stripe-saldo</AlertTitle><AlertDescription>{err}</AlertDescription></Alert>}
+      <div>Historisk Stripe-saldo (DKK) ved skæringspunkt: <strong>{res ? dkk(res.endingMinor) : "—"}</strong></div>
+      {res && <div className="text-xs text-muted-foreground">Skæringspunkt {new Date(res.cutoff).toLocaleString("da-DK", { timeZone: "Europe/Copenhagen" })} · rapport {res.runId} · oprettet {new Date(res.createdAt).toLocaleString("da-DK", { timeZone: "Europe/Copenhagen" })}</div>}
+    </div>
   );
 }
 
