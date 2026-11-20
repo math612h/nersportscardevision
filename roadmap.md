@@ -10,3 +10,4 @@
 - [x] Opsætningsguide + liste over ikke-afprøvet
 - [ ] Automatic external backup — blocked: needs a Google Drive/Dropbox connection chosen by the user
 - [ ] Live Stripe/bank/AI flows tested with real data — needs the treasurer's access and real files
+- [ ] Stripe-saldo ved skæringspunkt: CSV-download via egen files.stripe.com-forbindelse (begrænset live-nøgle, kun Files-læseadgang)
