@@ -26,6 +26,7 @@ import { TeamAvatarOnly } from "@/components/TeamAvatar";
 import { DonorFrame } from "@/lib/donation-tier";
 import { computeTeamRacePoints } from "@/lib/team-points";
 import { aggregateStandings, compareStandings } from "@/lib/league-standings";
+import { resignupLockedCar, type PreviousEntry, type CarLockSettings } from "@/lib/resignup-car-lock";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -1468,6 +1469,36 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
 
   const blockedByApprovedOnly = approvedOnly && !isApproved;
 
+  // Genindmelding i samme klasse efter bil-låsen: samme bil som før.
+  const { data: carLockData } = useQuery({
+    queryKey: ["resignup-car-lock", leagueId, user?.id],
+    enabled: !!user && open,
+    queryFn: async () => {
+      const [{ data: prev, error: pErr }, { data: lg, error: lErr }] = await Promise.all([
+        supabase
+          .from("entries")
+          .select("car_class,car_model,car_number,withdrawn_at,division_id")
+          .eq("league_id", leagueId)
+          .eq("user_id", user!.id)
+          .not("withdrawn_at", "is", null),
+        supabase.from("leagues").select("car_lock_never,car_lock_at").eq("id", leagueId).maybeSingle(),
+      ]);
+      if (pErr) throw pErr;
+      if (lErr) throw lErr;
+      return { previous: (prev ?? []) as PreviousEntry[], league: (lg ?? null) as CarLockSettings | null };
+    },
+  });
+  const lockedCar = !isAdmin && carLockData && selected
+    ? resignupLockedCar(carLockData.previous, selected.car_class, carLockData.league)
+    : null;
+  useEffect(() => {
+    if (!lockedCar) return;
+    if (carModel !== lockedCar.carModel) setCarModel(lockedCar.carModel);
+    if (carNumber == null && lockedCar.carNumber != null && !taken.includes(lockedCar.carNumber)) {
+      setCarNumber(lockedCar.carNumber);
+    }
+  }, [lockedCar?.carModel, lockedCar?.carNumber, carModel, carNumber, taken]);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return toastError("Du skal være logget ind.");
@@ -1671,7 +1702,18 @@ function SignupDialog({ leagueId, configs, signupOpensAt, approvedOnly }: { leag
                 const allowed = Array.isArray((selected as any).allowed_cars) && (selected as any).allowed_cars.length > 0
                   ? (all.filter((c) => (selected as any).allowed_cars.includes(c)))
                   : all;
-                if (allowed.length === 0) return null;
+                if (allowed.length === 0 && !lockedCar) return null;
+                if (lockedCar) {
+                  return (
+                    <div>
+                      <Label>Bil</Label>
+                      <Input value={lockedCar.carModel} disabled readOnly />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Du har tidligere kørt {lockedCar.carModel} i {selected.car_class} i denne liga. Af hensyn til reglementet og dine optjente point fortsætter du i samme bil.
+                      </p>
+                    </div>
+                  );
+                }
                 return (
                   <div>
                     <Label>Bil</Label>
