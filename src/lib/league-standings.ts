@@ -77,7 +77,7 @@ export function aggregateStandings(
       const pen = Number(r.penalty_seconds ?? 0);
       const ptsPen = Math.max(0, Number(r.penalty_points ?? 0));
       cur.race += r.points;
-      cur.total += Math.max(0, r.points - ptsPen);
+      cur.total += r.points - ptsPen;
       cur.penalty += pen;
       cur.pointPenalty += ptsPen;
       const rowStatus = isResultStatus((r as any).status)
@@ -92,21 +92,21 @@ export function aggregateStandings(
     }
   }
 
-  // Drop-runder: hver kørers værste afdelinger (laveste point minus pointstraf)
+  // Drop-runder: hver kørers værste afdelinger (laveste løbspoint)
   // streges og tæller ikke i totalen. DNS (0 point) og tiltrædelsespoint tæller
   // med som mulige drop-runder. Kun når der er kørt flere afdelinger end antallet.
   if (dropRounds > 0 && completed.length > dropRounds) {
     for (const agg of map.values()) {
       const nets = Object.entries(agg.rounds)
-        .map(([divId, c]) => ({ divId, net: Math.max(0, c.points - c.pointPenalty) }))
+        .map(([divId, c]) => ({ divId, net: c.points }))
         .sort((a, b) => a.net - b.net);
       const dropped = new Set(nets.slice(0, dropRounds).map((n) => n.divId));
       if (dropped.size === 0) continue;
       agg.dropped = dropped;
       for (const divId of dropped) {
         const c = agg.rounds[divId];
-        agg.total -= Math.max(0, c.points - c.pointPenalty);
-        agg.pointPenalty -= c.pointPenalty;
+        // Kun løbspoint droppes; idømte strafpoint trækkes altid fra totalen.
+        agg.total -= c.points;
       }
     }
   }

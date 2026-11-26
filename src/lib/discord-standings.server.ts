@@ -103,6 +103,7 @@ export async function buildLeagueStandingsEmbeds(
     r.driver_category;
 
   type Agg = {
+    penaltyTotal?: number;
     key: string;
     user_id?: string | null;
     driver_name: string;
@@ -134,9 +135,9 @@ export async function buildLeagueStandingsEmbeds(
           rounds: {},
         } as Agg);
       const ptsPen = Math.max(0, Number(r.penalty_points ?? 0));
-      const net = Math.max(0, Number(r.points ?? 0) - ptsPen);
-      cur.total += net;
-      cur.rounds[d.id] = (cur.rounds[d.id] ?? 0) + net;
+      const racePts = Number(r.points ?? 0);
+      cur.rounds[d.id] = (cur.rounds[d.id] ?? 0) + racePts;
+      cur.penaltyTotal = (cur.penaltyTotal ?? 0) + ptsPen;
       const st = typeof r.status === "string" ? r.status : r.dns ? "dns" : null;
       if (st === "dns") cur.dnsCount += 1;
       else if (st === "dnf") cur.dnfCount += 1;
@@ -146,7 +147,7 @@ export async function buildLeagueStandingsEmbeds(
   }
   const dropRounds = Math.max(0, Number((league.points_system as any)?.drop_rounds ?? 0)) || 0;
   for (const agg of map.values()) {
-    agg.total = totalAfterDrop(agg.rounds, dropRounds, completed.length);
+    agg.total = totalAfterDrop(agg.rounds, dropRounds, completed.length) - (agg.penaltyTotal ?? 0);
   }
   const allRows = Array.from(map.values());
 

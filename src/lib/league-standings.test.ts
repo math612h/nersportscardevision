@@ -31,3 +31,15 @@ describe("driverDuel", () => {
     expect(driverDuel(rows, "x")).toBeNull();
   });
 });
+
+import { aggregateStandings as agg2 } from "./league-standings";
+describe("strafpoint og drop-runde", () => {
+  it("trækker strafpoint fra selv ved 0 løbspoint i en droppet afdeling", () => {
+    const mk = (id: string, points: number, pen: number) => ({ id, settings: { results: [
+      { user_id: "u1", car_number: 110, driver_name: "D", car_class: "GT3", driver_category: "Am", class_position: 1, points, penalty_points: pen },
+    ] } });
+    const [r] = agg2([mk("a", 50, 0), mk("b", 0, 4), mk("c", 40, 0)], [], 1);
+    expect(r!.total).toBe(86);
+    expect(r!.pointPenalty).toBe(4);
+  });
+});
