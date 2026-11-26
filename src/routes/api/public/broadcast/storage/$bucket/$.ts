@@ -14,6 +14,16 @@ export const Route = createFileRoute("/api/public/broadcast/storage/$bucket/$")(
         }
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        if (bucket === "stream-photos") {
+          // Only serve stream photos that a driver has actively set on their profile.
+          const { data: owner } = await supabaseAdmin
+            .from("profiles")
+            .select("id")
+            .eq("stream_photo_path", path)
+            .limit(1)
+            .maybeSingle();
+          if (!owner) return new Response("Not found", { status: 404 });
+        }
         const { data, error } = await supabaseAdmin.storage.from(bucket).download(path);
         if (error || !data) return new Response("Not found", { status: 404 });
 

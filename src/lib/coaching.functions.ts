@@ -123,9 +123,10 @@ export const listCoachRatings = createServerFn({ method: "GET" })
   .inputValidator((d: { coach_user_id: string }) => ({
     coach_user_id: z.string().uuid().parse(d?.coach_user_id),
   }))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: rows } = await supabaseAdmin
+    // RLS-scoped: only the coach, the rater (own review) or admins see reviews.
+    const { data: rows } = await context.supabase
       .from("coaching_ratings")
       .select("id, stars, comment, created_at, rater_user_id")
       .eq("coach_user_id", data.coach_user_id)

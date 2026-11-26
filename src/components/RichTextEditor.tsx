@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { Bold, Italic, Link as LinkIcon, Heading2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +29,7 @@ export function RichTextEditor({ value, onChange, placeholder, minHeight = 140 }
 
   useEffect(() => {
     if (ref.current && ref.current.innerHTML !== value) {
-      ref.current.innerHTML = value || "";
+      ref.current.innerHTML = DOMPurify.sanitize(value || "");
     }
   }, [value]);
 

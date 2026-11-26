@@ -234,10 +234,13 @@ export const getCheckoutSessionStatus = createServerFn({ method: "POST" })
   .inputValidator((i) =>
     z.object({ sessionId: z.string().min(1), environment: environmentSchema }).parse(i),
   )
-  .handler(async ({ data }): Promise<{ status: string; paymentStatus: string } | { error: string }> => {
+  .handler(async ({ data, context }): Promise<{ status: string; paymentStatus: string } | { error: string }> => {
     try {
       const stripe = createStripeClient(data.environment as StripeEnv);
       const session = await stripe.checkout.sessions.retrieve(data.sessionId);
+      if (session.metadata?.userId !== context.userId) {
+        return { error: "Betalingen blev ikke fundet." };
+      }
       return {
         status: session.status ?? "unknown",
         paymentStatus: session.payment_status ?? "unknown",

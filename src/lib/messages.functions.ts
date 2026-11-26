@@ -572,6 +572,16 @@ export const notifyTeamInvitation = createServerFn({ method: "POST" })
       throw new Error("Kun teamejeren kan sende invitationer");
     }
 
+    const { data: pendingInv } = await (supabaseAdmin as any)
+      .from("team_invitations")
+      .select("id")
+      .eq("team_id", team.id)
+      .eq("user_id", data.userId)
+      .eq("status", "pending")
+      .limit(1)
+      .maybeSingle();
+    if (!pendingInv) throw new Error("Der findes ingen afventende invitation til denne bruger");
+
     const { error } = await (supabaseAdmin as any).from("notifications").insert({
       user_id: data.userId,
       title: `Du er blevet inviteret til at joine "${team.name}"`,

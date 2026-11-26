@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { sanitizeSearchTerm } from "@/lib/search-sanitize";
 
 const Filters = z.object({
   table: z.string().optional(),
@@ -31,7 +32,8 @@ export const getAuditLog = createServerFn({ method: "POST" })
       .limit(data.limit);
     if (data.table) q = q.eq("table_name", data.table);
     if (data.actorId) q = q.eq("actor_id", data.actorId);
-    if (data.search) q = q.or(`actor_label.ilike.%${data.search}%,row_id.ilike.%${data.search}%`);
+    const term = data.search ? sanitizeSearchTerm(data.search) : "";
+    if (term) q = q.or(`actor_label.ilike.%${term}%,row_id.ilike.%${term}%`);
     const { data: rows, error } = await q;
     if (error) throw error;
     return rows ?? [];

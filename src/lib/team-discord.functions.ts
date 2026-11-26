@@ -12,12 +12,22 @@ async function assertAdmin(userId: string) {
   if (!isAdmin) throw new Error("Kun admins.");
 }
 
-// Idempotent: any authenticated user can trigger a sync for a team.
+// Idempotent: team owner, team members or admins can trigger a sync for a team.
 // Used right after team creation and after member changes.
 export const syncTeamDiscordResources = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ teamId: z.string().uuid() }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: team }, { data: member }, { data: roles }] = await Promise.all([
+      supabaseAdmin.from("teams").select("owner_id").eq("id", data.teamId).maybeSingle(),
+      supabaseAdmin.from("team_members").select("user_id").eq("team_id", data.teamId).eq("user_id", context.userId).maybeSingle(),
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", context.userId),
+    ]);
+    const isAdmin = (roles ?? []).some((r: { role: string }) => r.role === "admin");
+    if (!team || (!isAdmin && team.owner_id !== context.userId && !member)) {
+      return { ok: false, errors: ["Ingen adgang til dette team."], reason: "forbidden" };
+    }
     try {
       const { syncTeamDiscordResourcesCore } = await import("./team-discord.server");
       return await syncTeamDiscordResourcesCore(data.teamId);

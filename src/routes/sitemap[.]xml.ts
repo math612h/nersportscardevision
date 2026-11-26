@@ -24,7 +24,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         try {
           const { data: leagues } = await supabaseAdmin
             .from("leagues")
-            .select("id");
+            .select("id")
+            .eq("published", true);
           for (const l of leagues ?? []) {
             entries.push({
               path: `/ligaer/${l.id}`,
@@ -41,7 +42,8 @@ export const Route = createFileRoute("/sitemap.xml")({
           const { data: divisions } = await supabaseAdmin
             .from("divisions")
             .select("id, league_id, race_date");
-          for (const d of divisions ?? []) {
+          const publishedIds = new Set((leagues ?? []).map((l) => l.id));
+          for (const d of (divisions ?? []).filter((x) => publishedIds.has(x.league_id))) {
             entries.push({
               path: `/ligaer/${d.league_id}/afdeling/${d.id}`,
               lastmod: (d as any).race_date ?? undefined,
