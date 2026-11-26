@@ -24,6 +24,7 @@ import { isResultsPublished } from "@/lib/results-visibility";
 import { ResultsStatusBadge } from "@/components/ResultsStatusBadge";
 import { seatCap, isSplitClass } from "@/lib/class-capacity";
 import { postLeagueStandingsToDiscord } from "@/lib/discord-standings.functions";
+import { ShareStandingsImageButton } from "@/components/ShareStandingsImage";
 
 export const Route = createFileRoute("/_authenticated/_admin/admin/ligaer/$leagueId/stillinger")({
   component: AdminStandings,
@@ -187,7 +188,10 @@ function AdminStandings() {
           <h1 className="text-2xl font-bold">Stillinger</h1>
           {league && <p className="mt-1 text-sm text-muted-foreground">{league.name}</p>}
         </div>
-        <PostStandingsButton leagueId={leagueId} />
+        <div className="flex flex-wrap gap-2">
+          <ShareStandingsImageButton leagueId={leagueId} />
+          <PostStandingsButton leagueId={leagueId} />
+        </div>
       </div>
 
       {(!divisions || divisions.length === 0) && (
