@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { aggregateStandings, compareStandings, type StandingsEntry } from "@/lib/league-standings";
 import { isResultsPublished } from "@/lib/results-visibility";
+import { computeTeamRacePoints } from "@/lib/team-points";
 import logoAsset from "@/assets/lmu-logo.png.asset.json";
 
-type Row = { pos: number; name: string; number: number | null; team: string | null; points: number };
+type Row = { pos: number; name: string; number: number | null; team: string | null; points: number; logo?: string | null };
 
 // Billedets farver (tegnes på canvas, ikke i app-temaet).
 const C = {
@@ -37,7 +38,7 @@ function fit(ctx: CanvasRenderingContext2D, s: string, max: number) {
   return t + "…";
 }
 
-async function drawStandings(canvas: HTMLCanvasElement, opts: { league: string; classLabel: string; subtitle: string; rows: Row[] }) {
+async function drawStandings(canvas: HTMLCanvasElement, opts: { league: string; classLabel: string; subtitle: string; rows: Row[]; teams?: boolean }) {
   const W = 1080, PAD = 60, HEAD = 330, ROW = 72, FOOT = 110;
   const H = HEAD + Math.max(1, opts.rows.length) * ROW + FOOT;
   canvas.width = W; canvas.height = H;
@@ -59,7 +60,7 @@ async function drawStandings(canvas: HTMLCanvasElement, opts: { league: string; 
   ctx.fillText(fit(ctx, opts.league.toUpperCase(), 520), W - PAD, 112);
   ctx.textAlign = "left";
   ctx.fillStyle = C.muted; ctx.font = "700 24px system-ui, sans-serif";
-  ctx.fillText("MESTERSKABSSTILLING", PAD, 200);
+  ctx.fillText(opts.teams ? "TEAMSTILLING" : "MESTERSKABSSTILLING", PAD, 200);
   // tydelig klasse-badge
   ctx.font = "900 64px system-ui, sans-serif";
   const cw = ctx.measureText(opts.classLabel).width;
@@ -71,7 +72,8 @@ async function drawStandings(canvas: HTMLCanvasElement, opts: { league: string; 
   // kolonner
   const xPos = PAD + 40, xName = PAD + 110, xTeam = 600, xPts = W - PAD - 20;
   ctx.fillStyle = C.muted; ctx.font = "700 16px system-ui, sans-serif";
-  ctx.fillText("POS", PAD + 18, HEAD - 6); ctx.fillText("KØRER", xName, HEAD - 6); ctx.fillText("TEAM", xTeam, HEAD - 6);
+  ctx.fillText("POS", PAD + 18, HEAD - 6); ctx.fillText(opts.teams ? "TEAM" : "KØRER", xName, HEAD - 6); if (!opts.teams) ctx.fillText("TEAM", xTeam, HEAD - 6);
+  const logos = await Promise.all(opts.rows.map((r) => (r.logo ? loadImage(r.logo) : Promise.resolve(null))));
   ctx.textAlign = "right"; ctx.fillText("POINT", xPts, HEAD - 6); ctx.textAlign = "left";
 
   opts.rows.forEach((r, i) => {
@@ -89,6 +91,19 @@ async function drawStandings(canvas: HTMLCanvasElement, opts: { league: string; 
     } else {
       ctx.fillStyle = C.text; ctx.font = "800 26px system-ui, sans-serif"; ctx.textAlign = "center";
       ctx.fillText(String(r.pos), xPos, cy + 9); ctx.textAlign = "left";
+    }
+    if (opts.teams) {
+      const L = 48, lx = xName, ly = cy - L / 2;
+      ctx.save(); ctx.beginPath(); ctx.roundRect(lx, ly, L, L, 8); ctx.fillStyle = "rgba(255,255,255,0.08)"; ctx.fill(); ctx.clip();
+      const img = logos[i];
+      if (img) { const sc = Math.min(L / img.width, L / img.height); const w = img.width * sc, h = img.height * sc; ctx.drawImage(img, lx + (L - w) / 2, ly + (L - h) / 2, w, h); }
+      else { ctx.fillStyle = C.muted; ctx.font = "800 22px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText(r.name.slice(0, 1).toUpperCase(), lx + L / 2, cy + 8); ctx.textAlign = "left"; }
+      ctx.restore();
+      ctx.fillStyle = C.text; ctx.font = `${top3 ? 800 : 600} 28px system-ui, sans-serif`;
+      ctx.fillText(fit(ctx, r.name, xPts - lx - L - 140), lx + L + 20, cy + 10);
+      ctx.fillStyle = top3 ? MEDAL[r.pos - 1] : C.text; ctx.font = "900 28px system-ui, sans-serif"; ctx.textAlign = "right";
+      ctx.fillText(String(r.points), xPts, cy + 10); ctx.textAlign = "left";
+      return;
     }
     ctx.fillStyle = C.text; ctx.font = `${top3 ? 800 : 600} 26px system-ui, sans-serif`;
     const num = r.number != null ? `#${r.number} ` : "";
@@ -132,8 +147,19 @@ function ShareDialog({ leagueId, onClose }: { leagueId: string; onClose: () => v
         supabase.from("entries").select("user_id,car_class,driver_category,car_number,team_id,withdrawn_at,division_id").eq("league_id", leagueId),
       ]);
       const teamIds = Array.from(new Set((entries ?? []).map((e: any) => e.team_id).filter(Boolean)));
-      const { data: teams } = teamIds.length ? await supabase.from("teams").select("id,name").in("id", teamIds) : { data: [] as any[] };
-      return { league, divisions: divisions ?? [], entries: (entries ?? []) as any[], teams: Object.fromEntries((teams ?? []).map((t: any) => [t.id, t.name])) as Record<string, string> };
+      const [{ data: teams }, { data: teamEntries }] = await Promise.all([
+        teamIds.length ? supabase.from("teams").select("id,name").in("id", teamIds) : Promise.resolve({ data: [] as any[] }),
+        (supabase as any).from("league_team_entries")
+          .select("team_id, car_class, teams:team_id(id, name, logo_url), league_team_lineup(user_id, status, effective_from, effective_until)")
+          .eq("league_id", leagueId).eq("status", "confirmed"),
+      ]);
+      const logoPaths = Array.from(new Set(((teamEntries ?? []) as any[]).map((e) => e.teams?.logo_url).filter(Boolean))) as string[];
+      const logoUrls: Record<string, string> = {};
+      await Promise.all(logoPaths.map(async (path) => {
+        const { data: s } = await supabase.storage.from("team-logos").createSignedUrl(path, 3600);
+        if (s?.signedUrl) logoUrls[path] = s.signedUrl;
+      }));
+      return { league, divisions: divisions ?? [], entries: (entries ?? []) as any[], teams: Object.fromEntries((teams ?? []).map((t: any) => [t.id, t.name])) as Record<string, string>, teamEntries: (teamEntries ?? []) as any[], logoUrls };
     },
   });
 
@@ -153,6 +179,36 @@ function ShareDialog({ leagueId, onClose }: { leagueId: string; onClose: () => v
         return { pos: i + 1, name: r.driver_name, number: e?.car_number ?? r.car_number, team: e?.team_id ? data.teams[e.team_id] ?? null : null, points: r.total };
       }));
     }
+    // Team-stillinger pr. klasse (samme regler som ligasiden: median-placering, min. 2 lineup-kørere, drop-runder).
+    const pts = (data.league?.points_system as any)?.points_per_position;
+    const pointsPerPosition = Array.isArray(pts) ? pts.map((n: any) => Number(n) || 0) : [];
+    const infos = data.teamEntries.flatMap((e: any) => {
+      const acc = ((e.league_team_lineup ?? []) as any[]).filter((l) => l.status === "accepted");
+      if (acc.length < 2) return [];
+      return [{ teamId: e.team_id, teamName: e.teams?.name ?? "Team", logo: e.teams?.logo_url ? data.logoUrls[e.teams.logo_url] ?? null : null, carClass: e.car_class,
+        userIds: new Set(acc.map((l) => l.user_id as string)),
+        effectiveFrom: new Map(acc.map((l) => [l.user_id as string, l.effective_from ?? null])),
+        effectiveUntil: new Map(acc.map((l) => [l.user_id as string, l.effective_until ?? null])) }];
+    });
+    const tAgg = new Map<string, { info: any; rounds: Record<string, { points: number; rank: number }>; total: number }>();
+    for (const t of infos) tAgg.set(`${t.carClass}|${t.teamId}`, { info: t, rounds: {}, total: 0 });
+    for (const d of completed as any[]) {
+      const ranked = computeTeamRacePoints({ results: d.settings?.results ?? [], teams: infos as any, pointsPerPosition, raceDate: d.race_date ?? null });
+      for (const [c, list] of ranked.entries()) for (const t of list) {
+        const a = tAgg.get(`${c}|${t.teamId}`); if (!a) continue;
+        a.rounds[d.id] = { points: t.points, rank: t.rank }; a.total += t.points;
+      }
+    }
+    if (drop > 0 && completed.length > drop) for (const a of tAgg.values()) {
+      const scored = Object.values(a.rounds).filter((s) => s.rank > 0).sort((x, y) => x.points - y.points);
+      for (const s of scored.slice(0, drop)) a.total -= s.points;
+    }
+    for (const c of Array.from(new Set(infos.map((t: any) => t.carClass as string))).sort()) {
+      const list = Array.from(tAgg.values()).filter((a) => a.info.carClass === c && (a.total > 0 || Object.keys(a.rounds).length > 0)).sort((x, y) => y.total - x.total);
+      if (!list.length) continue;
+      const k = `team:${c}`; keys.push(k);
+      groups.set(k, list.map((a, i) => ({ pos: i + 1, name: a.info.teamName, number: null, team: null, points: a.total, logo: a.info.logo })));
+    }
     const last = completed[completed.length - 1] as any;
     return { groups, keys, subtitle: last ? `Efter ${last.name} · ${completed.length} afd.` : "Ingen afdelinger kørt" };
   }, [data]);
@@ -161,10 +217,10 @@ function ShareDialog({ leagueId, onClose }: { leagueId: string; onClose: () => v
 
   useEffect(() => {
     if (!computed || !cls || !canvasRef.current) return;
-    const [c, cat] = cls.split("|");
-    const label = [c, cat].filter(Boolean).join(" ");
+    const isTeam = cls.startsWith("team:");
+    const label = isTeam ? `${cls.slice(5)} TEAMS` : cls.split("|").filter(Boolean).join(" ");
     setBlob(null);
-    void drawStandings(canvasRef.current, { league: data?.league?.name ?? "", classLabel: label, subtitle: computed.subtitle, rows: computed.groups.get(cls) ?? [] })
+    void drawStandings(canvasRef.current, { league: data?.league?.name ?? "", classLabel: label, subtitle: computed.subtitle, rows: computed.groups.get(cls) ?? [], teams: isTeam })
       .then(() => canvasRef.current?.toBlob((b) => setBlob(b), "image/png"));
   }, [computed, cls, data]);
 
@@ -182,18 +238,18 @@ function ShareDialog({ leagueId, onClose }: { leagueId: string; onClose: () => v
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Del stilling som billede</DialogTitle>
-          <DialogDescription>Samlet mesterskabsstilling for den valgte klasse.</DialogDescription>
+          <DialogDescription>Samlet mesterskabsstilling for den valgte klasse eller teamstilling.</DialogDescription>
         </DialogHeader>
         {!computed ? <p className="text-sm text-muted-foreground">Henter stilling…</p> : computed.keys.length === 0 ? (
           <p className="text-sm text-muted-foreground">Der er ingen offentliggjorte resultater endnu.</p>
         ) : (
           <div className="space-y-3">
             <div className="space-y-1">
-              <Label>Klasse</Label>
+              <Label>Klasse / teams</Label>
               <Select value={cls} onValueChange={setCls}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {computed.keys.map((k) => <SelectItem key={k} value={k}>{k.split("|").filter(Boolean).join(" ")}</SelectItem>)}
+                  {computed.keys.map((k) => <SelectItem key={k} value={k}>{k.startsWith("team:") ? `Teams – ${k.slice(5)}` : k.split("|").filter(Boolean).join(" ")}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
